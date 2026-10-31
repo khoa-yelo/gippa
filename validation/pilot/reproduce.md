@@ -236,7 +236,7 @@ heading, a `Job:` line and its command when its PR merges:
 | S11 A3 | M10-08 to M10-11 | the GIPPA run on the active A3 branch (below) | the GIPPA run yes; the de novo search no |
 | S12 compare | M10-04/10 | `pilot_compare.sbatch` (`gippa-pilot-compare`) | yes |
 | S13 evidence | M10-04 | `run_evidence.py arm --expect-commit F` per arm | yes |
-| S14 TE and metrics | M10-05/06/07 | `te_real.py`, `entrapment.sbatch`, `metrics.py compute` and `render` into `$GIPPA_ROOT/pilot/metrics/freeze-<F7>/` | yes |
+| S14 TE and metrics | M10-05/06/07 | `te_real.py`, `entrapment.sbatch` (a freeze sets `GENOME`, `STRAIN_DB` and `ANNOTATION` to the run's files), `metrics.py compute` and `render` into `$GIPPA_ROOT/pilot/metrics/freeze-<F7>/` | yes |
 | S-bench | M10-12 | `benchmark_standard.sbatch` (`gippa-bench`) | no; `BENCH_COMMIT` recorded |
 
 ## A3

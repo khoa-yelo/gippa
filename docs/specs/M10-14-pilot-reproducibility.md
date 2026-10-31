@@ -171,7 +171,7 @@ Every command runs from FarmShare with `scripts/farmshare_env.sh` sourced; `P=$G
 | S11 A3 (active branch) | 08–11 | below | below | the GIPPA run yes; the de novo search **no** |
 | S12 compare | 04/10 | `pilot_compare.sbatch` (`gippa-pilot-compare`) | normal/normal, 2 CPU, 8 GB, 1 h | **yes** |
 | S13 evidence | 04 | `run_evidence.py arm` × arms, in a dev job | normal/dev, 1 CPU, 4 GB, 30 min | **yes** |
-| S14 TE and metrics | 05/06/07 | `te_real.py compute`, `te_real.py te7` (dev job), `entrapment.sbatch`, `metrics.py compute` and `render` | dev: 1–4 CPU, 8–16 GB, ≤ 1 h | **yes**, into `$GIPPA_ROOT/pilot/metrics/freeze-<F7>/` |
+| S14 TE and metrics | 05/06/07 | `te_real.py compute`, `te_real.py te7` (dev job), `entrapment.sbatch` (with the run's `GENOME`, `STRAIN_DB` and `ANNOTATION`), `metrics.py compute` and `render` | dev: 1–4 CPU, 8–16 GB, ≤ 1 h | **yes**, into `$GIPPA_ROOT/pilot/metrics/freeze-<F7>/` |
 | S-bench | 12 | `benchmark_standard.sbatch` (`gippa-bench`, `--array=0-2%1`, `CPU_SKU:6148`) | 16 CPU, 64000M, 22 h | **no**; `BENCH_COMMIT` recorded (M10-12 L12) |
 | S15 clean-up | 14 | `pilot_cleanup.sbatch` (`gippa-pilot-cleanup`) | normal/normal, 2 CPU, 8 GB, 2 h | yes, once, last |
 
