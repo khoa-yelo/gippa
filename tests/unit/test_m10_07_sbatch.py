@@ -9,7 +9,7 @@ Binding: docs/specs/M10-07-free-entrapment.md, "Lead decisions after the code re
   ``$GIPPA_ROOT/runs/pilot/pass1/out_a1``); an explicitly set ``OUT_A1``, ``DIANN_CMD`` or
   ``PROVENANCE`` that does not exist exits 2 before anything runs; the sbatch never skips the
   cross-checks silently (a skipped cross-check is logged);
-* ADR-0068: ``ANNOTATION`` (default: the M10-04 pilot's recorded Bakta JSON) is passed as
+* ADR-0068: ``ANNOTATION`` (default: the pass-1 recorded Bakta JSON) is passed as
   ``--annotation``, a required input of ``entrapment.py``.
 
 The script sources ``scripts/farmshare_env.sh``, which sets ``UV_PROJECT_ENVIRONMENT`` to
@@ -49,7 +49,7 @@ OPTIONAL_VARS = ("OUT_A1", "DIANN_CMD", "PROVENANCE")
 INPUT_VARS = (
     "PEP_A1", "K12_FASTA", "CONTAMINANTS", "GENOME", "STRAIN_DB", "RUNS_MANIFEST", "ANNOTATION",
 )  # fmt: skip
-#: M10-04's table: the annotation behind A1's run and ``strain_db.faa.gz``
+#: the committed Bakta JSON, paired with the default GENOME (pass 1; the freeze overrides both)
 PILOT_ANNOTATION = "tests/data/recorded/bakta/1.12.2-full/nissle/nissle1917.json.gz"
 
 

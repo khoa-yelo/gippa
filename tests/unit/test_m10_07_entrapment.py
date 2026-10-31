@@ -45,6 +45,7 @@ Interface fixed here (the spec names the quantities, not the functions):
 from __future__ import annotations
 
 import dataclasses
+import json
 from collections.abc import Iterable, Mapping, Sequence
 from pathlib import Path
 from typing import Any
@@ -1301,6 +1302,32 @@ def _bad_annotation(kind: str, root: Path, contigs: dict[str, str], genes: list[
         gs = [dataclasses.replace(g, interval=dataclasses.replace(g.interval, contig="plasmid9"))
               for g in genes]  # fmt: skip
         write_annotation_json(path, other, ["plasmid9"], gs)
+    elif kind == "empty_object":
+        path.write_text("{}", encoding="utf-8")
+    elif kind == "no_sequences":
+        write_annotation_json(path, contigs, ["nissle"], genes)
+        path.write_text(
+            json.dumps({"features": json.loads(path.read_text(encoding="utf-8"))["features"]}),
+            encoding="utf-8",
+        )
+    elif kind == "linear":  # the FASTA says circular: the two routes' origin wrap would differ
+        write_annotation_json(path, contigs, [], genes)
+    elif kind == "gene_nt_differs":  # same ids and lengths, another sequence: could credit wrongly
+        write_annotation_json(path, contigs, ["nissle"], genes)
+        doc = json.loads(path.read_text(encoding="utf-8"))
+        doc["features"][0]["nt"] = "A" * (
+            doc["features"][0]["stop"] - doc["features"][0]["start"] + 1
+        )
+        path.write_text(json.dumps(doc), encoding="utf-8")
+    elif kind == "truncated_gzip":
+        full = write_annotation_json(root / "full.json.gz", contigs, ["nissle"], genes)
+        path = root / "bad.bakta.json.gz"
+        path.write_bytes(full.read_bytes()[:40])
+    elif kind == "features_not_a_list":
+        write_annotation_json(path, contigs, ["nissle"], genes)
+        doc = json.loads(path.read_text(encoding="utf-8"))
+        doc["features"] = 3
+        path.write_text(json.dumps(doc), encoding="utf-8")
     else:
         assert kind == "another_length"
         write_annotation_json(path, {"nissle": contigs["nissle"] + "ACGTAC"}, ["nissle"], genes)
@@ -1308,7 +1335,20 @@ def _bad_annotation(kind: str, root: Path, contigs: dict[str, str], genes: list[
 
 
 @pytest.mark.parametrize(
-    "kind", ["not_json", "not_an_object", "another_table", "another_contig", "another_length"]
+    "kind",
+    [
+        "not_json",
+        "not_an_object",
+        "another_table",
+        "another_contig",
+        "another_length",
+        "empty_object",
+        "no_sequences",
+        "linear",
+        "gene_nt_differs",
+        "truncated_gzip",
+        "features_not_a_list",
+    ],
 )
 def test_cli_with_an_unusable_annotation_exits_2_naming_it(tmp_path: Path, kind: str) -> None:
     contigs, genes = start_world("GTG")
@@ -1316,3 +1356,43 @@ def test_cli_with_an_unusable_annotation_exits_2_naming_it(tmp_path: Path, kind:
     args = _cli_args(tmp_path / "in", contigs, genes, annotation=bad)
     out = tmp_path / "metrics"
     _exit2(run_entrapment(*args, "--out", str(out)), out, "precondition", str(bad))
+
+
+def test_cli_with_an_annotation_missing_a_contig_exits_2(tmp_path: Path) -> None:
+    """A contig the annotation omits would silently get no start cells."""
+    contigs, genes = start_world("GTG")
+    ann = write_annotation_json(tmp_path / "ann" / "a.json", contigs, ["nissle"], genes)
+    args = _cli_args(tmp_path / "in", {**contigs, "p2": "ACGT" * 50}, genes, annotation=ann)
+    out = tmp_path / "metrics"
+    _exit2(run_entrapment(*args, "--out", str(out)), out, "precondition", str(ann))
+
+
+@pytest.mark.parametrize(
+    ("feature_type", "aa", "want"),
+    [
+        ("cds", START_PEPTIDE, "exact"),
+        ("sorf", START_PEPTIDE, "exact"),
+        ("pseudogene", "", "absent"),
+    ],
+)
+def test_the_json_path_credits_what_gippa_credits(
+    tmp_path: Path, feature_type: str, aa: str, want: str
+) -> None:
+    """Through ``_index``, not a hand-built model: a pseudogene's start is not a start."""
+    contigs, genes = start_world("GTG", aa=aa, feature_type=feature_type)
+    ann = write_annotation_json(tmp_path / "a.json", contigs, ["nissle"], genes)
+    fna = write_genome(tmp_path / "g.fna", contigs, ["nissle"])
+    faa = write_faa(tmp_path / "s.faa", [])
+    got = presences(E()._index(fna, faa, ann), [START_PEPTIDE])[START_PEPTIDE]
+    assert (got.rule == "exact") == (want == "exact")
+
+
+def test_the_default_genome_and_annotation_pair_loads() -> None:
+    """``entrapment.sbatch``'s defaults: the committed pair passes the mismatch checks."""
+    root = Path(__file__).resolve().parents[2]
+    idx = E()._index(
+        root / "tests/data/genomes/nissle1917.fna.gz",
+        root / "validation/pilot/db_a2/strain_db.faa.gz",
+        root / "tests/data/recorded/bakta/1.12.2-full/nissle/nissle1917.json.gz",
+    )
+    assert len(idx.starts.sites) == 415

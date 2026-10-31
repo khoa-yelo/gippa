@@ -97,7 +97,7 @@ would come from `rest.uniprot.org`.
 | `gippa.mapping.masses` | residue masses (Appendix B.5; `RESIDUE_MASS`, `MOD_DELTA` with `Oxidation` 15.994915 and `Carbamidomethyl` 57.021464) | precursor m/z |
 | M10-05 `metrics.py` | `metrics.json` (`schema gippa-pilot-metrics/1`), `render`, the template with metric 8 under "Pending in pass 2", the accepted-row rule (target, `q_value ≤ 0.01`, NA not accepted), `metrics.json` `m2` genome-inconsistent count | the A1 accepted set; the hook for `m8`; the cross-check |
 | `validation/pilot/inputs/pxd078459_files.tsv` (committed) | the `run` column `WT_1`–`WT_3`, the three selected untreated wild-type runs | the "only wild-type runs" check |
-| `validation/pilot/db_a2/strain_db.faa.gz` (committed) | Nissle's Bakta CDS + sORF proteins, initiator M as Bakta writes it | the non-ATG N-terminal rule (L2) |
+| `validation/pilot/db_a2/strain_db.faa.gz` (committed) | Nissle's Bakta CDS + sORF proteins, initiator M as Bakta writes it | rule 1's protein-substring fallback |
 | `tests/data/genomes/nissle1917.fna.gz` (committed, circular-tagged) | the Nissle genome | the six-frame translation |
 
 ### The searchable space (derived from `diann_A1.cfg`)
@@ -123,7 +123,7 @@ decide how many charge states each peptide has (examples 1, 2).
 | `K12_FASTA` | `$GIPPA_DATA_DIR/proteomes/UP000000625.fasta` | the target + entrapment database |
 | `CONTAMINANTS` | `$GIPPA_DB_DIR/contaminants/contaminants.fasta` (the file A1 searched; its path is in `command_step1.txt`) | exclusions |
 | `GENOME` | `tests/data/genomes/nissle1917.fna.gz` | Nissle's translation |
-| `STRAIN_DB` | `validation/pilot/db_a2/strain_db.faa.gz` | the N-terminal rule (L2) |
+| `STRAIN_DB` | `validation/pilot/db_a2/strain_db.faa.gz` | rule 1's protein-substring fallback |
 | `ANNOTATION` | `tests/data/recorded/bakta/1.12.2-full/nissle/nissle1917.json.gz` | a Bakta JSON (possibly gzipped) of `GENOME`: the annotated non-ATG starts where rule 1 credits an initiator M (ADR-0068, M11-20) |
 | `RUNS_MANIFEST` | `validation/pilot/inputs/pxd078459_files.tsv` | wild-type runs |
 | `OUT_A1` (optional) | the M10-04 A1 run directory (as M10-05 resolves it) | cross-checks (exact route, genome-inconsistent count) |
@@ -157,8 +157,8 @@ unchanged to the in-silico universe and to the discoveries. `p` is present when 
 
 1. **exact:** `match_exact` returns a target row for `p` on Nissle's six-frame index (I → L; every
    frame, both strands, origin wrap on circular replicons); or `p` is a substring of a
-   `STRAIN_DB` protein after I → L (L2: this catches N-terminal products of non-ATG starts, where
-   the genome reads V/L/I but the protein, and DIA-NN, read M); or
+   `STRAIN_DB` protein after I → L. `match_exact` credits M at starts annotated in `ANNOTATION`
+   (ADR-0068); the substring is the fallback for a protein with no such cell (L2); or
 2. **mass-equivalent:** `match_tolerant`, run with the GIPPA defaults (`mapping.tolerant`, ≥ 10 aa),
    returns a target row whose `diff_types` is non-empty and contains only `block`. Those are the
    exact-composition exchanges of §7.2.4, such as N ↔ GG and Q ↔ AG. `near_block`, `swap`,
@@ -294,7 +294,7 @@ Hand-made sequences and counts. None comes from the real reports.
 | 6 | **Boundary.** N_T = 2,990, N_E = 10, k12_only 1, shared 2 (r = 0.5) | `fdp_combined` = 10 · 3 / (1 · 3,000) = 0.01 exactly (rational arithmetic); `consistent_with_control` (≤ is inclusive). With N_T = 2,989: 30/2,999 = 0.0100033, `inconclusive` |
 | 7 | **No entrapment discoveries.** N_T = 5,000, N_E = 0, r = 0.4 | `fdp_combined` 0.0, `fdp_lower` 0.0, `consistent_with_control`, `warnings` `n_entrapment_zero` (the report says "no K-12-only peptide was accepted"; R4: an FDP estimate of 0 with no interval) |
 | 8 | **Digest mismatch.** As example 2, plus an accepted target row `SAGLLKVEPTIDEK` (a Met-excised N-terminal product that GIPPA's digest never makes) | `not_in_universe` 1, `warnings` `digest_mismatch`; N_T and N_E unchanged |
-| 9 | **Non-ATG start (L2).** As example 1, plus K-12 protein P4 `MTEKLLAGGPR` (digest: `MTEKLLAGGPR` 11 aa; `MTEK` and `LLAGGPR` → only `LLAGGPR`, 7 aa, is ≥ 7). The genome reads `VTEKLLAGGPR` (GTG start), and `STRAIN_DB` has `MTEKLLAGGPR…` | `LLAGGPR`: exact, `shared`. `MTEKLLAGGPR`: not exact in the six-frame translation, but a substring of a `STRAIN_DB` protein, so `shared` (`present_rule = strain_db`, counted in `shared_strain_db_only`). Without `STRAIN_DB` (L2 answered "no") it is `k12_only`, because rule 2 sees M ↔ V as a substitution |
+| 9 | **Non-ATG start, not annotated (L2).** As example 1, plus K-12 protein P4 `MTEKLLAGGPR` (digest: `MTEKLLAGGPR` 11 aa; `MTEK` and `LLAGGPR` → only `LLAGGPR`, 7 aa, is ≥ 7). The genome reads `VTEKLLAGGPR` (GTG start), and `STRAIN_DB` has `MTEKLLAGGPR…` | `LLAGGPR`: exact, `shared`. `MTEKLLAGGPR`: not exact in the six-frame translation, but a substring of a `STRAIN_DB` protein, so `shared` (`present_rule = strain_db`, counted in `shared_strain_db_only`). Without `STRAIN_DB` (L2 answered "no") it is `k12_only`, because rule 2 sees M ↔ V as a substitution. If `ANNOTATION` has this start (ADR-0068), `MTEKLLAGGPR` is `exact` instead, counted in `shared_exact`, with or without `STRAIN_DB` |
 | 10 | **Wild type only.** `PEP_A1` has a row with run `WT_ROS_1` | exit 2 naming the run; nothing written |
 
 ## Edge cases
@@ -439,7 +439,7 @@ Tests come to about 320 lines, plus the methods note (prose). One PR. It depends
 | # | Question | Default |
 |---|---|---|
 | L1 | A constructed entrapment (shuffled `strain_db.faa` via FDRBench, one extra ~15-min DIA-NN search) as a cross-check? | **no**: §16 lists FDRBench entrapment as Later (R1). If wanted, an ADR and Khoa (§16) |
-| L2 | "Nissle's translation": the six-frame genome translation only, or also the Bakta proteins (`strain_db.faa`, M at non-ATG starts)? With the six-frame only, every true N-terminal peptide of a non-ATG-start gene that K-12 shares would count as entrapment | six-frame ∪ `strain_db.faa` substrings (exact rule only) |
+| L2 | "Nissle's translation": the six-frame genome translation only, or also the Bakta proteins (`strain_db.faa`, M at non-ATG starts)? With the six-frame only, a true N-terminal peptide of a non-ATG-start gene that K-12 shares, at a start not annotated, would count as entrapment (since 2026-10-31, see Lead decisions) | six-frame ∪ `strain_db.faa` substrings (exact rule only) |
 | L3 | Contaminant exclusion by sequence (D(contaminants)) rather than by `protein_ids` (M10-05's rule) | by sequence, because the in-silico side has no `protein_ids`. The difference shows up in cross-check 2 |
 | L4 | H2 (§15.7). It names "entrapment FDP (full validation, FDRBench)". Should this free estimate stand in for it in the pilot? | no: H2 stays `deferred`; the report shows the genome-inconsistent share and `fdp_combined` side by side, without a verdict |
 | L5 | Where metric 8 lives. A separate `entrapment.json` plus a `--entrapment` hook in M10-05's `metrics.py`, or code inside `metrics.py`? | separate script and file (§15.5 names `entrapment.py`), with a small hook in `metrics.py` (≈ 15 lines in this PR) |
@@ -771,6 +771,7 @@ above: the bias direction, the deterministic lower bound, and `ucb95` coverage.
 
 ## Lead decisions after the code review (rev-1007, 2026-10-24; binding)
 These supersede earlier text that differs.
+- **2026-10-31, ADR-0068:** rule 1 uses start cells from a required `ANNOTATION`, parsed as GIPPA parses it. An annotation whose contigs, lengths, topology or gene `nt` differ from `GENOME` exits 2. The freeze run overrides `GENOME`, `STRAIN_DB` and `ANNOTATION` together.
 - **B1:** cross-check 1 considers only discoveries in the T and E buckets. Unclassified discoveries are counted and reported, never an exit-1 failure.
 - **B2:** the sbatch default output path must be git-ignored (`git check-ignore`). The default run must not exit 2.
 - **B3:** merge main, including M10-06's `expand()`/INPUTS hooks, and re-apply the M10-07 hook on top.

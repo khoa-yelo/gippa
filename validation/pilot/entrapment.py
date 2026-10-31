@@ -27,7 +27,7 @@ import argparse
 import sys
 import traceback
 from collections.abc import Iterable, Mapping, Sequence
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, replace
 from fractions import Fraction
 from itertools import combinations
 from pathlib import Path
@@ -40,7 +40,7 @@ from scipy.stats import binom
 from validation.pilot import metrics as m5
 from validation.pilot.metrics import Inconsistent, Precondition, sha256
 
-from gippa.annotate.bakta import parse_bakta_json
+from gippa.annotate.bakta import interval_nt, parse_bakta_json
 from gippa.config import resolve_config
 from gippa.config.model import Enzyme, TolerantConfig
 from gippa.io.fasta import read_genome_fasta
@@ -548,7 +548,19 @@ def _index(genome: Path, strain_db: Path, annotation: Path) -> Index:
     table = resolve_config().annotation.translation_table
 
     def model(path: Path) -> GeneModel:
-        return parse_bakta_json(path, reps, seqs, translation_table=table).model
+        """GIPPA's parse (replicons from the JSON), refusing an annotation of another genome."""
+        try:
+            gm = parse_bakta_json(path, genome=seqs, translation_table=table).model
+        except (EOFError, TypeError) as exc:  # truncated gzip, wrongly typed JSON fields
+            raise Precondition(f"{path}: {exc}") from exc
+        if {c: (r.length, r.topology) for c, r in gm.replicons.items()} != {
+            c: (r.length, r.topology) for c, r in reps.items()
+        }:
+            raise Precondition(f"{path}: contigs, lengths or topology differ from {genome}")
+        for g in gm.genes:
+            if g.nt and g.nt != interval_nt(seqs[g.interval.contig], g.interval):
+                raise Precondition(f"{path}: {g.locus_tag}: nt differs from {genome}")
+        return replace(gm, replicons=reps)  # FASTA order
 
     return build_index(seqs, reps, _proteins(strain_db), annotation=m5._load(annotation, model))
 
