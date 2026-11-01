@@ -526,3 +526,34 @@ def test_cli_schema_invalid_record_exits_2(tmp_path: Path, damage: str) -> None:
         del rec["wall_s"]
         p.write_text(json.dumps(rec))
     assert _cli(d).returncode == 2
+
+
+def test_two_rounds_is_complete_only_when_asked(bs: ModuleType) -> None:
+    """ADR-0072: 1.0.0's two repeats; the default stays three, and two of three stay incomplete."""
+    runs = _three([10000, 10100])
+    assert _cell(bs, runs)["status"] == "incomplete"
+    cell = bs.cell_summary(runs, bs.ESTIMATES["standard"], rounds=2)
+    assert cell["status"] == "complete"
+    assert cell["median_s"] == pytest.approx(10050)  # the mean of two, not one of the runs
+    assert cell["runs_s"] == [10000, 10100]
+    assert bs.baseline_entry(cell)["rounds"] == 2
+    assert "median of 2;" in _md(bs, [cell | {"genome": "k12", "variant": "standard"}])
+
+
+def test_two_rounds_with_three_valid_runs_is_not_complete(bs: ModuleType) -> None:
+    cell = bs.cell_summary(_three([1000, 1100, 1200]), bs.ESTIMATES["standard"], rounds=2)
+    assert cell["status"] == "incomplete"
+    assert "of 2 repeats" in _md(bs, [cell | {"genome": "k12", "variant": "standard"}])
+
+
+def test_three_round_entry_still_records_three(bs: ModuleType) -> None:
+    assert bs.baseline_entry(_cell(bs, _three([3912, 3700, 4106])))["rounds"] == 3
+
+
+def test_cli_two_rounds_needs_the_adr(tmp_path: Path) -> None:
+    d = tmp_path / "2026-10-31_abc"
+    d.mkdir()
+    res = _cli(d, "--rounds", "2")
+    assert res.returncode == 2
+    assert "--adr" in res.stderr
+    assert not (d / "summary.json").exists()

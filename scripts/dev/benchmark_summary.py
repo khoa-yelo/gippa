@@ -5,7 +5,8 @@ Reads every ``r<k>[.<attempt>]/<genome>_<variant>/bench_run.json`` written by
 ``summary.json`` and ``summary.md`` (the PROGRESS > Measured numbers rows and the user-guide
 table) next to them. Per (genome, variant) cell the latest valid attempt of each repeat counts;
 a cell with 3 valid repeats and equal input sha256 values is ``complete`` (median of 3), 1-2 is
-``incomplete`` (no median; the mean of the valid ones, labelled), 0 is ``no_data``. With
+``incomplete`` (no median; the mean of the valid ones, labelled), 0 is ``no_data``. ``--rounds 2``
+with ``--adr`` makes 2 valid repeats complete instead (median of 2, recorded as ``rounds``). With
 ``--write`` the complete cells go into ``standard_run.<node class>.<genome>_<variant>`` of
 ``baseline.json``; every other key is kept byte-for-byte, and an entry measured on another
 commit is replaced only with ``--replace`` (else exit 1, file unchanged). The noisy threshold
@@ -116,7 +117,7 @@ def _flag(argv: Sequence[str], name: str) -> str | None:
     return next((argv[i + 1] for i, a in enumerate(argv[:-1]) if a == name), None)
 
 
-def cell_summary(runs: Sequence[Run], estimate: Estimate) -> dict[str, Any]:
+def cell_summary(runs: Sequence[Run], estimate: Estimate, rounds: int = ROUNDS) -> dict[str, Any]:
     """Every record of one cell (all repeats and attempts) → the cell's numbers and status."""
     cell: dict[str, Any] = {
         "status": "no_data",
@@ -160,11 +161,12 @@ def cell_summary(runs: Sequence[Run], estimate: Estimate) -> dict[str, Any]:
         + [f"node_class:{c}" for c in sorted(classes) if c not in NODE_CLASSES]  # never summarised
     )
     cell["valid_runs"] = len(valid)
-    if len(valid) != ROUNDS or cell["reasons"]:
+    cell["rounds"] = rounds
+    if len(valid) != rounds or cell["reasons"]:
         cell |= {"status": "incomplete", "mean_of_valid_s": statistics.fmean(walls)}
         return cell
     med = statistics.median(walls)
-    median_run = valid[walls.index(med)]
+    median_run = valid[walls.index(statistics.median_low(walls))]  # med itself if rounds is odd
     sku = valid[0]["cpu_sku"]
     node_class, cpu = NODE_CLASSES[sku]
     within = None
@@ -217,7 +219,7 @@ def baseline_entry(cell: Mapping[str, Any]) -> dict[str, Any]:
         "threads": THREADS,
         "mem_mb": 64000,
         "task_memory": "56.GB",
-        "rounds": ROUNDS,
+        "rounds": cell.get("rounds", ROUNDS),
         "adr": cell.get("adr"),
     }
 
@@ -244,7 +246,7 @@ def markdown_rows(cells: Sequence[Mapping[str, Any]]) -> list[str]:
             )
         if c["status"] == "complete":
             wall = (
-                f"{_hms(c['median_s'])} (median of 3; {_hms(min(c['runs_s']))}-"
+                f"{_hms(c['median_s'])} (median of {c['rounds']}; {_hms(min(c['runs_s']))}-"
                 f"{_hms(max(c['runs_s']))})"
             )
             if c["noisy"]:
@@ -253,7 +255,8 @@ def markdown_rows(cells: Sequence[Mapping[str, Any]]) -> list[str]:
             node = f"{c['node_class']} ({', '.join(map(str, c['slurm_jobs']))})"
             rss = _gib(c["peak_rss_sacct_max_bytes"])
         elif c["status"] == "incomplete":
-            wall = f"{_hms(c['mean_of_valid_s'])} (mean of {c['valid_runs']} of 3 repeats)"
+            of = f"{c['valid_runs']} of {c['rounds']}"
+            wall = f"{_hms(c['mean_of_valid_s'])} (mean of {of} repeats)"
             node, rss = "-", "-"
         else:
             wall, node, rss = "no data", "-", "-"
@@ -308,9 +311,15 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--write", action="store_true", help="add the complete cells to --baseline")
     ap.add_argument("--replace", action="store_true", help="replace entries of another commit")
     ap.add_argument("--adr", help="ADR-NNNN of the entries (kept on a same-commit rewrite)")
+    ap.add_argument(
+        "--rounds", type=int, choices=(2, ROUNDS), default=ROUNDS, help="repeats per cell"
+    )
     args = ap.parse_args(argv)
     if args.adr is not None and not re.fullmatch(r"ADR-\d{4}", args.adr):
         print(f"benchmark_summary: --adr {args.adr!r} is not ADR-NNNN", file=sys.stderr)
+        return 2
+    if args.rounds != ROUNDS and args.adr is None:
+        print("benchmark_summary: --rounds 2 needs the --adr that records it", file=sys.stderr)
         return 2
     try:
         runs = _load(args.bench)
@@ -321,7 +330,9 @@ def main(argv: list[str] | None = None) -> int:
     for g in GENOMES:
         for v in VARIANTS:
             group = [r for r in runs if (r["genome"], r["variant"]) == (g, v)]
-            cells[f"{g}_{v}"] = {"genome": g, "variant": v} | cell_summary(group, ESTIMATES[v])
+            cells[f"{g}_{v}"] = {"genome": g, "variant": v} | cell_summary(
+                group, ESTIMATES[v], args.rounds
+            )
     summary = {"bench_id": args.bench.name, "noisy_max": NOISY_MAX, "cells": cells}
     (args.bench / "summary.json").write_text(json.dumps(summary, indent=2) + "\n")
     md = [
