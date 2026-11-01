@@ -441,3 +441,9 @@ time.
 ## Lead decisions (2026-10-24)
 
 Every lead question L1–L12 takes its default. L9: docs/user-guide/runtimes.md is created by the docs role in the evidence PR.
+
+## Khoa's decision for 1.0.0 (2026-11-01, ADR-0072)
+
+The 1.0.0 benchmark stops after 2 repeats. `benchmark_summary.py --rounds 2 --adr ADR-0072` records a
+cell with 2 valid repeats as complete, its `median_s` being their mean and its entry saying
+`rounds: 2`. The default stays 3, and `--rounds 2` without `--adr` exits 2.
