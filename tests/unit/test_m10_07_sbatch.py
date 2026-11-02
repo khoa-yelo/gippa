@@ -145,6 +145,7 @@ def test_s5_a_skipped_cross_check_is_logged(root: Path, tmp_path: Path) -> None:
     assert "cross-check" in log and "skip" in log, _show(res)
 
 
+@pytest.mark.gnu_userland
 def test_annotation_is_passed_to_entrapment_py(root: Path, tmp_path: Path) -> None:
     argv_file = _stub_python(root, real=False)
     inputs = _inputs(tmp_path / "in")
@@ -153,6 +154,7 @@ def test_annotation_is_passed_to_entrapment_py(root: Path, tmp_path: Path) -> No
     assert _flag(_argv(argv_file), "--annotation") == inputs["ANNOTATION"], _argv(argv_file)
 
 
+@pytest.mark.gnu_userland
 def test_annotation_defaults_to_the_pilot_annotation(root: Path, tmp_path: Path) -> None:
     """Like ``GENOME``, the default is the spec table's path relative to the checkout."""
     argv_file = _stub_python(root, real=False)

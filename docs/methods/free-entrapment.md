@@ -152,6 +152,7 @@ run's intersection. Estimates are reported unclipped and flagged
 | The tolerant route reports only minimal-cost loci; a block-only locus behind a cheaper non-block locus is not seen | high, negligible |
 | An incomplete genome, a different strain, or K-12 material in the sample (carryover, lab contamination) makes some K-12-only discoveries true; the lower bound then stops being a bound | high |
 | Six-frame chance hits move short K-12-only peptides into `shared` | lower N_E (a more conservative lower bound); negligible for equation (1) |
+| An annotated non-ATG start that is not a real start credits an initiator-M peptide the strain does not make, moving it from E to T. The Bakta protein carries the same M, so the `strain_db` clause admits that peptide anyway when `STRAIN_DB` and `ANNOTATION` come from one annotation; the credit changes the rule, not the class | low, negligible |
 | E and T differ in length and charge composition, so equal chance per precursor mis-weights the peptide-level r (`sensitivity.r_prec_weighted`) | either |
 | False matches attracted to T, e.g. interference from abundant co-eluting shared proteins (equal-chance violation in the low direction) | low, unquantified |
 | A protein-level filter (`PG.Q.Value`) would remove K-12-only proteins first; neither DIA-NN's main report nor GIPPA applies one (DIA-NN 2.3.1 docs, above), and adding one is a lead finding | low |

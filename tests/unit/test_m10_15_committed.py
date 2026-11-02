@@ -101,7 +101,9 @@ def _committed_texts() -> dict[str, str]:
 
 
 def test_committed_report_files_hold_no_peptide_like_string() -> None:
-    hits = {n: m.start() for n, t in _committed_texts().items() if (m := PEPTIDE_LIKE.search(t))}
+    # Slurm's COMPLETED holds a 7-letter run of amino-acid codes; only that word is exempt
+    texts = {n: t.replace("COMPLETED", "") for n, t in _committed_texts().items()}
+    hits = {n: m.start() for n, t in texts.items() if (m := PEPTIDE_LIKE.search(t))}
     assert not hits, f"7+ amino-acid strings in committed report files: {hits}"
 
 

@@ -38,6 +38,15 @@ gippa makedb --annotation bakta.json --six-frame-orfs --min-orf-aa 20 --no-conta
   unwrapped across the origin (`end > length`), as in the tables.
 - **`makedb_manifest.json`**: the inputs, options and counts.
 
+!!! warning "`--six-frame-orfs` on real data"
+    In the only real six-frame search so far (one *E. coli* Nissle 1917 strain, three runs), GIPPA called no
+    novel ORFs, but this does not show the strain has none: each ORF class had only 8 to 64 candidates that
+    beat their decoys, and a class needs at least 100 such candidates ranked above every decoy before any
+    ORF can reach q ≤ 0.01, so no call was possible. Decoy wins also outnumbered target wins in every class, and
+    the lowest q reached was 0.125 to 0.50 by class. The first segment of the known gene *prfB* had the
+    best peptide score in its class and was still not called (q = 0.25),
+    and this route's error rate has been measured only on simulated data.
+
 ## Requirements and errors
 
 - `--annotation` is required in 1.0. Without it, `gippa makedb` exits with code 2: running Bakta
