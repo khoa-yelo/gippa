@@ -67,7 +67,7 @@ abundance:
 | `--genome-relation` | `related`, `same` | `same` if the proteomics comes from this exact strain |
 | `--abundance-type` | `unknown`, `ibaq`, `top3`, `maxlfq`, `intensity` | what your abundance values are |
 | `--abundance-missing` | `median`, `exclude`, `min`, `zero`, `mean` | how genes without a value are filled |
-| `--terminators` | `terminatornet`, `transtermhp` | terminator predictor; TerminatorNet is the slowest step |
+| `--terminators` | `terminatornet`, `transtermhp` | terminator predictor; TerminatorNet is one of the two slowest steps |
 | `--promoters` | `targeted`, `genome` | promoters upstream of genes only, or genome-wide |
 | `--sensitivity` | `basic`, `full`, `off` | robustness re-runs |
 | `--publication` | off | 10,000 permutations for final numbers; slower |
