@@ -16,9 +16,8 @@ spread is a weak estimate, and the true variation may be larger.
 
 How to read the table:
 
-- Plan for about 3-4 h on 16 threads on similar hardware. The specification's estimates (35 min,
-  range 16-55, for a standard run; 25 min for core modules) were not met, and ADR-0072 waives that
-  range for 1.0.0.
+- Plan for about 3-4 h on 16 threads on similar hardware. The specification's first estimates were
+  not met, and ADR-0072 waives that range for 1.0.0.
 - 16 threads are 16 hardware threads (8 physical cores) of an Intel Xeon Gold 6148 node, shared
   with other users' jobs; the node's median allocation was 60-80 of 80 CPUs.
 - Peak memory is the run's Slurm MaxRSS (`sacct`, sampled every 60 s). Why it differs so much
