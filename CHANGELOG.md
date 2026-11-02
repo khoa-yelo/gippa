@@ -245,6 +245,11 @@ All notable changes are recorded here by towncrier from `changelog.d/` fragments
     - the V4 locus browser (igv-reports) and the V9 mass-fraction treemap are not built, so 16
       plots are made instead of 18;
     - no RO-Crate export;
+    - mapping attack `flat_c200` (a flat contaminant weight) reads FDP 0.015 at q 0.01, over its
+      bound; the contaminant weight is not decided (gate M3 not met).
+    - variant calling: G1 (F1 on simulated variants) and A6a were last measured at the release
+      commit on the scope before ADR-0049 (G1 0.869, below 0.9); the accepted scope has not been
+      rerun at that commit (gate M7 not met).
     - six-frame novel ORFs: In the only real six-frame search so far (one *E. coli* Nissle 1917
       strain, three runs), GIPPA called no novel ORFs, but this does not show the strain has none:
       each ORF class had only 8 to 64 candidates that beat their decoys, and a class needs at least

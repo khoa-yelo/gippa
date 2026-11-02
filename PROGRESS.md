@@ -13,7 +13,7 @@ _Last updated: 2026-11-01 · session https://claude.ai/code/session_015h628ytdvW
 
 ## Milestone progress
 <!-- progress:start -->
-🟩 done (merged) · ⬛ superseded by an accepted ADR (counts as done) · 🟨 running (open branch) · ⬜ pending; designed issues: 191/199 done (96 %), 1 running · generated 2026-11-01 20:26 by `scripts/dev/progress_bars.py`
+🟩 done (merged) · ⬛ superseded by an accepted ADR (counts as done) · 🟨 running (open branch) · ⬜ pending; designed issues: 191/199 done (96 %), 1 running · generated 2026-11-02 10:07 by `scripts/dev/progress_bars.py`
 
 | Milestone | Progress | Done | Running | Pending |
 |---|---|---|---|---|
@@ -120,7 +120,7 @@ Gate records M1-M10 (§13; readiness H1). F is the report-freeze commit `fa49b8f
 array at F is 1913506-1913520: 15 suites, 0 failed suites, 6 strict xfails in the junit roll-up (this
 excludes shard and confirm-run verdicts in merged records, which the M3 and M7 blocks name). These
 statuses were compiled from the repository and the logs on 2026-11-01; they are not Khoa's verdicts.
-Readiness H1 only counts these headings: it reads `pass` although M3, M7 and M9 are not recorded as met.
+Readiness H1 only counts these headings: it reads `pass` although M3 and M7 are not met (shipped as known limits, Khoa 2026-11-02).
 
 ### Gate M1 (inputs and preflight)
 - **Criterion:** every preflight rule unit-tested (`T-PRE-01 … 25`, one pass and one fail each);
@@ -146,7 +146,7 @@ Readiness H1 only counts these headings: it reads `pass` although M3, M7 and M9 
 
 ### Gate M3 (mapping and decoy FDR)
 - **Criterion:** ≥ 99.9 % recall of planted peptides; mapping FDR calibrated; TE1 and TE8 proxies pass.
-- **Status:** not recorded: a decision on the contaminant weight, so attack `flat_c200` stays open
+- **Status:** not met; Khoa decided on 2026-11-02 to ship 1.0.0 with this disclosed as a known limit. Not recorded: a decision on the contaminant weight, so attack `flat_c200` stays open
   (strict xfail "contaminant weight pending (M3-25 decision 10 left it open)"; no ADR or backlog line found).
 - **Evidence:** recall: #113, `tests/integration/test_m3_gate.py` (≥ 0.999, 5 seeds; 1 passed on
   2026-11-01). FDR: `placement` job 1913506 at F, exit 0, 107 of 108 merged records pass; stressed
@@ -191,7 +191,7 @@ Readiness H1 only counts these headings: it reads `pass` although M3, M7 and M9 
 ### Gate M7 (variants and novel ORFs)
 - **Criterion:** F1 ≥ 0.9 on simulated variants and novel ORFs; TE2 proxy passes (claimed check by
   check, M7-13c).
-- **Status:** not recorded: a full-tier result for G1, A6a and A6b under ADR-0049's accepted scope,
+- **Status:** not met; Khoa decided on 2026-11-02 to ship 1.0.0 with this disclosed as a known limit. Not recorded: a full-tier result for G1, A6a and A6b under ADR-0049's accepted scope,
   and the M7-13c gate run (`GIPPA_M7_GATE=1`; its ledger skipped in nightly 1914425_0).
 - **Evidence (job 1913519, 1913517 at F):** G1 full is still a strict xfail on the pre-ADR scope: F1
   0.869 (R = 100, block 2). ADR-0049's scope gave 0.933 [0.924, 0.941] at 1 Mb (Slurm 1874972, code of
@@ -215,7 +215,7 @@ Readiness H1 only counts these headings: it reads `pass` although M3, M7 and M9 
 
 ### Gate M9 (visualisation and report)
 - **Criterion:** Khoa approves the plot snapshots and report layout.
-- **Status:** not recorded: Khoa's approval of the report layout (Questions row 18)
+- **Status:** met: Khoa accepted the current report layout for 1.0.0 on 2026-11-02 (Answered by Khoa)
 - **Evidence:** PROGRESS › Answered by Khoa, 2026-10-24 (evening): "#325 M9-25 baselines approved". The
   #325 baselines are 37 PNGs and `tests/snapshot/report_structure.json`. #360 (V03) re-baseline also
   approved (`local/handoff/khoa_q.md`). Bar 26/26.
@@ -225,7 +225,8 @@ Readiness H1 only counts these headings: it reads `pass` although M3, M7 and M9 
 
 ### Gate M10 (M10-15, 2026-11-01)
 
-Gate M10: awaiting Khoa's review
+Gate M10: met
+- Khoa review: accept, 2026-11-02 (PROGRESS › Answered by Khoa)
 
 | §15.6 bullet | Status | Evidence |
 |---|---|---|
@@ -234,7 +235,7 @@ Gate M10: awaiting Khoa's review
 | A1 and A2 detections and abundances are compared | pass (metrics.json › checklist.2) | metrics.json › m4, m5; reproduce.md › S12 1916515 (COMPLETED, exit 0:0, fa49b8f) (metrics.json › checklist.2) |
 | Measured runtimes replace the estimates | pass (metrics.json › checklist.3) | baseline.json › standard_run.wheat.{k12_standard,k12_core,sim5m_standard,sim5m_core}.median_s; ADR-0072-benchmark-baseline-1-0-0 accepted-by-khoa; docs/user-guide/runtimes.md (metrics.json › checklist.3) |
 | TE2–TE5 are reported; failures explained | reported (1 not passed, explained) (metrics.json › checklist.4) | metrics.json › te_real.te2-te5.status; TE4 not passed: report_notes.md › Diagnosis: TE4 (metrics.json › checklist.4) |
-| Khoa has reviewed the report (§14.8 item 4) | awaiting | PROGRESS › Questions for Khoa row 17; no entry in PROGRESS › Answered by Khoa |
+| Khoa has reviewed the report (§14.8 item 4) | accept (2026-11-02) | PROGRESS › Answered by Khoa, 2026-11-02 |
 
 **Report identity.** `validation/pilot/REPORT.md` sha256 `1bedca51b57e39fdb14e9f8438b0a6ef7cf515107aa7b0a38d1d4aa66e962191`; F = `fa49b8f145ea4598a5f896f9d0b1956912fc5df3`;
 packet: `$GIPPA_ROOT/review/m10-pilot/r1/` (#524), round r1.
@@ -275,7 +276,7 @@ packet: `$GIPPA_ROOT/review/m10-pilot/r1/` (#524), round r1.
   gives the Slurm limit. Editing the ADR would change its hash in `metrics.json`.
 - CI on main at `a629525a`: macOS `test-compat` failed 2 tests in `test_m10_07_sbatch.py`; #524 skips them
   there; the cause is not reproduced (docs/backlog.md).
-- ADRs still `proposed`: Needs Khoa: yes: ADR-0048, ADR-0051 (the pilot's DIA-NN 2.3.1), ADR-0060, ADR-0065;
+- ADRs still `proposed`: Needs Khoa: yes: ADR-0048 (after 1.0.0, Khoa 2026-11-02); ADR-0051, ADR-0060 and ADR-0065 accepted 2026-11-02;
   Needs Khoa: no: ADR-0053, ADR-0059, ADR-0062, ADR-0063, ADR-0066.
 
 ## In progress
@@ -655,6 +656,8 @@ Slurm jobs this session (2026-10-27): 1900002 (nightly, task 2 SIGTERM at 5 h 50
 | 2026-10-14 | ~~RegulonDB v12 download~~ **RESOLVED 2026-10-21** | Not an outage: RegulonDB serves a cert (GlobalSign GCC R46 OV TLS CA 2025, issued 2026-10-14) **without the intermediate**, so verification fails. The intermediate from GlobalSign's own CA endpoint verifies against `GlobalSign Root R46`, already in FarmShare's trust store; with it, the site and `/datasets` return HTTP 200. Khoa approved completing the chain (2026-10-21). | nothing — M6-11/M6-12 unblocked |
 
 ## Answered by Khoa
+- 2026-11-02: **M10 pilot report** (REPORT.md sha256 1bedca51b57e39fdb14e9f8438b0a6ef7cf515107aa7b0a38d1d4aa66e962191, packet r1): "Accept your recommendatios, try to ship 1.0.0 soon\" and, asked for the M10 verdict on this sha256, \"Accept" → verdict accept
+- 2026-11-02 (same message, accepting the lead's recommendations): **Gate M9** report layout accepted for 1.0.0; **Gates M3 and M7** ship as disclosed known limits; **ADR-0051, ADR-0060, ADR-0065** accepted ("0051, 0060, 0065; 0048 later (Recommended)"); ADR-0048 after 1.0.0. "try to ship 1.0.0 soon".
 - 2026-10-24 (evening): **#325 M9-25 baselines approved**; the V16 #555555 and V15 (c) overlap go
   to the backlog. **M7-16 → B**, annotated end stops (ADR-0058). **M7-16 item 6, yes:** build 16c
   (internal Sec/Pyl). **Q11:** stays pooled. **Placement-kind labels:** yes (16b, 16c, M11-08).
@@ -699,9 +702,6 @@ Slurm jobs this session (2026-10-27): 1900002 (nightly, task 2 SIGTERM at 5 h 50
 | 14 | ADR-0047 tightening (M4-24 backlog): narrow the condition under which decoys above `q_value_max` leave the picked competition | tighten / leave | leave (ADR-0047 as accepted) | 2026-10-23 (#238) |
 | 15 | FYI, reversible: MVP-04 gate 13 re-stated before any number (decision 20). "≥ 4 of 6 islands" was infeasible (0/11 seeds); now one 20-TU high island gated (11/11), three 8-TU lows exempt (structural cap) | ok / revise | decision 20 (in use) | 2026-10-23 (#258) |
 | 16 | M10-14 K2: after the report-freeze reruns, delete the DIA-NN raw reports and predicted libraries (the converted tables, hashes and counts stay)? | delete / keep | keep them until you say so (nothing irreversible) | 2026-10-24 (#308) |
-| 17 | M10 pilot report review, round r1. M10 pilot report verdict: accept, accept with changes, or reject? `validation/pilot/REPORT.md` sha256 `1bedca51b57e39fdb14e9f8438b0a6ef7cf515107aa7b0a38d1d4aa66e962191`, via #524 (§14.8 item 4) | accept / accept with changes / reject | none: a §14.8 checkpoint has no default; the M10 gate stays awaiting review | 2026-11-01 (#524) |
-| 18 | Gate M9: the 2026-10-24 approval names the #325 baselines, and #348 later changed `report_structure.json` with no approval found. Accept the current report layout for 1.0.0? | accept / changes | none: the gate reads not recorded until answered | 2026-11-01 (#524) |
-| 19 | Gates M3 and M7 are not recorded as met: attack `flat_c200` FDP over its bound with no contaminant-weight decision; G1 and A6a at F on the pre-ADR-0049 scope. Ship 1.0.0 with both disclosed as known limits? | ship and disclose / fix first | none: release decision | 2026-11-01 (#524) |
 
 ## Environment notes
 - capabilities: allocation cpus=8, mem=31.2 GB, time left at 16:32 UTC=4:18; local/ used=1.75 GB;

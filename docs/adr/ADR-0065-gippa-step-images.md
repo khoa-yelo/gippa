@@ -1,5 +1,5 @@
 # ADR-0065: GIPPA step images `<pkg>-step` and `<pkg>-step-r`, tagged `<version>`
-- Status: proposed (Q-K39; lead default: accept)
+- Status: accepted-by-khoa (2026-11-02, in session: "0051, 0060, 0065; 0048 later (Recommended)")
 - Date: 2026-10-27
 - Spec sections: §0.2 R1, R5, R6; §3 (Containers row); §12; §13; M11-06 (Q-L8); M11-14 14c;
   M11-15 item 8 (8a, slice 15g; Q-K37, Q-K39); ADR-0038, ADR-0059, ADR-0060
