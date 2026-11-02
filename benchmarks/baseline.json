@@ -589,5 +589,861 @@
     "date": "2026-10-24",
     "issue": "M6-09",
     "note": "pytest -m calibration -n 2 on the two files: 18 passed, 1 skipped (C through the step, until M6-05H), 1 xfailed (D-1, ADR-0055). test_attack_d1_level holds both D-1 checks (pooled level and lowest quartile). Full tier: Slurm 1884493 (rye-01, -n 16, commit 24267fd3), 514 s wall, 21 passed, 1 xfailed (includes test_operon_gate_modes.py)."
+  },
+  "standard_run": {
+    "wheat": {
+      "k12_standard": {
+        "median_s": 13232.5,
+        "runs_s": [
+          12502,
+          13963
+        ],
+        "spread": 0.1104099754392594,
+        "noisy": false,
+        "nodes": [
+          "wheat-01",
+          "wheat-01"
+        ],
+        "cpu": "Intel Xeon Gold 6148 (CPU_SKU:6148)",
+        "profile": "farmshare_local,apptainer",
+        "modules": "core,mobile,bgc,function",
+        "bakta": "live, full DB",
+        "peak_rss_sacct_max_bytes": 66949525504,
+        "task_peak_rss_max_bytes": 8697308774.4,
+        "cpu_efficiency_median": 0.7847718115370108,
+        "steps": {
+          "terminatornet_plan": {
+            "median_s": 2.65,
+            "peak_rss_max_bytes": 110939340
+          },
+          "genomad": {
+            "median_s": 327.0,
+            "peak_rss_max_bytes": 4939212390
+          },
+          "bakta": {
+            "median_s": 1514.0,
+            "peak_rss_max_bytes": 8697308774
+          },
+          "terminatornet_chunk": {
+            "median_s": 27848.0,
+            "peak_rss_max_bytes": 443023360
+          },
+          "antismash": {
+            "median_s": 66.5,
+            "peak_rss_max_bytes": 977797120
+          },
+          "parse_bakta": {
+            "median_s": 10.45,
+            "peak_rss_max_bytes": 418381824
+          },
+          "uniop_input": {
+            "median_s": 10.149999999999999,
+            "peak_rss_max_bytes": 390804275
+          },
+          "codon_usage": {
+            "median_s": 18.85,
+            "peak_rss_max_bytes": 639736217
+          },
+          "ostir_input": {
+            "median_s": 34.35,
+            "peak_rss_max_bytes": 406323200
+          },
+          "region_layer": {
+            "median_s": 10.65,
+            "peak_rss_max_bytes": 388077977
+          },
+          "transterm_input": {
+            "median_s": 10.6,
+            "peak_rss_max_bytes": 363226726
+          },
+          "promoter_windows": {
+            "median_s": 39.6,
+            "peak_rss_max_bytes": 1181116006
+          },
+          "sixframe_index": {
+            "median_s": 15.350000000000001,
+            "peak_rss_max_bytes": 578394521
+          },
+          "uniop": {
+            "median_s": 15.85,
+            "peak_rss_max_bytes": 150680371
+          },
+          "transtermhp": {
+            "median_s": 27.0,
+            "peak_rss_max_bytes": 38063308
+          },
+          "map_exact": {
+            "median_s": 12.1,
+            "peak_rss_max_bytes": 493984153
+          },
+          "operon_pairs": {
+            "median_s": 39.7,
+            "peak_rss_max_bytes": 396466585
+          },
+          "map_tolerant": {
+            "median_s": 87.5,
+            "peak_rss_max_bytes": 947178700
+          },
+          "promotech": {
+            "median_s": 1496.0,
+            "peak_rss_max_bytes": 8053063680
+          },
+          "promoter_calculator": {
+            "median_s": 36971.0,
+            "peak_rss_max_bytes": 96678707
+          },
+          "placement": {
+            "median_s": 20.950000000000003,
+            "peak_rss_max_bytes": 585524838
+          },
+          "terminatornet_merge": {
+            "median_s": 4.05,
+            "peak_rss_max_bytes": 111358771
+          },
+          "promoter_layer": {
+            "median_s": 30.400000000000002,
+            "peak_rss_max_bytes": 872100659
+          },
+          "loci": {
+            "median_s": 27.950000000000003,
+            "peak_rss_max_bytes": 552809267
+          },
+          "terminator_layer": {
+            "median_s": 28.049999999999997,
+            "peak_rss_max_bytes": 355676979
+          },
+          "variants_step": {
+            "median_s": 67.55,
+            "peak_rss_max_bytes": 1073741824
+          },
+          "ostir": {
+            "median_s": 15.899999999999999,
+            "peak_rss_max_bytes": 400975462
+          },
+          "rbs_layer": {
+            "median_s": 8.9,
+            "peak_rss_max_bytes": 339843481
+          },
+          "tx_layer": {
+            "median_s": 11.45,
+            "peak_rss_max_bytes": 470076620
+          },
+          "context_layers": {
+            "median_s": 27.25,
+            "peak_rss_max_bytes": 669620633
+          },
+          "gene_table": {
+            "median_s": 9.399999999999999,
+            "peak_rss_max_bytes": 537395200
+          },
+          "detectability": {
+            "median_s": 11.0,
+            "peak_rss_max_bytes": 423205273
+          },
+          "novel_candidates": {
+            "median_s": 33.0,
+            "peak_rss_max_bytes": 652319129
+          },
+          "context_stats": {
+            "median_s": 70.45,
+            "peak_rss_max_bytes": 1010827264
+          },
+          "operons_step": {
+            "median_s": 62.0,
+            "peak_rss_max_bytes": 683042406
+          },
+          "function_step": {
+            "median_s": 97.5,
+            "peak_rss_max_bytes": 850290278
+          },
+          "promotech_novel": {
+            "median_s": 193.5,
+            "peak_rss_max_bytes": 8053063680
+          },
+          "ostir_novel": {
+            "median_s": 7.85,
+            "peak_rss_max_bytes": 349175808
+          },
+          "novel_rbs_layer": {
+            "median_s": 7.45,
+            "peak_rss_max_bytes": 359242137
+          },
+          "determinants_step": {
+            "median_s": 662.5,
+            "peak_rss_max_bytes": 4402341478
+          },
+          "novel_promoter_layer": {
+            "median_s": 7.65,
+            "peak_rss_max_bytes": 487482982
+          },
+          "sensitivity": {
+            "median_s": 294.5,
+            "peak_rss_max_bytes": 1181116006
+          },
+          "novel_orfs": {
+            "median_s": 26.05,
+            "peak_rss_max_bytes": 845361971
+          },
+          "plots": {
+            "median_s": 107.5,
+            "peak_rss_max_bytes": 654416281
+          },
+          "report_html": {
+            "median_s": 10.600000000000001,
+            "peak_rss_max_bytes": 602826342
+          }
+        },
+        "estimate_s": 2100,
+        "ratio_to_estimate": 6.3011904761904765,
+        "within_estimate_range": false,
+        "slurm_jobs": [
+          "1916711_0",
+          "1916711_1"
+        ],
+        "commit": "fa49b8f145ea4598a5f896f9d0b1956912fc5df3",
+        "date": "2026-10-31",
+        "inputs_sha256": {
+          "config": "68383efc01bd65d3626c4433fdfaf342bce6466a188218d02475799afff007f1",
+          "genome": "4bfd7163f6f0de6394a2131cbfdbe75100daa55cbee227ec3e403a44640ac03c",
+          "peptides": "3a65981d0b6e809e531f63bdd7d6baff9bc2a9e63755e6fc9863598cc05e8089"
+        },
+        "threads": 16,
+        "mem_mb": 64000,
+        "task_memory": "56.GB",
+        "rounds": 2,
+        "adr": "ADR-0072"
+      },
+      "k12_core": {
+        "median_s": 10873.5,
+        "runs_s": [
+          10896,
+          10851
+        ],
+        "spread": 0.004138501862325838,
+        "noisy": false,
+        "nodes": [
+          "wheat-01",
+          "wheat-01"
+        ],
+        "cpu": "Intel Xeon Gold 6148 (CPU_SKU:6148)",
+        "profile": "farmshare_local,apptainer",
+        "modules": "core",
+        "bakta": "recorded JSON",
+        "peak_rss_sacct_max_bytes": 40659152896,
+        "task_peak_rss_max_bytes": 8053063680.0,
+        "cpu_efficiency_median": 0.8680988857010175,
+        "steps": {
+          "terminatornet_plan": {
+            "median_s": 2.2,
+            "peak_rss_max_bytes": 111463628
+          },
+          "parse_bakta": {
+            "median_s": 7.15,
+            "peak_rss_max_bytes": 412300083
+          },
+          "terminatornet_chunk": {
+            "median_s": 25233.5,
+            "peak_rss_max_bytes": 443128217
+          },
+          "uniop_input": {
+            "median_s": 13.45,
+            "peak_rss_max_bytes": 392901427
+          },
+          "region_layer": {
+            "median_s": 13.05,
+            "peak_rss_max_bytes": 360605286
+          },
+          "promoter_windows": {
+            "median_s": 45.2,
+            "peak_rss_max_bytes": 1288490188
+          },
+          "codon_usage": {
+            "median_s": 22.85,
+            "peak_rss_max_bytes": 635751628
+          },
+          "transterm_input": {
+            "median_s": 11.649999999999999,
+            "peak_rss_max_bytes": 359242137
+          },
+          "ostir_input": {
+            "median_s": 37.9,
+            "peak_rss_max_bytes": 405484339
+          },
+          "sixframe_index": {
+            "median_s": 17.950000000000003,
+            "peak_rss_max_bytes": 577555660
+          },
+          "uniop": {
+            "median_s": 14.1,
+            "peak_rss_max_bytes": 151204659
+          },
+          "transtermhp": {
+            "median_s": 28.0,
+            "peak_rss_max_bytes": 36805017
+          },
+          "map_exact": {
+            "median_s": 14.45,
+            "peak_rss_max_bytes": 510866227
+          },
+          "operon_pairs": {
+            "median_s": 45.0,
+            "peak_rss_max_bytes": 396571443
+          },
+          "map_tolerant": {
+            "median_s": 94.5,
+            "peak_rss_max_bytes": 963536486
+          },
+          "promotech": {
+            "median_s": 1554.0,
+            "peak_rss_max_bytes": 8053063680
+          },
+          "promoter_calculator": {
+            "median_s": 39358.0,
+            "peak_rss_max_bytes": 96783564
+          },
+          "placement": {
+            "median_s": 23.049999999999997,
+            "peak_rss_max_bytes": 582064537
+          },
+          "terminatornet_merge": {
+            "median_s": 5.0,
+            "peak_rss_max_bytes": 114504499
+          },
+          "promoter_layer": {
+            "median_s": 34.05,
+            "peak_rss_max_bytes": 936797798
+          },
+          "terminator_layer": {
+            "median_s": 32.099999999999994,
+            "peak_rss_max_bytes": 355467264
+          },
+          "loci": {
+            "median_s": 29.9,
+            "peak_rss_max_bytes": 562665881
+          },
+          "variants_step": {
+            "median_s": 69.0,
+            "peak_rss_max_bytes": 1073741824
+          },
+          "ostir": {
+            "median_s": 17.1,
+            "peak_rss_max_bytes": 404540620
+          },
+          "rbs_layer": {
+            "median_s": 10.7,
+            "peak_rss_max_bytes": 339424051
+          },
+          "tx_layer": {
+            "median_s": 12.850000000000001,
+            "peak_rss_max_bytes": 434739609
+          },
+          "context_layers": {
+            "median_s": 30.8,
+            "peak_rss_max_bytes": 722154291
+          },
+          "gene_table": {
+            "median_s": 9.5,
+            "peak_rss_max_bytes": 534564044
+          },
+          "detectability": {
+            "median_s": 11.45,
+            "peak_rss_max_bytes": 429287014
+          },
+          "novel_candidates": {
+            "median_s": 33.2,
+            "peak_rss_max_bytes": 656094003
+          },
+          "context_stats": {
+            "median_s": 43.45,
+            "peak_rss_max_bytes": 1011980697
+          },
+          "operons_step": {
+            "median_s": 62.3,
+            "peak_rss_max_bytes": 695310745
+          },
+          "promotech_novel": {
+            "median_s": 188.0,
+            "peak_rss_max_bytes": 8053063680
+          },
+          "ostir_novel": {
+            "median_s": 9.05,
+            "peak_rss_max_bytes": 351692390
+          },
+          "novel_rbs_layer": {
+            "median_s": 8.0,
+            "peak_rss_max_bytes": 355362406
+          },
+          "determinants_step": {
+            "median_s": 728.5,
+            "peak_rss_max_bytes": 4294967296
+          },
+          "novel_promoter_layer": {
+            "median_s": 8.850000000000001,
+            "peak_rss_max_bytes": 532362035
+          },
+          "sensitivity": {
+            "median_s": 225.5,
+            "peak_rss_max_bytes": 773953945
+          },
+          "novel_orfs": {
+            "median_s": 28.0,
+            "peak_rss_max_bytes": 851863142
+          },
+          "plots": {
+            "median_s": 76.0,
+            "peak_rss_max_bytes": 649487974
+          },
+          "report_html": {
+            "median_s": 8.7,
+            "peak_rss_max_bytes": 573571072
+          }
+        },
+        "estimate_s": 1500,
+        "ratio_to_estimate": 7.249,
+        "within_estimate_range": null,
+        "slurm_jobs": [
+          "1916711_0",
+          "1916711_1"
+        ],
+        "commit": "fa49b8f145ea4598a5f896f9d0b1956912fc5df3",
+        "date": "2026-10-31",
+        "inputs_sha256": {
+          "annotation": "54a2015927371e4ccdfe3b7e5d12b87ca5c5647937de946e8d786ea4dfcff4f7",
+          "config": "68383efc01bd65d3626c4433fdfaf342bce6466a188218d02475799afff007f1",
+          "genome": "4bfd7163f6f0de6394a2131cbfdbe75100daa55cbee227ec3e403a44640ac03c",
+          "peptides": "3a65981d0b6e809e531f63bdd7d6baff9bc2a9e63755e6fc9863598cc05e8089"
+        },
+        "threads": 16,
+        "mem_mb": 64000,
+        "task_memory": "56.GB",
+        "rounds": 2,
+        "adr": "ADR-0072"
+      },
+      "sim5m_standard": {
+        "median_s": 13499.5,
+        "runs_s": [
+          14578,
+          12421
+        ],
+        "spread": 0.15978369569243306,
+        "noisy": true,
+        "nodes": [
+          "wheat-01",
+          "wheat-01"
+        ],
+        "cpu": "Intel Xeon Gold 6148 (CPU_SKU:6148)",
+        "profile": "farmshare_local,apptainer",
+        "modules": "core,mobile,bgc,function",
+        "bakta": "live, full DB",
+        "peak_rss_sacct_max_bytes": 66975068160,
+        "task_peak_rss_max_bytes": 9556302233.6,
+        "cpu_efficiency_median": 0.7735797991281301,
+        "steps": {
+          "genomad": {
+            "median_s": 276.0,
+            "peak_rss_max_bytes": 4831838208
+          },
+          "terminatornet_plan": {
+            "median_s": 2.25,
+            "peak_rss_max_bytes": 64277708
+          },
+          "bakta": {
+            "median_s": 1622.5,
+            "peak_rss_max_bytes": 9556302233
+          },
+          "terminatornet_chunk": {
+            "median_s": 25864.0,
+            "peak_rss_max_bytes": 448475955
+          },
+          "antismash": {
+            "median_s": 37.45,
+            "peak_rss_max_bytes": 1395864371
+          },
+          "parse_bakta": {
+            "median_s": 8.45,
+            "peak_rss_max_bytes": 352216678
+          },
+          "uniop_input": {
+            "median_s": 8.05,
+            "peak_rss_max_bytes": 392481996
+          },
+          "codon_usage": {
+            "median_s": 14.3,
+            "peak_rss_max_bytes": 679477248
+          },
+          "transterm_input": {
+            "median_s": 8.0,
+            "peak_rss_max_bytes": 361758720
+          },
+          "promoter_windows": {
+            "median_s": 31.5,
+            "peak_rss_max_bytes": 1181116006
+          },
+          "ostir_input": {
+            "median_s": 29.200000000000003,
+            "peak_rss_max_bytes": 402024038
+          },
+          "sixframe_index": {
+            "median_s": 13.15,
+            "peak_rss_max_bytes": 632396185
+          },
+          "terminatornet_merge": {
+            "median_s": 3.45,
+            "peak_rss_max_bytes": 111568486
+          },
+          "region_layer": {
+            "median_s": 7.8,
+            "peak_rss_max_bytes": 370357043
+          },
+          "transtermhp": {
+            "median_s": 27.5,
+            "peak_rss_max_bytes": 35861299
+          },
+          "uniop": {
+            "median_s": 12.850000000000001,
+            "peak_rss_max_bytes": 151309516
+          },
+          "map_exact": {
+            "median_s": 12.65,
+            "peak_rss_max_bytes": 753821286
+          },
+          "operon_pairs": {
+            "median_s": 37.2,
+            "peak_rss_max_bytes": 396990873
+          },
+          "map_tolerant": {
+            "median_s": 103.5,
+            "peak_rss_max_bytes": 1073741824
+          },
+          "promotech": {
+            "median_s": 1543.4499999999998,
+            "peak_rss_max_bytes": 8053063680
+          },
+          "terminator_layer": {
+            "median_s": 27.299999999999997,
+            "peak_rss_max_bytes": 351692390
+          },
+          "promoter_calculator": {
+            "median_s": 43837.0,
+            "peak_rss_max_bytes": 96783564
+          },
+          "placement": {
+            "median_s": 29.8,
+            "peak_rss_max_bytes": 833408204
+          },
+          "promoter_layer": {
+            "median_s": 33.85,
+            "peak_rss_max_bytes": 913729126
+          },
+          "loci": {
+            "median_s": 69.35,
+            "peak_rss_max_bytes": 967835648
+          },
+          "ostir": {
+            "median_s": 13.399999999999999,
+            "peak_rss_max_bytes": 404960051
+          },
+          "rbs_layer": {
+            "median_s": 8.4,
+            "peak_rss_max_bytes": 339319193
+          },
+          "variants_step": {
+            "median_s": 135.5,
+            "peak_rss_max_bytes": 3221225472
+          },
+          "tx_layer": {
+            "median_s": 9.7,
+            "peak_rss_max_bytes": 432957030
+          },
+          "context_layers": {
+            "median_s": 19.65,
+            "peak_rss_max_bytes": 708313088
+          },
+          "gene_table": {
+            "median_s": 10.55,
+            "peak_rss_max_bytes": 768606208
+          },
+          "detectability": {
+            "median_s": 7.45,
+            "peak_rss_max_bytes": 403387187
+          },
+          "novel_candidates": {
+            "median_s": 20.049999999999997,
+            "peak_rss_max_bytes": 686607564
+          },
+          "context_stats": {
+            "median_s": 21.049999999999997,
+            "peak_rss_max_bytes": 1288490188
+          },
+          "operons_step": {
+            "median_s": 59.9,
+            "peak_rss_max_bytes": 792723456
+          },
+          "function_step": {
+            "median_s": 8.3,
+            "peak_rss_max_bytes": 486329548
+          },
+          "promotech_novel": {
+            "median_s": 41.55,
+            "peak_rss_max_bytes": 7945689497
+          },
+          "ostir_novel": {
+            "median_s": 2.1,
+            "peak_rss_max_bytes": 85458944
+          },
+          "novel_rbs_layer": {
+            "median_s": 10.399999999999999,
+            "peak_rss_max_bytes": 337536614
+          },
+          "determinants_step": {
+            "median_s": 738.5,
+            "peak_rss_max_bytes": 4402341478
+          },
+          "novel_promoter_layer": {
+            "median_s": 6.4,
+            "peak_rss_max_bytes": 370357043
+          },
+          "sensitivity": {
+            "median_s": 274.0,
+            "peak_rss_max_bytes": 839070515
+          },
+          "novel_orfs": {
+            "median_s": 13.3,
+            "peak_rss_max_bytes": 878811545
+          },
+          "plots": {
+            "median_s": 71.5,
+            "peak_rss_max_bytes": 690592153
+          },
+          "report_html": {
+            "median_s": 9.95,
+            "peak_rss_max_bytes": 689438720
+          }
+        },
+        "estimate_s": 2100,
+        "ratio_to_estimate": 6.428333333333334,
+        "within_estimate_range": false,
+        "slurm_jobs": [
+          "1916711_0",
+          "1916711_1"
+        ],
+        "commit": "fa49b8f145ea4598a5f896f9d0b1956912fc5df3",
+        "date": "2026-10-31",
+        "inputs_sha256": {
+          "genome": "4133f1232d079562eb5ba675fbc343dc895b4242d1b52d18a4798a18d3f1b7a8",
+          "peptides": "0889c7e85c3125188b3f28dc6cdcf22bb46053b974aee9f3e4c5290ce7772273"
+        },
+        "threads": 16,
+        "mem_mb": 64000,
+        "task_memory": "56.GB",
+        "rounds": 2,
+        "adr": "ADR-0072"
+      },
+      "sim5m_core": {
+        "median_s": 12545.5,
+        "runs_s": [
+          12146,
+          12945
+        ],
+        "spread": 0.06368817504284405,
+        "noisy": false,
+        "nodes": [
+          "wheat-01",
+          "wheat-01"
+        ],
+        "cpu": "Intel Xeon Gold 6148 (CPU_SKU:6148)",
+        "profile": "farmshare_local,apptainer",
+        "modules": "core",
+        "bakta": "recorded JSON",
+        "peak_rss_sacct_max_bytes": 44235546624,
+        "task_peak_rss_max_bytes": 8053063680.0,
+        "cpu_efficiency_median": 0.8434438475295136,
+        "steps": {
+          "terminatornet_plan": {
+            "median_s": 2.55,
+            "peak_rss_max_bytes": 110834483
+          },
+          "parse_bakta": {
+            "median_s": 7.3,
+            "peak_rss_max_bytes": 391013990
+          },
+          "terminatornet_chunk": {
+            "median_s": 27647.0,
+            "peak_rss_max_bytes": 447951667
+          },
+          "ostir_input": {
+            "median_s": 45.25,
+            "peak_rss_max_bytes": 408210636
+          },
+          "promoter_windows": {
+            "median_s": 45.150000000000006,
+            "peak_rss_max_bytes": 1181116006
+          },
+          "transterm_input": {
+            "median_s": 13.75,
+            "peak_rss_max_bytes": 360080998
+          },
+          "uniop_input": {
+            "median_s": 13.65,
+            "peak_rss_max_bytes": 395942297
+          },
+          "region_layer": {
+            "median_s": 13.45,
+            "peak_rss_max_bytes": 354313830
+          },
+          "codon_usage": {
+            "median_s": 24.05,
+            "peak_rss_max_bytes": 675807232
+          },
+          "sixframe_index": {
+            "median_s": 17.7,
+            "peak_rss_max_bytes": 640365363
+          },
+          "transtermhp": {
+            "median_s": 30.0,
+            "peak_rss_max_bytes": 36490444
+          },
+          "uniop": {
+            "median_s": 13.55,
+            "peak_rss_max_bytes": 150575513
+          },
+          "map_exact": {
+            "median_s": 18.3,
+            "peak_rss_max_bytes": 724461158
+          },
+          "promotech": {
+            "median_s": 1535.5,
+            "peak_rss_max_bytes": 8053063680
+          },
+          "operon_pairs": {
+            "median_s": 40.35,
+            "peak_rss_max_bytes": 400765747
+          },
+          "map_tolerant": {
+            "median_s": 116.5,
+            "peak_rss_max_bytes": 1073741824
+          },
+          "promoter_calculator": {
+            "median_s": 46799.1,
+            "peak_rss_max_bytes": 96993280
+          },
+          "placement": {
+            "median_s": 29.8,
+            "peak_rss_max_bytes": 829213900
+          },
+          "terminatornet_merge": {
+            "median_s": 4.449999999999999,
+            "peak_rss_max_bytes": 113351065
+          },
+          "promoter_layer": {
+            "median_s": 37.599999999999994,
+            "peak_rss_max_bytes": 930506342
+          },
+          "terminator_layer": {
+            "median_s": 31.6,
+            "peak_rss_max_bytes": 352740966
+          },
+          "loci": {
+            "median_s": 79.5,
+            "peak_rss_max_bytes": 935854080
+          },
+          "variants_step": {
+            "median_s": 163.0,
+            "peak_rss_max_bytes": 3221225472
+          },
+          "ostir": {
+            "median_s": 14.850000000000001,
+            "peak_rss_max_bytes": 404750336
+          },
+          "rbs_layer": {
+            "median_s": 8.05,
+            "peak_rss_max_bytes": 339004620
+          },
+          "tx_layer": {
+            "median_s": 12.15,
+            "peak_rss_max_bytes": 493984153
+          },
+          "context_layers": {
+            "median_s": 25.700000000000003,
+            "peak_rss_max_bytes": 661336883
+          },
+          "gene_table": {
+            "median_s": 12.850000000000001,
+            "peak_rss_max_bytes": 744593817
+          },
+          "detectability": {
+            "median_s": 9.25,
+            "peak_rss_max_bytes": 408000921
+          },
+          "novel_candidates": {
+            "median_s": 26.5,
+            "peak_rss_max_bytes": 681993830
+          },
+          "context_stats": {
+            "median_s": 31.35,
+            "peak_rss_max_bytes": 1288490188
+          },
+          "operons_step": {
+            "median_s": 63.5,
+            "peak_rss_max_bytes": 764936192
+          },
+          "promotech_novel": {
+            "median_s": 33.3,
+            "peak_rss_max_bytes": 7945689497
+          },
+          "ostir_novel": {
+            "median_s": 2.0,
+            "peak_rss_max_bytes": 84620083
+          },
+          "novel_rbs_layer": {
+            "median_s": 12.2,
+            "peak_rss_max_bytes": 337956044
+          },
+          "determinants_step": {
+            "median_s": 933.5,
+            "peak_rss_max_bytes": 4402341478
+          },
+          "novel_promoter_layer": {
+            "median_s": 6.05,
+            "peak_rss_max_bytes": 369937612
+          },
+          "sensitivity": {
+            "median_s": 317.0,
+            "peak_rss_max_bytes": 829947904
+          },
+          "novel_orfs": {
+            "median_s": 14.55,
+            "peak_rss_max_bytes": 876399820
+          },
+          "plots": {
+            "median_s": 75.0,
+            "peak_rss_max_bytes": 687656140
+          },
+          "report_html": {
+            "median_s": 10.350000000000001,
+            "peak_rss_max_bytes": 684929843
+          }
+        },
+        "estimate_s": 1500,
+        "ratio_to_estimate": 8.363666666666667,
+        "within_estimate_range": null,
+        "slurm_jobs": [
+          "1916711_0",
+          "1916711_1"
+        ],
+        "commit": "fa49b8f145ea4598a5f896f9d0b1956912fc5df3",
+        "date": "2026-10-31",
+        "inputs_sha256": {
+          "annotation": "eb542cf924a442fa513c488374086639ee68bf7c96a4cace7dbe35a2d4e4dc5e",
+          "genome": "4133f1232d079562eb5ba675fbc343dc895b4242d1b52d18a4798a18d3f1b7a8",
+          "peptides": "0889c7e85c3125188b3f28dc6cdcf22bb46053b974aee9f3e4c5290ce7772273"
+        },
+        "threads": 16,
+        "mem_mb": 64000,
+        "task_memory": "56.GB",
+        "rounds": 2,
+        "adr": "ADR-0072"
+      }
+    }
   }
 }

@@ -846,6 +846,12 @@ The table of jobs is `$GIPPA_ROOT/runs/ostir390/JOBS.tsv`. Rule set A was re-app
 with `--expect-commit 8b6e93d4`, and each verdict is in that pass's attempts table. Every rerun
 completed with exit 0.
 
+## Pilot report (M10-15)
+
+Freeze commit F: `fa49b8f145ea4598a5f896f9d0b1956912fc5df3`. Report: [`REPORT.md`](REPORT.md), sha256
+`1bedca51b57e39fdb14e9f8438b0a6ef7cf515107aa7b0a38d1d4aa66e962191`. Review packet: round r1, `$GIPPA_ROOT/review/m10-pilot/r1/`
+(gitignored, because it holds per-gene HTML). The verdict is recorded in `PROGRESS.md` › Gate M10.
+
 ## Running the pilot (§15.2 steps 4-9)
 
 Every step is a batch job; nothing runs on a login node or in the session allocation.

@@ -245,6 +245,22 @@ All notable changes are recorded here by towncrier from `changelog.d/` fragments
     - the V4 locus browser (igv-reports) and the V9 mass-fraction treemap are not built, so 16
       plots are made instead of 18;
     - no RO-Crate export;
+    - mapping attack `flat_c200` (a flat contaminant weight) reads FDP 0.015 at q 0.01, over its
+      bound; the contaminant weight is not decided (gate M3 not met).
+    - variant calling: G1 (F1 on simulated variants) and A6a were last measured at the release
+      commit on the scope before ADR-0049 (G1 0.869, below 0.9); the accepted scope has not been
+      rerun at that commit (gate M7 not met).
+    - six-frame novel ORFs: In the only real six-frame search so far (one *E. coli* Nissle 1917
+      strain, three runs), GIPPA called no novel ORFs, but this does not show the strain has none:
+      each ORF class had only 8 to 64 candidates that beat their decoys, and a class needs at least
+      100 such candidates ranked above every decoy before any ORF can reach q ≤ 0.01, so no call was possible. Decoy wins also outnumbered target wins in every class, and
+      the lowest q reached was 0.125 to 0.50 by class. The first segment of the known gene *prfB* had the
+      best peptide score in its class and was still not called (q = 0.25), and this route's error
+      rate has been measured only on simulated data.
+    - runtime: a standard K-12 run on 16 threads and 64 GB takes about 3-4 h on FarmShare, not the
+      16-55 min first estimated; see the
+      [runtimes page](https://github.com/khoa-yelo/gippa/blob/main/docs/user-guide/runtimes.md) and
+      [ADR-0072](https://github.com/khoa-yelo/gippa/blob/main/docs/adr/ADR-0072-benchmark-baseline-1-0-0.md);
     - mapping FDR: on a same-database search (`--search-db same`) exact matches are exempt from
       decoy estimation, so GIPPA adds no estimate of identification error; it comes from your
       search engine. The pilot's mapping FDR on arm A2 was therefore not measured, and the release

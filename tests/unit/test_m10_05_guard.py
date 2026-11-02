@@ -74,7 +74,8 @@ def test_tracked_aggregates_hold_no_peptide_like_string() -> None:
     for p in _tracked("validation/pilot/"):
         if PurePosixPath(p).name in AGGREGATES or fnmatch.fnmatchcase(p, "validation/pilot/*/*.md"):
             text = (REPO / p).read_text(encoding="utf-8")
-            if m := PEPTIDE_LIKE.search(text):
+            # Slurm's COMPLETED holds a 7-letter run of amino-acid codes; only that word is exempt
+            if m := PEPTIDE_LIKE.search(text.replace("COMPLETED", "")):
                 hits.append((p, m.start()))
     assert not hits, f"peptide-like strings in committed aggregates: {hits}"
 

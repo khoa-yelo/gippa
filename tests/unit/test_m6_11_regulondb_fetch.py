@@ -387,14 +387,14 @@ def test_main_is_idempotent_and_appends_the_second_date(
     class _Later(dt.datetime):
         @classmethod
         def now(cls, tz: dt.tzinfo | None = None) -> dt.datetime:
-            return dt.datetime(2026, 11, 2, 9, 0, 0, tzinfo=tz)
+            return dt.datetime(2099, 1, 2, 9, 0, 0, tzinfo=tz)  # never today
 
     monkeypatch.setattr(fr.dt, "datetime", _Later)
     assert fr.main() == 0
     second = json.loads((out / "provenance.json").read_text())
 
     assert [f["sha256"] for f in first["files"]] == [f["sha256"] for f in second["files"]]
-    assert second["retrieved_dates"] == [first["retrieved"], "2026-11-02"]
+    assert second["retrieved_dates"] == [first["retrieved"], "2099-01-02"]
 
 
 def test_main_fails_without_gippa_data_dir(

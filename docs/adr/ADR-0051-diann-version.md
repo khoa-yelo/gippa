@@ -1,5 +1,5 @@
 # ADR-0051: DIA-NN 2.3.1 Academia (Apptainer image) instead of the spec's 2.7.0
-- Status: proposed
+- Status: accepted-by-khoa (2026-11-02, in session: "0051, 0060, 0065; 0048 later (Recommended)")
 - Date: 2026-10-23
 - Spec sections: §15.1 (arms A1, A2: "DIA-NN 2.7.0"), §15.2 steps 3, 5 and 7 and the DIA-NN template, §3.3 (`GIPPA_TOOLS_DIR`), §3.6 (`needs_diann`: "DIA-NN 2.7.0 under `$GIPPA_TOOLS_DIR`"), §14.8 item 6, §0.1 item 4, §17 rows on DIA-NN; R5, R6, R11, R13
 - Needs Khoa: yes. This changes a dependency version and the way it is installed (§14.8 items 1 and 6). It writes down Khoa's 2026-10-20 acceptance of the M3-24 README and does not replace it.

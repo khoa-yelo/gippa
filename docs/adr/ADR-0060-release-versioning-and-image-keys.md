@@ -1,5 +1,5 @@
 # ADR-0060: Release versioning and immutable, content-addressed tool images
-- Status: proposed
+- Status: accepted-by-khoa (2026-11-02, in session: "0051, 0060, 0065; 0048 later (Recommended)")
 - Date: 2026-10-25
 - Spec sections: §3 (Containers row), §6.3, §9.2 Versioning row, §12 (`containers.yml`, `release.yml`, Releases), §14.6, §14.8 item 5, §3.10; R5, R6, R11; ADR-0008, ADR-0022, ADR-0059; M11-06, M11-13, M11-14
 - Needs Khoa: yes (release policy, GHCR publishing and retention, rc channel; Q-K13–Q-K19 of M11-14)

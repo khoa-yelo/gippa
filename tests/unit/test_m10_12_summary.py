@@ -24,7 +24,6 @@ import functools
 import importlib.util
 import json
 import re
-import shutil
 import subprocess
 import sys
 from pathlib import Path
@@ -425,7 +424,9 @@ def _cells(summary: dict[str, Any]) -> dict[str, dict[str, Any]]:
 @pytest.fixture
 def baseline(tmp_path: Path) -> Path:
     p = tmp_path / "baseline.json"
-    shutil.copyfile(BASELINE, p)
+    data = json.loads(BASELINE.read_text())
+    data.pop("standard_run", None)  # these tests write their own entries
+    p.write_text(json.dumps(data, indent=2, ensure_ascii=False) + "\n")
     return p
 
 

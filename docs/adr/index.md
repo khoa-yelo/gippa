@@ -52,7 +52,7 @@
 - [ADR-0048: Replicate counts for the 1-Mb novel-ORF gate (M7-13 G3/G4)](ADR-0048-replicates-novel-orfs-gate.md): proposed
 - [ADR-0049: M7 variant-call precision under de novo errors (G1, A6a, A6b, A6c)](ADR-0049-m7-variant-precision.md): accepted-by-khoa (2026-10-23)
 - [ADR-0050: ORF-level q in the de novo subgroup regime under exact systematic errors (G4-k3, attack GC)](ADR-0050-denovo-orf-q-exact-errors.md): accepted-by-khoa (2026-10-23)
-- [ADR-0051: DIA-NN 2.3.1 Academia (Apptainer image) instead of the spec's 2.7.0](ADR-0051-diann-version.md): proposed
+- [ADR-0051: DIA-NN 2.3.1 Academia (Apptainer image) instead of the spec's 2.7.0](ADR-0051-diann-version.md): accepted-by-khoa (2026-11-02, in session: "0051, 0060, 0065; 0048 later (Recommended)")
 - [ADR-0052: PR CI under 20 minutes; calibration, integration and coverage move to the nightly](ADR-0052-pr-ci-under-20-minutes.md): accepted-by-khoa (2026-10-23)
 - [ADR-0053: Bit-identical speed-ups of the determinants step; two new benchmark baselines](ADR-0053-determinants-bit-identical-speedups.md): proposed
 - [ADR-0054: External artefacts of the A3 de novo arm (ADR-M10-B): conversion route, TDF-SDK licence, Cascadia weights host, Unimod table](ADR-0054-a3-external-artefacts.md): accepted-by-khoa (2026-10-24, in session: "go with your recommendation": Bruker TDF-SDK accepted for route B2; `cascadia.ckpt` allowed from the authors' Drive folder with its sha256 pinned; the ProteoWizard route not accepted)
@@ -61,15 +61,16 @@
 - [ADR-0057: the calibration merge honours the xfail mark of the test that owns a check](ADR-0057-calibration-merge-honours-strict-xfail.md): accepted-by-khoa (2026-10-24, in session: "Yes and yes", to "should the merge step honour expected-failure marks?")
 - [ADR-0058: The tolerant matcher may consume an annotated stop codon (option B of M7-16)](ADR-0058-annotated-stop-substitution.md): accepted-by-khoa (2026-10-24, in session: "B")
 - [ADR-0059: Bare image references in `containers.config` (no `docker://` prefix)](ADR-0059-bare-image-refs.md): proposed
-- [ADR-0060: Release versioning and immutable, content-addressed tool images](ADR-0060-release-versioning-and-image-keys.md): proposed
+- [ADR-0060: Release versioning and immutable, content-addressed tool images](ADR-0060-release-versioning-and-image-keys.md): accepted-by-khoa (2026-11-02, in session: "0051, 0060, 0065; 0048 later (Recommended)")
 - [ADR-0061: Scope of the TU-blocked claims under the distance-model operon fallback](ADR-0061-distance-model-fallback-scope.md): accepted-by-khoa (2026-10-26, in session: "I approve", Q-K28)
 - [ADR-0062: TerminatorNet gets the process_high CPUs; Promotech gets 2 CPUs and 10 GB](ADR-0062-terminatornet-promotech-resources.md): proposed
 - [ADR-0063: The determinants null on worker processes and partial dependence on threads; one new benchmark baseline](ADR-0063-determinants-null-processes-pd-threads.md): proposed
 - [ADR-0064: Rename GIAP to GIPPA](ADR-0064-rename-giap-to-gippa.md): accepted-by-khoa (2026-10-27, in session, Q-K31: accept as proposed; rename all output names now; one-off PR-size exception granted; Khoa-only steps handed over when the rename PR is ready)
-- [ADR-0065: GIPPA step images `<pkg>-step` and `<pkg>-step-r`, tagged `<version>`](ADR-0065-gippa-step-images.md): proposed (Q-K39; lead default: accept)
+- [ADR-0065: GIPPA step images `<pkg>-step` and `<pkg>-step-r`, tagged `<version>`](ADR-0065-gippa-step-images.md): accepted-by-khoa (2026-11-02, in session: "0051, 0060, 0065; 0048 later (Recommended)")
 - [ADR-0066: `gippa demo` runs the developer-only local executor on bundled layers](ADR-0066-demo-local-executor.md): proposed (lead; Khoa approved M11-15 wave 1 for 1.0, Q-K44)
 - [ADR-0067: Genetic codes 4, 11 and 25](ADR-0067-genetic-codes-4-11-25.md): accepted-by-khoa (Accepted by Khoa, 2026-10-28, relayed by the lead; supports codes 4 and 25 alongside 11, superseding Q-K30; Bakta gets `--translation-table` only at 4 and 25)
 - [ADR-0068: Initiator methionine at annotated non-ATG starts](ADR-0068-initiator-methionine-non-atg-starts.md): accepted-by-khoa (Accepted by Khoa, 2026-10-28, in session, Q-K56: "Yes")
 - [ADR-0069: A second official source for the Promotech RF-HOT model (GitHub LFS fallback)](ADR-0069-promotech-model-github-lfs-fallback.md): accepted-by-khoa (2026-10-30, in session: "Accept as fallback")
 - [ADR-0070: 1.0.0 ships with TE4's rplL/rplJ pair failing on the pilot](ADR-0070-te4-rplL-rplJ-waiver-1-0-0.md): accepted-by-khoa (2026-10-31, in session: "waive it")
 - [ADR-0071: 1.0.0 ships without a measured mapping FDR on pilot arm A2](ADR-0071-r2-mapping-fdr-waiver-1-0-0.md): accepted-by-khoa (2026-10-31, in session: "Waive and disclose (Recommended)")
+- [ADR-0072: The 1.0.0 benchmark: two repeats, measured runtimes, and the §13.2 range waived](ADR-0072-benchmark-baseline-1-0-0.md): accepted-by-khoa (2026-10-31 and 2026-11-01, in session: "Accept measured runtime (Recommended)"; "Cut repeat 3")
