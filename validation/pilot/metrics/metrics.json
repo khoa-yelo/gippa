@@ -1,0 +1,3052 @@
+{
+  "checklist": [
+    {
+      "bullet": "GIPPA runs end to end on A1, A2 and A3",
+      "evidence": "metrics.json \u203a evidence.exit_codes; reproduce.md \u203a Evidence",
+      "status": "pass"
+    },
+    {
+      "bullet": ">= 99.5 % of A2 peptides map exactly (TE1)",
+      "evidence": "metrics.json \u203a te1.share_exact_inframe, te1.passed",
+      "status": "pass"
+    },
+    {
+      "bullet": "A1 and A2 detections and abundances are compared",
+      "evidence": "metrics.json \u203a m4, m5",
+      "status": "pass"
+    },
+    {
+      "bullet": "Measured runtimes replace the estimates",
+      "evidence": "baseline.json \u203a standard_run.wheat.{k12_standard,k12_core,sim5m_standard,sim5m_core}.median_s; ADR-0072-benchmark-baseline-1-0-0 accepted-by-khoa; docs/user-guide/runtimes.md",
+      "status": "pass"
+    },
+    {
+      "bullet": "TE2-TE5 are reported; failures explained",
+      "evidence": "metrics.json \u203a te_real.te2-te5.status; TE4 not passed: report_notes.md \u203a Diagnosis: TE4",
+      "status": "reported (1 not passed, explained)"
+    }
+  ],
+  "evidence": {
+    "a3_feasibility": {
+      "reason": null,
+      "verdict": "pass"
+    },
+    "benchmark": {
+      "adr": "ADR-0072-benchmark-baseline-1-0-0",
+      "adr_status": "accepted-by-khoa",
+      "cells": {
+        "k12_core": {
+          "commit": "fa49b8f145ea4598a5f896f9d0b1956912fc5df3",
+          "cpu": "Intel Xeon Gold 6148 (CPU_SKU:6148)",
+          "median_s": 10873.5
+        },
+        "k12_standard": {
+          "commit": "fa49b8f145ea4598a5f896f9d0b1956912fc5df3",
+          "cpu": "Intel Xeon Gold 6148 (CPU_SKU:6148)",
+          "median_s": 13232.5
+        },
+        "sim5m_core": {
+          "commit": "fa49b8f145ea4598a5f896f9d0b1956912fc5df3",
+          "cpu": "Intel Xeon Gold 6148 (CPU_SKU:6148)",
+          "median_s": 12545.5
+        },
+        "sim5m_standard": {
+          "commit": "fa49b8f145ea4598a5f896f9d0b1956912fc5df3",
+          "cpu": "Intel Xeon Gold 6148 (CPU_SKU:6148)",
+          "median_s": 13499.5
+        }
+      },
+      "incomplete": []
+    },
+    "exit_codes": {
+      "A1": 0,
+      "A2": 0,
+      "A3": 0
+    },
+    "runbook": {
+      "a3_branch": null,
+      "freeze_commit": null,
+      "reason": "pending (render --final --runbook)",
+      "status": null
+    }
+  },
+  "gippa_commit": "fa49b8f145ea4598a5f896f9d0b1956912fc5df3",
+  "h1": {
+    "b": 417,
+    "b_tu": 275,
+    "c": 33,
+    "c_tu": 31,
+    "coverage_diff": 0.08196371398078975,
+    "failed_clauses": [
+      "mostly"
+    ],
+    "mixed_tu": 1,
+    "mostly": {
+      "ci_high": 0.2981000992827279,
+      "ci_low": 0.2147805931888202,
+      "k": 106,
+      "n": 417,
+      "value": 0.2541966426858513
+    },
+    "mostly_base_rate": {
+      "ci_high": 0.0937243155927705,
+      "ci_low": 0.07771280077816156,
+      "k": 400,
+      "n": 4685,
+      "value": 0.08537886872998933
+    },
+    "n_genes": 4685,
+    "p_gene": 4.646636057980401e-86,
+    "p_tu": 2.4866492906738706e-50,
+    "prop_a2_only": {
+      "ci_high": 0.9473088836594662,
+      "ci_low": 0.8988015642441322,
+      "k": 417,
+      "n": 450,
+      "value": 0.9266666666666666
+    },
+    "strain_specific_share": {
+      "ci_high": 0.7986785818388008,
+      "ci_low": 0.7169550266181458,
+      "k": 317,
+      "n": 417,
+      "value": 0.7601918465227818
+    },
+    "unit_effect": {
+      "ci_high": 0.9277087180694124,
+      "ci_low": 0.859790801616245,
+      "k": 275,
+      "n": 306,
+      "value": 0.8986928104575164
+    },
+    "verdict": "not_supported",
+    "warnings": []
+  },
+  "h3": {
+    "criteria": {
+      "enriched_categories": {
+        "jaccard": 0.562771,
+        "n_a": 437,
+        "n_b": 285,
+        "n_shared": 260,
+        "status": "holds",
+        "union": 462
+      },
+      "islands": {
+        "jaccard": null,
+        "n_a": 0,
+        "n_b": 0,
+        "n_shared": 0,
+        "status": "not_evaluable",
+        "union": 0
+      },
+      "operon_flags": {
+        "jaccard": null,
+        "n_a": 0,
+        "n_b": 0,
+        "n_shared": 0,
+        "status": "not_evaluable",
+        "union": 0
+      },
+      "rho": {
+        "ci_high": 0.982577,
+        "ci_low": 0.973089,
+        "rho": 0.978429,
+        "status": "holds"
+      }
+    },
+    "region_tests": "not compared in pass 1",
+    "verdict": "supported"
+  },
+  "h4": {
+    "B": 10,
+    "a2_contaminant_rows": {
+      "ci_high": 0.002746235838213108,
+      "ci_low": 0.002106981435016036,
+      "k": 218,
+      "n": 90625,
+      "value": 0.0024055172413793104
+    },
+    "bins": [
+      {
+        "L_b": {
+          "ci_high": 0.3422214104732396,
+          "ci_low": 0.19626675526812928,
+          "k": 36,
+          "n": 137,
+          "value": 0.26277372262773724
+        },
+        "L_b_adj": {
+          "ci_high": 0.37912770580487043,
+          "ci_low": 0.1722233993719804,
+          "k": 36,
+          "level": 0.995,
+          "n": 137,
+          "value": 0.26277372262773724
+        },
+        "L_b_searchable": {
+          "ci_high": 1.0,
+          "ci_low": 0.9035813714055363,
+          "k": 36,
+          "label": "descriptive",
+          "n": 36,
+          "value": 1.0
+        },
+        "U_b": 0.39741599406441125,
+        "genome": {
+          "c_value": 0.997842,
+          "ci_high": 0.365786,
+          "ci_low": 0.219449,
+          "flags": [],
+          "precision": 0.2926
+        },
+        "k_b": 36,
+        "n_b": 137,
+        "nested_share": {
+          "ci_high": 0.06240139108103243,
+          "ci_low": 0.007474758336188016,
+          "k": 3,
+          "n": 137,
+          "value": 0.021897810218978103
+        },
+        "relation_95": "consistent",
+        "relation_adj": "consistent",
+        "reportable": true,
+        "score_bin": 0
+      },
+      {
+        "L_b": {
+          "ci_high": 0.44379425893670404,
+          "ci_low": 0.2844694454006204,
+          "k": 49,
+          "n": 136,
+          "value": 0.3602941176470588
+        },
+        "L_b_adj": {
+          "ci_high": 0.4805536393514481,
+          "ci_low": 0.2553363503793412,
+          "k": 49,
+          "level": 0.995,
+          "n": 136,
+          "value": 0.3602941176470588
+        },
+        "L_b_searchable": {
+          "ci_high": 1.0,
+          "ci_low": 0.9273021807795035,
+          "k": 49,
+          "label": "descriptive",
+          "n": 49,
+          "value": 1.0
+        },
+        "U_b": 0.47057920217012533,
+        "genome": {
+          "c_value": 0.99784,
+          "ci_high": 0.434757,
+          "ci_low": 0.276844,
+          "flags": [],
+          "precision": 0.351871
+        },
+        "k_b": 49,
+        "n_b": 136,
+        "nested_share": {
+          "ci_high": 0.027470099733582408,
+          "ci_low": 0.0,
+          "k": 0,
+          "n": 136,
+          "value": 0.0
+        },
+        "relation_95": "consistent",
+        "relation_adj": "consistent",
+        "reportable": true,
+        "score_bin": 1
+      },
+      {
+        "L_b": {
+          "ci_high": 0.4587462481070767,
+          "ci_low": 0.2981212768263188,
+          "k": 51,
+          "n": 136,
+          "value": 0.375
+        },
+        "L_b_adj": {
+          "ci_high": 0.49534536487473757,
+          "ci_low": 0.26834567856860025,
+          "k": 51,
+          "level": 0.995,
+          "n": 136,
+          "value": 0.375
+        },
+        "L_b_searchable": {
+          "ci_high": 1.0,
+          "ci_low": 0.9299533801014687,
+          "k": 51,
+          "label": "descriptive",
+          "n": 51,
+          "value": 1.0
+        },
+        "U_b": 0.5080905708908721,
+        "genome": {
+          "c_value": 0.997823,
+          "ci_high": 0.474103,
+          "ci_low": 0.31158,
+          "flags": [],
+          "precision": 0.395462
+        },
+        "k_b": 51,
+        "n_b": 136,
+        "nested_share": {
+          "ci_high": 0.04047285399552214,
+          "ci_low": 0.001299156036095813,
+          "k": 1,
+          "n": 136,
+          "value": 0.007352941176470588
+        },
+        "relation_95": "consistent",
+        "relation_adj": "consistent",
+        "reportable": true,
+        "score_bin": 2
+      },
+      {
+        "L_b": {
+          "ci_high": 0.5576202554089548,
+          "ci_low": 0.39267847013242335,
+          "k": 65,
+          "n": 137,
+          "value": 0.4744525547445255
+        },
+        "L_b_adj": {
+          "ci_high": 0.5923021820523934,
+          "ci_low": 0.3593817831204982,
+          "k": 65,
+          "level": 0.995,
+          "n": 137,
+          "value": 0.4744525547445255
+        },
+        "L_b_searchable": {
+          "ci_high": 1.0,
+          "ci_low": 0.9441984686771432,
+          "k": 65,
+          "label": "descriptive",
+          "n": 65,
+          "value": 1.0
+        },
+        "U_b": 0.6127383616853472,
+        "genome": {
+          "c_value": 0.997835,
+          "ci_high": 0.577956,
+          "ci_low": 0.409687,
+          "flags": [],
+          "precision": 0.497476
+        },
+        "k_b": 65,
+        "n_b": 137,
+        "nested_share": {
+          "ci_high": 0.027275057024116055,
+          "ci_low": 0.0,
+          "k": 0,
+          "n": 137,
+          "value": 0.0
+        },
+        "relation_95": "consistent",
+        "relation_adj": "consistent",
+        "reportable": true,
+        "score_bin": 3
+      },
+      {
+        "L_b": {
+          "ci_high": 0.6042449266376544,
+          "ci_low": 0.43866080425645243,
+          "k": 71,
+          "n": 136,
+          "value": 0.5220588235294118
+        },
+        "L_b_adj": {
+          "ci_high": 0.6377518381646159,
+          "ci_low": 0.4039497424042069,
+          "k": 71,
+          "level": 0.995,
+          "n": 136,
+          "value": 0.5220588235294118
+        },
+        "L_b_searchable": {
+          "ci_high": 1.0,
+          "ci_low": 0.9486720478031097,
+          "k": 71,
+          "label": "descriptive",
+          "n": 71,
+          "value": 1.0
+        },
+        "U_b": 0.6572553792136168,
+        "genome": {
+          "c_value": 0.99782,
+          "ci_high": 0.619038,
+          "ci_low": 0.445827,
+          "flags": [],
+          "precision": 0.53061
+        },
+        "k_b": 71,
+        "n_b": 136,
+        "nested_share": {
+          "ci_high": 0.06284590531741366,
+          "ci_low": 0.007529925310275402,
+          "k": 3,
+          "n": 136,
+          "value": 0.022058823529411766
+        },
+        "relation_95": "consistent",
+        "relation_adj": "consistent",
+        "reportable": true,
+        "score_bin": 4
+      },
+      {
+        "L_b": {
+          "ci_high": 0.5900127710859894,
+          "ci_low": 0.42428913921204614,
+          "k": 69,
+          "n": 136,
+          "value": 0.5073529411764706
+        },
+        "L_b_adj": {
+          "ci_high": 0.6239470357208392,
+          "ci_low": 0.389953491135435,
+          "k": 69,
+          "level": 0.995,
+          "n": 136,
+          "value": 0.5073529411764706
+        },
+        "L_b_searchable": {
+          "ci_high": 1.0,
+          "ci_low": 0.9472627418109483,
+          "k": 69,
+          "label": "descriptive",
+          "n": 69,
+          "value": 1.0
+        },
+        "U_b": 0.6508652381606563,
+        "genome": {
+          "c_value": 0.997786,
+          "ci_high": 0.613587,
+          "ci_low": 0.434884,
+          "flags": [],
+          "precision": 0.527332
+        },
+        "k_b": 69,
+        "n_b": 136,
+        "nested_share": {
+          "ci_high": 0.0520317288659177,
+          "ci_low": 0.004042191463735811,
+          "k": 2,
+          "n": 136,
+          "value": 0.014705882352941176
+        },
+        "relation_95": "consistent",
+        "relation_adj": "consistent",
+        "reportable": true,
+        "score_bin": 5
+      },
+      {
+        "L_b": {
+          "ci_high": 0.7109459116411366,
+          "ci_low": 0.5517608247830071,
+          "k": 87,
+          "n": 137,
+          "value": 0.635036496350365
+        },
+        "L_b_adj": {
+          "ci_high": 0.7402035146104499,
+          "ci_low": 0.5151812409042659,
+          "k": 87,
+          "level": 0.995,
+          "n": 137,
+          "value": 0.635036496350365
+        },
+        "L_b_searchable": {
+          "ci_high": 1.0,
+          "ci_low": 0.9577124930558795,
+          "k": 87,
+          "label": "descriptive",
+          "n": 87,
+          "value": 1.0
+        },
+        "U_b": 0.7558851894043449,
+        "genome": {
+          "c_value": 0.997766,
+          "ci_high": 0.724266,
+          "ci_low": 0.570624,
+          "flags": [],
+          "precision": 0.651105
+        },
+        "k_b": 87,
+        "n_b": 137,
+        "nested_share": {
+          "ci_high": 0.027275057024116055,
+          "ci_low": 0.0,
+          "k": 0,
+          "n": 137,
+          "value": 0.0
+        },
+        "relation_95": "consistent",
+        "relation_adj": "consistent",
+        "reportable": true,
+        "score_bin": 6
+      },
+      {
+        "L_b": {
+          "ci_high": 0.7693290671143069,
+          "ci_low": 0.6168225109326528,
+          "k": 95,
+          "n": 136,
+          "value": 0.6985294117647058
+        },
+        "L_b_adj": {
+          "ci_high": 0.7955958876483691,
+          "ci_low": 0.5797183374710353,
+          "k": 95,
+          "level": 0.995,
+          "n": 136,
+          "value": 0.6985294117647058
+        },
+        "L_b_searchable": {
+          "ci_high": 1.0,
+          "ci_low": 0.9611351464605271,
+          "k": 95,
+          "label": "descriptive",
+          "n": 95,
+          "value": 1.0
+        },
+        "U_b": 0.8348646341151282,
+        "genome": {
+          "c_value": 0.997736,
+          "ci_high": 0.80227,
+          "ci_low": 0.648491,
+          "flags": [],
+          "precision": 0.726852
+        },
+        "k_b": 95,
+        "n_b": 136,
+        "nested_share": {
+          "ci_high": 0.0520317288659177,
+          "ci_low": 0.004042191463735811,
+          "k": 2,
+          "n": 136,
+          "value": 0.014705882352941176
+        },
+        "relation_95": "consistent",
+        "relation_adj": "consistent",
+        "reportable": true,
+        "score_bin": 7
+      },
+      {
+        "L_b": {
+          "ci_high": 0.7825627403936342,
+          "ci_low": 0.6321926582493969,
+          "k": 97,
+          "n": 136,
+          "value": 0.7132352941176471
+        },
+        "L_b_adj": {
+          "ci_high": 0.8080345051087379,
+          "ci_low": 0.5950807737232151,
+          "k": 97,
+          "level": 0.995,
+          "n": 136,
+          "value": 0.7132352941176471
+        },
+        "L_b_searchable": {
+          "ci_high": 1.0,
+          "ci_low": 0.9619059574740523,
+          "k": 97,
+          "label": "descriptive",
+          "n": 97,
+          "value": 1.0
+        },
+        "U_b": 0.8467580253071108,
+        "genome": {
+          "c_value": 0.997757,
+          "ci_high": 0.818079,
+          "ci_low": 0.677987,
+          "flags": [],
+          "precision": 0.751721
+        },
+        "k_b": 97,
+        "n_b": 136,
+        "nested_share": {
+          "ci_high": 0.06284590531741366,
+          "ci_low": 0.007529925310275402,
+          "k": 3,
+          "n": 136,
+          "value": 0.022058823529411766
+        },
+        "relation_95": "consistent",
+        "relation_adj": "consistent",
+        "reportable": true,
+        "score_bin": 8
+      },
+      {
+        "L_b": {
+          "ci_high": 0.9268209723481061,
+          "ci_low": 0.818698144531221,
+          "k": 121,
+          "n": 137,
+          "value": 0.8832116788321168
+        },
+        "L_b_adj": {
+          "ci_high": 0.9401149326068972,
+          "ci_low": 0.784625589799729,
+          "k": 121,
+          "level": 0.995,
+          "n": 137,
+          "value": 0.8832116788321168
+        },
+        "L_b_searchable": {
+          "ci_high": 1.0,
+          "ci_low": 0.9692293020525218,
+          "k": 121,
+          "label": "descriptive",
+          "n": 121,
+          "value": 1.0
+        },
+        "U_b": 0.9659449347126259,
+        "genome": {
+          "c_value": 0.997703,
+          "ci_high": 0.943801,
+          "ci_low": 0.834041,
+          "flags": [],
+          "precision": 0.892564
+        },
+        "k_b": 121,
+        "n_b": 137,
+        "nested_share": {
+          "ci_high": 0.08258888741670851,
+          "ci_low": 0.01568799026258154,
+          "k": 5,
+          "n": 137,
+          "value": 0.0364963503649635
+        },
+        "relation_95": "consistent",
+        "relation_adj": "consistent",
+        "reportable": true,
+        "score_bin": 9
+      }
+    ],
+    "c_assumed": false,
+    "caveats": [
+      "The score bins span the de novo scores of (0.8, 1] only (Cascadia's reported range).",
+      "c_value comes from A2's own exact matches and the confirmations from A2's identifications, so A2 enters both sides: a shared dependence, not an independent check.",
+      "Class error rates of A3's ALT calls are unestimated (no spectrum pairing).",
+      "Dependent rows: nested or overlapping de novo peptides of one locus share correctness, so the genome bin CI can be too narrow and a not_supported can come from that undercoverage; nested_share shows how clustered each bin is.",
+      "Contaminant rows count in c_value (they never match the genome), which biases the genome precision up and lowers the power to refute; de novo contaminant peptides are not in A2's set and count as unconfirmed.",
+      "A2's identifications are at 1 % FDR, so the lower bound can be off by up to that share (not corrected).",
+      "A failure confined to a single score bin reads consistent_with_lower_bound: not_supported needs two consecutive reportable bins below the bound (the pre-registered fallback)."
+    ],
+    "mean_genome_precision": {
+      "label": "descriptive",
+      "n": 1364,
+      "value": 0.5618228687683284
+    },
+    "n_queries": 1364,
+    "pooled_L": {
+      "ci_high": 0.5695318082632773,
+      "ci_low": 0.5167354994272905,
+      "k": 741,
+      "label": "descriptive",
+      "n": 1364,
+      "value": 0.5432551319648093
+    },
+    "searchable_definition": "GIPPA's digest (trypsin_p, at most 1 missed cleavage, 7-30 residues, no N-terminal Met excision; not DIA-NN's settings) of --strain-db, I folded to L",
+    "verdict": "consistent_with_lower_bound",
+    "warnings": []
+  },
+  "inputs": {
+    "a3_feasibility": {
+      "path": "/home/classes/bios/270/khoa/giap/local/pilot/pass3/a3_feasibility.json",
+      "sha256": "4d0770d7ac030d2a02a69b0adc66ae22eaee33be4b6a856bfa31b4f06a8eed63"
+    },
+    "bakta_json": {
+      "path": "/home/classes/bios/270/khoa/giap/local/pilot/pass3/inputs/nissle1917_wt.bakta.json",
+      "sha256": "dbe5e126ede2d027e63f1f57b7abc6475238718dcbfd4468ee0bbecef2b93a00"
+    },
+    "baseline": {
+      "path": "/home/classes/bios/270/khoa/giap/local/worktrees/report-freeze/benchmarks/baseline.json",
+      "sha256": "ca9eb55072d77d9e6a68a3bae3c19e132de7cf173632916ba38656d0d8276e54"
+    },
+    "benchmark_adr": {
+      "path": "/home/classes/bios/270/khoa/giap/local/worktrees/report-freeze/docs/adr/ADR-0072-benchmark-baseline-1-0-0.md",
+      "sha256": "f2f79c11213895e51cd9a4999e2c7463557be129615ac02649c1ac8b4c1e687e"
+    },
+    "convert_a1": {
+      "path": "/home/classes/bios/270/khoa/giap/local/pilot/inputs/a1.convert.json",
+      "sha256": "9d23fef0ea2d50ad3a8c2097e8b367255d00c904fc94290302428f11dce69e2b"
+    },
+    "convert_a2": {
+      "path": "/home/classes/bios/270/khoa/giap/local/pilot/pass3/inputs/a2.convert.json",
+      "sha256": "4b70bef97e850e169daeb28e5d534c6cc7089eb352f6137f36b3eb3a0da62497"
+    },
+    "convert_a3": {
+      "path": "/home/classes/bios/270/khoa/giap/local/pilot/inputs/a3.convert.json",
+      "sha256": "3b75251c89afa9de753a6a43be44adfd8b961073e42558970a2e04145dbda93a"
+    },
+    "entrapment": {
+      "path": "/home/classes/bios/270/khoa/giap/local/pilot/metrics/freeze-fa49b8f/entrapment.json",
+      "sha256": "275dda2ebd45fa7ae624be6f4ca83c3ea8ce6bdd4de6594f7821f90a074b5dca"
+    },
+    "genome": {
+      "path": "/home/classes/bios/270/khoa/giap/local/pilot/pass3/genome/nissle1917_wt.fna.gz",
+      "sha256": "1a654e6b83292353f15be4e7a7973b896d728761a4c9dfde533953f76e7961ad"
+    },
+    "k12_fasta": {
+      "path": "/home/classes/bios/270/khoa/giap/local/data/proteomes/UP000000625.fasta",
+      "sha256": "a8052a607a98d2444c9d5dd685bd1370150df8c5570c3116811544bbf3d093a2"
+    },
+    "manifest_a1": {
+      "path": "/home/classes/bios/270/khoa/giap/local/runs/pilot/freeze/fa49b8f/out_a1/run_manifest.json",
+      "sha256": "1cc776f68b712a2e9445c33d0b8cb6406cced69f35a194edc6c6f2e9c15845d9"
+    },
+    "manifest_a2": {
+      "path": "/home/classes/bios/270/khoa/giap/local/runs/pilot/freeze/fa49b8f/out_a2/run_manifest.json",
+      "sha256": "b9be1de514aeb83b6af70e2085a6711dd854a52d439fba46e8f2271259aee756"
+    },
+    "manifest_a3": {
+      "path": "/home/classes/bios/270/khoa/giap/local/runs/pilot/freeze/fa49b8f/out_a3/run_manifest.json",
+      "sha256": "1ab02fae057453d9df5a2d8273b9d06882aa48c495457bd02b5f9a9bbcf7da14"
+    },
+    "peptides_a1": {
+      "path": "/home/classes/bios/270/khoa/giap/local/pilot/inputs/a1.tsv.gz",
+      "sha256": "81818184f0cd222f091ae6b835ff72cc5743b6ce7e6403e7a2cb1740bbf24f3a"
+    },
+    "peptides_a2": {
+      "path": "/home/classes/bios/270/khoa/giap/local/pilot/pass3/inputs/a2.tsv.gz",
+      "sha256": "d7f1ddf5d2badb0038b50f55a6d99b43be61ccc9e2c8fadff9f5a7ab0c405fbf"
+    },
+    "peptides_a3": {
+      "path": "/home/classes/bios/270/khoa/giap/local/pilot/inputs/a3.tsv.gz",
+      "sha256": "743396d090db4f7b0e1075d63d68c4a81b903b8b6fd3a8b61d80fedcac1bf0b8"
+    },
+    "sacct": {
+      "path": "/home/classes/bios/270/khoa/giap/local/runs/pilot/freeze/fa49b8f/sacct.tsv",
+      "sha256": "45ac3e092346cc103894c92a02477dbb17722c5dc3ccbe01c7c6ae9323115176"
+    },
+    "strain_db": {
+      "path": "/home/classes/bios/270/khoa/giap/local/pilot/pass3/db_a2/strain_db.faa.gz",
+      "sha256": "20e36adfa049110906bc688d20ea83f8ca251f9afcc7add18d78ca31029417b8"
+    },
+    "summary_a1": {
+      "path": "/home/classes/bios/270/khoa/giap/local/pilot/recorded/diann/2.3.1/A1/summary.json",
+      "sha256": "be786dc96fd11853c1b75eed7aa516f03599e24175b822a24083dbc0c16f4d8d"
+    },
+    "summary_a2": {
+      "path": "/home/classes/bios/270/khoa/giap/local/pilot/pass3/recorded/diann/2.3.1/A2/summary.json",
+      "sha256": "f57f7bbc91543dd1866bf8abc51d6b301d8b19ac10509c185e76f97ce323f4cf"
+    },
+    "te7": {
+      "path": "/home/classes/bios/270/khoa/giap/local/pilot/metrics/freeze-fa49b8f/te7.json",
+      "sha256": "6379fb9b601dafe002b5f3386f2b1902fbec6ebccffcd2bf211c3b24fc0df663"
+    },
+    "te_real": {
+      "path": "/home/classes/bios/270/khoa/giap/local/pilot/metrics/freeze-fa49b8f/te_real.json",
+      "sha256": "aadc2a5cfc90f8932594373e0a73613fec7781dbc95d94faddfe785fdfeb36a2"
+    }
+  },
+  "m1": {
+    "A1": {
+      "per_run": {
+        "WT_1": {
+          "peptides": {
+            "all": 21673,
+            "contaminant_only": 71,
+            "non_contaminant": 21602
+          },
+          "precursors": {
+            "all": 25920,
+            "contaminant_only": 78,
+            "non_contaminant": 25842
+          },
+          "protein_groups": {
+            "all": 2698,
+            "contaminant_only": 33,
+            "non_contaminant": 2665
+          },
+          "protein_groups_min2": {
+            "all": 2335,
+            "contaminant_only": 9,
+            "non_contaminant": 2326
+          }
+        },
+        "WT_2": {
+          "peptides": {
+            "all": 21849,
+            "contaminant_only": 51,
+            "non_contaminant": 21798
+          },
+          "precursors": {
+            "all": 26153,
+            "contaminant_only": 56,
+            "non_contaminant": 26097
+          },
+          "protein_groups": {
+            "all": 2660,
+            "contaminant_only": 28,
+            "non_contaminant": 2632
+          },
+          "protein_groups_min2": {
+            "all": 2318,
+            "contaminant_only": 8,
+            "non_contaminant": 2310
+          }
+        },
+        "WT_3": {
+          "peptides": {
+            "all": 21594,
+            "contaminant_only": 58,
+            "non_contaminant": 21536
+          },
+          "precursors": {
+            "all": 25745,
+            "contaminant_only": 66,
+            "non_contaminant": 25679
+          },
+          "protein_groups": {
+            "all": 2684,
+            "contaminant_only": 29,
+            "non_contaminant": 2655
+          },
+          "protein_groups_min2": {
+            "all": 2319,
+            "contaminant_only": 6,
+            "non_contaminant": 2313
+          }
+        }
+      },
+      "union": {
+        "peptides": {
+          "all": 23792,
+          "contaminant_only": 88,
+          "non_contaminant": 23704
+        },
+        "precursors": {
+          "all": 28639,
+          "contaminant_only": 96,
+          "non_contaminant": 28543
+        },
+        "protein_groups": {
+          "all": 2798,
+          "contaminant_only": 46,
+          "non_contaminant": 2752
+        },
+        "protein_groups_min2": {
+          "all": 2433,
+          "contaminant_only": 11,
+          "non_contaminant": 2422
+        }
+      }
+    },
+    "A2": {
+      "per_run": {
+        "WT_1": {
+          "peptides": {
+            "all": 25252,
+            "contaminant_only": 72,
+            "non_contaminant": 25180
+          },
+          "precursors": {
+            "all": 30079,
+            "contaminant_only": 79,
+            "non_contaminant": 30000
+          },
+          "protein_groups": {
+            "all": 3063,
+            "contaminant_only": 30,
+            "non_contaminant": 3033
+          },
+          "protein_groups_min2": {
+            "all": 2666,
+            "contaminant_only": 10,
+            "non_contaminant": 2656
+          }
+        },
+        "WT_2": {
+          "peptides": {
+            "all": 25676,
+            "contaminant_only": 61,
+            "non_contaminant": 25615
+          },
+          "precursors": {
+            "all": 30505,
+            "contaminant_only": 67,
+            "non_contaminant": 30438
+          },
+          "protein_groups": {
+            "all": 3068,
+            "contaminant_only": 34,
+            "non_contaminant": 3034
+          },
+          "protein_groups_min2": {
+            "all": 2667,
+            "contaminant_only": 10,
+            "non_contaminant": 2657
+          }
+        },
+        "WT_3": {
+          "peptides": {
+            "all": 25325,
+            "contaminant_only": 64,
+            "non_contaminant": 25261
+          },
+          "precursors": {
+            "all": 30041,
+            "contaminant_only": 72,
+            "non_contaminant": 29969
+          },
+          "protein_groups": {
+            "all": 3082,
+            "contaminant_only": 36,
+            "non_contaminant": 3046
+          },
+          "protein_groups_min2": {
+            "all": 2652,
+            "contaminant_only": 5,
+            "non_contaminant": 2647
+          }
+        }
+      },
+      "union": {
+        "peptides": {
+          "all": 28234,
+          "contaminant_only": 105,
+          "non_contaminant": 28129
+        },
+        "precursors": {
+          "all": 33764,
+          "contaminant_only": 113,
+          "non_contaminant": 33651
+        },
+        "protein_groups": {
+          "all": 3228,
+          "contaminant_only": 57,
+          "non_contaminant": 3171
+        },
+        "protein_groups_min2": {
+          "all": 2790,
+          "contaminant_only": 12,
+          "non_contaminant": 2778
+        }
+      }
+    }
+  },
+  "m2": {
+    "A1": {
+      "contaminant_difference": 1,
+      "counts": {
+        "exact": 23552,
+        "tolerant": 122,
+        "unmapped": 30
+      },
+      "genome_inconsistent": {
+        "consistent": false,
+        "count": 1450,
+        "n": 25002,
+        "value": 0.057995360371170306
+      },
+      "n_contaminant_only": 88,
+      "n_denominator": 23704,
+      "n_universe": 23792,
+      "shares": {
+        "exact": {
+          "ci_high": 0.9945267978402429,
+          "ci_low": 0.992488407261605,
+          "k": 23552,
+          "n": 23704,
+          "value": 0.9935875801552481
+        },
+        "tolerant": {
+          "ci_high": 0.006141373765213112,
+          "ci_low": 0.004312612914729137,
+          "k": 122,
+          "n": 23704,
+          "value": 0.005146810664866689
+        },
+        "unmapped": {
+          "ci_high": 0.0018061399452941034,
+          "ci_low": 0.0008867015321378873,
+          "k": 30,
+          "n": 23704,
+          "value": 0.0012656091798852514
+        }
+      },
+      "unmapped_reasons": {
+        "below_identity": 0,
+        "no_hit": 7,
+        "not_listed": 0,
+        "rejected_placement_fdr": 14,
+        "too_short": 9
+      }
+    },
+    "A2": {
+      "contaminant_difference": 0,
+      "counts": {
+        "exact": 28129,
+        "tolerant": 0,
+        "unmapped": 0
+      },
+      "genome_inconsistent": {
+        "consistent": null,
+        "count": null,
+        "n": null,
+        "value": null
+      },
+      "n_contaminant_only": 105,
+      "n_denominator": 28129,
+      "n_universe": 28234,
+      "shares": {
+        "exact": {
+          "ci_high": 1.0,
+          "ci_low": 0.9998634528678406,
+          "k": 28129,
+          "n": 28129,
+          "value": 1.0
+        },
+        "tolerant": {
+          "ci_high": 0.00013654713215929652,
+          "ci_low": 0.0,
+          "k": 0,
+          "n": 28129,
+          "value": 0.0
+        },
+        "unmapped": {
+          "ci_high": 0.00013654713215929652,
+          "ci_low": 0.0,
+          "k": 0,
+          "n": 28129,
+          "value": 0.0
+        }
+      },
+      "unmapped_reasons": {
+        "below_identity": 0,
+        "no_hit": 0,
+        "not_listed": 0,
+        "rejected_placement_fdr": 0,
+        "too_short": 0
+      }
+    }
+  },
+  "m3": {
+    "A1": {
+      "order": [
+        "all",
+        "chromosome",
+        "plasmid",
+        "plasmid:NZ_CP058218.1",
+        "plasmid:NZ_CP058219.1",
+        "unknown",
+        "prophage",
+        "bgc",
+        "strain_specific",
+        "k12_shared",
+        "no_peptides",
+        "pseudogene"
+      ],
+      "subsets": {
+        "all": {
+          "by_status": {
+            "detected": 2673,
+            "not_detected": 2010,
+            "partial_excluded": 2
+          },
+          "detected": 2673,
+          "genes": 4685,
+          "share": {
+            "ci_high": 0.5846549600140503,
+            "ci_low": 0.5563180299676265,
+            "k": 2673,
+            "n": 4685,
+            "value": 0.5705442902881537
+          }
+        },
+        "bgc": {
+          "by_status": {
+            "detected": 78,
+            "not_detected": 173
+          },
+          "detected": 78,
+          "genes": 251,
+          "share": {
+            "ci_high": 0.37050227287304444,
+            "ci_low": 0.2567169384765429,
+            "k": 78,
+            "n": 251,
+            "value": 0.3107569721115538
+          }
+        },
+        "chromosome": {
+          "by_status": {
+            "detected": 2672,
+            "not_detected": 2000
+          },
+          "detected": 2672,
+          "genes": 4672,
+          "share": {
+            "ci_high": 0.586041209758102,
+            "ci_low": 0.5576762378752671,
+            "k": 2672,
+            "n": 4672,
+            "value": 0.571917808219178
+          }
+        },
+        "k12_shared": {
+          "by_status": {
+            "detected": 2673,
+            "not_detected": 1086
+          },
+          "detected": 2673,
+          "genes": 3759,
+          "share": {
+            "ci_high": 0.7253615973080455,
+            "ci_low": 0.6963941469526703,
+            "k": 2673,
+            "n": 3759,
+            "value": 0.7110933758978452
+          }
+        },
+        "no_peptides": {
+          "by_status": {
+            "not_detected": 10
+          },
+          "detected": 0,
+          "genes": 10,
+          "share": {
+            "ci_high": 0.2775327998628892,
+            "ci_low": 0.0,
+            "k": 0,
+            "n": 10,
+            "value": 0.0
+          }
+        },
+        "plasmid": {
+          "by_status": {
+            "detected": 1,
+            "not_detected": 10,
+            "partial_excluded": 2
+          },
+          "detected": 1,
+          "genes": 13,
+          "share": {
+            "ci_high": 0.3331395092109959,
+            "ci_low": 0.013710421242556586,
+            "k": 1,
+            "n": 13,
+            "value": 0.07692307692307693
+          }
+        },
+        "plasmid:NZ_CP058218.1": {
+          "by_status": {
+            "not_detected": 5
+          },
+          "detected": 0,
+          "genes": 5,
+          "share": {
+            "ci_high": 0.43448246478317476,
+            "ci_low": 0.0,
+            "k": 0,
+            "n": 5,
+            "value": 0.0
+          }
+        },
+        "plasmid:NZ_CP058219.1": {
+          "by_status": {
+            "detected": 1,
+            "not_detected": 5,
+            "partial_excluded": 2
+          },
+          "detected": 1,
+          "genes": 8,
+          "share": {
+            "ci_high": 0.4708881822128535,
+            "ci_low": 0.02241749145005667,
+            "k": 1,
+            "n": 8,
+            "value": 0.125
+          }
+        },
+        "prophage": {
+          "by_status": {
+            "detected": 3,
+            "not_detected": 133
+          },
+          "detected": 3,
+          "genes": 136,
+          "share": {
+            "ci_high": 0.06284590531741366,
+            "ci_low": 0.007529925310275402,
+            "k": 3,
+            "n": 136,
+            "value": 0.022058823529411766
+          }
+        },
+        "pseudogene": {
+          "by_status": {
+            "partial_excluded": 3
+          },
+          "detected": 0,
+          "genes": 3,
+          "share": {
+            "ci_high": 0.5614970317550454,
+            "ci_low": 0.0,
+            "k": 0,
+            "n": 3,
+            "value": 0.0
+          }
+        },
+        "strain_specific": {
+          "by_status": {
+            "not_detected": 914,
+            "partial_excluded": 2
+          },
+          "detected": 0,
+          "genes": 916,
+          "share": {
+            "ci_high": 0.004176218394873355,
+            "ci_low": 0.0,
+            "k": 0,
+            "n": 916,
+            "value": 0.0
+          }
+        },
+        "unknown": {
+          "by_status": {},
+          "detected": 0,
+          "genes": 0,
+          "share": {
+            "ci_high": null,
+            "ci_low": null,
+            "k": 0,
+            "n": 0,
+            "reason": "empty_denominator",
+            "value": null
+          }
+        }
+      }
+    },
+    "A2": {
+      "order": [
+        "all",
+        "chromosome",
+        "plasmid",
+        "plasmid:NZ_CP058218.1",
+        "plasmid:NZ_CP058219.1",
+        "unknown",
+        "prophage",
+        "bgc",
+        "strain_specific",
+        "k12_shared",
+        "no_peptides",
+        "pseudogene"
+      ],
+      "subsets": {
+        "all": {
+          "by_status": {
+            "detected": 3057,
+            "not_detected": 1626,
+            "partial_excluded": 2
+          },
+          "detected": 3057,
+          "genes": 4685,
+          "share": {
+            "ci_high": 0.6660131532147354,
+            "ci_low": 0.638752962797089,
+            "k": 3057,
+            "n": 4685,
+            "value": 0.6525080042689434
+          }
+        },
+        "bgc": {
+          "by_status": {
+            "detected": 137,
+            "not_detected": 114
+          },
+          "detected": 137,
+          "genes": 251,
+          "share": {
+            "ci_high": 0.6062596647848982,
+            "ci_low": 0.48399252615151733,
+            "k": 137,
+            "n": 251,
+            "value": 0.545816733067729
+          }
+        },
+        "chromosome": {
+          "by_status": {
+            "detected": 3047,
+            "not_detected": 1625
+          },
+          "detected": 3047,
+          "genes": 4672,
+          "share": {
+            "ci_high": 0.665710199013234,
+            "ci_low": 0.6384061857109492,
+            "k": 3047,
+            "n": 4672,
+            "value": 0.6521832191780822
+          }
+        },
+        "k12_shared": {
+          "by_status": {
+            "detected": 2740,
+            "not_detected": 1019
+          },
+          "detected": 2740,
+          "genes": 3759,
+          "share": {
+            "ci_high": 0.7428884907202988,
+            "ci_low": 0.7144786396342646,
+            "k": 2740,
+            "n": 3759,
+            "value": 0.7289172652301144
+          }
+        },
+        "no_peptides": {
+          "by_status": {
+            "not_detected": 10
+          },
+          "detected": 0,
+          "genes": 10,
+          "share": {
+            "ci_high": 0.2775327998628892,
+            "ci_low": 0.0,
+            "k": 0,
+            "n": 10,
+            "value": 0.0
+          }
+        },
+        "plasmid": {
+          "by_status": {
+            "detected": 10,
+            "not_detected": 1,
+            "partial_excluded": 2
+          },
+          "detected": 10,
+          "genes": 13,
+          "share": {
+            "ci_high": 0.9182047128150143,
+            "ci_low": 0.49743624053272495,
+            "k": 10,
+            "n": 13,
+            "value": 0.7692307692307693
+          }
+        },
+        "plasmid:NZ_CP058218.1": {
+          "by_status": {
+            "detected": 5
+          },
+          "detected": 5,
+          "genes": 5,
+          "share": {
+            "ci_high": 1.0,
+            "ci_low": 0.5655175352168251,
+            "k": 5,
+            "n": 5,
+            "value": 1.0
+          }
+        },
+        "plasmid:NZ_CP058219.1": {
+          "by_status": {
+            "detected": 5,
+            "not_detected": 1,
+            "partial_excluded": 2
+          },
+          "detected": 5,
+          "genes": 8,
+          "share": {
+            "ci_high": 0.8631557141764026,
+            "ci_low": 0.30574239460262737,
+            "k": 5,
+            "n": 8,
+            "value": 0.625
+          }
+        },
+        "prophage": {
+          "by_status": {
+            "detected": 37,
+            "not_detected": 99
+          },
+          "detected": 37,
+          "genes": 136,
+          "share": {
+            "ci_high": 0.35234378694025936,
+            "ci_low": 0.2042969938206384,
+            "k": 37,
+            "n": 136,
+            "value": 0.27205882352941174
+          }
+        },
+        "pseudogene": {
+          "by_status": {
+            "partial_excluded": 3
+          },
+          "detected": 0,
+          "genes": 3,
+          "share": {
+            "ci_high": 0.5614970317550454,
+            "ci_low": 0.0,
+            "k": 0,
+            "n": 3,
+            "value": 0.0
+          }
+        },
+        "strain_specific": {
+          "by_status": {
+            "detected": 317,
+            "not_detected": 597,
+            "partial_excluded": 2
+          },
+          "detected": 317,
+          "genes": 916,
+          "share": {
+            "ci_high": 0.3774619344144114,
+            "ci_low": 0.3159634952661064,
+            "k": 317,
+            "n": 916,
+            "value": 0.3460698689956332
+          }
+        },
+        "unknown": {
+          "by_status": {},
+          "detected": 0,
+          "genes": 0,
+          "share": {
+            "ci_high": null,
+            "ci_low": null,
+            "k": 0,
+            "n": 0,
+            "reason": "empty_denominator",
+            "value": null
+          }
+        }
+      }
+    }
+  },
+  "m4": {
+    "ba_bias_log2": -0.19455,
+    "ba_loa_high": 0.986878,
+    "ba_loa_low": -1.37598,
+    "ci_high": 0.982577,
+    "ci_low": 0.973089,
+    "flags": null,
+    "method": "spearman_tu_bootstrap",
+    "n_boot": 1000,
+    "n_shared": 2635,
+    "n_units": 1683,
+    "spearman_rho": 0.978429
+  },
+  "m5": {
+    "enriched_categories": {
+      "flags": null,
+      "jaccard": 0.562771,
+      "n_a": 437,
+      "n_b": 285,
+      "n_shared": 260,
+      "note": null
+    },
+    "islands": {
+      "flags": "both_empty",
+      "jaccard": null,
+      "n_a": 0,
+      "n_b": 0,
+      "n_shared": 0,
+      "note": "none in either arm"
+    },
+    "operon_flags": {
+      "flags": "both_empty",
+      "jaccard": null,
+      "n_a": 0,
+      "n_b": 0,
+      "n_shared": 0,
+      "note": "none in either arm"
+    },
+    "other_families": {
+      "alt_sites": {
+        "flags": null,
+        "jaccard": 0.0,
+        "n_a": 118,
+        "n_b": 0,
+        "n_shared": 0,
+        "note": null
+      },
+      "novel_orfs": {
+        "flags": null,
+        "jaccard": 0.0,
+        "n_a": 1,
+        "n_b": 0,
+        "n_shared": 0,
+        "note": null
+      }
+    }
+  },
+  "m6": {
+    "A1": {
+      "novel_orfs": {
+        "by_class": {
+          "antisense": {
+            "called": 0,
+            "not_called": 0,
+            "unestimated": 0
+          },
+          "cds_outframe": {
+            "called": 0,
+            "not_called": 0,
+            "unestimated": 0
+          },
+          "cterm_extension": {
+            "called": 0,
+            "not_called": 0,
+            "unestimated": 0
+          },
+          "intergenic": {
+            "called": 1,
+            "not_called": 0,
+            "unestimated": 6
+          },
+          "nterm_extension": {
+            "called": 0,
+            "not_called": 0,
+            "unestimated": 15
+          },
+          "pseudogene": {
+            "called": 0,
+            "not_called": 0,
+            "unestimated": 0
+          },
+          "sorf": {
+            "called": 0,
+            "not_called": 0,
+            "unestimated": 0
+          }
+        },
+        "n_rows": 22,
+        "totals": {
+          "called": 1,
+          "not_called": 0,
+          "unestimated": 21
+        }
+      },
+      "variants": {
+        "alt": {
+          "block": {
+            "candidate": 0,
+            "high": 0
+          },
+          "frameshift": {
+            "candidate": 0,
+            "high": 0
+          },
+          "substitution": {
+            "candidate": 114,
+            "high": 4
+          },
+          "swap": {
+            "candidate": 0,
+            "high": 0
+          }
+        },
+        "class_error": {
+          "numeric": 0,
+          "unestimated": 119
+        },
+        "mixed": 1
+      }
+    },
+    "A2": {
+      "novel_orfs": {
+        "by_class": {
+          "antisense": {
+            "called": 0,
+            "not_called": 0,
+            "unestimated": 0
+          },
+          "cds_outframe": {
+            "called": 0,
+            "not_called": 0,
+            "unestimated": 0
+          },
+          "cterm_extension": {
+            "called": 0,
+            "not_called": 0,
+            "unestimated": 0
+          },
+          "intergenic": {
+            "called": 0,
+            "not_called": 0,
+            "unestimated": 0
+          },
+          "nterm_extension": {
+            "called": 0,
+            "not_called": 0,
+            "unestimated": 0
+          },
+          "pseudogene": {
+            "called": 0,
+            "not_called": 0,
+            "unestimated": 0
+          },
+          "sorf": {
+            "called": 0,
+            "not_called": 0,
+            "unestimated": 0
+          }
+        },
+        "n_rows": 0,
+        "totals": {
+          "called": 0,
+          "not_called": 0,
+          "unestimated": 0
+        }
+      },
+      "variants": {
+        "alt": {
+          "block": {
+            "candidate": 0,
+            "high": 0
+          },
+          "frameshift": {
+            "candidate": 0,
+            "high": 0
+          },
+          "substitution": {
+            "candidate": 0,
+            "high": 0
+          },
+          "swap": {
+            "candidate": 0,
+            "high": 0
+          }
+        },
+        "class_error": {
+          "numeric": 0,
+          "unestimated": 0
+        },
+        "mixed": 0
+      }
+    },
+    "A3": {
+      "novel_orfs": {
+        "by_class": {
+          "antisense": {
+            "called": 0,
+            "not_called": 2,
+            "unestimated": 0
+          },
+          "cds_outframe": {
+            "called": 0,
+            "not_called": 1,
+            "unestimated": 0
+          },
+          "cterm_extension": {
+            "called": 0,
+            "not_called": 0,
+            "unestimated": 0
+          },
+          "intergenic": {
+            "called": 0,
+            "not_called": 1,
+            "unestimated": 0
+          },
+          "nterm_extension": {
+            "called": 0,
+            "not_called": 1,
+            "unestimated": 0
+          },
+          "pseudogene": {
+            "called": 0,
+            "not_called": 0,
+            "unestimated": 0
+          },
+          "sorf": {
+            "called": 0,
+            "not_called": 0,
+            "unestimated": 0
+          }
+        },
+        "n_rows": 5,
+        "totals": {
+          "called": 0,
+          "not_called": 5,
+          "unestimated": 0
+        }
+      },
+      "variants": {
+        "alt": {
+          "block": {
+            "candidate": 28,
+            "high": 0
+          },
+          "frameshift": {
+            "candidate": 0,
+            "high": 0
+          },
+          "substitution": {
+            "candidate": 41,
+            "high": 0
+          },
+          "swap": {
+            "candidate": 125,
+            "high": 1
+          }
+        },
+        "class_error": {
+          "numeric": 0,
+          "unestimated": 248
+        },
+        "mixed": 53
+      }
+    },
+    "overlap_a2_a3": {
+      "alt_sites": {
+        "alt": {
+          "a2_found_by_a3": {
+            "ci_high": null,
+            "ci_low": null,
+            "k": 0,
+            "n": 0,
+            "reason": "empty_denominator",
+            "value": null
+          },
+          "a3_confirmed_by_a2": {
+            "ci_high": 0.019319204573721077,
+            "ci_low": 0.0,
+            "k": 0,
+            "n": 195,
+            "value": 0.0
+          },
+          "jaccard": 0.0,
+          "n_a2": 0,
+          "n_a3": 195,
+          "n_shared": 0,
+          "union": 195
+        },
+        "high": {
+          "a2_found_by_a3": {
+            "ci_high": null,
+            "ci_low": null,
+            "k": 0,
+            "n": 0,
+            "reason": "empty_denominator",
+            "value": null
+          },
+          "a3_confirmed_by_a2": {
+            "ci_high": 0.7934506856227626,
+            "ci_low": 0.0,
+            "k": 0,
+            "n": 1,
+            "value": 0.0
+          },
+          "jaccard": 0.0,
+          "n_a2": 0,
+          "n_a3": 1,
+          "n_shared": 0,
+          "union": 1
+        }
+      },
+      "novel_orfs": {
+        "any_row": {
+          "a2_found_by_a3": {
+            "ci_high": null,
+            "ci_low": null,
+            "k": 0,
+            "n": 0,
+            "reason": "empty_denominator",
+            "value": null
+          },
+          "a3_confirmed_by_a2": {
+            "ci_high": 0.43448246478317476,
+            "ci_low": 0.0,
+            "k": 0,
+            "n": 5,
+            "value": 0.0
+          },
+          "jaccard": 0.0,
+          "n_a2": 0,
+          "n_a3": 5,
+          "n_shared": 0,
+          "union": 5
+        },
+        "called": {
+          "a2_found_by_a3": {
+            "ci_high": null,
+            "ci_low": null,
+            "k": 0,
+            "n": 0,
+            "reason": "empty_denominator",
+            "value": null
+          },
+          "a3_confirmed_by_a2": {
+            "ci_high": null,
+            "ci_low": null,
+            "k": 0,
+            "n": 0,
+            "reason": "empty_denominator",
+            "value": null
+          },
+          "by_class_a3": {
+            "antisense": {
+              "n": 0,
+              "shared": 0
+            },
+            "cds_outframe": {
+              "n": 0,
+              "shared": 0
+            },
+            "cterm_extension": {
+              "n": 0,
+              "shared": 0
+            },
+            "intergenic": {
+              "n": 0,
+              "shared": 0
+            },
+            "nterm_extension": {
+              "n": 0,
+              "shared": 0
+            },
+            "pseudogene": {
+              "n": 0,
+              "shared": 0
+            },
+            "sorf": {
+              "n": 0,
+              "shared": 0
+            }
+          },
+          "class_agree": 0,
+          "jaccard": null,
+          "n_a2": 0,
+          "n_a3": 0,
+          "n_shared": 0,
+          "reason": "both_empty",
+          "union": 0
+        },
+        "orf_id_jaccard": null
+      }
+    },
+    "warnings": []
+  },
+  "m7": {
+    "A1": {
+      "cached_steps": [],
+      "hosts": [],
+      "max_step_peak_rss_bytes": 8053063680,
+      "runtime_complete": true,
+      "sacct": {
+        "AllocCPUS": "4",
+        "Elapsed": "02:36:36",
+        "JobID": "1915264",
+        "JobName": "gippa-run-freeze-a1",
+        "MaxRSS": "",
+        "NodeList": "wheat-03",
+        "State": "COMPLETED"
+      },
+      "steps": [
+        {
+          "cpu_time_s": 46132.2028,
+          "n_retries": 0,
+          "n_tasks": 48,
+          "name": "terminatornet",
+          "peak_rss_bytes": 448790528,
+          "status": "completed",
+          "wall_time_s": 11919.5
+        },
+        {
+          "cpu_time_s": 6.0207999999999995,
+          "n_retries": 0,
+          "n_tasks": 1,
+          "name": "parse_bakta",
+          "peak_rss_bytes": 423100416,
+          "status": "completed",
+          "wall_time_s": 7.1
+        },
+        {
+          "cpu_time_s": 63.912800000000004,
+          "n_retries": 0,
+          "n_tasks": 1,
+          "name": "antismash",
+          "peak_rss_bytes": 1395864371,
+          "status": "completed",
+          "wall_time_s": 45.2
+        },
+        {
+          "cpu_time_s": 890.59,
+          "n_retries": 0,
+          "n_tasks": 1,
+          "name": "genomad",
+          "peak_rss_bytes": 4939212390,
+          "status": "completed",
+          "wall_time_s": 145.0
+        },
+        {
+          "cpu_time_s": 4.429599999999999,
+          "n_retries": 0,
+          "n_tasks": 1,
+          "name": "transterm_input",
+          "peak_rss_bytes": 356201267,
+          "status": "completed",
+          "wall_time_s": 5.6
+        },
+        {
+          "cpu_time_s": 15.937200000000002,
+          "n_retries": 0,
+          "n_tasks": 1,
+          "name": "codon_usage",
+          "peak_rss_bytes": 653262848,
+          "status": "completed",
+          "wall_time_s": 17.1
+        },
+        {
+          "cpu_time_s": 5.5821000000000005,
+          "n_retries": 0,
+          "n_tasks": 1,
+          "name": "uniop_input",
+          "peak_rss_bytes": 319920538,
+          "status": "completed",
+          "wall_time_s": 6.9
+        },
+        {
+          "cpu_time_s": 10.922099999999999,
+          "n_retries": 0,
+          "n_tasks": 1,
+          "name": "uniop",
+          "peak_rss_bytes": 151519232,
+          "status": "completed",
+          "wall_time_s": 14.7
+        },
+        {
+          "cpu_time_s": 26.052000000000003,
+          "n_retries": 0,
+          "n_tasks": 1,
+          "name": "transtermhp",
+          "peak_rss_bytes": 38063309,
+          "status": "completed",
+          "wall_time_s": 26.0
+        },
+        {
+          "cpu_time_s": 16.8681,
+          "n_retries": 0,
+          "n_tasks": 1,
+          "name": "operon_pairs",
+          "peak_rss_bytes": 389336269,
+          "status": "completed",
+          "wall_time_s": 17.7
+        },
+        {
+          "cpu_time_s": 7.880599999999999,
+          "n_retries": 0,
+          "n_tasks": 1,
+          "name": "region_layer",
+          "peak_rss_bytes": 350643814,
+          "status": "completed",
+          "wall_time_s": 9.1
+        },
+        {
+          "cpu_time_s": 27.664199999999997,
+          "n_retries": 0,
+          "n_tasks": 1,
+          "name": "promoter_windows",
+          "peak_rss_bytes": 1288490189,
+          "status": "completed",
+          "wall_time_s": 28.2
+        },
+        {
+          "cpu_time_s": 556.7472,
+          "n_retries": 0,
+          "n_tasks": 11,
+          "name": "promotech",
+          "peak_rss_bytes": 8053063680,
+          "status": "completed",
+          "wall_time_s": 654.5
+        },
+        {
+          "cpu_time_s": 19518.692,
+          "n_retries": 0,
+          "n_tasks": 27,
+          "name": "promoter_calculator",
+          "peak_rss_bytes": 96783565,
+          "status": "completed",
+          "wall_time_s": 18882.0
+        },
+        {
+          "cpu_time_s": 16.383100000000002,
+          "n_retries": 0,
+          "n_tasks": 1,
+          "name": "ostir_input",
+          "peak_rss_bytes": 402233754,
+          "status": "completed",
+          "wall_time_s": 17.3
+        },
+        {
+          "cpu_time_s": 32.19539999999999,
+          "n_retries": 0,
+          "n_tasks": 1,
+          "name": "ostir",
+          "peak_rss_bytes": 406532915,
+          "status": "completed",
+          "wall_time_s": 4.6
+        },
+        {
+          "cpu_time_s": 4.9112,
+          "n_retries": 0,
+          "n_tasks": 1,
+          "name": "rbs_layer",
+          "peak_rss_bytes": 338165760,
+          "status": "completed",
+          "wall_time_s": 5.6
+        },
+        {
+          "cpu_time_s": 10.191600000000001,
+          "n_retries": 0,
+          "n_tasks": 1,
+          "name": "sixframe_index",
+          "peak_rss_bytes": 562351309,
+          "status": "completed",
+          "wall_time_s": 11.4
+        },
+        {
+          "cpu_time_s": 11.303700000000001,
+          "n_retries": 0,
+          "n_tasks": 1,
+          "name": "map_exact",
+          "peak_rss_bytes": 516109107,
+          "status": "completed",
+          "wall_time_s": 12.3
+        },
+        {
+          "cpu_time_s": 21.0289,
+          "n_retries": 0,
+          "n_tasks": 1,
+          "name": "promoter_layer",
+          "peak_rss_bytes": 940153242,
+          "status": "completed",
+          "wall_time_s": 22.3
+        },
+        {
+          "cpu_time_s": 127.514,
+          "n_retries": 0,
+          "n_tasks": 1,
+          "name": "map_tolerant",
+          "peak_rss_bytes": 846620262,
+          "status": "completed",
+          "wall_time_s": 103.0
+        },
+        {
+          "cpu_time_s": 11.425600000000001,
+          "n_retries": 0,
+          "n_tasks": 1,
+          "name": "terminator_layer",
+          "peak_rss_bytes": 356725555,
+          "status": "completed",
+          "wall_time_s": 14.8
+        },
+        {
+          "cpu_time_s": 7.379999999999999,
+          "n_retries": 0,
+          "n_tasks": 1,
+          "name": "placement",
+          "peak_rss_bytes": 549978112,
+          "status": "completed",
+          "wall_time_s": 8.2
+        },
+        {
+          "cpu_time_s": 13.0275,
+          "n_retries": 0,
+          "n_tasks": 1,
+          "name": "loci",
+          "peak_rss_bytes": 532466893,
+          "status": "completed",
+          "wall_time_s": 13.5
+        },
+        {
+          "cpu_time_s": 32.4792,
+          "n_retries": 0,
+          "n_tasks": 1,
+          "name": "variants",
+          "peak_rss_bytes": 1181116006,
+          "status": "completed",
+          "wall_time_s": 31.2
+        },
+        {
+          "cpu_time_s": 10.0794,
+          "n_retries": 0,
+          "n_tasks": 1,
+          "name": "tx_layer",
+          "peak_rss_bytes": 347812659,
+          "status": "completed",
+          "wall_time_s": 21.4
+        },
+        {
+          "cpu_time_s": 25.014499999999998,
+          "n_retries": 0,
+          "n_tasks": 1,
+          "name": "context_layers",
+          "peak_rss_bytes": 615199539,
+          "status": "completed",
+          "wall_time_s": 24.5
+        },
+        {
+          "cpu_time_s": 9.273599999999998,
+          "n_retries": 0,
+          "n_tasks": 1,
+          "name": "gene_table",
+          "peak_rss_bytes": 484232397,
+          "status": "completed",
+          "wall_time_s": 9.2
+        },
+        {
+          "cpu_time_s": 11.4875,
+          "n_retries": 0,
+          "n_tasks": 1,
+          "name": "detectability",
+          "peak_rss_bytes": 398039450,
+          "status": "completed",
+          "wall_time_s": 12.5
+        },
+        {
+          "cpu_time_s": 7.691599999999999,
+          "n_retries": 0,
+          "n_tasks": 1,
+          "name": "novel_candidates",
+          "peak_rss_bytes": 461163725,
+          "status": "completed",
+          "wall_time_s": 13.4
+        },
+        {
+          "cpu_time_s": 10.2705,
+          "n_retries": 0,
+          "n_tasks": 1,
+          "name": "promotech_novel",
+          "peak_rss_bytes": 7945689498,
+          "status": "completed",
+          "wall_time_s": 12.3
+        },
+        {
+          "cpu_time_s": 1.5469,
+          "n_retries": 0,
+          "n_tasks": 1,
+          "name": "ostir_novel",
+          "peak_rss_bytes": 47815066,
+          "status": "completed",
+          "wall_time_s": 3.1
+        },
+        {
+          "cpu_time_s": 47.338499999999996,
+          "n_retries": 0,
+          "n_tasks": 1,
+          "name": "context_stats",
+          "peak_rss_bytes": 937951232,
+          "status": "completed",
+          "wall_time_s": 45.3
+        },
+        {
+          "cpu_time_s": 79.79220000000001,
+          "n_retries": 0,
+          "n_tasks": 1,
+          "name": "operons",
+          "peak_rss_bytes": 653053133,
+          "status": "completed",
+          "wall_time_s": 58.2
+        },
+        {
+          "cpu_time_s": 4.8081,
+          "n_retries": 0,
+          "n_tasks": 1,
+          "name": "novel_promoter_layer",
+          "peak_rss_bytes": 351482675,
+          "status": "completed",
+          "wall_time_s": 4.7
+        },
+        {
+          "cpu_time_s": 6.651600000000001,
+          "n_retries": 0,
+          "n_tasks": 1,
+          "name": "novel_rbs_layer",
+          "peak_rss_bytes": 325373133,
+          "status": "completed",
+          "wall_time_s": 6.9
+        },
+        {
+          "cpu_time_s": 10.773,
+          "n_retries": 0,
+          "n_tasks": 1,
+          "name": "novel_orfs",
+          "peak_rss_bytes": 790206874,
+          "status": "completed",
+          "wall_time_s": 13.5
+        },
+        {
+          "cpu_time_s": 139.72,
+          "n_retries": 0,
+          "n_tasks": 1,
+          "name": "function",
+          "peak_rss_bytes": 860566323,
+          "status": "completed",
+          "wall_time_s": 140.0
+        },
+        {
+          "cpu_time_s": 2509.77,
+          "n_retries": 0,
+          "n_tasks": 1,
+          "name": "determinants",
+          "peak_rss_bytes": 3865470566,
+          "status": "completed",
+          "wall_time_s": 3110.0
+        },
+        {
+          "cpu_time_s": 1065.856,
+          "n_retries": 0,
+          "n_tasks": 1,
+          "name": "sensitivity",
+          "peak_rss_bytes": 1073741824,
+          "status": "completed",
+          "wall_time_s": 757.0
+        },
+        {
+          "cpu_time_s": 79.849,
+          "n_retries": 0,
+          "n_tasks": 1,
+          "name": "plots",
+          "peak_rss_bytes": 581645107,
+          "status": "completed",
+          "wall_time_s": 77.0
+        },
+        {
+          "cpu_time_s": 14.841,
+          "n_retries": 0,
+          "n_tasks": 1,
+          "name": "report",
+          "peak_rss_bytes": 498388173,
+          "status": "completed",
+          "wall_time_s": 17.0
+        }
+      ],
+      "sum_task_wall_s": 36348.8,
+      "totals_lower_bound": false,
+      "wall_time_s": 9367.0
+    },
+    "A2": {
+      "cached_steps": [],
+      "hosts": [],
+      "max_step_peak_rss_bytes": 8053063680,
+      "runtime_complete": true,
+      "sacct": {
+        "AllocCPUS": "4",
+        "Elapsed": "02:50:55",
+        "JobID": "1914948",
+        "JobName": "gippa-run-freeze-a2",
+        "MaxRSS": "",
+        "NodeList": "wheat-07",
+        "State": "COMPLETED"
+      },
+      "steps": [
+        {
+          "cpu_time_s": 68633.1589,
+          "n_retries": 0,
+          "n_tasks": 48,
+          "name": "terminatornet",
+          "peak_rss_bytes": 450992538,
+          "status": "completed",
+          "wall_time_s": 17920.1
+        },
+        {
+          "cpu_time_s": 6.3244,
+          "n_retries": 0,
+          "n_tasks": 1,
+          "name": "parse_bakta",
+          "peak_rss_bytes": 422156698,
+          "status": "completed",
+          "wall_time_s": 9.7
+        },
+        {
+          "cpu_time_s": 111.72,
+          "n_retries": 0,
+          "n_tasks": 1,
+          "name": "antismash",
+          "peak_rss_bytes": 1073741824,
+          "status": "completed",
+          "wall_time_s": 84.0
+        },
+        {
+          "cpu_time_s": 864.435,
+          "n_retries": 0,
+          "n_tasks": 1,
+          "name": "genomad",
+          "peak_rss_bytes": 4831838208,
+          "status": "completed",
+          "wall_time_s": 169.0
+        },
+        {
+          "cpu_time_s": 14.466399999999998,
+          "n_retries": 0,
+          "n_tasks": 1,
+          "name": "codon_usage",
+          "peak_rss_bytes": 650536550,
+          "status": "completed",
+          "wall_time_s": 16.9
+        },
+        {
+          "cpu_time_s": 6.2604,
+          "n_retries": 0,
+          "n_tasks": 1,
+          "name": "region_layer",
+          "peak_rss_bytes": 382939955,
+          "status": "completed",
+          "wall_time_s": 7.4
+        },
+        {
+          "cpu_time_s": 5.4337,
+          "n_retries": 0,
+          "n_tasks": 1,
+          "name": "transterm_input",
+          "peak_rss_bytes": 354838118,
+          "status": "completed",
+          "wall_time_s": 6.7
+        },
+        {
+          "cpu_time_s": 18.522000000000002,
+          "n_retries": 0,
+          "n_tasks": 1,
+          "name": "promoter_windows",
+          "peak_rss_bytes": 1395864371,
+          "status": "completed",
+          "wall_time_s": 19.6
+        },
+        {
+          "cpu_time_s": 22.0651,
+          "n_retries": 0,
+          "n_tasks": 1,
+          "name": "ostir_input",
+          "peak_rss_bytes": 404960051,
+          "status": "completed",
+          "wall_time_s": 23.3
+        },
+        {
+          "cpu_time_s": 8.2512,
+          "n_retries": 0,
+          "n_tasks": 1,
+          "name": "sixframe_index",
+          "peak_rss_bytes": 562875597,
+          "status": "completed",
+          "wall_time_s": 10.8
+        },
+        {
+          "cpu_time_s": 18.981,
+          "n_retries": 0,
+          "n_tasks": 1,
+          "name": "transtermhp",
+          "peak_rss_bytes": 38797312,
+          "status": "completed",
+          "wall_time_s": 19.0
+        },
+        {
+          "cpu_time_s": 686.8084,
+          "n_retries": 0,
+          "n_tasks": 11,
+          "name": "promotech",
+          "peak_rss_bytes": 8053063680,
+          "status": "completed",
+          "wall_time_s": 996.0
+        },
+        {
+          "cpu_time_s": 7.6208,
+          "n_retries": 0,
+          "n_tasks": 1,
+          "name": "map_exact",
+          "peak_rss_bytes": 516109107,
+          "status": "completed",
+          "wall_time_s": 8.8
+        },
+        {
+          "cpu_time_s": 31.555999999999997,
+          "n_retries": 0,
+          "n_tasks": 1,
+          "name": "ostir",
+          "peak_rss_bytes": 400660890,
+          "status": "completed",
+          "wall_time_s": 4.6
+        },
+        {
+          "cpu_time_s": 6.299700000000001,
+          "n_retries": 0,
+          "n_tasks": 1,
+          "name": "rbs_layer",
+          "peak_rss_bytes": 327470285,
+          "status": "completed",
+          "wall_time_s": 8.3
+        },
+        {
+          "cpu_time_s": 7.2156,
+          "n_retries": 0,
+          "n_tasks": 1,
+          "name": "uniop_input",
+          "peak_rss_bytes": 387343974,
+          "status": "completed",
+          "wall_time_s": 8.4
+        },
+        {
+          "cpu_time_s": 20.5875,
+          "n_retries": 0,
+          "n_tasks": 1,
+          "name": "promoter_layer",
+          "peak_rss_bytes": 929038336,
+          "status": "completed",
+          "wall_time_s": 22.5
+        },
+        {
+          "cpu_time_s": 10.988999999999999,
+          "n_retries": 0,
+          "n_tasks": 1,
+          "name": "uniop",
+          "peak_rss_bytes": 151204659,
+          "status": "completed",
+          "wall_time_s": 16.5
+        },
+        {
+          "cpu_time_s": 86.87,
+          "n_retries": 0,
+          "n_tasks": 1,
+          "name": "map_tolerant",
+          "peak_rss_bytes": 932184064,
+          "status": "completed",
+          "wall_time_s": 70.0
+        },
+        {
+          "cpu_time_s": 8.312600000000002,
+          "n_retries": 0,
+          "n_tasks": 1,
+          "name": "placement",
+          "peak_rss_bytes": 579233382,
+          "status": "completed",
+          "wall_time_s": 8.9
+        },
+        {
+          "cpu_time_s": 29.3733,
+          "n_retries": 0,
+          "n_tasks": 1,
+          "name": "operon_pairs",
+          "peak_rss_bytes": 391223706,
+          "status": "completed",
+          "wall_time_s": 29.7
+        },
+        {
+          "cpu_time_s": 15.1844,
+          "n_retries": 0,
+          "n_tasks": 1,
+          "name": "loci",
+          "peak_rss_bytes": 563714458,
+          "status": "completed",
+          "wall_time_s": 15.4
+        },
+        {
+          "cpu_time_s": 19825.449,
+          "n_retries": 0,
+          "n_tasks": 27,
+          "name": "promoter_calculator",
+          "peak_rss_bytes": 96888422,
+          "status": "completed",
+          "wall_time_s": 19520.0
+        },
+        {
+          "cpu_time_s": 59.644000000000005,
+          "n_retries": 0,
+          "n_tasks": 1,
+          "name": "variants",
+          "peak_rss_bytes": 1288490189,
+          "status": "completed",
+          "wall_time_s": 62.0
+        },
+        {
+          "cpu_time_s": 11.79,
+          "n_retries": 0,
+          "n_tasks": 1,
+          "name": "terminator_layer",
+          "peak_rss_bytes": 355991552,
+          "status": "completed",
+          "wall_time_s": 13.1
+        },
+        {
+          "cpu_time_s": 9.261000000000001,
+          "n_retries": 0,
+          "n_tasks": 1,
+          "name": "tx_layer",
+          "peak_rss_bytes": 459171430,
+          "status": "completed",
+          "wall_time_s": 10.5
+        },
+        {
+          "cpu_time_s": 24.418400000000002,
+          "n_retries": 0,
+          "n_tasks": 1,
+          "name": "context_layers",
+          "peak_rss_bytes": 693108736,
+          "status": "completed",
+          "wall_time_s": 23.3
+        },
+        {
+          "cpu_time_s": 11.5374,
+          "n_retries": 0,
+          "n_tasks": 1,
+          "name": "gene_table",
+          "peak_rss_bytes": 505308774,
+          "status": "completed",
+          "wall_time_s": 13.4
+        },
+        {
+          "cpu_time_s": 11.210999999999999,
+          "n_retries": 0,
+          "n_tasks": 1,
+          "name": "detectability",
+          "peak_rss_bytes": 382310810,
+          "status": "completed",
+          "wall_time_s": 11.1
+        },
+        {
+          "cpu_time_s": 8.446,
+          "n_retries": 0,
+          "n_tasks": 1,
+          "name": "novel_candidates",
+          "peak_rss_bytes": 472593203,
+          "status": "completed",
+          "wall_time_s": 8.2
+        },
+        {
+          "cpu_time_s": 11.008400000000002,
+          "n_retries": 0,
+          "n_tasks": 1,
+          "name": "novel_orfs",
+          "peak_rss_bytes": 758644736,
+          "status": "completed",
+          "wall_time_s": 11.6
+        },
+        {
+          "cpu_time_s": 59.463100000000004,
+          "n_retries": 0,
+          "n_tasks": 1,
+          "name": "context_stats",
+          "peak_rss_bytes": 985032294,
+          "status": "completed",
+          "wall_time_s": 58.7
+        },
+        {
+          "cpu_time_s": 102.7,
+          "n_retries": 0,
+          "n_tasks": 1,
+          "name": "operons",
+          "peak_rss_bytes": 662070886,
+          "status": "completed",
+          "wall_time_s": 65.0
+        },
+        {
+          "cpu_time_s": 163.51,
+          "n_retries": 0,
+          "n_tasks": 1,
+          "name": "function",
+          "peak_rss_bytes": 868954931,
+          "status": "completed",
+          "wall_time_s": 166.0
+        },
+        {
+          "cpu_time_s": 2630.4439999999995,
+          "n_retries": 0,
+          "n_tasks": 1,
+          "name": "determinants",
+          "peak_rss_bytes": 3865470566,
+          "status": "completed",
+          "wall_time_s": 3434.0
+        },
+        {
+          "cpu_time_s": 798.9119999999999,
+          "n_retries": 0,
+          "n_tasks": 1,
+          "name": "sensitivity",
+          "peak_rss_bytes": 1073741824,
+          "status": "completed",
+          "wall_time_s": 576.0
+        },
+        {
+          "cpu_time_s": 72.84599999999999,
+          "n_retries": 0,
+          "n_tasks": 1,
+          "name": "plots",
+          "peak_rss_bytes": 588985139,
+          "status": "completed",
+          "wall_time_s": 71.0
+        },
+        {
+          "cpu_time_s": 14.095200000000002,
+          "n_retries": 0,
+          "n_tasks": 1,
+          "name": "report",
+          "peak_rss_bytes": 493355008,
+          "status": "completed",
+          "wall_time_s": 16.8
+        }
+      ],
+      "sum_task_wall_s": 43536.299999999996,
+      "totals_lower_bound": false,
+      "wall_time_s": 10220.0
+    }
+  },
+  "m8": {
+    "caveats": [
+      "near-homolog entrapment: the estimate errs high (\u00a715.5)",
+      "an estimated upper bound in expectation (Wen 2025, Suppl. Note 2.2), not a bound on this sample",
+      "assumes the Nissle genome is complete, is the sample's strain, and that no K-12 material is in the sample",
+      "assessment is made at precursor level, the unit DIA-NN's global q controls"
+    ],
+    "cross_checks": {
+      "digest": {
+        "agrees": true,
+        "not_in_universe": 0
+      },
+      "run": {
+        "exact_rejected": 0,
+        "exact_route_agrees": true,
+        "genome_inconsistent_count": 1450,
+        "n_entrapment": 152,
+        "n_exact_route": 23517,
+        "n_exact_route_unclassified": 32,
+        "present_not_exact": 0
+      },
+      "settings": {
+        "agrees": true
+      }
+    },
+    "peptide": {
+      "N_E": 152,
+      "N_T": 23517,
+      "above_one": false,
+      "assessment": "not_assessed",
+      "assessment_reason": "peptide-level FDR is not controlled by the search (q_value is DIA-NN's precursor-level Global.Q.Value)",
+      "ci": {
+        "assumes": "equal chance and independent false matches; not valid under clustered (protein-level) errors",
+        "method": "binomial_inversion_equal_chance",
+        "ucb95": 0.030757530947653048
+      },
+      "excluded_contaminant": 120,
+      "fdp_combined": 0.027343928584009792,
+      "fdp_lower": 0.006421902065993494,
+      "not_in_universe": 0,
+      "sensitivity": {
+        "far": {
+          "N_E_far": 7,
+          "N_T_10": 17040,
+          "breakdown": {
+            "N_E": {
+              "far": 7,
+              "lt10": 9,
+              "near_homolog": 136
+            },
+            "k12_only": {
+              "far": 15450,
+              "lt10": 6546,
+              "near_homolog": 13527
+            }
+          },
+          "fdp_combined_far": 0.0027437753950006485,
+          "fdp_lower_far": 0.00041062943626444533,
+          "r_far": 0.1759981773651535,
+          "ucb95_far": 0.004927553235173345
+        },
+        "present_broad": {
+          "N_E": 152,
+          "N_T": 23517,
+          "fdp_combined": 0.027346238037437496,
+          "fdp_lower": 0.006421902065993494,
+          "k12_only": 35520,
+          "r": 0.30691067447768156,
+          "shared": 115734,
+          "ucb95": 0.030757530947653048
+        },
+        "r_prec_weighted": {
+          "fdp_combined_rprec": 0.027523569821200182,
+          "mean_nprec_k12_only": 4.447259521999831,
+          "mean_nprec_shared": 4.485444695025533
+        }
+      }
+    },
+    "precursor": {
+      "N_E": 157,
+      "N_T": 28347,
+      "above_one": false,
+      "assessment": "inconclusive",
+      "ci": {
+        "assumes": "equal chance and independent false matches; not valid under clustered (protein-level) errors",
+        "method": "binomial_inversion_equal_chance",
+        "ucb95": 0.026522593320235755
+      },
+      "excluded_contaminant": 133,
+      "fdp_combined": 0.023606680718261143,
+      "fdp_lower": 0.005507998877350547,
+      "not_in_universe": 0
+    },
+    "universe": {
+      "excluded_contaminant": 116,
+      "k12_only": 35523,
+      "k12_only_precursors": 157980,
+      "k12_peptides": 151370,
+      "non_standard": 13,
+      "r": 0.30694455245353447,
+      "r_prec": 0.3043314936284567,
+      "shared": 115731,
+      "shared_exact": 115727,
+      "shared_mass_equivalent": 4,
+      "shared_precursors": 519105,
+      "shared_strain_db_only": 0
+    },
+    "warning_codes": [],
+    "warnings": []
+  },
+  "schema": "gippa-pilot-metrics/1",
+  "spec": "87e381908f8cb9e5020e57cc0dd349641425bcae",
+  "te1": {
+    "ci_high": 1.0,
+    "ci_low": 0.9998634528678406,
+    "ci_low_below_threshold": false,
+    "exact_inframe": 28129,
+    "exact_inframe_masked": 18,
+    "misses": {
+      "exact_other_class": {},
+      "exact_other_gene": 0,
+      "non_atg_nterm": 0,
+      "tolerant_only": 0,
+      "unplaced": {}
+    },
+    "n_misses": 0,
+    "n_peptides": 28129,
+    "non_atg_nterm": {
+      "misses": 0,
+      "peptides": 42
+    },
+    "passed": true,
+    "share_exact_inframe": 1.0,
+    "share_excluding_non_atg": {
+      "ci_high": 1.0,
+      "ci_low": 0.9998632487095012,
+      "k": 28087,
+      "n": 28087,
+      "value": 1.0
+    },
+    "share_without_q_at_cutoff": {
+      "ci_high": null,
+      "ci_low": null,
+      "k": 0,
+      "n": 0,
+      "pass_becomes_fail": false,
+      "q_crossings": 0,
+      "reason": "no_crossings",
+      "removed": null,
+      "value": null
+    },
+    "target_q_na": 0,
+    "threshold": 0.995,
+    "unknown_source": 0
+  },
+  "te1_a1_diagnostic": {
+    "exact_inframe_any_gene": 23517,
+    "n_peptides": 23704,
+    "share": {
+      "ci_high": 0.9931602567793911,
+      "ci_low": 0.9909023387345453,
+      "k": 23517,
+      "n": 23704,
+      "value": 0.9921110361120486
+    }
+  },
+  "te7": {
+    "diann": {
+      "l0": null,
+      "l3": null,
+      "nodes": [],
+      "reason": "not_given",
+      "status": "not_run"
+    },
+    "end_to_end": false,
+    "gippa": {
+      "differing": [],
+      "external_differing": [],
+      "figures_differing": [],
+      "n_excluded": 13439,
+      "n_external": 0,
+      "n_figures": 81,
+      "n_gate": 2786,
+      "status": "pass"
+    },
+    "pair": {
+      "ref": {
+        "cpu_classes_by_step": {},
+        "git_commit": "fa49b8f145ea4598a5f896f9d0b1956912fc5df3",
+        "hosts": [],
+        "job": "1914948",
+        "outdir": "/home/classes/bios/270/khoa/giap/local/runs/pilot/freeze/fa49b8f/out_a2"
+      },
+      "rep1": {
+        "cpu_classes_by_step": {},
+        "git_commit": "fa49b8f145ea4598a5f896f9d0b1956912fc5df3",
+        "hosts": [],
+        "job": "1915683",
+        "outdir": "/home/classes/bios/270/khoa/giap/local/runs/pilot/freeze/fa49b8f/out_a2_rep"
+      }
+    },
+    "schema": "gippa-pilot-te7/1",
+    "spec": "87e381908f8cb9e5020e57cc0dd349641425bcae"
+  },
+  "te_real": {
+    "inputs": {
+      "contaminants": {
+        "path": "/home/classes/bios/270/khoa/giap/local/db/contaminants/contaminants.fasta",
+        "sha256": "c0782146be6dad6ecf53e23e5a21a7ed4fea9b4802cb01e8d00091404ec66926"
+      },
+      "genes_a2": {
+        "path": "/home/classes/bios/270/khoa/giap/local/runs/pilot/freeze/fa49b8f/out_a2/tables/genes.tsv",
+        "sha256": "cbfc0f449e75cc533af70d2eab75006f48030d5d440746b3b7aa5f62dd5ac358"
+      },
+      "manifest_a1": {
+        "path": "/home/classes/bios/270/khoa/giap/local/runs/pilot/freeze/fa49b8f/out_a1/run_manifest.json",
+        "sha256": "1cc776f68b712a2e9445c33d0b8cb6406cced69f35a194edc6c6f2e9c15845d9"
+      },
+      "manifest_a2": {
+        "path": "/home/classes/bios/270/khoa/giap/local/runs/pilot/freeze/fa49b8f/out_a2/run_manifest.json",
+        "sha256": "b9be1de514aeb83b6af70e2085a6711dd854a52d439fba46e8f2271259aee756"
+      },
+      "peptides_a1": {
+        "path": "/home/classes/bios/270/khoa/giap/local/pilot/inputs/a1.tsv.gz",
+        "sha256": "81818184f0cd222f091ae6b835ff72cc5743b6ce7e6403e7a2cb1740bbf24f3a"
+      },
+      "peptides_a2": {
+        "path": "/home/classes/bios/270/khoa/giap/local/pilot/pass3/inputs/a2.tsv.gz",
+        "sha256": "d7f1ddf5d2badb0038b50f55a6d99b43be61ccc9e2c8fadff9f5a7ab0c405fbf"
+      },
+      "variants_a2": {
+        "path": "/home/classes/bios/270/khoa/giap/local/runs/pilot/freeze/fa49b8f/out_a2/tables/variants.tsv",
+        "sha256": "e8ded80c0d2cdf7ebefb7ee3176bab48b8b41bde25629ceceae856807740b550"
+      }
+    },
+    "schema": "gippa-pilot-te-real/1",
+    "spec": "87e381908f8cb9e5020e57cc0dd349641425bcae",
+    "te2": {
+      "breakdown": {
+        "aa_pos_1_unflagged": 0,
+        "alt_type": {},
+        "call": {},
+        "flags": {},
+        "n_alt": {},
+        "region": {},
+        "replicon": {}
+      },
+      "counts": {
+        "alt_sites": 0,
+        "alt_stop_codon": 0,
+        "high": 0,
+        "high_start_codon": 0,
+        "high_stop_codon": 0,
+        "violations": 0
+      },
+      "id_mixups": 0.0,
+      "status": "pass",
+      "vacuous": true,
+      "violations": [],
+      "warnings": []
+    },
+    "te3": {
+      "abundance": {
+        "abundance_type": "ibaq",
+        "holds": true,
+        "m": 20.9462,
+        "n_measured": 3077,
+        "n_r_measured": 53,
+        "percentile_rank": 0.9866753331166721,
+        "q3": 16.5114
+      },
+      "detection": {
+        "holds": true,
+        "share": {
+          "ci_high": 1.0,
+          "ci_low": 0.932418011423458,
+          "k": 53,
+          "n": 53,
+          "value": 1.0
+        }
+      },
+      "n_ribosomal": 53,
+      "secondary": {
+        "section_7_1_2": {
+          "abundance": {
+            "abundance_type": "ibaq",
+            "holds": true,
+            "m": 20.8272,
+            "n_measured": 3077,
+            "n_r_measured": 59,
+            "percentile_rank": 0.9847253818654533,
+            "q3": 16.5114
+          },
+          "detection": {
+            "holds": true,
+            "share": {
+              "ci_high": 1.0,
+              "ci_low": 0.9388706294732116,
+              "k": 59,
+              "n": 59,
+              "value": 1.0
+            }
+          },
+          "n_ribosomal": 59
+        },
+        "without_type_b": {
+          "abundance": {
+            "abundance_type": "ibaq",
+            "holds": true,
+            "m": 20.95635,
+            "n_measured": 3077,
+            "n_r_measured": 52,
+            "percentile_rank": 0.9866753331166721,
+            "q3": 16.5114
+          },
+          "detection": {
+            "holds": true,
+            "share": {
+              "ci_high": 1.0,
+              "ci_low": 0.9312077638761376,
+              "k": 52,
+              "n": 52,
+              "value": 1.0
+            }
+          },
+          "n_ribosomal": 52
+        }
+      },
+      "status": "pass"
+    },
+    "te4": {
+      "abundance_type": "ibaq",
+      "pairs": {
+        "atpA/atpD": {
+          "high": 1,
+          "log2_ratio": -0.11789999999999878,
+          "low": -1,
+          "reason": [],
+          "status": "pass",
+          "top3_log2_ratio": -0.10419999999999874
+        },
+        "rplL/rplJ": {
+          "high": 3,
+          "log2_ratio": -0.48019999999999996,
+          "low": 1,
+          "reason": [],
+          "status": "fail",
+          "top3_log2_ratio": -0.5307999999999993
+        }
+      },
+      "reason": [
+        "rplL/rplJ:fail"
+      ],
+      "secondary": {
+        "genes": {
+          "atpA": {
+            "n_observable_peptides": 28,
+            "n_peptides_unique": 26
+          },
+          "atpD": {
+            "n_observable_peptides": 24,
+            "n_peptides_unique": 25
+          },
+          "rplJ": {
+            "n_observable_peptides": 8,
+            "n_peptides_unique": 8
+          },
+          "rplL": {
+            "n_observable_peptides": 7,
+            "n_peptides_unique": 9
+          }
+        }
+      },
+      "status": "fail"
+    },
+    "te5": {
+      "A1": {
+        "counts": {
+          "absent": 0,
+          "bucket": 59,
+          "genome_exact": 0,
+          "labelled_unmapped": 0,
+          "match_other_entry": 0,
+          "placed_tolerant": 0
+        },
+        "families": {
+          "keratin": 48,
+          "trypsin": 11
+        },
+        "n_s": 59,
+        "secondary": {
+          "keratin_associated": {
+            "counts": {
+              "absent": 0,
+              "bucket": 0,
+              "genome_exact": 0,
+              "labelled_unmapped": 0,
+              "match_other_entry": 0,
+              "placed_tolerant": 0
+            },
+            "families": {
+              "keratin_associated": 0
+            },
+            "n_s": 0
+          }
+        },
+        "share_bucket": {
+          "ci_high": 1.0,
+          "ci_low": 0.9388706294732116,
+          "k": 59,
+          "n": 59,
+          "value": 1.0
+        },
+        "status": "pass"
+      },
+      "A2": {
+        "counts": {
+          "absent": 0,
+          "bucket": 61,
+          "genome_exact": 0,
+          "labelled_unmapped": 0,
+          "match_other_entry": 0,
+          "placed_tolerant": 0
+        },
+        "families": {
+          "keratin": 51,
+          "trypsin": 10
+        },
+        "n_s": 61,
+        "secondary": {
+          "keratin_associated": {
+            "counts": {
+              "absent": 0,
+              "bucket": 0,
+              "genome_exact": 0,
+              "labelled_unmapped": 0,
+              "match_other_entry": 0,
+              "placed_tolerant": 0
+            },
+            "families": {
+              "keratin_associated": 0
+            },
+            "n_s": 0
+          }
+        },
+        "share_bucket": {
+          "ci_high": 1.0,
+          "ci_low": 0.9407561321018871,
+          "k": 61,
+          "n": 61,
+          "value": 1.0
+        },
+        "status": "pass"
+      },
+      "status": "pass"
+    },
+    "warnings": []
+  },
+  "warnings": []
+}

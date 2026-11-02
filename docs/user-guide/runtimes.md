@@ -1,17 +1,34 @@
 # Runtimes
 
-This page will hold the measured wall-clock times of a standard `gippa run`, from
-`scripts/slurm/benchmark_standard.sbatch` (M10-12). Each row will give the median of three runs,
-with the node class, the date and the GIPPA commit. The numbers will come from
-`benchmarks/baseline.json › standard_run` and the M10-12 decision record.
+Measured wall-clock times of a `gippa run` from `scripts/slurm/benchmark_standard.sbatch` (M10-12).
+These numbers replace the estimates of the specification. The source is
+`benchmarks/baseline.json › standard_run`, and the decision record is
+[ADR-0072](../adr/ADR-0072-benchmark-baseline-1-0-0.md).
 
-**Status: pending (M10-12).** No standard-run benchmark has been committed yet. The table below is
-empty on purpose: GIPPA's documentation states no runtime that has not been measured.
+**This 1.0.0 baseline has 2 repeats per run, not 3.** The third repeat was cancelled (ADR-0072), so
+each time below is the mean of 2 runs, and the spread is (slowest − fastest) / mean. With 2 repeats a
+spread is a weak estimate, and the true variation may be larger.
 
-| Run | Median (h:mm) | Range of 3 runs | Peak memory (GiB) | Threads / memory | Node class | Date | Commit |
-|---|---|---|---|---|---|---|---|
-| E. coli K-12, all modules | pending (M10-12) | pending (M10-12) | pending (M10-12) | 16 / 64 GB | pending (M10-12) | — | — |
-| E. coli K-12, `--modules core` | pending (M10-12) | pending (M10-12) | pending (M10-12) | 16 / 64 GB | pending (M10-12) | — | — |
+| Run | Mean of 2 runs (h:mm) | Range of 2 runs | Spread | Peak memory, both runs (GiB) | Threads / memory | Node class | Date | Commit |
+|---|---|---|---|---|---|---|---|---|
+| E. coli K-12, standard (all modules, live Bakta full DB) | 3:41 | 3:28:22-3:52:43 | 11.0 % | 62.4, 49.2 | 16 / 64 GB | wheat | 2026-10-31 | fa49b8f |
+| E. coli K-12, `--modules core` (recorded Bakta JSON) | 3:01 | 3:00:51-3:01:36 | 0.4 % | 26.4, 37.9 | 16 / 64 GB | wheat | 2026-10-31 | fa49b8f |
+
+How to read the table:
+
+- Plan for about 3-4 h on 16 threads on similar hardware. The specification's estimates (35 min,
+  range 16-55, for a standard run; 25 min for core modules) were not met, and ADR-0072 waives that
+  range for 1.0.0.
+- 16 threads are 16 hardware threads (8 physical cores) of an Intel Xeon Gold 6148 node, shared
+  with other users' jobs; the node's median allocation was 60-80 of 80 CPUs.
+- Peak memory is the run's Slurm MaxRSS (`sacct`, sampled every 60 s). Why it differs so much
+  between repeats is not established, and whether the 62 GiB peak reflects a limit is not either:
+  treat 64 GB as the tested allocation, not as a measured requirement.
+- Both runs used simulated peptide tables. The `core` run differs from `standard` in two ways, fewer
+  modules and no Bakta run, so it is not "standard minus modules".
+- The baseline's simulated 5-Mb genome is the speed-loop reference, not a user number, so it is not
+  in this table. Its times are in ADR-0072 and `benchmarks/baseline.json`; its standard run is marked
+  noisy (spread 16.0 %, above the 15 % threshold).
 
 What affects the runtime, qualitatively:
 

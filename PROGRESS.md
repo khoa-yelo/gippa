@@ -566,3 +566,8 @@ Slurm jobs this session (2026-10-27): 1900002 (nightly, task 2 SIGTERM at 5 h 50
 | Pilot pass-1 arm A2 head job, at 0667e366, superseded by the re-run 1893676 (M10-04) | Nissle 1917 pilot | 1 h 52 min (01:52:31) | 1.1 GB (head) | barley-03, 4 CPU (1892236) |
 | Pilot pass-1 arm A2 head job, at 6f969ee7 (M10-04; accepted) | Nissle 1917 pilot | 1 h 44 min (01:43:45) | 1.2 GB (head) | wheat-08, 4 CPU (1893676) |
 | Pilot pass-1 compare (`gippa compare` + rule set C, M10-04) | A1 vs A2 | 17 s | 0.3 GB | wheat-08 (1894360) |
+| gippa run standard | k12 | 3:40:32 (median of 2; 3:28:22-3:52:43) (6.30 x the §13.2 estimate) | 62.4 GiB | wheat (1916711_0, 1916711_1) |
+| gippa run core | k12 | 3:01:14 (median of 2; 3:00:51-3:01:36) (7.25 x the §13.2 estimate) | 37.9 GiB | wheat (1916711_0, 1916711_1) |
+| gippa run standard | sim5m | 3:45:00 (median of 2; 3:27:01-4:02:58) (noisy (spread 16.0 % > 15 %); 6.43 x the §13.2 estimate) | 62.4 GiB | wheat (1916711_0, 1916711_1) |
+| gippa run core | sim5m | 3:29:06 (median of 2; 3:22:26-3:35:45) (8.36 x the §13.2 estimate) | 41.2 GiB | wheat (1916711_0, 1916711_1) |
+| Benchmark directory `$GIPPA_ROOT/bench/2026-10-31_fa49b8f` (M10-12; 2 repeats, ADR-0072; no `out/work` left) | — | — | 836 MB on disk | wheat-01 (array 1916711) |
