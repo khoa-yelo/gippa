@@ -1,1 +1,0 @@
-`pip install gippa` no longer resolves to pandas 3.1, which made `gippa run` and `gippa demo` crash on import (pandarallel, through codon-bias). The numeric dependencies now have upper bounds at the next release after the tested one.
