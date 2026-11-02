@@ -21,8 +21,9 @@ How to read the table:
 - 16 threads are 16 hardware threads (8 physical cores) of an Intel Xeon Gold 6148 node, shared
   with other users' jobs; the node's median allocation was 60-80 of 80 CPUs.
 - Peak memory is the run's Slurm MaxRSS (`sacct`, sampled every 60 s). Why it differs so much
-  between repeats is not established, and whether the 62 GiB peak reflects a limit is not either:
-  treat 64 GB as the tested allocation, not as a measured requirement.
+  between repeats is not established. Each run's Slurm limit was 64000 MiB (62.5 GiB), and the 62.4 GiB
+  peaks sit just under it, so they may reflect that limit rather than a need; this is not established
+  either. Treat 64 GB as the tested allocation, not as a measured requirement.
 - Both runs used simulated peptide tables. The `core` run differs from `standard` in two ways, fewer
   modules and no Bakta run, so it is not "standard minus modules".
 - The baseline's simulated 5-Mb genome is the speed-loop reference, not a user number, so it is not

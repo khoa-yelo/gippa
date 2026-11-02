@@ -248,9 +248,9 @@ All notable changes are recorded here by towncrier from `changelog.d/` fragments
     - six-frame novel ORFs: In the only real six-frame search so far (one *E. coli* Nissle 1917
       strain, three runs), GIPPA called no novel ORFs, but this does not show the strain has none:
       each ORF class had only 8 to 64 candidates that beat their decoys, and a class needs at least
-      100 such candidates ranked above every decoy before any ORF can reach q ≤ 0.01, so no call was
-      possible. The lowest q reached was 0.125 to 0.50 by class, the first segment of the known gene
-      *prfB* ranked first in its class and was still not called (q = 0.25), and this route's error
+      100 such candidates ranked above every decoy before any ORF can reach q ≤ 0.01, so no call was possible. Decoy wins also outnumbered target wins in every class, and
+      the lowest q reached was 0.125 to 0.50 by class. The first segment of the known gene *prfB* had the
+      best peptide score in its class and was still not called (q = 0.25), and this route's error
       rate has been measured only on simulated data.
     - runtime: a standard K-12 run on 16 threads and 64 GB takes about 3-4 h on FarmShare, not the
       16-55 min first estimated; see the

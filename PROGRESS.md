@@ -13,7 +13,7 @@ _Last updated: 2026-11-01 · session https://claude.ai/code/session_015h628ytdvW
 
 ## Milestone progress
 <!-- progress:start -->
-🟩 done (merged) · ⬛ superseded by an accepted ADR (counts as done) · 🟨 running (open branch) · ⬜ pending; designed issues: 191/199 done (96 %), 1 running · generated 2026-11-01 20:08 by `scripts/dev/progress_bars.py`
+🟩 done (merged) · ⬛ superseded by an accepted ADR (counts as done) · 🟨 running (open branch) · ⬜ pending; designed issues: 191/199 done (96 %), 1 running · generated 2026-11-01 20:26 by `scripts/dev/progress_bars.py`
 
 | Milestone | Progress | Done | Running | Pending |
 |---|---|---|---|---|
@@ -117,8 +117,10 @@ post-MVP hardening pass.
 ## Done (with evidence)
 
 Gate records M1-M10 (§13; readiness H1). F is the report-freeze commit `fa49b8f1`. The full-tier
-array at F is 1913506-1913520: 15 suites, 0 failed suites, 6 strict xfails. These statuses were
-compiled from the repository and the logs on 2026-11-01; they are not Khoa's verdicts.
+array at F is 1913506-1913520: 15 suites, 0 failed suites, 6 strict xfails in the junit roll-up (this
+excludes shard and confirm-run verdicts in merged records, which the M3 and M7 blocks name). These
+statuses were compiled from the repository and the logs on 2026-11-01; they are not Khoa's verdicts.
+Readiness H1 only counts these headings: it reads `pass` although M3, M7 and M9 are not recorded as met.
 
 ### Gate M1 (inputs and preflight)
 - **Criterion:** every preflight rule unit-tested (`T-PRE-01 … 25`, one pass and one fail each);
@@ -132,12 +134,12 @@ compiled from the repository and the logs on 2026-11-01; they are not Khoa's ver
 ### Gate M2 (annotation wrappers and benchmarks)
 - **Criterion:** a contract test per tool; full Bakta DB and full-DB fixtures (G17); nightly and
   weekly proposed for `scrontab`; measured runtimes per tool replace the estimates.
-- **Status:** met
+- **Status:** met with exceptions: no contract file for codon-bias (in-process); measured runtimes per tool not confirmed for every tool
 - **Evidence:** `tests/contract/` has a file for Bakta, UniOP, Promotech, Promoter Calculator,
   TerminatorNet, TransTermHP, BacTermFinder, OSTIR, geNOMAD, antiSMASH, miniprot, tblastn and blastp.
   G17: `tests/data/recorded/bakta/1.12.2-full/{k12,nissle,sim100k}`, `test_recording_bakta_full.py`,
   Slurm 1849096, 1849097. #107 (M2-21): nightly array, weekly, runtimes
-  (`tests/data/recorded/runtimes/`, `docs/user-guide/runtimes.md`). `scripts/slurm/nightly.scrontab`
+  (`tests/data/recorded/runtimes/` holds an M2-21 sacct file and a sim100k trace; the user guide has no per-tool numbers; see Measured numbers). `scripts/slurm/nightly.scrontab`
   is installed; at `fa49b8f1`, nightly 1914425_0 and weekly 1914510_0/_1 exited 0.
 - **Open items:** codon-bias runs in-process and has no `tests/contract/` file (unit:
   `tests/unit/test_codon_usage.py`). Weekly 1914510 reports live Bakta features vs recording `changed`.
@@ -213,7 +215,7 @@ compiled from the repository and the logs on 2026-11-01; they are not Khoa's ver
 
 ### Gate M9 (visualisation and report)
 - **Criterion:** Khoa approves the plot snapshots and report layout.
-- **Status:** met
+- **Status:** not recorded: Khoa's approval of the report layout (Questions row 18)
 - **Evidence:** PROGRESS › Answered by Khoa, 2026-10-24 (evening): "#325 M9-25 baselines approved". The
   #325 baselines are 37 PNGs and `tests/snapshot/report_structure.json`. #360 (V03) re-baseline also
   approved (`local/handoff/khoa_q.md`). Bar 26/26.
@@ -234,8 +236,8 @@ Gate M10: awaiting Khoa's review
 | TE2–TE5 are reported; failures explained | reported (1 not passed, explained) (metrics.json › checklist.4) | metrics.json › te_real.te2-te5.status; TE4 not passed: report_notes.md › Diagnosis: TE4 (metrics.json › checklist.4) |
 | Khoa has reviewed the report (§14.8 item 4) | awaiting | PROGRESS › Questions for Khoa row 17; no entry in PROGRESS › Answered by Khoa |
 
-**Report identity.** `validation/pilot/REPORT.md` sha256 `b55f1ecb9a2318984c83b259c5ef0b50ea9c8b4540efbbc2319a16bcd81cbe7f`; F = `fa49b8f145ea4598a5f896f9d0b1956912fc5df3`;
-packet: `validation/pilot/REPORT.md` via #524, round r1.
+**Report identity.** `validation/pilot/REPORT.md` sha256 `1bedca51b57e39fdb14e9f8438b0a6ef7cf515107aa7b0a38d1d4aa66e962191`; F = `fa49b8f145ea4598a5f896f9d0b1956912fc5df3`;
+packet: `$GIPPA_ROOT/review/m10-pilot/r1/` (#524), round r1.
 
 **§14.9 checklist.**
 - [x] Tests per layer: `tests/unit/test_m10_*` (13 issue prefixes, 72 files), contract `test_m10_03_diann_contract.py`,
@@ -256,8 +258,9 @@ packet: `validation/pilot/REPORT.md` via #524, round r1.
   `metrics.json` schema `gippa-pilot-metrics/1`.
 - [x] Benchmark (M10-12): array 1916711, `benchmarks/baseline.json` › `standard_run.wheat`, 4 cells, 2 repeats
   (ADR-0072; `sim5m` standard is noisy, spread 16.0 %).
-- [ ] Reviews: #314 records code and statistician reviews; the other M10 PRs were not audited; no review of
-  #524 is recorded (`local/runs/pilot/freeze/fa49b8f/STATUS.txt`: gate review open).
+- [ ] Reviews: #314 records code and statistician reviews; the other M10 PRs were not audited. #524: code
+  review 2026-11-01 (findings fixed or listed below); statistician approved #522's entrapment change with
+  a wording change, applied in `report_notes.md`.
 - [x] PROGRESS updated: this block.
 
 **Open items.**
@@ -268,12 +271,16 @@ packet: `validation/pilot/REPORT.md` via #524, round r1.
 - R2 not measured (ADR-0071). R7 waived, 2 repeats (ADR-0072).
 - Entrapment `inconclusive`; the rerun that counts ran from main `db3a95f1`, not F (#522).
 - S15 clean-up not run. M10-13 is post-gate, not blocking.
+- ADR-0072 lacks the core comparison against §13.2 and the memory reading M10-12 asks for; the runtimes page
+  gives the Slurm limit. Editing the ADR would change its hash in `metrics.json`.
+- CI on main at `a629525a`: macOS `test-compat` failed 2 tests in `test_m10_07_sbatch.py`; #524 skips them
+  there; the cause is not reproduced (docs/backlog.md).
 - ADRs still `proposed`: Needs Khoa: yes: ADR-0048, ADR-0051 (the pilot's DIA-NN 2.3.1), ADR-0060, ADR-0065;
   Needs Khoa: no: ADR-0053, ADR-0059, ADR-0062, ADR-0063, ADR-0066.
 
 ## In progress
 - Benchmark window: array 1916711 ended 2026-11-01 (repeats 1 and 2 on wheat-01; repeat 3 cancelled, ADR-0072).
-- Arm A4 six-frame run: exploratory and outside the gate.
+- Arm A4 six-frame run: exploratory and outside the gate. `gippa run` job 1921228 finished 2026-11-01, exit 0, 109 candidates, 0 called; no call was possible at its class sizes (statistician review; numbers in `docs/user-guide/makedb.md`).
 M7-01 residue aligner (branch m7/alignment, implementer step done 2026-10-21): `gippa.variants.align` (247 code lines, numba banded DP with traceback; M3 kernels untouched). Unit 42 passed, property 5 passed (also over 20 Hypothesis seeds), sim100k conformance passed (Slurm 1864764), fast suite 9180 passed (1864763), benchmark 100k tolerant hits 11.35 s < 30 s (1864766, wheat-08). Next: code review.
 M7-02 pileup and calls (branch m7/calls, stacked on m7/alignment; implementer step done 2026-10-21): `gippa.variants.pileup` (Support, eligible, pileup, sites; 242 non-blank code lines). Unit 68 passed, property 5 passed, fast suite 9253 passed (Slurm 1865145). Frameshift events travel in `pile.attrs["frameshifts"]`; per-codon ALT detail in internal `_ref_codon`/`_alts` columns (writers drop `_` columns, M7-03). Next: code review.
 - M8-02 (m8/fgsea, implementer step done, 103ebe6): fgsea 1.36.2 port I — `gippa.stats.fgsea`
@@ -692,7 +699,9 @@ Slurm jobs this session (2026-10-27): 1900002 (nightly, task 2 SIGTERM at 5 h 50
 | 14 | ADR-0047 tightening (M4-24 backlog): narrow the condition under which decoys above `q_value_max` leave the picked competition | tighten / leave | leave (ADR-0047 as accepted) | 2026-10-23 (#238) |
 | 15 | FYI, reversible: MVP-04 gate 13 re-stated before any number (decision 20). "≥ 4 of 6 islands" was infeasible (0/11 seeds); now one 20-TU high island gated (11/11), three 8-TU lows exempt (structural cap) | ok / revise | decision 20 (in use) | 2026-10-23 (#258) |
 | 16 | M10-14 K2: after the report-freeze reruns, delete the DIA-NN raw reports and predicted libraries (the converted tables, hashes and counts stay)? | delete / keep | keep them until you say so (nothing irreversible) | 2026-10-24 (#308) |
-| 17 | M10 pilot report review, round r1. M10 pilot report verdict: accept, accept with changes, or reject? `validation/pilot/REPORT.md` sha256 `b55f1ecb9a2318984c83b259c5ef0b50ea9c8b4540efbbc2319a16bcd81cbe7f`, via #524 (§14.8 item 4) | accept / accept with changes / reject | none: a §14.8 checkpoint has no default; the M10 gate stays awaiting review | 2026-11-01 (#524) |
+| 17 | M10 pilot report review, round r1. M10 pilot report verdict: accept, accept with changes, or reject? `validation/pilot/REPORT.md` sha256 `1bedca51b57e39fdb14e9f8438b0a6ef7cf515107aa7b0a38d1d4aa66e962191`, via #524 (§14.8 item 4) | accept / accept with changes / reject | none: a §14.8 checkpoint has no default; the M10 gate stays awaiting review | 2026-11-01 (#524) |
+| 18 | Gate M9: the 2026-10-24 approval names the #325 baselines, and #348 later changed `report_structure.json` with no approval found. Accept the current report layout for 1.0.0? | accept / changes | none: the gate reads not recorded until answered | 2026-11-01 (#524) |
+| 19 | Gates M3 and M7 are not recorded as met: attack `flat_c200` FDP over its bound with no contaminant-weight decision; G1 and A6a at F on the pre-ADR-0049 scope. Ship 1.0.0 with both disclosed as known limits? | ship and disclose / fix first | none: release decision | 2026-11-01 (#524) |
 
 ## Environment notes
 - capabilities: allocation cpus=8, mem=31.2 GB, time left at 16:32 UTC=4:18; local/ used=1.75 GB;
@@ -730,4 +739,90 @@ Slurm jobs this session (2026-10-27): 1900002 (nightly, task 2 SIGTERM at 5 h 50
 | gippa run core | k12 | 3:01:14 (median of 2; 3:00:51-3:01:36) (7.25 x the §13.2 estimate) | 37.9 GiB | wheat (1916711_0, 1916711_1) |
 | gippa run standard | sim5m | 3:45:00 (median of 2; 3:27:01-4:02:58) (noisy (spread 16.0 % > 15 %); 6.43 x the §13.2 estimate) | 62.4 GiB | wheat (1916711_0, 1916711_1) |
 | gippa run core | sim5m | 3:29:06 (median of 2; 3:22:26-3:35:45) (8.36 x the §13.2 estimate) | 41.2 GiB | wheat (1916711_0, 1916711_1) |
+| terminatornet_plan (standard) | k12 | 0:00:02 | 81.9 MB | wheat (1916711_0) |
+| genomad (standard) | k12 | 0:05:31 | 4.5 GB | wheat (1916711_0) |
+| bakta (standard) | k12 | 0:25:35 | 8.1 GB | wheat (1916711_0) |
+| terminatornet_chunk (38 tasks) (standard) | k12 | 0:14:13 | 421.7 MB | wheat (1916711_0) |
+| antismash (standard) | k12 | 0:01:04 | 932.5 MB | wheat (1916711_0) |
+| parse_bakta (standard) | k12 | 0:00:10 | 397 MB | wheat (1916711_0) |
+| uniop_input (standard) | k12 | 0:00:10 | 365.2 MB | wheat (1916711_0) |
+| region_layer (standard) | k12 | 0:00:11 | 358.8 MB | wheat (1916711_0) |
+| transterm_input (standard) | k12 | 0:00:11 | 343 MB | wheat (1916711_0) |
+| sixframe_index (standard) | k12 | 0:00:15 | 542.7 MB | wheat (1916711_0) |
+| codon_usage (standard) | k12 | 0:00:18 | 607.2 MB | wheat (1916711_0) |
+| uniop (standard) | k12 | 0:00:15 | 143.7 MB | wheat (1916711_0) |
+| map_exact (standard) | k12 | 0:00:11 | 471.1 MB | wheat (1916711_0) |
+| ostir_input (standard) | k12 | 0:00:33 | 387.5 MB | wheat (1916711_0) |
+| promoter_windows (standard) | k12 | 0:00:37 | 1.1 GB | wheat (1916711_0) |
+| transtermhp (standard) | k12 | 0:00:25 | 34.6 MB | wheat (1916711_0) |
+| operon_pairs (standard) | k12 | 0:00:42 | 378.1 MB | wheat (1916711_0) |
+| map_tolerant (standard) | k12 | 0:01:23 | 896.3 MB | wheat (1916711_0) |
+| promotech (10 tasks) (standard) | k12 | 0:02:45 | 7.5 GB | wheat (1916711_0) |
+| promoter_calculator (27 tasks) (standard) | k12 | 0:26:22 | 92.2 MB | wheat (1916711_0) |
+| placement (standard) | k12 | 0:00:18 | 539.1 MB | wheat (1916711_0) |
+| terminatornet_merge (standard) | k12 | 0:00:03 | 106.2 MB | wheat (1916711_0) |
+| loci (standard) | k12 | 0:00:25 | 526.2 MB | wheat (1916711_0) |
+| promoter_layer (standard) | k12 | 0:00:27 | 777.6 MB | wheat (1916711_0) |
+| terminator_layer (standard) | k12 | 0:00:28 | 337.5 MB | wheat (1916711_0) |
+| variants_step (standard) | k12 | 0:00:59 | 1 GB | wheat (1916711_0) |
+| ostir (standard) | k12 | 0:00:15 | 382.4 MB | wheat (1916711_0) |
+| rbs_layer (standard) | k12 | 0:00:08 | 323.9 MB | wheat (1916711_0) |
+| tx_layer (standard) | k12 | 0:00:10 | 448.3 MB | wheat (1916711_0) |
+| context_layers (standard) | k12 | 0:00:25 | 638.6 MB | wheat (1916711_0) |
+| gene_table (standard) | k12 | 0:00:09 | 510.9 MB | wheat (1916711_0) |
+| detectability (standard) | k12 | 0:00:10 | 403.6 MB | wheat (1916711_0) |
+| novel_candidates (standard) | k12 | 0:00:30 | 622.1 MB | wheat (1916711_0) |
+| ostir_novel (standard) | k12 | 0:00:08 | 333 MB | wheat (1916711_0) |
+| novel_rbs_layer (standard) | k12 | 0:00:07 | 342.6 MB | wheat (1916711_0) |
+| context_stats (standard) | k12 | 0:00:59 | 964 MB | wheat (1916711_0) |
+| operons_step (standard) | k12 | 0:01:02 | 651.4 MB | wheat (1916711_0) |
+| function_step (standard) | k12 | 0:01:35 | 794.1 MB | wheat (1916711_0) |
+| promotech_novel (2 tasks) (standard) | k12 | 0:01:41 | 7.5 GB | wheat (1916711_0) |
+| determinants_step (standard) | k12 | 0:10:09 | 4 GB | wheat (1916711_0) |
+| novel_promoter_layer (standard) | k12 | 0:00:07 | 464.9 MB | wheat (1916711_0) |
+| novel_orfs (standard) | k12 | 0:00:24 | 806.2 MB | wheat (1916711_0) |
+| sensitivity (standard) | k12 | 0:04:41 | 1.1 GB | wheat (1916711_0) |
+| plots (standard) | k12 | 0:01:29 | 624.1 MB | wheat (1916711_0) |
+| report_html (standard) | k12 | 0:00:09 | 570.2 MB | wheat (1916711_0) |
+| terminatornet_plan (core) | k12 | 0:00:02 | 106.3 MB | wheat (1916711_1) |
+| parse_bakta (core) | k12 | 0:00:07 | 393.2 MB | wheat (1916711_1) |
+| terminatornet_chunk (38 tasks) (core) | k12 | 0:13:05 | 422.5 MB | wheat (1916711_1) |
+| region_layer (core) | k12 | 0:00:12 | 343.9 MB | wheat (1916711_1) |
+| uniop_input (core) | k12 | 0:00:13 | 374.7 MB | wheat (1916711_1) |
+| transterm_input (core) | k12 | 0:00:09 | 304.9 MB | wheat (1916711_1) |
+| sixframe_index (core) | k12 | 0:00:15 | 535.5 MB | wheat (1916711_1) |
+| codon_usage (core) | k12 | 0:00:21 | 606.3 MB | wheat (1916711_1) |
+| uniop (core) | k12 | 0:00:13 | 144.2 MB | wheat (1916711_1) |
+| map_exact (core) | k12 | 0:00:11 | 461.9 MB | wheat (1916711_1) |
+| ostir_input (core) | k12 | 0:00:34 | 386.6 MB | wheat (1916711_1) |
+| transtermhp (core) | k12 | 0:00:25 | 34.2 MB | wheat (1916711_1) |
+| promoter_windows (core) | k12 | 0:00:42 | 1.1 GB | wheat (1916711_1) |
+| operon_pairs (core) | k12 | 0:00:37 | 374.6 MB | wheat (1916711_1) |
+| map_tolerant (core) | k12 | 0:01:23 | 911.3 MB | wheat (1916711_1) |
+| promotech (10 tasks) (core) | k12 | 0:02:48 | 7.5 GB | wheat (1916711_1) |
+| promoter_calculator (27 tasks) (core) | k12 | 0:28:03 | 92 MB | wheat (1916711_1) |
+| terminatornet_merge (core) | k12 | 0:00:05 | 104.1 MB | wheat (1916711_1) |
+| placement (core) | k12 | 0:00:22 | 555.1 MB | wheat (1916711_1) |
+| promoter_layer (core) | k12 | 0:00:33 | 845.7 MB | wheat (1916711_1) |
+| terminator_layer (core) | k12 | 0:00:35 | 339 MB | wheat (1916711_1) |
+| loci (core) | k12 | 0:00:28 | 532.4 MB | wheat (1916711_1) |
+| variants_step (core) | k12 | 0:01:11 | 1 GB | wheat (1916711_1) |
+| ostir (core) | k12 | 0:00:17 | 385.8 MB | wheat (1916711_1) |
+| rbs_layer (core) | k12 | 0:00:11 | 323.7 MB | wheat (1916711_1) |
+| tx_layer (core) | k12 | 0:00:11 | 414.6 MB | wheat (1916711_1) |
+| context_layers (core) | k12 | 0:00:27 | 688.7 MB | wheat (1916711_1) |
+| gene_table (core) | k12 | 0:00:09 | 508.8 MB | wheat (1916711_1) |
+| detectability (core) | k12 | 0:00:11 | 409.4 MB | wheat (1916711_1) |
+| novel_candidates (core) | k12 | 0:00:37 | 625.7 MB | wheat (1916711_1) |
+| ostir_novel (core) | k12 | 0:00:07 | 334.2 MB | wheat (1916711_1) |
+| context_stats (core) | k12 | 0:00:50 | 949.6 MB | wheat (1916711_1) |
+| novel_rbs_layer (core) | k12 | 0:00:08 | 338.9 MB | wheat (1916711_1) |
+| operons_step (core) | k12 | 0:00:59 | 663.1 MB | wheat (1916711_1) |
+| promotech_novel (2 tasks) (core) | k12 | 0:01:44 | 7.5 GB | wheat (1916711_1) |
+| determinants_step (core) | k12 | 0:12:27 | 4 GB | wheat (1916711_1) |
+| novel_promoter_layer (core) | k12 | 0:00:08 | 507.7 MB | wheat (1916711_1) |
+| novel_orfs (core) | k12 | 0:00:27 | 803.9 MB | wheat (1916711_1) |
+| sensitivity (core) | k12 | 0:03:55 | 738.1 MB | wheat (1916711_1) |
+| plots (core) | k12 | 0:01:06 | 619.4 MB | wheat (1916711_1) |
+| report_html (core) | k12 | 0:00:07 | 417.3 MB | wheat (1916711_1) |
 | Benchmark directory `$GIPPA_ROOT/bench/2026-10-31_fa49b8f` (M10-12; 2 repeats, ADR-0072; no `out/work` left) | — | — | 836 MB on disk | wheat-01 (array 1916711) |
