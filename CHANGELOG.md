@@ -245,6 +245,10 @@ All notable changes are recorded here by towncrier from `changelog.d/` fragments
     - the V4 locus browser (igv-reports) and the V9 mass-fraction treemap are not built, so 16
       plots are made instead of 18;
     - no RO-Crate export;
+    - runtime: a standard K-12 run on 16 threads and 64 GB takes about 3-4 h on FarmShare, not the
+      16-55 min first estimated; see the
+      [runtimes page](https://github.com/khoa-yelo/gippa/blob/main/docs/user-guide/runtimes.md) and
+      [ADR-0072](https://github.com/khoa-yelo/gippa/blob/main/docs/adr/ADR-0072-benchmark-baseline-1-0-0.md);
     - mapping FDR: on a same-database search (`--search-db same`) exact matches are exempt from
       decoy estimation, so GIPPA adds no estimate of identification error; it comes from your
       search engine. The pilot's mapping FDR on arm A2 was therefore not measured, and the release
