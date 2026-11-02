@@ -139,7 +139,7 @@ in the [configuration reference](../reference/configuration.md).
 |---|---|---|
 | `--threads` | 16 (config `threads`) | threads; the upper limit per task |
 | `--memory` | `64.GB` | memory for the workflow |
-| `--profile` | `farmshare,apptainer` | comma-joined Nextflow profiles (see [Install](../get-started/install.md#execution-profiles)) |
+| `--profile` | `auto` (detects one and prints its choice) | comma-joined Nextflow profiles (see [Install](../get-started/install.md#execution-profiles)) |
 | `--resume` | off | resume a stopped run in the same `--outdir` |
 
 On a local executor (no `farmshare` or `slurm` profile), a `threads` you did not set is capped to
