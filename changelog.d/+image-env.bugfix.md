@@ -1,1 +1,0 @@
-The published tool images now run under `--profile apptainer`: their conda environment is on `PATH` without the entrypoint, the sharded TerminatorNet processes are pinned to the image, and the Promotech image has the `libGL` that its Qt import needs.

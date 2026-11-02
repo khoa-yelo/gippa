@@ -4,7 +4,7 @@ All notable changes are recorded here by towncrier from `changelog.d/` fragments
 
 <!-- towncrier release notes start -->
 
-## GIPPA 1.0.0 (2026-10-29)
+## GIPPA 1.0.0 (2026-11-02)
 
 ### Features
 
@@ -199,7 +199,8 @@ All notable changes are recorded here by towncrier from `changelog.d/` fragments
   `db_manifest.json`; a full disk or quota gives the usual disk-full advice. A directory database is
   swapped by renaming the old copy aside to `<path>.gippa-old` first, so a failed swap keeps the old
   copy, or the next `gippa setup` recovers it. ([#466](https://github.com/khoa-yelo/gippa/pull/466))
-- - `gippa report OUT` on a local run (no `resolved_config.yaml`) now takes the run's config, modules included, from `run_manifest.json`, so a `--modules core` run's page is byte-identical to the run's own report.
+- `gippa setup` with a `--db-dir` that cannot be created, or an existing one it cannot write to, now stops with one line (`cannot create --db-dir <path>: <reason>` or `cannot write to <path>: <reason>`) and exit 1 before printing the plan, instead of an internal error; a full disk while creating it is exit 2. The free-space line names the existing directory it measured ([#503](https://github.com/khoa-yelo/gippa/issues/503)). A failed `apptainer pull` or `docker pull` is retried once, its message keeps the last stderr lines, and setup ends with a line naming the images that were not pulled and saying to rerun `gippa setup`; images that hit a full disk or a digest mismatch point to their messages above instead ([#504](https://github.com/khoa-yelo/gippa/issues/504)). ([#506](https://github.com/khoa-yelo/gippa/pull/506))
+- `gippa report OUT` on a local run (no `resolved_config.yaml`) now takes the run's config, modules included, from `run_manifest.json`, so a `--modules core` run's page is byte-identical to the run's own report.
 - BacTermFinder results are now read from the table the tool actually writes (`<genome>_mean.csv`, with `SampleName` and `probability_mean` columns), so runs with `annotation.terminators.bactermfinder` enabled no longer fail when their output is parsed. Contig names that contain underscores are handled, and window coordinates are kept as written. Every scanned window is still reported; no probability cut-off is applied yet.
 - FarmShare profile: barley-03 joins barley-01 and rye-02 on the slow-node exclusion list (quick Python steps stalled there for about 20 minutes at 1 % CPU).
 - The TransTermHP terminator cross-check no longer fails on a complete circular genome with a gene across the origin: such a gene is now passed to TransTermHP as two in-range pieces instead of one with an end past the replicon length.
@@ -223,6 +224,10 @@ All notable changes are recorded here by towncrier from `changelog.d/` fragments
   for V15 is titled "Determinants of abundance".
 - `gippa setup`, preflight and `gippa run` now use one Apptainer image cache: setup's Bakta and antiSMASH downloaders look for their image in `--cache-dir` (else the default cache), and `gippa run` exports `NXF_APPTAINER_CACHEDIR` to the cache preflight checked when it is not set, so `DIR/containers` works without any variable. `gippa setup --images` pulls the images before it downloads the databases, so an Apptainer-only host installs Bakta (and antiSMASH) in one run. `gippa preflight --profile` checks the installed tools as `gippa run --profile` does, and `gippa run` without Nextflow points at the install page.
 - `run_manifest.json` now records as `detection_tier` the tier that detection actually used, the same as `genes.tsv`. It no longer records preflight's provisional tier. Detection warnings such as `decoy_unscored` now appear in the manifest's `warnings`.
+- The published tool images now run under `--profile apptainer`: their conda environment is on `PATH` without the entrypoint, the sharded TerminatorNet processes are pinned to the image, and the Promotech image has the `libGL` that its Qt import needs.
+- `gippa run` on a local executor caps the default `threads` to the CPUs available, so a machine with fewer than 16 CPUs no longer aborts with "Task requirement exceeds available CPUs" ([issue 514](https://github.com/khoa-yelo/gippa/issues/514)); a value you set is used as given. antiSMASH passes `--databases` only when `DB_DIR/antismash` has content and otherwise uses the databases in its image, which is what a fresh `gippa setup` records ([issue 515](https://github.com/khoa-yelo/gippa/issues/515)). `gippa setup` no longer prints a doubled `v` in versions such as `v1.12.2`.
+- `gippa setup` now falls back to the Promotech authors' GitHub LFS copy of the RF-HOT model (on `media.githubusercontent.com`, same SHA-256 pin) when `www.cs.mun.ca` cannot be reached, and records the URL that served it; a checksum mismatch never falls through to the other source. When both sources fail, the message names both hosts and how to install the model by hand ([issue 508](https://github.com/khoa-yelo/gippa/issues/508), ADR-0069).
+- `pip install gippa` no longer resolves to pandas 3.1, which made `gippa run` and `gippa demo` crash on import (pandarallel, through codon-bias). The numeric dependencies now have upper bounds at the next release after the tested one.
 
 ### Documentation
 
@@ -232,6 +237,8 @@ All notable changes are recorded here by towncrier from `changelog.d/` fragments
 
 - Add an advisory `docker-smoke` workflow (real MINIPROT and TBLASTN under `-profile test,docker` on
   path-filtered pull requests and weekly) and the platforms support matrix in the user guide.
+- Pin the published GHCR images of Promotech, Promoter Calculator, TerminatorNet, BacTermFinder, OSTIR and fgsea by digest.
+- The docs and the setup plan describe the published images: their sizes are in the plan total, and the pre-publish warnings are gone.
 - Known limitations of version 1:
     - licences: geNOMAD is for non-commercial use only. `gippa setup` downloads its database
       unless you pass `--no-genomad` (or `--minimal`). KEGG is for academic use;
