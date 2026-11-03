@@ -29,7 +29,7 @@ concurrency:
 
 jobs:
   verify:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     env:
       VERSION: ${{ inputs.version }}
       DRY_RUN: ${{ inputs.dry_run }}
@@ -130,7 +130,7 @@ jobs:
 
   build:
     needs: verify
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     env:
       VERSION: ${{ inputs.version }}
       DRY_RUN: ${{ inputs.dry_run }}
@@ -172,7 +172,7 @@ jobs:
   publish:
     needs: build
     if: ${{ !inputs.dry_run && github.actor == 'khoa-yelo' }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     env:
       VERSION: ${{ inputs.version }}
       DRY_RUN: ${{ inputs.dry_run }}
@@ -212,7 +212,7 @@ jobs:
   github-release:
     needs: publish
     if: ${{ !inputs.dry_run && github.actor == 'khoa-yelo' && inputs.target == 'pypi' }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     env:
       VERSION: ${{ inputs.version }}
       DRY_RUN: ${{ inputs.dry_run }}
@@ -236,7 +236,7 @@ jobs:
   summary:
     needs: [verify, build, publish, github-release]
     if: ${{ always() }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     env:
       VERSION: ${{ inputs.version }}
       DRY_RUN: ${{ inputs.dry_run }}
