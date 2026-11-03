@@ -257,6 +257,10 @@ All notable changes are recorded here by towncrier from `changelog.d/` fragments
     - variant calling: G1 (F1 on simulated variants) and A6a were last measured at the release
       commit on the scope before ADR-0049 (G1 0.869, below 0.9); the accepted scope has not been
       rerun at that commit (gate M7 not met).
+    - calibration: the fast-tier nightly calibration did not run on the release commit (cluster
+      nodes); it last passed at the report-freeze commit, the full tier passed on the release code,
+      and readiness row R3 is waived for 1.0.0
+      ([ADR-0073](https://github.com/khoa-yelo/gippa/blob/main/docs/adr/ADR-0073-r3-nightly-calibration-waiver-1-0-0.md)).
     - six-frame novel ORFs: In the only real six-frame search so far (one *E. coli* Nissle 1917
       strain, three runs), GIPPA called no novel ORFs, but this does not show the strain has none:
       each ORF class had only 8 to 64 candidates that beat their decoys, and a class needs at least
