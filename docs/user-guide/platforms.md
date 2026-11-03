@@ -2,15 +2,15 @@
 
 Where GIPPA is tested and which execution profiles are supported. Each cell is one of:
 
-- **tested**: run by a CI job (GitHub Actions, `.github/workflows/`) or a FarmShare Slurm suite
-  (`scripts/slurm/`) named in the cell;
+- **tested**: run by a CI job (GitHub Actions, `.github/workflows/`) or by one of the developers'
+  scheduled Slurm suites (`nightly`, `weekly`) named in the cell;
 - **smoke-tested**: a reduced run on that platform (a few real tools, not the whole pipeline);
 - **untested**: expected to work in principle, but nothing in GIPPA's test suites runs it.
 
 <!-- --8<-- [start:platforms] -->
 | Platform | Python package (`gippa preflight`, `convert`, `report`, `compare`) | Full pipeline |
 |---|---|---|
-| Linux x86-64 + Apptainer (FarmShare) | tested (`test`, `package` on ubuntu; `nightly`) | tested (`-profile farmshare_local,apptainer`; `nightly`, `weekly`) |
+| Linux x86-64 + Apptainer (Slurm) | tested (`test`, `package` on ubuntu; `nightly`) | tested (`nightly`, `weekly`) |
 | Linux x86-64 + conda | tested (`test`, `test-compat` on ubuntu) | tested for the conda-only tools only (prebuilt micromamba envs; `nightly`) |
 | Linux x86-64 + Docker | tested (`test`, `package` on ubuntu) | smoke-tested (`docker-smoke`: MINIPROT and TBLASTN under `-profile test,docker`; `params.db_dir` readable in the BAKTA container) |
 | macOS (arm64 / x86-64) | tested (`test-compat`, macOS, Python 3.12) | untested; Docker Desktop runs the amd64 images under emulation |
@@ -18,7 +18,7 @@ Where GIPPA is tested and which execution profiles are supported. Each cell is o
 <!-- --8<-- [end:platforms] -->
 
 **Linux with glibc < 2.28** (CentOS or RHEL 7): the Python package install is smoke-tested with
-`pip install --prefer-binary gippa` on Stanford Sherlock (glibc 2.17, Python 3.12), where
+`pip install --prefer-binary gippa` on a CentOS 7 cluster (glibc 2.17, Python 3.12), where
 `gippa demo` passed. The older numpy, numba, pyarrow and lightgbm versions pip picks there are
 not part of the tested matrix. See
 [Install › The five steps](../get-started/install.md#the-five-steps).
@@ -34,9 +34,8 @@ not part of the tested matrix. See
   100-kb synthetic test genome and checks that the outputs have the format GIPPA's parsers read.
   It runs on pull requests that change `workflow/` and once a week on main. It is advisory: a
   registry outage or rate limit does not block a merge.
-- **FarmShare suites.** `nightly` (`scripts/slurm/nightly.sbatch`) and `weekly`
-  (`scripts/slurm/weekly.sbatch`) run the real pipeline with `gippa run` inside a Slurm allocation;
-  user runs on FarmShare go through `scripts/slurm/gippa_run.sbatch`.
+- **Slurm suites.** `nightly` and `weekly` run the real pipeline with `gippa run` and Apptainer
+  inside a Slurm allocation on a Linux x86-64 cluster.
 
 ## Profiles and tools outside the containers
 
@@ -61,7 +60,7 @@ not part of the tested matrix. See
   daemon is not reachable, or when the `docker` client is older than 20.10 (its `docker run`
   has no `--pull` option).
 - **podman.** With the `podman-docker` package, `docker` runs podman 3.0 or later, which has
-  `--pull=never` and `image inspect`. This is best effort and untested: no CI job or FarmShare
+  `--pull=never` and `image inspect`. This is best effort and untested: no CI job or Slurm
   suite runs podman.
 - **Your own `docker.runOptions`.** A `docker.runOptions` set in a `nextflow.config` in the
   launch directory (for `gippa run`, that is `<outdir>/nextflow.config`: Nextflow starts there)

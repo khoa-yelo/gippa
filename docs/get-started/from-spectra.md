@@ -18,7 +18,7 @@ pilot did not run a route, this page says so.
 ## Choose a route
 
 | Route | Input spectra | Typical use | `gippa convert --from` | What it feeds in GIPPA | Pilot run time |
-|---|---|---|---|---|---|
+|---|---|---|
 | [A. DIA-NN against the called genes](#a-dia-nn-against-the-called-genes) | DIA | the default for an annotated genome | `diann` | every analysis: gene-level FDR (`decoy_picked`), abundance, regions, islands, operons, function, variants | search 14–42 min; GIPPA 1.6–4.5 h |
 | [B. DIA-NN against six-frame ORFs](#b-dia-nn-against-six-frame-orfs) | DIA | finding unannotated genes (novel ORFs) | `diann` | as A, plus novel-ORF class FDR | not run in the pilot |
 | [C. De novo with Cascadia](#c-de-novo-with-cascadia) | DIA | no usable database: a poorly annotated or divergent strain | `cascadia` | detection (`two_peptide` tier), novel ORFs, variants; no abundance | GIPPA 3.0 h (de novo step not timed) |
@@ -267,24 +267,20 @@ estimates gene-level FDR itself. Not run in the pilot.
 
 ## Run times and sizes from the pilot
 
-| Step | Arm | Recorded | Where |
-|---|---|---|---|
-| download, 3 runs (about 1.0 GB each, zipped) | all | 23 min, 2.9 GB | Slurm 1879859 |
-| Bakta 1.12.2, full database | all | 1 h 43 min, 18 CPUs | Slurm 1895437 |
-| `gippa makedb` | A2 | 23 s (job total) | Slurm 1895583 |
-| DIA-NN 2.3.1, 3 runs | A2 | 42 min, 16 CPUs (pass 3); 14 min, 17 threads, 6.4 GiB (pass 1) | Slurm 1895586, 1879956 |
-| `gippa convert --from diann` | A1, A2 | 17–28 s, 0.3 GiB | Slurm 1880219, 1880220, 1895670 |
-| `gippa convert --from cascadia` | A3 | 25 s, 2 CPUs | Slurm 1894680 |
-| `gippa run` | A1 | 1 h 37 min (pass 1), 4 h 30 min (pass 3) | Slurm 1892719, 1896178 |
-| `gippa run` | A2 | 1 h 44 min (pass 1), 4 h 00 min (pass 3) | Slurm 1893676, 1895673 |
-| `gippa run` | A3 | 3 h 01 min | Slurm 1894682 |
+| Step | Arm | Recorded |
+|---|---|---|
+| download, 3 runs (about 1.0 GB each, zipped) | all | 23 min, 2.9 GB |
+| Bakta 1.12.2, full database | all | 1 h 43 min, 18 CPUs |
+| `gippa makedb` | A2 | 23 s (job total) |
+| DIA-NN 2.3.1, 3 runs | A2 | 42 min, 16 CPUs (pass 3); 14 min, 17 threads, 6.4 GiB (pass 1) |
+| `gippa convert --from diann` | A1, A2 | 17–28 s, 0.3 GiB |
+| `gippa convert --from cascadia` | A3 | 25 s, 2 CPUs |
+| `gippa run` | A1 | 1 h 37 min (pass 1), 4 h 30 min (pass 3) |
+| `gippa run` | A2 | 1 h 44 min (pass 1), 4 h 00 min (pass 3) |
+| `gippa run` | A3 | 3 h 01 min |
 
-Every `gippa run` used 14 CPUs and 54 GB, all modules, and the default seed. On FarmShare the
-pilot ran these steps with `scripts/slurm/diann_pilot.sbatch` (DIA-NN),
-`scripts/slurm/mzml_pilot.sbatch` and `scripts/slurm/denovo_pilot.sbatch` (de novo),
-`scripts/slurm/diann_convert.sbatch` and `scripts/slurm/cascadia_convert.sbatch` (conversion),
-and `scripts/slurm/gippa_run.sbatch`. The step-by-step runbook is `validation/pilot/reproduce.md`.
-These scripts carry FarmShare paths, so copy them as a template, not as is.
+Every `gippa run` used 14 CPUs and 54 GB, all modules, and the default seed; each step ran as a
+Slurm job. The step-by-step runbook is `validation/pilot/reproduce.md`.
 
 ## Licences of the search tools
 

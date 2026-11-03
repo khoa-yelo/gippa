@@ -26,8 +26,8 @@ and an HTML report, each claim with its own error control.*
 
 ## Status
 
-`1.0.0` is the first release. The full pipeline is tested on Stanford FarmShare (Slurm and
-Apptainer), on the synthetic demo below and on
+`1.0.0` is the first release. The full pipeline is tested on Linux x86-64 with Slurm and
+Apptainer, on the synthetic demo below and on
 the E. coli Nissle 1917 pilot (PXD078459; [`validation/pilot/README.md`](validation/pilot/README.md)).
 Pending:
 
@@ -38,9 +38,9 @@ Genetic codes 11 (default), 4 (Mycoplasma and Spiroplasma) and 25 (SR1 and Graci
 supported through `annotation.translation_table`
 ([Inputs › Genetic code](docs/user-guide/inputs.md#genetic-code)).
 
-Off FarmShare, `gippa preflight`, `convert`, `compare` and `report` work anywhere; until the first
-image publish, `gippa run` under `--profile docker` or `apptainer` alone stops in preflight for the
-four tools above ([Install](docs/get-started/install.md)).
+`gippa preflight`, `convert`, `compare` and `report` need only the Python package. `gippa run`
+also needs Nextflow, Java 17 or newer, Docker or Apptainer, the tool images and the databases
+([Install](docs/get-started/install.md), [Platforms](docs/user-guide/platforms.md)).
 
 ## Install
 
@@ -59,7 +59,8 @@ python3 -m venv .venv && . .venv/bin/activate && pip install .
 ```
 
 `gippa run` also needs Nextflow (with Java 17+) and Docker or Apptainer; see
-[Install](docs/get-started/install.md) for the prerequisites, profiles and the FarmShare setup.
+[Install](docs/get-started/install.md) for the prerequisites, the execution profiles and running
+on a Slurm cluster.
 
 ## Quickstart
 
@@ -89,16 +90,19 @@ The build specification is [`GIPPA_SPEC.md`](GIPPA_SPEC.md); progress is tracked
 [`PROGRESS.md`](PROGRESS.md). Every PR that changes `src/` or `workflow/` adds a fragment under
 [`changelog.d/`](changelog.d/) (checked in CI by `scripts/ci/check_changelog.py`).
 
-### Development on FarmShare
+From a checkout, with [uv](https://docs.astral.sh/uv/):
 
 ```bash
-source scripts/farmshare_env.sh          # all data and environments live in ./local (gitignored)
-bash scripts/bootstrap_farmshare.sh      # once: uv, Nextflow, nf-test, gh
 uv sync --frozen --all-extras
 uv run pytest -m "not slow and not calibration_full and not e2e" -n auto
 ```
 
 See [`AGENTS.md`](AGENTS.md) for test layers and conventions.
+
+### Development on FarmShare
+
+The maintainers' own cluster setup (`scripts/farmshare_env.sh`) is in the
+[developer guide](docs/developer.md); users do not need it.
 
 ## Licence
 
