@@ -288,8 +288,8 @@ its digest:
 | miniprot | `quay.io/biocontainers/miniprot@sha256:2eb53fea53743b56b1c10ac4b202469b92db959ffbb8bafd83156fdbde80e22f` | 0.18--h577a1d6_0 |
 | transtermhp | `quay.io/biocontainers/transtermhp@sha256:fc6fe0404be9340a883ec7a7b90415dfc3826c2bca7333a0314335c7bfee2d03` | 2.09--h9948957_2 |
 
-**Apptainer.** The cache is one directory: `NXF_APPTAINER_CACHEDIR`, else `$GIPPA_ROOT/containers`,
-else `DIR/containers` ([Install › Step 3](install.md#the-five-steps)). Inside it, each image
+**Apptainer.** The cache is one directory: `NXF_APPTAINER_CACHEDIR`, else `DIR/containers`
+([Install › Step 3](install.md#the-five-steps)). Inside it, each image
 must have the file name Nextflow looks for: the reference with `/` and `:` replaced by `-`, plus
 `.img`. For example:
 
@@ -319,7 +319,7 @@ copy the DB directory. With `NXF_APPTAINER_CACHEDIR` unset, the image cache goes
 
 ```bash
 # on the machine with internet access
-unset NXF_APPTAINER_CACHEDIR GIPPA_ROOT
+unset NXF_APPTAINER_CACHEDIR
 gippa setup --db-dir /scratch/gippa-db --profile apptainer   # every item and image is on by default
 
 # copy (resumable; -a keeps the symlinks and permissions inside the Bakta DB)

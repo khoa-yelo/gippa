@@ -266,4 +266,4 @@ Approved: rules 1-6 and the S = ∅ fallback. Notes, none blocking:
    them.
 3. libm `exp` / `pow` are the same on nodes that share a glibc build and the FMA code path. A node
    without FMA would take another glibc variant (correctly rounded in practice, but not
-   guaranteed). Every FarmShare node with AVX2 has FMA.
+   guaranteed). On the x86-64 nodes GIPPA was tested on, every node with AVX2 had FMA.

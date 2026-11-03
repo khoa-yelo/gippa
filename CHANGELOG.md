@@ -12,7 +12,7 @@ All notable changes are recorded here by towncrier from `changelog.d/` fragments
   (`TERMINATORNET_PLAN` → `TERMINATORNET_CHUNK` → `TERMINATORNET_MERGE`), each on
   `--terminatornet_chunk_cpus` CPUs (default 4), with output byte-identical to the unsharded
   `-n ≥ 2` run. A timeout now re-runs one chunk instead of the whole scan; `--terminatornet_sharded
-  false` runs the old single task. On FarmShare a chunk asks for 4 GB and 2 h per attempt, and the step
+  false` runs the old single task. Under the developers' site profile a chunk asks for 4 GB and 2 h per attempt, and the step
   uses at most 32 CPUs at a time. ([#455](https://github.com/khoa-yelo/gippa/pull/455))
 - Preflight warns (`inputs.bakta_gbff`) when a precomputed Bakta JSON (`--annotation x.json[.gz]` or `annotation.precomputed.bakta_json`) has no `x.gbff` or `x.gbff.gz` next to it while the bgc module is on: antiSMASH would be skipped and the bgc layer would be empty. The warning names the expected paths, appears in `preflight.json`, `preflight.md` and the `run_manifest.json` warnings, and `--strict` turns it into exit code 3.
   `preflight.md` now shows check messages in full (the Value column keeps its 200-character cap). ([#467](https://github.com/khoa-yelo/gippa/pull/467))
@@ -34,7 +34,7 @@ All notable changes are recorded here by towncrier from `changelog.d/` fragments
   annotates the genome with Bakta and adds operon pairs and transcription units (UniOP), promoters,
   terminators, ribosome binding sites, codon usage and regions (prophage, plasmid, biosynthetic gene
   cluster, CRISPR, AMR). A Bakta JSON or your own GFF3/GBFF annotation can be supplied instead.
-  The pipeline runs through Nextflow (`-profile farmshare,apptainer`) or a local executor.
+  The pipeline runs through Nextflow (for example `--profile slurm,apptainer`) or a local executor.
 - <!-- m03 -->
   Peptide and protein mapping: peptides are placed on the genome through a six-frame index (exact,
   tolerant and frameshift matches) and proteins through miniprot and tblastn, with target-decoy
@@ -96,8 +96,8 @@ All notable changes are recorded here by towncrier from `changelog.d/` fragments
 - New `gippa demo` command: runs a bundled synthetic genome (SIM100K) with precomputed layers in about a minute, with no Nextflow, containers, databases or network, and prints the report path (`--open` opens it). `gippa demo --full` runs the same inputs through `gippa run` with the real tools after `gippa setup`, as a check of the whole install. The demo data (under 1 MiB) ships in the wheel; the manifest records `demo: true` and the report shows a synthetic-data banner.
 - Preflight now treats a pinned container image as the install of its tool under the `docker` and
   `apptainer` profiles: under docker no local environment is needed, and under apptainer the image
-  must be in the image cache (`NXF_APPTAINER_CACHEDIR`, else `$GIPPA_ROOT/containers`, else
-  `<db_dir>/containers`), so a pip install without `$GIPPA_ROOT` works. A tool that has only a conda
+  must be in the image cache (`NXF_APPTAINER_CACHEDIR`, else
+  `<db_dir>/containers`), so a plain pip install works. A tool that has only a conda
   environment is reported missing under `docker` or plain `apptainer`, with the reason, instead of
   running on the host without its environment; a missing image names `gippa setup --images`.
 - Preflight now warns (`genome.genetic_code`) when a genome left at the default translation table 11 probably uses genetic code 4 (TGA = Trp, as in Mycoplasma and Spiroplasma): long open reading frames cover far less of the genome with TGA as a stop than with TGA as a codon (ratio < 0.55, at least 20 such ORFs). The warning appears in `preflight.json`, the manifest `warnings` and at the top of the report summary; it never changes any result (`--strict` exits 3, as for every warning).
@@ -152,12 +152,12 @@ All notable changes are recorded here by towncrier from `changelog.d/` fragments
   Runs whose output schema majors differ stop with exit 1 unless `--allow-cross-major` is given.
   `run_manifest.json` and `datapackage.json` now record `output_schema_version` (`1.0`), the version
   of the output tables and manifest, apart from the config's `schema_version`.
-- `gippa run`, `gippa preflight` and `gippa setup` choose a Nextflow profile when `--profile` is not given (new default `auto`): FarmShare is detected by its Slurm cluster name, `sbatch` on `PATH` selects the new generic `slurm` profile, and the container runtime follows what `gippa setup --images` recorded (`setup.runtime` in `db_manifest.json`, schema 1.1), else Apptainer, Singularity, Docker or conda. The choice is printed and recorded in `run_manifest.json` (`launch`). The accepted profile names are read from the bundled `nextflow.config`; two executor profiles or two container runtimes in `--profile` are a usage error.
+- `gippa run`, `gippa preflight` and `gippa setup` choose a Nextflow profile when `--profile` is not given (new default `auto`): a developers' site profile is detected by its Slurm cluster name, `sbatch` on `PATH` selects the new generic `slurm` profile, and the container runtime follows what `gippa setup --images` recorded (`setup.runtime` in `db_manifest.json`, schema 1.1), else Apptainer, Singularity, Docker or conda. The choice is printed and recorded in `run_manifest.json` (`launch`). The accepted profile names are read from the bundled `nextflow.config`; two executor profiles or two container runtimes in `--profile` are a usage error.
 - `gippa setup --images --profile apptainer|docker` pulls the pinned container images a config
   needs (`--images all`: every pinned image), checks each pulled digest against its pin and records
   the images in `db_manifest.json`; `--cache-dir` chooses the Apptainer image cache. `gippa setup`
   itself now runs the Bakta and antiSMASH downloaders through Docker when no environment or cached
-  image is available, so it needs neither `$GIPPA_ROOT` nor a source checkout. `gippa setup --check`
+  image is available, so it needs no prebuilt environment and no source checkout. `gippa setup --check`
   reports a database installed from another release as `installed <old>, this release pins <new>`.
 - `gippa setup --uniop --profile docker --accept-uniop-terms` fetches UniOP from its authors (pinned commit, sha256 checked), builds the image locally with docker and records it in `local_tools.config` and `db_manifest.json`; `setup --images` includes the step (`--no-uniop` skips it), and `gippa run` adds the local build under docker, apptainer and conda (M11-14u1).
 - `gippa setup --uniop` builds UniOP for every runtime and asks first:
@@ -166,7 +166,7 @@ All notable changes are recorded here by towncrier from `changelog.d/` fragments
     default; `--uniop` then exits 2, `--images` warns and exits 0);
   - apptainer builds `uniop.def` into a `0600` `.sif` (`--fakeroot`, then
     `--fakeroot --ignore-fakeroot-command`); plain `conda` creates `<cache-dir>/envs/gippa-uniop`
-    from the lock; `farmshare*` profiles check and record the prebuilt env;
+    from the lock; the developers' site profiles check and record the prebuilt env;
   - an explicit `setup --uniop` installs UniOP only, and a rerun with a current build does nothing;
   - `db_manifest.json` records the build as `local_build`; preflight accepts it only when its
     runtime, key and image ID, `.sif` sha256 or env commit still match, and otherwise names the
@@ -202,9 +202,9 @@ All notable changes are recorded here by towncrier from `changelog.d/` fragments
 - `gippa setup` with a `--db-dir` that cannot be created, or an existing one it cannot write to, now stops with one line (`cannot create --db-dir <path>: <reason>` or `cannot write to <path>: <reason>`) and exit 1 before printing the plan, instead of an internal error; a full disk while creating it is exit 2. The free-space line names the existing directory it measured ([#503](https://github.com/khoa-yelo/gippa/issues/503)). A failed `apptainer pull` or `docker pull` is retried once, its message keeps the last stderr lines, and setup ends with a line naming the images that were not pulled and saying to rerun `gippa setup`; images that hit a full disk or a digest mismatch point to their messages above instead ([#504](https://github.com/khoa-yelo/gippa/issues/504)). ([#506](https://github.com/khoa-yelo/gippa/pull/506))
 - `gippa report OUT` on a local run (no `resolved_config.yaml`) now takes the run's config, modules included, from `run_manifest.json`, so a `--modules core` run's page is byte-identical to the run's own report.
 - BacTermFinder results are now read from the table the tool actually writes (`<genome>_mean.csv`, with `SampleName` and `probability_mean` columns), so runs with `annotation.terminators.bactermfinder` enabled no longer fail when their output is parsed. Contig names that contain underscores are handled, and window coordinates are kept as written. Every scanned window is still reported; no probability cut-off is applied yet.
-- FarmShare profile: barley-03 joins barley-01 and rye-02 on the slow-node exclusion list (quick Python steps stalled there for about 20 minutes at 1 % CPU).
+- The developers' site profile excludes one more slow node from task submission (quick Python steps stalled there for about 20 minutes at 1 % CPU).
 - The TransTermHP terminator cross-check no longer fails on a complete circular genome with a gene across the origin: such a gene is now passed to TransTermHP as two in-range pieces instead of one with an end past the replicon length.
-- The antiSMASH version is now recorded in the run manifest: the antiSMASH, Bakta, geNomad, miniprot and tblastn version captures discard stderr, so a tool warning no longer corrupts `versions.yml`. antiSMASH is right-sized to 4 CPUs and 8 GB per attempt instead of the `process_high` 16 CPUs and 48 GB. Tasks killed at the Slurm time limit (exit 140) are retried like exit 143. On FarmShare, memory-derived CPU counts divide by 4000 MB to match Slurm's MaxMemPerCPU, and the slow nodes barley-01 and rye-02 are excluded from task submission.
+- The antiSMASH version is now recorded in the run manifest: the antiSMASH, Bakta, geNomad, miniprot and tblastn version captures discard stderr, so a tool warning no longer corrupts `versions.yml`. antiSMASH is right-sized to 4 CPUs and 8 GB per attempt instead of the `process_high` 16 CPUs and 48 GB. Tasks killed at the Slurm time limit (exit 140) are retried like exit 143. Under the developers' site profile, memory-derived CPU counts divide by 4000 MB to match the cluster's Slurm MaxMemPerCPU, and two slow nodes are excluded from task submission.
 - The opt-in BacTermFinder terminator step now calls `genome_scan.py` with the arguments its README gives (step 3, batch 10000) and runs it from a task-local directory, so it no longer fails at start-up or writes into the shared tool directory.
 - Tool runs no longer import Python packages from the user site (`~/.local`): every workflow task,
   including Docker and Apptainer tasks, and every `gippa setup` tool call run with
@@ -268,7 +268,7 @@ All notable changes are recorded here by towncrier from `changelog.d/` fragments
       the lowest q reached was 0.125 to 0.50 by class. The first segment of the known gene *prfB* had the
       best peptide score in its class and was still not called (q = 0.25), and this route's error
       rate has been measured only on simulated data.
-    - runtime: a standard K-12 run on 16 threads and 64 GB takes about 3-4 h on FarmShare, not the
+    - runtime: a standard K-12 run on 16 threads and 64 GB takes about 3-4 h on a 16-thread Intel Xeon Gold 6148 node, not the
       16-55 min first estimated; see the
       [runtimes page](https://github.com/khoa-yelo/gippa/blob/main/docs/user-guide/runtimes.md) and
       [ADR-0072](https://github.com/khoa-yelo/gippa/blob/main/docs/adr/ADR-0072-benchmark-baseline-1-0-0.md);
@@ -324,7 +324,7 @@ All notable changes are recorded here by towncrier from `changelog.d/` fragments
 - The determinants step refits the permutation null of both models on one pool of `threads` worker processes instead of a LightGBM thread pool and a serial elastic net; the null values, p and b are bit-identical (ADR-0063).
 - The fixed SVG hash salt is now `gippa`; written SVGs are unchanged, because their hashed ids are renumbered on write.
 - The miniprot conda environment now has a committed lock file, so `build_envs.sh` can rebuild it exactly.
-- The project, Python package, command and environment variables are renamed to `gippa` / `GIPPA_*` (ADR-0064); `scripts/farmshare_env.sh` still exports the old variable names for a transition window.
+- The project, Python package, command and environment variables are renamed to `gippa` / `GIPPA_*` (ADR-0064); the developers' environment script still exports the old variable names for a transition window.
 - The six-frame index, exact and tolerant peptide mapping, the annotated read-through stop sites and the N-terminal extension walk now use `annotation.translation_table`: under genetic codes 4 and 25, TGA reads as W and G and is never a stop, a Sec (`U`) residue cannot be recoded (it is counted as a codon mismatch and never gives `sec_site`), and Pyl (`O` over TAG) works as under 11. The six-frame index work file records the table it was built with (index format 3), and a run with another table refuses it with a message to rebuild the six-frame index; an older format-2 index is still accepted at table 11. The `mapping.stop_sites` log event reports the table. Output at table 11 is unchanged.
 - `calibration.yaml: operon_distance` records the distance-model fallback's precision and recall at
   `pair_threshold` 0.5 on RegulonDB 14.5.0 K-12 (0.828 [0.805, 0.847] and 0.916 [0.901, 0.931],

@@ -142,7 +142,7 @@ in the [configuration reference](../reference/configuration.md).
 | `--profile` | `auto` (detects one and prints its choice) | comma-joined Nextflow profiles (see [Install](../get-started/install.md#execution-profiles)) |
 | `--resume` | off | resume a stopped run in the same `--outdir` |
 
-On a local executor (no `farmshare` or `slurm` profile), a `threads` you did not set is capped to
+On a local executor (no `slurm` profile), a `threads` you did not set is capped to
 the CPUs available, with one line on stderr; a value from `--threads`, the config file or `--set`
 is used as given.
 

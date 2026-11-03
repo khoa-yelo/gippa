@@ -6,8 +6,8 @@ GIPPA has two parts:
   container pins (`workflow/conf/containers.config`, `workflow/conf/images.json`) and the database
   pins (`src/gippa/data/db_sources.yaml`);
 - the tools it runs as separate programs (Bakta, miniprot, geNOMAD, antiSMASH and others). Each
-  tool runs from a container image pinned by digest, or, on FarmShare, from a prebuilt micromamba
-  environment.
+  tool runs from a container image pinned by digest; UniOP, which GIPPA may not redistribute, is
+  built on your machine by `gippa setup` ([UniOP](#uniop)).
 
 `gippa preflight`, `gippa convert`, `gippa compare` and `gippa report` need only the Python package.
 `gippa setup` needs no Nextflow (it installs the pinned launcher when none is on `PATH`). `gippa
@@ -15,7 +15,7 @@ run` needs Nextflow, Java 17 or newer, a container runtime, the tool images and 
 
 ## Tested platforms
 
-The full pipeline is tested on Stanford FarmShare. Every other row is as stated:
+The full pipeline is tested on Linux x86-64 with Slurm and Apptainer. Every other row is as stated:
 
 --8<-- "docs/user-guide/platforms.md:platforms"
 
@@ -27,8 +27,8 @@ The cell words (tested, smoke-tested, untested) and the CI jobs are explained on
 | Requirement | Version | Where it is pinned |
 |---|---|---|
 | Python | Python ≥ 3.11 | `requires-python = ">=3.11"` in `pyproject.toml` |
-| Nextflow | 26.10.0 is the pinned, tested version; at least 25.04.8 (advice: GIPPA does not check the version) | `scripts/bootstrap_farmshare.sh`, [ADR-0002](../adr/ADR-0002-farmshare-env-pins.md) |
-| Java | 17 or newer, which Nextflow needs; the bootstrap installs OpenJDK 21 | `scripts/bootstrap_farmshare.sh` |
+| Nextflow | 26.10.0 is the pinned, tested version; at least 25.04.8 (advice: GIPPA does not check the version) | the launcher pin `nextflow` in `src/gippa/data/db_sources.yaml` |
+| Java | 17 or newer, which Nextflow needs; tested with OpenJDK 21 | checked by `gippa run` (`src/gippa/runner/prereqs.py`) |
 | Docker or Apptainer | the `docker` CLI with access to a daemon, Docker 20.10 or later (podman 3.0 or later through podman-docker: best effort, untested), or `apptainer` | see [Platforms](../user-guide/platforms.md) |
 
 **Nextflow.** When `nextflow` is not on `PATH`, `gippa setup` downloads the official
@@ -84,7 +84,7 @@ gippa run --genome genome.fna --peptides peptides.tsv --db-dir /path/to/db \
 !!! note "Older Linux (glibc < 2.28, such as CentOS or RHEL 7)"
     On these systems the newest numpy, numba and pyarrow releases have no compatible wheels.
     pip then falls back to their sdists, and the build fails. Install with
-    `pip install --prefer-binary gippa` instead. This was verified on Stanford Sherlock (glibc
+    `pip install --prefer-binary gippa` instead. This was verified on a CentOS 7 cluster (glibc
     2.17, Python 3.12): pip chose numpy 2.2.6, numba 0.67.0, pyarrow 20.0.0 and lightgbm 3.3.5,
     and `gippa demo` passed. These older versions are not part of GIPPA's tested matrix
     ([#502](https://github.com/khoa-yelo/gippa/issues/502)).
@@ -110,22 +110,21 @@ of geNOMAD (non-commercial use only) and KEGG (academic use only).
   conda | docker | apptainer`.
 - Each image is recorded as an `image:<tool>` item in `DIR/db_manifest.json`. A failed pull or a
   digest mismatch (`pulled <d1>, pinned <d2>`) is exit code 2; the other images are still pulled.
-- **A failed Apptainer pull.** On some unprivileged Apptainer builds (Stanford Sherlock,
-  apptainer 1.5.5), `mksquashfs` can segfault on a first pull: the message ends in
+- **A failed Apptainer pull.** On some unprivileged Apptainer builds (seen with
+  apptainer 1.5.5 on one cluster), `mksquashfs` can segfault on a first pull: the message ends in
   `mksquashfs command failed: exit status 139`. Setup retries a failed pull once automatically.
   Setting `APPTAINER_CACHEDIR` keeps the layers between attempts, so a rerun can reuse them;
-  without it each attempt pulls from scratch. On Sherlock the failure followed the node type, not
-  memory: it repeated on Intel Broadwell nodes and setup passed on AMD ones. If it keeps failing,
-  run setup on a different node type (on Sherlock, `sbatch -C CPU_MNF:AMD`). A missing bakta
-  image also makes `bakta_light`
-  skip, so rerun setup after such a failure. Large pulls print no progress: the
-  antiSMASH image (4.6 GiB) can take several minutes
+  without it each attempt pulls from scratch. On that cluster the failure followed the node type,
+  not memory: it repeated on Intel Broadwell nodes and setup passed on AMD ones. If it keeps
+  failing, run setup on a different node type (with Slurm, `sbatch --constraint=<feature>`). A
+  missing bakta image also makes `bakta_light` skip, so rerun setup after such a failure. Large
+  pulls print no progress: the antiSMASH image (4.6 GiB) can take several minutes
   ([#504](https://github.com/khoa-yelo/gippa/issues/504)).
 - **The DB directory's nearest existing parent must be writable.** Otherwise setup stops with a
   clean error (exit code 1)
   ([#503](https://github.com/khoa-yelo/gippa/issues/503)).
 - **The Apptainer cache** is one directory: `NXF_APPTAINER_CACHEDIR`, else
-  `$GIPPA_ROOT/containers`, else `DIR/containers` (`setup --cache-dir` overrides it for that
+  `DIR/containers` (`setup --cache-dir` overrides it for that
   `setup` command). Every reader uses that same directory:
     - setup's image pull and UniOP build;
     - setup's Bakta and antiSMASH downloaders, which run inside the pulled images;
@@ -147,11 +146,12 @@ of geNOMAD (non-commercial use only) and KEGG (academic use only).
 **Step 4.** `gippa preflight` validates the inputs in seconds and reads the installed versions from
 `$GIPPA_DB_DIR/db_manifest.json`. With `--profile`, it also checks that every tool is installed
 under that profile, exactly as `gippa run --profile` does before Nextflow starts (next section):
-the same profile names, the DB directory from `$GIPPA_DB_DIR` and the prebuilt envs under
-`$GIPPA_ROOT`. A missing tool is exit code 2; for missing images the message says `run: gippa setup
+the same profile names and the DB directory from `$GIPPA_DB_DIR`. A missing tool is exit code 2; for missing images the message says `run: gippa setup
 --images --profile apptainer`. Without `--profile`, no tool is checked.
 
-**Step 5.** The default `--profile` is `farmshare,apptainer`, so off FarmShare always pass it.
+**Step 5.** The default `--profile` is `auto`: `gippa run` chooses a profile from what it finds on
+the host and prints its choice ([Execution profiles](#execution-profiles)); pass `--profile` to
+choose yourself.
 `--memory` defaults to `64.GB`; set it to what the machine has. `--threads` defaults to 16, capped to
 the CPUs available unless you set it or a Slurm profile runs the tasks. See
 [Run](../user-guide/run.md).
@@ -162,8 +162,7 @@ UniOP, the operon predictor, has no licence file, so GIPPA never redistributes i
 UniOP image. `setup --images` (or `setup --uniop` alone) fetches the authors' archive at the pinned
 commit from GitHub, checks its sha256, and builds it on your machine. Nothing is pushed anywhere.
 
-- **Terms.** Setup prints this notice whenever it builds or checks a local build (not under a
-  `farmshare*` profile, which uses the prebuilt env):
+- **Terms.** Setup prints this notice whenever it builds or checks a local build:
   "UniOP (github.com/hongsua/UniOP @3ed14dfc) is fetched from its authors and built on this
   machine; it has no licence file, so gippa does not distribute it and whether your use is
   permitted is yours to decide." On a terminal it asks `Build UniOP for your own use? [y/N]`; the
@@ -201,26 +200,50 @@ commit from GitHub, checks its sha256, and builds it on your machine. Nothing is
 
 ## Execution profiles
 
-`gippa run --profile` takes one or more of these Nextflow profiles, joined by commas: `farmshare`,
-`farmshare_local`, `slurm`, `apptainer`, `conda`, `docker`, `standard`. The default is
-`farmshare,apptainer`.
+`gippa run --profile` takes one or more of these Nextflow profiles, joined by commas: `slurm`,
+`apptainer`, `conda`, `docker`, `standard`, at most one executor and one container runtime. The
+default is `auto`, which prints its choice:
+
+- with `sbatch` on `PATH`: `slurm,<runtime>`, where the runtime is the one `gippa setup --images`
+  recorded in `db_manifest.json` when it is available here, else Apptainer (or Singularity), else
+  conda; with only Docker available it chooses `docker`, and the tasks run on the launching host;
+- without `sbatch`: the recorded runtime when available, else Docker, Apptainer (or Singularity)
+  or conda, in that order;
+- with no container runtime and no conda it stops and asks you to install Apptainer or Docker.
+
+The `farmshare` and `farmshare_local` profiles are site profiles used by the developers (see the
+[developer guide](../developer.md)); they are not meant for users.
 
 | Profile | What it does | Status |
 |---|---|---|
-| `apptainer` | runs every pinned tool from its image in the Apptainer cache; binds the DB directory read-only | tested (on FarmShare) |
+| `apptainer` | runs every pinned tool from its image in the Apptainer cache; binds the DB directory read-only | tested (Linux x86-64, with Slurm) |
 | `docker` | the same images through Docker: DB directory bound read-only, tasks run as your user (`-u $(id -u):$(id -g)`); never pulls (`docker run --pull=never`): images come from `gippa setup --images --profile docker` | smoke-tested (`docker-smoke`); see [Platforms](../user-guide/platforms.md) |
 | `conda` | lets Nextflow create each tool's environment from `workflow/envs/*.yml`; preflight still requires the prebuilt environments of the conda-only tools | not tested on its own |
-| `farmshare` | Slurm executor on Stanford FarmShare, plus the prebuilt tool environments under `$GIPPA_ROOT` | tested |
-| `farmshare_local` | the same environments, but all tasks run inside the current Slurm allocation | tested |
-| `slurm` | generic Slurm executor: the cluster's default partition, no site-specific options; set the queue, account, extra `sbatch` options, job cap and time limit with the `params.slurm_*` options (`slurm_queue`, `slurm_account`, `slurm_options`, `slurm_max_jobs`, `slurm_max_time`); combine it with one container runtime, e.g. `slurm,apptainer` | not tested |
+| `farmshare` | developers' site profile ([developer guide](../developer.md)) | not for users |
+| `farmshare_local` | developers' site profile ([developer guide](../developer.md)) | not for users |
+| `slurm` | generic Slurm executor: the cluster's default partition, no site-specific options; the workflow reads the queue, account, extra `sbatch` options, job cap and time limit from the `params.slurm_*` options, but no `gippa run` flag sets them yet in 1.0.0 (`slurm_queue`, `slurm_account`, `slurm_options`, `slurm_max_jobs`, `slurm_max_time`); combine it with one container runtime, e.g. `slurm,apptainer` | not tested |
 | `standard` | Nextflow's local executor, with no container or Conda settings | not tested |
 
-**A Slurm (or other) executor off FarmShare.** The analysis steps (`GIPPA_STEP`) run `gippa` on the
-host, not in a container. Every node that runs tasks therefore needs the same Python environment
-with the same `gippa` version on `PATH`, for example one venv on a shared filesystem. `gippa run`
-has no `-c` option for your own Nextflow config; Nextflow also reads `$NXF_HOME/config` (default
-`~/.nextflow/config`), where an executor can be set. The DB directory and the Apptainer cache
-(`NXF_APPTAINER_CACHEDIR`) must also be on a filesystem that every node sees.
+### Run on a cluster
+
+The simplest route is one batch job: request the CPUs and memory for the whole run (for example
+16 CPUs and 64 GB) and run `gippa run --profile apptainer` inside it. Every task then runs inside
+that job's allocation, and nothing else has to be set up on the other nodes. Do not start
+`gippa run` on a login node: the Nextflow head process runs on the host where you start it, for
+the whole run.
+
+`--profile slurm,apptainer` (which `auto` chooses where `sbatch` is on `PATH`) instead submits
+each task as its own Slurm job, on the cluster's default partition. It is not tested yet (table
+above), and it needs more set-up:
+
+- the analysis steps (`GIPPA_STEP`) run `gippa` on the host, not in a container, so every node
+  that runs tasks needs the same Python environment with the same `gippa` version on `PATH`, for
+  example one venv on a shared filesystem;
+- the DB directory and the Apptainer cache (`NXF_APPTAINER_CACHEDIR`) must be on a filesystem
+  that every node sees;
+- 1.0.0 has no command-line flag to choose a partition or account. `gippa run` has no `-c`
+  option for your own Nextflow config, but Nextflow also reads `$NXF_HOME/config` (default
+  `~/.nextflow/config`), where `process.queue` and `process.clusterOptions` can be set.
 
 ## What `gippa run` needs before preflight passes
 
@@ -231,11 +254,11 @@ the message names the tool and the reason. Only `gippa setup` pulls images: `gip
 `gippa preflight` use the images already on the machine, or stop and name the `setup` command
 that fetches them.
 
-| Tool kind | `docker` | `apptainer` (no conda profile) | `farmshare*`, or with `conda` |
+| Tool kind | `docker` | `apptainer` (no conda profile) | with `conda` (or a site profile) |
 |---|---|---|---|
 | pinned in `containers.config` | present iff `docker image inspect <ref>` succeeds (runs never pull); Docker < 20.10 is refused | present iff its `.img` is in the cache | with `apptainer` in the list: as in that column; with `docker` in the list (no `apptainer`): as in the `docker` column; else not checked |
 | no image pin (conda-only) | missing: `conda-only tool under a container profile without conda` | same | needs the prebuilt env `$GIPPA_ROOT/micromamba/envs/gippa-<tool>/` |
-| UniOP | the local build in `local_tools.config` (image ID checked) | the local `.sif` (sha256 checked) | `farmshare*`: the prebuilt env; plain `conda`: the micromamba build |
+| UniOP | the local build in `local_tools.config` (image ID checked) | the local `.sif` (sha256 checked) | site profiles: the prebuilt env; plain `conda`: the micromamba build |
 | fgsea (`function` with `--abundance`) | prebuilt env, else its `images.json` image | prebuilt env, else that image in the cache | prebuilt env |
 | in-process tools | never missing | never missing | never missing |
 
@@ -252,34 +275,12 @@ downloaders run inside a tool environment or image: `bakta_db download` (which a
 `amrfinder_update`) and antiSMASH's database downloader (`--antismash`). For each,
 `ToolRunner` (`src/gippa/setupdb/run.py`) takes the first of:
 
-1. a micromamba environment `gippa-bakta` or `gippa-antismash` under `$MAMBA_ROOT_PREFIX/envs/`
-   (default `$GIPPA_ROOT/micromamba`);
+1. a micromamba environment `gippa-bakta` or `gippa-antismash` under `$MAMBA_ROOT_PREFIX/envs/`;
 2. the pinned image in the Apptainer cache (as in step 3), run with `apptainer exec`;
 3. the pinned image through `docker run -u <uid>:<gid>`, when `docker` is on `PATH`.
 
 When none is found, the item stays `absent` with the message `no gippa-<tool> environment, no
 pinned <tool> image … run gippa setup --images --profile apptainer|docker`, and setup exits 2.
-
-## FarmShare from a checkout
-
-On Stanford FarmShare, GIPPA runs from a repository checkout with prebuilt environments
-(`AGENTS.md › Setup`). Inside a Slurm allocation, never on a login node:
-
-```bash
-source scripts/farmshare_env.sh            # sets GIPPA_ROOT, NXF_APPTAINER_CACHEDIR=$GIPPA_ROOT/containers
-bash scripts/bootstrap_farmshare.sh        # once: uv, Nextflow, nf-test, gh in user space
-uv sync --frozen --all-extras
-sbatch scripts/slurm/build_envs.sbatch <tool> [...]   # micromamba envs and Apptainer pulls
-sbatch scripts/slurm/gippa_setup.sbatch     # the databases
-sbatch scripts/slurm/gippa_run.sbatch <args>           # -profile farmshare,apptainer
-```
-
-`build_envs.sbatch` builds `$GIPPA_ROOT/micromamba/envs/gippa-<tool>/` with its `.gippa-built`
-marker, including the conda-only tools and UniOP, and pulls every pinned image into
-`$GIPPA_ROOT/containers`. Under `farmshare,apptainer`, the conda-only tools use their prebuilt
-environments and the image-pinned tools use their images: `workflow/conf/container_common.config`,
-shared by the `apptainer` and `docker` profiles, sets `conda = ''` for every image-pinned process,
-so an environment never shadows an image.
 
 ## Licences
 

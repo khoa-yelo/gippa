@@ -1,6 +1,6 @@
 # Runtimes
 
-Measured wall-clock times of a `gippa run` from `scripts/slurm/benchmark_standard.sbatch` (M10-12).
+Measured wall-clock times of a `gippa run` as a Slurm job with Apptainer (benchmark M10-12).
 These numbers replace the estimates of the specification. The source is
 `benchmarks/baseline.json › standard_run`, and the decision record is
 [ADR-0072](../adr/ADR-0072-benchmark-baseline-1-0-0.md).
@@ -18,8 +18,9 @@ How to read the table:
 
 - Plan for about 3-4 h on 16 threads on similar hardware. The specification's first estimates were
   not met, and ADR-0072 waives that range for 1.0.0.
-- 16 threads are 16 hardware threads (8 physical cores) of an Intel Xeon Gold 6148 node, shared
-  with other users' jobs; the node's median allocation was 60-80 of 80 CPUs.
+- 16 threads are 16 hardware threads (8 physical cores) of an Intel Xeon Gold 6148 node (node
+  class `wheat` in the table), shared with other users' jobs; the node's median allocation was
+  60-80 of 80 CPUs.
 - Peak memory is the run's Slurm MaxRSS (`sacct`, sampled every 60 s). Why it differs so much
   between repeats is not established. Each run's Slurm limit was 64000 MiB (62.5 GiB), and the 62.4 GiB
   peaks sit just under it, so they may reflect that limit rather than a need; this is not established
