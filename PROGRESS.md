@@ -13,7 +13,7 @@ _Last updated: 2026-11-01 · session https://claude.ai/code/session_015h628ytdvW
 
 ## Milestone progress
 <!-- progress:start -->
-🟩 done (merged) · ⬛ superseded by an accepted ADR (counts as done) · 🟨 running (open branch) · ⬜ pending; designed issues: 191/199 done (96 %), 1 running · generated 2026-11-02 10:07 by `scripts/dev/progress_bars.py`
+🟩 done (merged) · ⬛ superseded by an accepted ADR (counts as done) · 🟨 running (open branch) · ⬜ pending; designed issues: 191/199 done (96 %), 1 running · generated 2026-11-03 12:48 by `scripts/dev/progress_bars.py`
 
 | Milestone | Progress | Done | Running | Pending |
 |---|---|---|---|---|
@@ -33,6 +33,8 @@ _Last updated: 2026-11-01 · session https://claude.ai/code/session_015h628ytdvW
 
 - M7-15 K-12 real-tool arm: **Slurm 1879271** (COMPLETED 4 m 41 s; 2,647 cached from 1873779, 4 rerun; d11f7608 + VARIANTS 8 GB; 4fcc29da is cache-key-only, outputs byte-identical). Earlier attempts 1869642, 1871633, 1873779, 1878443 (cancelled).
 ## Current milestone
+**2026-11-03: GIPPA 1.0.0 released.** PyPI https://pypi.org/project/gippa/1.0.0/ (wheel sha256 9ffc0099d33a7906b62614a20a4d7896a548d606782f79cb2b8b50649c99c105, sdist fff51ebc23e77f0e44b8bf77721a7dbe544061d1fdb15b02130492157e17a85b, identical to review packet r1); GitHub release v1.0.0. Readiness overall pass at R `1aae3b67` (R2, R3, R5, R7 waived; R10 deferred), verified on `5a9d4b1c` (#530); dry run 41710757897; publish run 41714305030 (all jobs success), dispatched by the lead at Khoa's in-session request after Khoa's "approved" on #531. TestPyPI skipped; Q-K1 trusted publisher registered by Khoa. Step 14 smoke: Slurm 1928871 (wheat-03, COMPLETED 0:0): fresh venv, `pip install gippa==1.0.0` from PyPI, `gippa demo` done in 92 s with report.html. Open: nightly 1928574 (ADR-0073) still queued; its result is recorded here when it ends. 1.0.1 queue: decoy fixture + lift the ubuntu-24.04 pin (#529), launcher node exclusion, a `singularity` profile for auto-detection, a `gippa run` flag for `params.slurm_*`, drop the README FarmShare heading and its test.
+
 (2026-10-25 evening) M0–M9 are done. M10: #296 (M10-04) and #364 (M10-10a) merged; the A3 run
 (Slurm 1894682, COMPLETED 0:0, 3 h 01 m, 77/0 tasks) passed rule set A and the three-way compare
 (Slurm 1895328, COMPLETED 0:0) passed rule set C (README section: #368). #366 (M10-10b, metric 6
@@ -656,6 +658,7 @@ Slurm jobs this session (2026-10-27): 1900002 (nightly, task 2 SIGTERM at 5 h 50
 | 2026-10-14 | ~~RegulonDB v12 download~~ **RESOLVED 2026-10-21** | Not an outage: RegulonDB serves a cert (GlobalSign GCC R46 OV TLS CA 2025, issued 2026-10-14) **without the intermediate**, so verification fails. The intermediate from GlobalSign's own CA endpoint verifies against `GlobalSign Root R46`, already in FarmShare's trust store; with it, the site and `/datasets` return HTTP 200. Khoa approved completing the chain (2026-10-21). | nothing — M6-11/M6-12 unblocked |
 
 ## Answered by Khoa
+- 2026-11-03: **CI runners** pinned to ubuntu-24.04 for 1.0.0 (#529); README keeps the FarmShare developer heading for 1.0.0. **Release 1.0.0 approved** ("approved" on #531, 20:31 UTC); Khoa asked the lead to run the publish ("Can you run it").
 - 2026-11-02: **M10 pilot report** (REPORT.md sha256 1bedca51b57e39fdb14e9f8438b0a6ef7cf515107aa7b0a38d1d4aa66e962191, packet r1): "Accept your recommendatios, try to ship 1.0.0 soon\" and, asked for the M10 verdict on this sha256, \"Accept" → verdict accept
 - 2026-11-02 (same message, accepting the lead's recommendations): **Gate M9** report layout accepted for 1.0.0; **Gates M3 and M7** ship as disclosed known limits; **ADR-0051, ADR-0060, ADR-0065** accepted ("0051, 0060, 0065; 0048 later (Recommended)"); ADR-0048 after 1.0.0. "try to ship 1.0.0 soon".
 - 2026-10-24 (evening): **#325 M9-25 baselines approved**; the V16 #555555 and V15 (c) overlap go
