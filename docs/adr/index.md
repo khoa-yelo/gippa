@@ -74,3 +74,4 @@
 - [ADR-0070: 1.0.0 ships with TE4's rplL/rplJ pair failing on the pilot](ADR-0070-te4-rplL-rplJ-waiver-1-0-0.md): accepted-by-khoa (2026-10-31, in session: "waive it")
 - [ADR-0071: 1.0.0 ships without a measured mapping FDR on pilot arm A2](ADR-0071-r2-mapping-fdr-waiver-1-0-0.md): accepted-by-khoa (2026-10-31, in session: "Waive and disclose (Recommended)")
 - [ADR-0072: The 1.0.0 benchmark: two repeats, measured runtimes, and the §13.2 range waived](ADR-0072-benchmark-baseline-1-0-0.md): accepted-by-khoa (2026-10-31 and 2026-11-01, in session: "Accept measured runtime (Recommended)"; "Cut repeat 3")
+- [ADR-0073: 1.0.0 ships without a fast-tier calibration nightly on the release commit](ADR-0073-r3-nightly-calibration-waiver-1-0-0.md): accepted-by-khoa (2026-11-03, in session: "Option 2")
