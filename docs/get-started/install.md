@@ -221,20 +221,29 @@ The `farmshare` and `farmshare_local` profiles are site profiles used by the dev
 | `conda` | lets Nextflow create each tool's environment from `workflow/envs/*.yml`; preflight still requires the prebuilt environments of the conda-only tools | not tested on its own |
 | `farmshare` | developers' site profile ([developer guide](../developer.md)) | not for users |
 | `farmshare_local` | developers' site profile ([developer guide](../developer.md)) | not for users |
-| `slurm` | generic Slurm executor: the cluster's default partition, no site-specific options; set the queue, account, extra `sbatch` options, job cap and time limit with the `params.slurm_*` options (`slurm_queue`, `slurm_account`, `slurm_options`, `slurm_max_jobs`, `slurm_max_time`); combine it with one container runtime, e.g. `slurm,apptainer` | not tested |
+| `slurm` | generic Slurm executor: the cluster's default partition, no site-specific options; the workflow reads the queue, account, extra `sbatch` options, job cap and time limit from the `params.slurm_*` options, but no `gippa run` flag sets them yet in 1.0.0 (`slurm_queue`, `slurm_account`, `slurm_options`, `slurm_max_jobs`, `slurm_max_time`); combine it with one container runtime, e.g. `slurm,apptainer` | not tested |
 | `standard` | Nextflow's local executor, with no container or Conda settings | not tested |
 
 ### Run on a cluster
 
-Use `--profile slurm,apptainer` (or let `auto` choose it where `sbatch` is on `PATH`); the generic
-`slurm` profile is not tested yet (table above). The Nextflow head process runs on the host where
-you start `gippa run`, for the whole run, so submit `gippa run` itself as a job rather than
-starting it on a login node. The analysis steps (`GIPPA_STEP`) run `gippa` on the host, not in a
-container. Every node that runs tasks therefore needs the same Python environment
-with the same `gippa` version on `PATH`, for example one venv on a shared filesystem. `gippa run`
-has no `-c` option for your own Nextflow config; Nextflow also reads `$NXF_HOME/config` (default
-`~/.nextflow/config`), where an executor can be set. The DB directory and the Apptainer cache
-(`NXF_APPTAINER_CACHEDIR`) must also be on a filesystem that every node sees.
+The simplest route is one batch job: request the CPUs and memory for the whole run (for example
+16 CPUs and 64 GB) and run `gippa run --profile apptainer` inside it. Every task then runs inside
+that job's allocation, and nothing else has to be set up on the other nodes. Do not start
+`gippa run` on a login node: the Nextflow head process runs on the host where you start it, for
+the whole run.
+
+`--profile slurm,apptainer` (which `auto` chooses where `sbatch` is on `PATH`) instead submits
+each task as its own Slurm job, on the cluster's default partition. It is not tested yet (table
+above), and it needs more set-up:
+
+- the analysis steps (`GIPPA_STEP`) run `gippa` on the host, not in a container, so every node
+  that runs tasks needs the same Python environment with the same `gippa` version on `PATH`, for
+  example one venv on a shared filesystem;
+- the DB directory and the Apptainer cache (`NXF_APPTAINER_CACHEDIR`) must be on a filesystem
+  that every node sees;
+- 1.0.0 has no command-line flag to choose a partition or account. `gippa run` has no `-c`
+  option for your own Nextflow config, but Nextflow also reads `$NXF_HOME/config` (default
+  `~/.nextflow/config`), where `process.queue` and `process.clusterOptions` can be set.
 
 ## What `gippa run` needs before preflight passes
 
