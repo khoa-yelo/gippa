@@ -185,10 +185,11 @@ def _environment(
             missing + "; tool and database versions are checked by gippa run",
         )  # fmt: skip
     else:
-        tools = environment_checks(
+        tools, _, *optional = environment_checks(
             reqs, EnvProbe(found=found, free_disk_bytes=0, total_ram_bytes=0), 0, 0,
             tools_missing, tool_reasons,
-        )[0]  # fmt: skip
+        )  # fmt: skip
+        return [tools, res, *optional], resources
     return [tools, res], resources
 
 
