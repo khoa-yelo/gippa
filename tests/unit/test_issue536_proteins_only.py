@@ -16,9 +16,14 @@ protein"; gene error ``unestimated``):
    protein hit names it; ``gene_q_value`` is NA; no peptide counts.
 3. ``--abundance`` is joined by the input protein ID through the rank-1 protein hits (C12), not only
    by locus tag.
-4. ``gippa run --proteins`` (no ``--peptides``) passes the short records (≤ 40 aa) to Nextflow as
-   ``params.inputs.peptides`` (the preflight-normalised Parquet), next to ``proteins_long`` and
-   ``abundance``; a FASTA of long records only still passes no ``peptides`` key.
+4. ``gippa run --proteins`` (no ``--peptides``) passes ``proteins_long`` and ``abundance`` to
+   Nextflow and never ``peptides`` (PR #537 review, lead decision, fix option a): the short records
+   (≤ 40 aa, within ``input.peptide_len``) are not used, the tier stays ``protein_list``, and
+   preflight warns ``proteins.short_records_unused`` with their count. With ``--peptides`` the short
+   records join the peptide table as before.
+5. PR #537 review M2: ``loci`` given ``peptides`` but not every peptide-chain output raises, naming
+   the missing key; on a proteins-only run, proteins no tool aligns are ``kind = protein`` rows of
+   ``unmapped.tsv``.
 
 The Nextflow side (main.nf runs MAPPING / GENETABLE / CONTEXT on proteins only) is pinned in
 workflow/tests/main_proteins_only.nf.test. Small examples only; no statistical claim is made, so no
@@ -31,9 +36,11 @@ import json
 import math
 import os
 import random
+import re
 import shutil
 import stat
 import sys
+from collections.abc import Sequence
 from pathlib import Path
 from typing import Any
 
@@ -223,37 +230,53 @@ def test_abundance_is_joined_by_input_protein_id(tmp_path: Path) -> None:
 
 
 @pytest.fixture(scope="module")
-def protein_only_loci(tmp_path_factory: pytest.TempPathFactory) -> dict[str, Any]:
-    """The ``mapping`` producer run on SIM100K with roots genome + bakta_json + proteins_long only
-    (recorded miniprot / tblastn outputs injected; half the proteins go to tblastn)."""
+def sim100k(tmp_path_factory: pytest.TempPathFactory) -> dict[str, Any]:
+    """SIM100K (the genome of the recorded miniprot / tblastn fixtures) after ``gippa preflight``
+    with its peptides, and the resolved configuration."""
     import dataclasses
     import hashlib
 
-    from helpers.mapping_steps import (
-        RECORDED_MINIPROT,
-        RECORDED_TBLASTN,
-        drive,
-        fresh_steps,
-        preflight,
-        proteins_key,
-    )
+    from helpers.mapping_steps import preflight
 
     from gippa.config import resolve_config
     from gippasim.proteomics import ProteomicsConfig
     from gippasim.simulate import SIM100K, SIM100K_SEED, simulate
 
-    tmp = tmp_path_factory.mktemp("proteins_only")
+    tmp = tmp_path_factory.mktemp("sim100k")
     res = simulate(dataclasses.replace(SIM100K, proteomics=ProteomicsConfig()), SIM100K_SEED,
                    tmp / "sim")  # fmt: skip
     sha = hashlib.sha256(res.genome_fasta.read_bytes()).hexdigest()
     assert sha.startswith("dd10216e"), "SIM100K genome differs from the recorded fixtures"
-    run = preflight(res, tmp / "pf")  # only for genome.norm.fa; its peptides are not staged
-    faa = RECORDED_MINIPROT / "proteins.faa"
-    ids = [ln[1:].split()[0] for ln in faa.read_text().splitlines() if ln.startswith(">")]
+    run = preflight(res, tmp / "pf")
+    return {"res": res, "run": run, "cfg": resolve_config(run.config_yaml, ["seed=3"])}
+
+
+def _protein_only_drive(
+    sim: dict[str, Any],
+    tmp: Path,
+    extra: Sequence[tuple[str, str]] = (),
+) -> dict[str, Any]:
+    """The ``mapping`` producer with roots genome + bakta_json + proteins_long only (recorded
+    miniprot / tblastn outputs injected; half the proteins go to tblastn). ``extra`` records are
+    appended to the protein FASTA and align nowhere (neither tool output names them)."""
+    from helpers.mapping_steps import (
+        RECORDED_MINIPROT,
+        RECORDED_TBLASTN,
+        drive,
+        fresh_steps,
+        proteins_key,
+    )
+
+    tmp.mkdir(parents=True, exist_ok=True)
+    src = RECORDED_MINIPROT / "proteins.faa"
+    ids = [ln[1:].split()[0] for ln in src.read_text().splitlines() if ln.startswith(">")]
+    faa = tmp / "proteins.long.faa"
+    text = src.read_text().rstrip("\n") + "\n"
+    faa.write_text(text + "".join(f">{i}\n{seq}\n" for i, seq in extra))
     drop = set(ids[::2])
     gff = _gff_without(RECORDED_MINIPROT / "miniprot.gff", drop, tmp / "miniprot.part.gff")
     tbl = _tsv_only(RECORDED_TBLASTN / "tblastn.tsv", drop, tmp / "tblastn.part.tsv")
-    cfg = resolve_config(run.config_yaml, ["seed=3"])
+    run, res = sim["run"], sim["res"]
     with pytest.MonkeyPatch.context() as mp:
         reg = fresh_steps(mp)
         producers = [s.name for s in reg.all_steps() if "mapping" in s.outputs]
@@ -261,10 +284,42 @@ def protein_only_loci(tmp_path_factory: pytest.TempPathFactory) -> dict[str, Any
         roots = {"genome": run.genome, "bakta_json": res.bakta_json, proteins_key(reg): faa}
         (mp_key,) = reg.get("miniprot").outputs
         (tb_key,) = reg.get("tblastn").outputs
-        avail = drive(reg, cfg, tmp / "work", roots,
+        avail = drive(reg, sim["cfg"], tmp / "work", roots,
                       inject={"miniprot": {mp_key: gff}, "tblastn": {tb_key: tbl}},
                       targets=tuple(producers))  # fmt: skip
     return {"ids": ids, "drop": drop, "work": tmp / "work", "avail": avail}
+
+
+@pytest.fixture(scope="module")
+def protein_only_loci(
+    sim100k: dict[str, Any], tmp_path_factory: pytest.TempPathFactory
+) -> dict[str, Any]:
+    return _protein_only_drive(sim100k, tmp_path_factory.mktemp("proteins_only"))
+
+
+#: proteins no tool output names (random 60-aa sequences)
+UNALIGNED = [(f"NOHIT_{k}", "M" + "".join(random.Random(k).choice("ACDEFGHIKLMNPQRSTVWY")
+                                         for _ in range(59))) for k in (1, 2)]  # fmt: skip
+
+
+@pytest.fixture(scope="module")
+def protein_only_loci_unaligned(
+    sim100k: dict[str, Any], tmp_path_factory: pytest.TempPathFactory
+) -> dict[str, Any]:
+    return _protein_only_drive(sim100k, tmp_path_factory.mktemp("unaligned"), extra=UNALIGNED)
+
+
+@pytest.fixture(scope="module")
+def peptide_chain(sim100k: dict[str, Any], tmp_path_factory: pytest.TempPathFactory) -> Any:
+    """The peptide chain up to ``placement`` on SIM100K's peptides (real work files for loci)."""
+    from helpers.mapping_steps import drive, fresh_steps, roots_of
+
+    tmp = tmp_path_factory.mktemp("peptide_chain")
+    with pytest.MonkeyPatch.context() as mp:
+        reg = fresh_steps(mp)
+        avail = drive(reg, sim100k["cfg"], tmp / "work", roots_of(sim100k["run"]),
+                      targets=("placement",))  # fmt: skip
+    return {"avail": avail, "tmp": tmp}
 
 
 def _gff_without(src: Path, drop: set[str], dst: Path) -> Path:
@@ -327,6 +382,49 @@ def test_proteins_only_loci_output_loads_as_the_m3_contract(
     assert not bad, bad
 
 
+PEPTIDE_WORK = ("placement", "mapping_fdr", "hits_exact", "hits_tolerant")
+
+
+@pytest.mark.parametrize("missing", PEPTIDE_WORK)
+def test_loci_with_peptides_but_a_missing_chain_output_raises(
+    peptide_chain: dict[str, Any], tmp_path: Path, missing: str
+) -> None:
+    """PR #537 review M2: ``peptides`` given means the peptide chain ran, so loci without one of
+    its outputs fails (naming the key) instead of silently writing a proteins-only table."""
+    from helpers.mapping_steps import fresh_steps
+
+    from gippa.config import GippaConfig
+
+    avail = peptide_chain["avail"]
+    keys = ["genome", "genes", "features", "replicons", "peptides", "sixframe", *PEPTIDE_WORK]
+    inputs = {k: avail[k] for k in keys if k != missing}
+    with pytest.MonkeyPatch.context() as mp:
+        reg = fresh_steps(mp)
+        with pytest.raises(Exception) as err:  # StepError through run_step
+            reg.run_step("loci", GippaConfig(seed=3), inputs, {"mapping": tmp_path / "mapping"})
+    text = f"{err.value} {err.value.__cause__}"
+    assert missing in text, f"loci failed without naming {missing}: {text}"
+
+
+def test_proteins_only_loci_lists_unaligned_proteins_as_unmapped(
+    protein_only_loci_unaligned: dict[str, Any],
+) -> None:
+    """PR #537 review M2: proteins neither miniprot nor tblastn aligns are ``kind = protein``
+    rows of ``unmapped.tsv``; aligned proteins are not."""
+    from helpers.mapping_steps import module2_files, read_tsv_df
+
+    run = protein_only_loci_unaligned
+    files = module2_files(run["work"], run["avail"])
+    un = read_tsv_df(files["unmapped.tsv"])
+    prot = un[un["kind"] == "protein"]
+    assert set(prot["sequence_id"]) == {i for i, _ in UNALIGNED}, prot
+    seqs = dict(UNALIGNED)
+    for r in prot.itertuples(index=False):
+        assert r.sequence == seqs[r.sequence_id]
+    hits = read_tsv_df(files["protein_hits.tsv"])
+    assert set(hits["protein_id"]) == set(run["ids"])
+
+
 # ---------------------------------------------------------------- 4. gippa run params.json
 
 
@@ -358,7 +456,9 @@ def _write(path: Path, text: str) -> Path:
     return path
 
 
-def _gippa_run(tmp: Path, db: Path, proteins: str, abundance: str | None) -> dict[str, str]:
+def _gippa_run(
+    tmp: Path, db: Path, proteins: str, abundance: str | None, peptides: str | None = None
+) -> dict[str, str]:
     from click.testing import CliRunner
 
     from gippa.cli import cli
@@ -372,6 +472,8 @@ def _gippa_run(tmp: Path, db: Path, proteins: str, abundance: str | None) -> dic
     argv = ["run", "--genome", str(genome), "--proteins", str(faa)]
     if abundance is not None:
         argv += ["--abundance", str(_write(tmp / "in" / "abundance.tsv", abundance))]
+    if peptides is not None:
+        argv += ["--peptides", str(_write(tmp / "in" / "peptides.tsv", peptides))]
     argv += ["--outdir", str(out), "--db-dir", str(db), "--modules", "core"]
     res = CliRunner().invoke(cli, argv)
     if res.exception is not None and not isinstance(res.exception, SystemExit):
@@ -379,6 +481,11 @@ def _gippa_run(tmp: Path, db: Path, proteins: str, abundance: str | None) -> dic
     assert res.exit_code == ExitCode.SUCCESS, res.output
     params = json.loads((out / "work" / "params.json").read_text(encoding="utf-8"))
     return {k: v for k, v in params["inputs"].items() if v}
+
+
+def _preflight_json(tmp: Path) -> dict[str, Any]:
+    doc: dict[str, Any] = json.loads((tmp / "OUT" / "preflight" / "preflight.json").read_text())
+    return doc
 
 
 def test_run_proteins_and_abundance_reach_nextflow(tmp_path: Path, run_env: Path) -> None:
@@ -395,15 +502,59 @@ def test_run_proteins_and_abundance_reach_nextflow(tmp_path: Path, run_env: Path
     assert set(pd.read_parquet(inputs["abundance"])["protein_id"]) <= faa_ids
 
 
-def test_run_proteins_only_short_records_go_to_the_peptide_path(
+# PR #537 review, lead decision (fix option a): without --peptides the short records
+# (input.peptide_len, 7..40 aa) are not used (staging them flips the tier to two_peptide and
+# undetects every long protein); preflight warns, naming the count. With --peptides they keep
+# today's peptide path.
+SHORT_RULE = "proteins.short_records_unused"
+SHORT_2 = "MKVLAAGIVGRSTEQLLKAW"  # 20 aa
+TOO_SHORT = "MKVLA"  # 5 aa: dropped (proteins.length_classes), not counted here
+PROTEINS_WITH_SHORT = (
+    f">P1\n{LONG_PROTEIN}\n>S1\n{SHORT_PROTEIN}\n>S2\n{SHORT_2}\n>T1\n{TOO_SHORT}\n"
+)
+USER_PEPTIDES = "peptide\tprotein_ids\trun\tintensity\nAAGLIEVQAPILSR\tP1\tr1\t50\n"
+
+
+def _short_checks(tmp: Path) -> list[dict[str, Any]]:
+    return [c for c in _preflight_json(tmp)["checks"] if c["rule_id"] == SHORT_RULE]
+
+
+def test_run_proteins_only_does_not_stage_short_records(tmp_path: Path, run_env: Path) -> None:
+    """Item 1: no ``peptides`` key in params.json; the run's tier stays ``protein_list``."""
+    inputs = _gippa_run(tmp_path, run_env, PROTEINS_WITH_SHORT, None)
+    assert "proteins_long" in inputs, inputs
+    assert "peptides" not in inputs, f"short --proteins records staged as peptides: {inputs}"
+    assert _preflight_json(tmp_path)["evidence_tier"] == "protein_list"
+
+
+def test_run_proteins_only_warns_about_unused_short_records(tmp_path: Path, run_env: Path) -> None:
+    """Item 2: one ``warn`` check on input ``proteins`` naming the count (2: S1, S2; the 5-aa T1 is
+    dropped, not counted), saying the records are not used and how to pass them (--peptides)."""
+    _gippa_run(tmp_path, run_env, PROTEINS_WITH_SHORT, None)
+    checks = _short_checks(tmp_path)
+    assert len(checks) == 1, _preflight_json(tmp_path)["checks"]
+    (c,) = checks
+    assert (c["level"], c["input"]) == ("warn", "proteins"), c
+    assert re.search(r"\b2\b", c["message"]), c
+    assert "--peptides" in c["message"], c
+    assert "not used" in c["message"], c
+    v = c["value"]
+    assert v == 2 or (isinstance(v, dict) and 2 in v.values()), c
+
+
+def test_run_proteins_only_long_records_no_short_warning(tmp_path: Path, run_env: Path) -> None:
+    _gippa_run(tmp_path, run_env, f">P1\n{LONG_PROTEIN}\n", None)
+    assert all(c["level"] != "warn" for c in _short_checks(tmp_path)), _short_checks(tmp_path)
+
+
+def test_run_with_peptides_keeps_short_records_on_the_peptide_path(
     tmp_path: Path, run_env: Path
 ) -> None:
-    """docs/user-guide/inputs.md: records of 40 aa or fewer take the peptide path, also without
-    ``--peptides`` (today preflight writes them to peptides.norm.parquet but gippa run drops it)."""
-    faa = f">P1\n{LONG_PROTEIN}\n>S1\n{SHORT_PROTEIN}\n"
-    inputs = _gippa_run(tmp_path, run_env, faa, None)
+    """Item 3: with --peptides the short protein records join the normalised peptide table, as
+    before, and no unused-records warning fires."""
+    inputs = _gippa_run(tmp_path, run_env, PROTEINS_WITH_SHORT, None, peptides=USER_PEPTIDES)
     work = (tmp_path / "OUT" / "work" / "preflight").absolute()
-    assert "proteins_long" in inputs, inputs
-    assert "peptides" in inputs, f"short --proteins records never reach MAPPING: {inputs}"
     assert Path(inputs["peptides"]) == work / "peptides.norm.parquet", inputs
-    assert set(pd.read_parquet(inputs["peptides"])["peptide"]) == {SHORT_PROTEIN}
+    got = set(pd.read_parquet(inputs["peptides"])["peptide"])
+    assert got == {"AAGLIEVQAPILSR", SHORT_PROTEIN, SHORT_2}, got
+    assert all(c["level"] != "warn" for c in _short_checks(tmp_path)), _short_checks(tmp_path)

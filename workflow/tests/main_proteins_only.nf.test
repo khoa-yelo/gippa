@@ -13,8 +13,10 @@
 // the `core` module. gene_table stages no `peptides` key (there is none) and, with
 // params.inputs.abundance, stages that file. Every GIPPA_STEP task's --in keys match the registry
 // fixture (data/annotate/step_registry.json): a loci step run without peptides must be declared so.
-// Not pinned: whether the peptide-only steps (sixframe_index ... placement, VARIANTS, NOVEL) run on
-// a proteins-only input. The peptides-plus-proteins test pins that nothing is lost on that path.
+// PR #537 review (lead decision, M3): on proteins only the peptide chain (sixframe_index, map_exact,
+// map_tolerant, placement), VARIANTS and NOVEL run 0 times, and no variants* / novel* key (nor
+// pileup / annotation_patch, their outputs) reaches REPORT. The peptides-plus-proteins test pins
+// that nothing is lost on that path.
 
 nextflow_pipeline {
 
@@ -30,8 +32,10 @@ nextflow_pipeline {
                 def a = "${moduleTestDir}/data/annotate"
                 def d = "${moduleTestDir}/data/mapping"
                 outdir = "$outputDir"
+                // preflight.json as gippa run always passes it (REPORT's plots step needs it)
                 inputs = [genome: "${a}/genome.fa".toString(), replicons: "${a}/replicons.tsv".toString(),
-                          proteins_long: "${d}/proteins.long.faa".toString()]
+                          proteins_long: "${d}/proteins.long.faa".toString(),
+                          preflight: "${moduleTestDir}/data/genetable/preflight.json".toString()]
                 modules = ['core']
                 annotation = new groovy.json.JsonSlurper().parse(new File("${a}/annotation.json"))
                 db_dir = "${moduleTestDir}/data/genetable/db".toString()
@@ -59,6 +63,27 @@ nextflow_pipeline {
             }
             def probs = H.registryProblems(work, REG)
             assert probs.isEmpty() : "py step inputs vs gippa.steps registry: ${probs}"
+
+            // lead decision (PR #537 review M3): no peptide chain, no VARIANTS, no NOVEL on proteins only
+            ['sixframe_index', 'map_exact', 'map_tolerant', 'placement'].each { s ->
+                assert H.stepCount(workflow.trace, s) == 0 : "peptide-chain step ${s} ran without peptides: ${names}"
+            }
+            def peptideOnly = names.findAll { n ->
+                def t = (H.tagOf(n) ?: '').toLowerCase()
+                def p = H.procOf(n).toUpperCase()
+                t == 'variants' || t.startsWith('novel') || p.startsWith('VARIANTS') || p.contains('NOVEL')
+            }
+            assert peptideOnly.isEmpty() : "VARIANTS / NOVEL tasks ran without peptides: ${peptideOnly}"
+            def plotTag = { File dir -> H.tagOf((new File(dir, '.command.run').readLines().find { it.startsWith('### name:') } ?: '').replaceFirst(/^### name:\s*['"]/, '').replaceFirst(/['"]\s*$/, '')) }
+            def plotDirs = H.taskDirs(work).findAll { plotTag(it) == 'plots' }
+            assert plotDirs.size() == 1 : "plots ran ${plotDirs.size()}x; tasks: ${names}"
+            def reportKeys = H.stepInputs(plotDirs[0]).collect { it[0] }.toSet()
+            def leaked = reportKeys.findAll { k -> k.startsWith('variants') || k.startsWith('novel') || k in ['pileup', 'annotation_patch'] }
+            assert leaked.isEmpty() : "VARIANTS / NOVEL keys reach REPORT without peptides: ${leaked}; all ${reportKeys}"
+            ['tables/variants.tsv', 'tables/variants.vcf', 'tables/pileup.tsv.gz', 'tables/novel_orfs.tsv',
+             'tables/novel_orfs.gff3', 'tables/novel_orfs.faa', 'tables/annotation_patch.gff3'].each { f ->
+                assert !new File("${outputDir}/${f}").exists() : "${f} published without peptides"
+            }
 
             // loci gets the long proteins and the tool outputs of the protein route
             def lin = H.stepInputs(H.stepDirs(work, 'loci')[0])
@@ -134,6 +159,27 @@ nextflow_pipeline {
             }
             def probs = H.registryProblems(work, REG)
             assert probs.isEmpty() : "py step inputs vs gippa.steps registry: ${probs}"
+
+            // lead decision (PR #537 review M3): no peptide chain, no VARIANTS, no NOVEL on proteins only
+            ['sixframe_index', 'map_exact', 'map_tolerant', 'placement'].each { s ->
+                assert H.stepCount(workflow.trace, s) == 0 : "peptide-chain step ${s} ran without peptides: ${names}"
+            }
+            def peptideOnly = names.findAll { n ->
+                def t = (H.tagOf(n) ?: '').toLowerCase()
+                def p = H.procOf(n).toUpperCase()
+                t == 'variants' || t.startsWith('novel') || p.startsWith('VARIANTS') || p.contains('NOVEL')
+            }
+            assert peptideOnly.isEmpty() : "VARIANTS / NOVEL tasks ran without peptides: ${peptideOnly}"
+            def plotTag = { File dir -> H.tagOf((new File(dir, '.command.run').readLines().find { it.startsWith('### name:') } ?: '').replaceFirst(/^### name:\s*['"]/, '').replaceFirst(/['"]\s*$/, '')) }
+            def plotDirs = H.taskDirs(work).findAll { plotTag(it) == 'plots' }
+            assert plotDirs.size() == 1 : "plots ran ${plotDirs.size()}x; tasks: ${names}"
+            def reportKeys = H.stepInputs(plotDirs[0]).collect { it[0] }.toSet()
+            def leaked = reportKeys.findAll { k -> k.startsWith('variants') || k.startsWith('novel') || k in ['pileup', 'annotation_patch'] }
+            assert leaked.isEmpty() : "VARIANTS / NOVEL keys reach REPORT without peptides: ${leaked}; all ${reportKeys}"
+            ['tables/variants.tsv', 'tables/variants.vcf', 'tables/pileup.tsv.gz', 'tables/novel_orfs.tsv',
+             'tables/novel_orfs.gff3', 'tables/novel_orfs.faa', 'tables/annotation_patch.gff3'].each { f ->
+                assert !new File("${outputDir}/${f}").exists() : "${f} published without peptides"
+            }
 
             def gin = H.stepInputs(H.stepDirs(work, 'gene_table')[0])
             assert gin.any { it[0] == 'abundance' && it[1].endsWith('abundance.norm.parquet') } : "gene_table got no abundance: ${gin}"
