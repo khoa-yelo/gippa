@@ -196,7 +196,7 @@ def test_main_calls_variants_after_mapping_inside_the_peptide_block() -> None:
     assert pep, "no `if (inputs.peptides) {` block inside the mapping block"
     call = re.search(r"\bVARIANTS\s*\(", _body(block, pep.end(), "{", "}"))
     assert call, "VARIANTS is not called inside the peptide block"
-    assert block.index("MAPPING(") < pep.start(), "VARIANTS must follow MAPPING"
+    assert block.index("MAPPING(") < pep.start(), "the peptide block (VARIANTS) must follow MAPPING"
     call = re.search(r"\bVARIANTS\s*\(", block)
     args = _body(block, call.end())
     assert "MAPPING.out.mapping" in args, args
