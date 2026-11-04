@@ -7,6 +7,8 @@ under OUT/<name>/:
 
     genome/<name>.fna.gz          the region as one linear contig (no topology tag)
     A_diann/report.parquet        DIA-NN 2.3.1 report rows whose proteins all lie in the region
+    A_diann/search_db.faa         the region's records of the search database (`--proteins`): they
+                                  map the report's protein IDs to genes, so the decoys pair
     B_proteins/proteins.faa       the region proteins DIA-NN quantified (A2 strain database)
     B_proteins/abundance.tsv      their PG.MaxLFQ (median over runs), as `gippa convert` computes it
     C_cascadia/WT_{1,2,3}.ssl     Cascadia rows whose peptide occurs in the region's six frames
@@ -280,12 +282,14 @@ def build(start: int, end: int, name: str, out_root: Path, root: Path) -> dict[s
     a_path = out / "A_diann" / "report.parquet"
     pq.write_table(sub_t, a_path, compression="zstd")
     sub = sub_t.to_pandas()
+    db = read_fasta(src["strain_db"])
+    s_path = out / "A_diann" / "search_db.faa"
+    write_fasta(s_path, [(pid, db[pid]) for pid in prot["db_id"]])
 
     # Route B
     ab = abundance(sub)
     ab_path = out / "B_proteins" / "abundance.tsv"
     ab.to_csv(ab_path, sep="\t", index=False, lineterminator="\n", float_format="%.6g")
-    db = read_fasta(src["strain_db"])
     f_path = out / "B_proteins" / "proteins.faa"
     write_fasta(f_path, [(pid, db[pid]) for pid in ab["protein_id"]])
 
@@ -349,7 +353,7 @@ def build(start: int, end: int, name: str, out_root: Path, root: Path) -> dict[s
         "sources": {k: {"path": str(v), "sha256": sha256(v)} for k, v in src.items()},
     }
     routes = {
-        "A_diann": [a_path],
+        "A_diann": [a_path, s_path],
         "B_proteins": [f_path, ab_path],
         "C_cascadia": [out / "C_cascadia" / f"{r}.ssl" for r in RUNS],
         "D_generic": [d_path],

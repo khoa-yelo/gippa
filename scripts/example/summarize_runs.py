@@ -1,7 +1,7 @@
 """Summarise the example timing runs: wall time, per-process times and result sanity.
 
-Reads every run directory under $GIPPA_ROOT/example/runs/ (written by scripts/slurm/example_run.sbatch)
-and prints one JSON object per run: timing.txt, the Nextflow trace (realtime per process, summed
+Reads every run directory under $GIPPA_ROOT/example/runs/ (scripts/slurm/example_run.sbatch) and
+prints one JSON object per run: timing.txt, the Nextflow trace (realtime per process, summed
 over tasks, the top processes and the critical-path-ish span from first submit to last complete),
 and from the outputs: genes, detected genes, the detection tier and gene-level FDR rows, the counts
 of the tables that small linear contigs make degenerate (operons, operon flags, islands, regions,
@@ -16,7 +16,6 @@ import json
 import os
 import re
 import sys
-from datetime import datetime
 from pathlib import Path
 
 import pandas as pd
@@ -46,7 +45,9 @@ def trace_summary(trace: Path, top: int = 8) -> dict[str, object]:
     t["dur_s"] = t["duration"].map(duration_s)
     t["submit_dt"] = pd.to_datetime(t["submit"], errors="coerce")
     end = (t["submit_dt"] + pd.to_timedelta(t["dur_s"], unit="s")).max()
-    by = t.groupby("proc").agg(tasks=("real_s", "size"), real_s=("real_s", "sum"), dur_s=("dur_s", "max"))
+    by = t.groupby("proc").agg(
+        tasks=("real_s", "size"), real_s=("real_s", "sum"), dur_s=("dur_s", "max")
+    )
     by = by.sort_values("real_s", ascending=False)
     return {
         "tasks": len(t),
@@ -54,8 +55,12 @@ def trace_summary(trace: Path, top: int = 8) -> dict[str, object]:
         "nf_span_s": round((end - t["submit_dt"].min()).total_seconds(), 1),
         "sum_realtime_s": round(float(t["real_s"].sum()), 1),
         "top": [
-            {"process": p, "tasks": int(r.tasks), "realtime_s": round(r.real_s, 1),
-             "max_task_duration_s": round(r.dur_s, 1)}
+            {
+                "process": p,
+                "tasks": int(r.tasks),
+                "realtime_s": round(r.real_s, 1),
+                "max_task_duration_s": round(r.dur_s, 1),
+            }
             for p, r in by.head(top).iterrows()
         ],
     }
@@ -81,9 +86,20 @@ def results(out: Path) -> dict[str, object]:
         }
         q01 = tier[(tier["group"].astype(str) == "0.01")]
         res["q01"] = {r.metric: r.value for r in q01.itertuples()}
-    for name in ("operons", "operon_flags", "islands", "regions_stats", "autocorrelation",
-                 "enrichment_detection", "enrichment_gsea", "variants", "novel_orfs",
-                 "determinants_model", "sensitivity", "category_summary"):
+    for name in (
+        "operons",
+        "operon_flags",
+        "islands",
+        "regions_stats",
+        "autocorrelation",
+        "enrichment_detection",
+        "enrichment_gsea",
+        "variants",
+        "novel_orfs",
+        "determinants_model",
+        "sensitivity",
+        "category_summary",
+    ):
         res[f"rows_{name}"] = _rows(out / "tables" / f"{name}.tsv")
     rp = out / "regions.parquet"
     if rp.exists():
@@ -96,9 +112,6 @@ def results(out: Path) -> dict[str, object]:
             if k in m:
                 v = m[k]
                 res[f"manifest_{k}"] = v if not isinstance(v, list) or len(v) < 40 else v[:40]
-        plots = m.get("plots") or m.get("report", {}).get("plots") if isinstance(m.get("report"), dict) else m.get("plots")
-        if isinstance(plots, dict) and "skipped" in plots:
-            res["plots_skipped"] = plots["skipped"]
     return res
 
 
@@ -119,7 +132,6 @@ def main(argv: list[str]) -> int:
     runs = [Path(a) for a in argv] or sorted((root / "example" / "runs").glob("*"))
     for r in runs:
         print(json.dumps(summarise(r), default=str))
-    _ = datetime
     return 0
 
 
