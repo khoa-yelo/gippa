@@ -9,6 +9,9 @@ models from the ``gippa setup`` manifest (:func:`read_manifest`, run-wiring lead
 installed (:func:`resolve_uniop`, pure) after one ``--help`` run of UniOP in the profile's
 runtime (:func:`probe_uniop`); the reason UniOP is missing includes a failed or absent
 ``image:uniop`` setup item (:func:`uniop_setup_record`).
+``environment.kegg`` (M12-03, Khoa 2026-11-04): a missing *optional* requirement (KEGG, academic
+use only: ``gippa setup --no-kegg``) is not an ``environment.tools`` error but this warning;
+``function`` still runs GO and COG and skips only the KEGG pathway analyses.
 ``environment.resources``: the only warning is RAM below the 24 GiB that genome-wide Promotech
 needs (the caller passes it as ``need_ram_bytes``, see :func:`resource_needs`). The check holds
 the verdict only, never the raw RAM and disk numbers, so ``preflight.json`` is identical across
@@ -40,6 +43,7 @@ from gippa.setupdb.items import RESOURCES, SOURCES
 __all__ = [
     "GENOME_PROMOTECH_RAM_BYTES",
     "GIB",
+    "KEGG_RULE",
     "LOCAL_TOOLS",
     "MANIFEST",
     "RESOURCES_RULE",
@@ -73,6 +77,9 @@ TOOLS_RULE = "binaries, environments and DB versions of enabled modules found �
 RESOURCES_RULE = (
     "RAM ≥ 24 GiB for genome-wide Promotech → else warn; free disk and RAM logged (events.jsonl)"
 )
+KEGG_RULE = (
+    "KEGG (optional for function) found → else warn: KEGG pathway analyses skipped, GO and COG run"
+)
 MANIFEST = "db_manifest.json"
 _CGROUP_LIMITS = (
     Path("/sys/fs/cgroup/memory.max"),  # cgroup v2
@@ -85,12 +92,18 @@ Kind = Literal["binary", "env", "db", "model"]
 
 @dataclass(frozen=True, slots=True)
 class Requirement:
-    """One tool, environment, database or model an enabled module needs."""
+    """One tool, environment, database or model an enabled module needs.
+
+    ``optional``: the module runs without it, skipping only what depends on it (KEGG for
+    ``function``, M12-03); missing, it is the warning ``environment.<name>``, not an
+    ``environment.tools`` error.
+    """
 
     name: str
     module: str
     kind: Kind
     min_version: str | None
+    optional: bool = False
 
 
 @dataclass(frozen=True, slots=True)
@@ -922,6 +935,17 @@ _ROWS: dict[str, tuple[tuple[str, Kind, str | None], ...]] = {
     "bgc": (("antismash_db", "db", None),),
     "function": (("go", "db", None), ("kegg", "db", None), ("cog", "db", None)),
 }
+# Requirements a module runs without (M12-03, Khoa 2026-11-04): KEGG is academic use only.
+# rule id, human rule and warning message of each optional requirement when it is missing
+_OPTIONAL_CHECKS: dict[str, tuple[str, str, str]] = {
+    "kegg": (
+        "environment.kegg",
+        KEGG_RULE,
+        "KEGG not installed: KEGG pathway analyses are skipped; GO and COG still run "
+        "(gippa setup --kegg installs KEGG)",
+    ),
+}
+_OPTIONAL = frozenset(_OPTIONAL_CHECKS)
 
 
 def requirements(modules: Sequence[str], promoters_mode: str) -> list[Requirement]:
@@ -932,7 +956,7 @@ def requirements(modules: Sequence[str], promoters_mode: str) -> list[Requiremen
     if unknown:
         raise ValueError(f"unknown modules: {', '.join(unknown)}")
     return [
-        Requirement(name, module, kind, version)
+        Requirement(name, module, kind, version, name in _OPTIONAL)
         for module in _ROWS
         if module == "core" or module in modules
         for name, kind, version in _ROWS[module]
@@ -1019,7 +1043,8 @@ def _tools_check(
     for r in [*reqs, *_reported_tools(reqs, probe)]:
         v = probe.found.get(r.name)
         if v is None:
-            missing.append(r.name)
+            if not r.optional:
+                missing.append(r.name)
             continue
         found[r.name] = v
         problem = _version_problem(r, v)
@@ -1055,6 +1080,18 @@ def _resources_check(probe: EnvProbe, need_disk_bytes: int, need_ram_bytes: int)
     return Check("environment.resources", "environment", level, rule, value, message)
 
 
+def _optional_checks(reqs: Sequence[Requirement], probe: EnvProbe) -> list[Check]:
+    """One warning per missing optional requirement (:data:`_OPTIONAL_CHECKS`), in ``reqs``
+    order; none when every optional requirement is found."""
+    out = []
+    for r in reqs:
+        if r.optional and probe.found.get(r.name) is None:
+            rule_id, rule, message = _OPTIONAL_CHECKS[r.name]
+            value: dict[str, JsonValue] = {"missing": list[JsonValue]([r.name]), "module": r.module}
+            out.append(Check(rule_id, "environment", "warn", rule, value, message))
+    return out
+
+
 def environment_checks(
     reqs: Sequence[Requirement],
     probe: EnvProbe,
@@ -1063,13 +1100,15 @@ def environment_checks(
     tools_missing: Sequence[str] = (),
     tool_reasons: Mapping[str, str] | None = None,
 ) -> list[Check]:
-    """``environment.tools`` and ``environment.resources`` for ``reqs`` against ``probe``;
-    ``tools_missing`` (from :func:`missing_tools`) are reported missing alongside databases,
-    each with its ``tool_reasons`` entry (:func:`missing_tool_reasons`) in the message.
+    """``environment.tools`` and ``environment.resources`` for ``reqs`` against ``probe``, then
+    one warning per missing optional requirement (``environment.kegg``); ``tools_missing`` (from
+    :func:`missing_tools`) are reported missing alongside databases, each with its
+    ``tool_reasons`` entry (:func:`missing_tool_reasons`) in the message.
 
     Free disk never warns (ADR-0005 item 4): ``need_disk_bytes`` is only recorded.
     """
     return [
         _tools_check(reqs, probe, tools_missing, tool_reasons),
         _resources_check(probe, need_disk_bytes, need_ram_bytes),
+        *_optional_checks(reqs, probe),
     ]

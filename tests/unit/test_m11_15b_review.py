@@ -380,7 +380,9 @@ def test_full_with_one_function_resource_missing_leaves_function_out(
     res = _invoke("--full")
     assert res.exit_code == 2, res.output
     (call,) = preflight.calls
-    assert sorted(call["cfg"].modules) == sorted(DEMO_MODULES), missing
+    # M12-03: KEGG is optional, so a missing KEGG item keeps `function` (GO and COG still run)
+    want = [*DEMO_MODULES, "function"] if missing.startswith("kegg_") else DEMO_MODULES
+    assert sorted(call["cfg"].modules) == sorted(want), missing
 
 
 @pytest.mark.parametrize("kept", _function_resources())

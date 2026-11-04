@@ -50,6 +50,10 @@ GSEA_CLUSTER = (
 #: docs/methods/islands.md, "Validity domain (ADR-0021 Amendment 1)"
 ISLANDS = "The FWER is claimed for a dependence regime, not for a replicon size."
 KEGG_TERMS = "KEGG data: academic use only (rest.kegg.jp terms)."
+#: the function section and provenance when the run had no KEGG (M12-03, ``gippa setup --no-kegg``)
+KEGG_SKIPPED = "KEGG not installed: pathway enrichment skipped."
+KEGG_ABSENT = "KEGG not installed"
+NOT_RECORDED_RUN = "not recorded in this run"
 #: ADR-0061 decision 1 (rows flagged ``tu_source_distance_model``), verbatim
 MORAN_DISTANCE = (
     "Moran's I under the TU-block null is anti-conservative at short lags when TUs come from the "
@@ -164,9 +168,10 @@ def _function(view: RunView, doc: Mapping[str, Any] | None) -> list[dict[str, An
         out += [_p(t) for t in GSEA]
         if gsea is not None and gsea["flags"].astype(str).str.contains("genomic_cluster").any():
             out.append(_p(GSEA_CLUSTER))
+    no_kegg = "layer_missing:kegg" in flags
     cats = _safe(view, "category_summary") if view.has("category_summary") else None
     if not view.has("category_summary"):
-        return out
+        return [*out, _p(KEGG_SKIPPED)] if out and no_kegg else out
     cov = "" if cats is None else ", ".join(
         f"{c} {format_value(v)}"
         for c, v in cats.drop_duplicates("collection")[["collection", "coverage"]].itertuples(False)
@@ -176,10 +181,10 @@ def _function(view: RunView, doc: Mapping[str, Any] | None) -> list[dict[str, An
     if "bakta_db_light" in flags:
         out.append(_p("Annotation used the Bakta light DB, which assigns fewer functions than "
                       "the full DB."))  # fmt: skip
-    if "layer_missing:kegg" in flags:
-        out.append(_p("KEGG not installed."))
+    if no_kegg:
+        out.append(_p(KEGG_SKIPPED))
     else:
-        date = kegg_date(doc) or "not recorded in this run"
+        date = kegg_date(doc) or NOT_RECORDED_RUN
         out.append(_p(f"{KEGG_TERMS} KEGG retrieval date: {date}."))
     return out
 
@@ -355,12 +360,15 @@ def provenance(view: RunView, doc: Mapping[str, Any] | None, note: str | None) -
             str(d.get("retrieved", ""))] for d in _databases(doc)]  # fmt: skip
     go = [str(d.get("version")) for d in _databases(doc) if d.get("name") == "go_basic"]
     dirty = " (uncommitted changes)" if doc.get("git_dirty") else ""
+    # M12-03: the flag wins over a lone KEGG item's date (a partial KEGG install is not used)
+    kegg_line = (KEGG_ABSENT if "layer_missing:kegg" in view.run_flags()
+                 else kegg_date(doc) or NOT_RECORDED_RUN)  # fmt: skip
     lines = [
         ("GIPPA version", str(doc.get("gippa_version", NOT_RECORDED))),
         ("commit", f"{doc.get('git_commit') or NOT_RECORDED}{dirty}"),
         ("command line", _command_line(doc) or NOT_RECORDED),
         ("seed", str(seeds.get("master")) if isinstance(seeds, Mapping) else NOT_RECORDED),
-        ("KEGG retrieval date", kegg_date(doc) or "not recorded in this run"),
+        ("KEGG retrieval date", kegg_line),
         ("GO release", ", ".join(go) or NOT_RECORDED),
         ("manifest digest (SHA-256 of run_manifest.json)", view.digest("run_manifest") or ""),
     ]

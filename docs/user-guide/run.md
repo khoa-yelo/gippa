@@ -45,7 +45,7 @@ four run by default.
 | `core` | annotation and context layers, mapping, the gene table, detection, context statistics, operons, variants, novel ORFs and determinants; always on, even when it is not listed | Bakta DB (checked even with `--annotation bakta.json`) and Promotech models; contaminants recommended (they label contaminant peptides) |
 | `mobile` | prophage and plasmid regions from geNOMAD | `--genomad` |
 | `bgc` | biosynthetic gene clusters from antiSMASH | `--antismash` |
-| `function` | COG, GO and KEGG categories, detection enrichment, abundance GSEA | `--go --kegg --cog` |
+| `function` | COG, GO and KEGG categories, detection enrichment, abundance GSEA | `--go --cog`; `--kegg` optional (academic use only): without it, KEGG pathway analyses are skipped and GO and COG still run |
 
 ```bash
 gippa run --genome genome.fna --peptides peptides.tsv --modules core,function --outdir out

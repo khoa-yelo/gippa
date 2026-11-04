@@ -95,13 +95,15 @@ see [Layout and sizes](setup-databases.md#layout-and-sizes).
 | `promotech_models` | on; `--no-promotech-models` | `promotech` | RF-HOT | 5 GiB | module `core` (promoter predictions) |
 | `antismash` | on; `--no-antismash` | `antismash` | 8.0.4 | 10 GiB | module `bgc` |
 | `go_basic`, `goslim_generic` | on; `--no-go` | `go/go-basic.obo`, `go/goslim_generic.obo` | 2026-05-19 | — | module `function` |
-| `kegg_ko_pathway`, `kegg_pathway_names` | on; `--no-kegg` | `kegg/ko_pathway.tsv`, `kegg/pathway_names.tsv` | retrieval date | — | module `function` |
+| `kegg_ko_pathway`, `kegg_pathway_names` | on; `--no-kegg` | `kegg/ko_pathway.tsv`, `kegg/pathway_names.tsv` | retrieval date | — | module `function` (optional: KEGG pathway analyses) |
 | `cog2020_def`, `cog2020_fun` | on; `--no-cog` | `cog/cog-20.def.tab`, `cog/fun-20.tab` | 2020 | — | module `function`; `cog_category` in `genes.tsv` |
 | `contaminants` | on; `--no-contaminants` | `contaminants/contaminants.fasta` | commit `bddf6da9` | — | contaminant labels in mapping; `gippa makedb` |
 | `uniop_source` | with the images, or `--uniop` alone | `uniop/UniOP-3ed14dfc2a5d69b993d99a26e50c1f8e9723c087.tar.gz` | commit `3ed14dfc` | — | operon predictions (UniOP; optional, see [Install › UniOP](install.md#uniop)) |
 
-Preflight requires every part of a group to be `ok`: `function` needs both GO files, both KEGG
-tables and both COG tables.
+Preflight counts a group only when every part of it is `ok`: `function` needs both GO files and
+both COG tables. KEGG is optional for `function`: it counts as installed only when
+`kegg_ko_pathway` and `kegg_pathway_names` are both `ok`; otherwise preflight warns
+(`environment.kegg`) and `function` runs GO and COG and skips the KEGG pathway analyses.
 
 In the commands below, set `DB=/path/to/db` first. `md5sum -c` and `sha256sum -c` print `OK` for a
 good file. If a check fails, delete the file and download it again from the same URL. Never

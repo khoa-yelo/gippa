@@ -32,7 +32,8 @@ a batch job. Flags you may change ([all flags](setup-databases.md#flags)):
 
 - `--no-genomad` for commercial use (geNOMAD is non-commercial only), then run with
   `--modules core,bgc,function`;
-- `--no-kegg` outside academia without a KEGG licence, then run with `--modules core,mobile,bgc`;
+- `--no-kegg` outside academia without a KEGG licence; `function` then runs GO and COG and skips
+  only the KEGG pathway analyses (preflight warns `environment.kegg`);
 - `--bakta full`: functions for more genes, about 84 GB more; `--minimal` for small disks.
 
 ## 3. Run
