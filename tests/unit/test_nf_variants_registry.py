@@ -188,12 +188,16 @@ def test_mapping_emits_hits_tolerant() -> None:
 def test_main_calls_variants_after_mapping_inside_the_peptide_block() -> None:
     text = _text(MAIN)
     assert re.search(r"include\s*\{\s*VARIANTS\s*\}\s*from\s*'./subworkflows/local/variants'", text)
-    m = re.search(r"if\s*\(\s*inputs\.peptides\s*\)\s*\{", text)
-    assert m, "main.nf has no `if (inputs.peptides) {` block"
+    # #536: MAPPING runs with peptides or proteins (`if (mapped)`); VARIANTS needs peptides
+    m = re.search(r"if\s*\(\s*mapped\s*\)\s*\{", text)
+    assert m, "main.nf has no `if (mapped) {` block"
     block = _body(text, m.end(), "{", "}")
-    call = re.search(r"\bVARIANTS\s*\(", block)
+    pep = re.search(r"if\s*\(\s*inputs\.peptides\s*\)\s*\{", block)
+    assert pep, "no `if (inputs.peptides) {` block inside the mapping block"
+    call = re.search(r"\bVARIANTS\s*\(", _body(block, pep.end(), "{", "}"))
     assert call, "VARIANTS is not called inside the peptide block"
-    assert block.index("MAPPING(") < call.start(), "VARIANTS must follow MAPPING"
+    assert block.index("MAPPING(") < pep.start(), "VARIANTS must follow MAPPING"
+    call = re.search(r"\bVARIANTS\s*\(", block)
     args = _body(block, call.end())
     assert "MAPPING.out.mapping" in args, args
     assert "MAPPING.out.hits_tolerant" in args, args
