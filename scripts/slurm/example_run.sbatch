@@ -14,7 +14,7 @@
 # Usage: sbatch --exclude=... [-c N] scripts/slurm/example_run.sbatch NAME ROUTE MODULES [extra gippa run args]
 #   NAME     bundle name under $GIPPA_ROOT/example (e.g. nissle_r100k)
 #   ROUTE    A (diann) | B (proteins+abundance) | C (cascadia) | D (generic)
-#   MODULES  core | default (all four modules)
+#   MODULES  default (all four modules) or a --modules list, e.g. core or core,bgc,function
 # Writes $GIPPA_ROOT/example/runs/<NAME>_<ROUTE>_<MODULES>_c<CPUS>_<jobid>/ with out/, timing.txt.
 set -euo pipefail
 export GIPPA_ROOT="${GIPPA_ROOT:-/home/classes/bios/270/khoa/giap/local}"
@@ -46,7 +46,7 @@ case "$ROUTE" in
   *) echo "unknown route $ROUTE" >&2; exit 1 ;;
 esac
 t1=$(date +%s)
-MOD=(); [[ "$MODULES" == core ]] && MOD=(--modules core)
+MOD=(); [[ "$MODULES" != default ]] && MOD=(--modules "$MODULES")
 mem_gb=$(( ${SLURM_MEM_PER_NODE:-32768} / 1024 - 2 ))
 set +e
 "$GIPPA" run --profile farmshare_local,apptainer --genome "$G" "${EV[@]}" "${MOD[@]}" \
