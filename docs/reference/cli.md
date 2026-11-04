@@ -46,6 +46,23 @@ Run the bundled synthetic SIM100K demo (no Nextflow, containers, databases or ne
 | `--full` | flag | — | — | After 'gippa setup': the same inputs through 'gippa run' with the real tools, the databases and Nextflow (checks the whole install). |
 | `--open` | flag | — | — | Open the report in a web browser. |
 
+## gippa example
+
+The real example dataset: a region of E. coli Nissle 1917 with four input routes.
+
+## gippa example fetch
+
+Download, verify and unpack the example bundle, then print the commands of its routes.
+
+| Option | Type | Default | Choices | Help |
+|---|---|---|---|---|
+| `--outdir` | `PATH` | `gippa-example` | — | Where the bundle is unpacked; must be absent or empty. |
+| `--version` | `X.Y` | — | — | The example bundle version (default: this GIPPA's MAJOR.MINOR); not gippa --version. |
+| `--from-file` | `FILE` | — | — | Offline: verify and unpack a bundle file already on disk (no network access). |
+| `--config` | `FILE` | — | — | YAML config file. |
+| `--set` | `KEY=VALUE` | — | — | Override any config key (dotted, repeatable; VALUE is YAML). |
+| `--log-level` | `CHOICE` | `INFO` | `DEBUG`, `INFO`, `WARNING`, `ERROR` | Logging verbosity. |
+
 ## gippa makedb
 
 Build an optional strain search database (no FDR is built on it).

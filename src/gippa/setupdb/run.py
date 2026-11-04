@@ -64,6 +64,7 @@ __all__ = [
     "nextflow_on_path",
     "run_setup",
     "setup_nextflow",
+    "unpack_archive",
 ]  # fmt: skip
 
 LOCK = ".giap_setup.lock"
@@ -347,6 +348,9 @@ def _unpack(archive: Path, out: Path) -> str | None:
             if bad is None:
                 tar.extractall(out, filter="data")
     return None if bad is None else f"unsafe member {bad!r} in {archive.name}"
+
+
+unpack_archive = _unpack  # the public name (gippa example, M12-01); ``_unpack`` stays an alias
 
 
 def _host(url: str) -> str:

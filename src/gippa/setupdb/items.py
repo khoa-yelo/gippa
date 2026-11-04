@@ -68,6 +68,7 @@ class DbItem:
     redirect_hosts: tuple[str, ...] = ()  # replaces the REDIRECT_HOSTS default when set (15d)
     executable: bool = False  # installed with mode 0755 (the Nextflow launcher)
     alt_urls: tuple[str, ...] = ()  # official fallbacks, tried after a SourceError (ADR-0069)
+    size_bytes: int = 0  # exact archive size (example bundle pins, M12-01); setup ignores it
 
     @property
     def urls(self) -> tuple[str, ...]:
@@ -142,7 +143,11 @@ def _load_sources() -> Mapping[str, DbItem]:
             redirect_hosts=tuple(str(h) for h in row.get("redirect_hosts") or ()),
             executable=bool(row.get("executable", False)),
             alt_urls=alt,
+            size_bytes=int(row.get("size_bytes", 0)),
         )
+    versions = [r.version for n, r in out.items() if n.startswith("example_")]
+    if twins := sorted({v for v in versions if versions.count(v) > 1}):
+        raise ValueError(f"db_sources.yaml: two example bundle rows with version {twins[0]}")
     return MappingProxyType(out)
 
 

@@ -129,32 +129,48 @@ def _help(text: str | None) -> list[str]:
     return [para for para in paras if para]
 
 
-def render_cli(group: click.Group, prog: str) -> str:
-    """Every visible command of ``group`` (Click's list order) and its visible parameters."""
-    body: list[str] = []
-    for para in _help(group.help):
+def _command_lines(cmd: click.Command, path: str, parent: click.Context) -> list[str]:
+    """``## <path>``, the help and the option table of ``cmd``; then, for a group, every visible
+    subcommand the same way, recursively (``## gippa example fetch``; M12-01)."""
+    body = [f"## {path}", ""]
+    for para in _help(cmd.help):
         body += [para, ""]
-    ctx = click.Context(group, info_name=prog)
+    rows = [
+        [
+            _param_names(p),
+            _param_type(p),
+            _param_default(p),
+            _param_choices(p),
+            _text(getattr(p, "help", None)),
+        ]
+        for p in cmd.params
+        if not getattr(p, "hidden", False)
+    ]
+    if rows:
+        body += [*_table(["Option", "Type", "Default", "Choices", "Help"], rows), ""]
+    if isinstance(cmd, click.Group):
+        body += _subcommands(cmd, path, parent)
+    return body
+
+
+def _subcommands(group: click.Group, prog: str, parent: click.Context | None) -> list[str]:
+    ctx = click.Context(group, info_name=prog.rsplit(" ", 1)[-1], parent=parent)
+    body: list[str] = []
     for name in group.list_commands(ctx):
         cmd = group.get_command(ctx, name)
         if cmd is None or cmd.hidden:
             continue
-        body += [f"## {prog} {name}", ""]
-        for para in _help(cmd.help):
-            body += [para, ""]
-        rows = [
-            [
-                _param_names(p),
-                _param_type(p),
-                _param_default(p),
-                _param_choices(p),
-                _text(getattr(p, "help", None)),
-            ]
-            for p in cmd.params
-            if not getattr(p, "hidden", False)
-        ]
-        if rows:
-            body += [*_table(["Option", "Type", "Default", "Choices", "Help"], rows), ""]
+        body += _command_lines(cmd, f"{prog} {name}", ctx)
+    return body
+
+
+def render_cli(group: click.Group, prog: str) -> str:
+    """Every visible command of ``group`` (Click's list order) and its visible parameters; a
+    subgroup gets its own section, followed by one section per visible subcommand."""
+    body: list[str] = []
+    for para in _help(group.help):
+        body += [para, ""]
+    body += _subcommands(group, prog, None)
     return _page("CLI reference", body)
 
 

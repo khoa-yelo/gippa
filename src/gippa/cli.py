@@ -49,6 +49,13 @@ def _choice(literal: Any) -> click.Choice[str]:
 
 def shared_options(func: F) -> F:
     """``--config``, ``--set``, ``--log-level`` and ``--version``, shared by every subcommand."""
+    func = config_options(func)
+    return click.version_option(gippa.__version__, prog_name="gippa")(func)
+
+
+def config_options(func: F) -> F:
+    """``--config``, ``--set`` and ``--log-level`` (``shared_options`` without ``--version``,
+    for a command that has its own ``--version``: ``gippa example fetch``)."""
     func = click.option(
         "--log-level",
         type=click.Choice(LOG_LEVELS, case_sensitive=False),
@@ -66,7 +73,6 @@ def shared_options(func: F) -> F:
     func = click.option("--config", "config_file", type=_existing_file, help="YAML config file.")(
         func
     )
-    func = click.version_option(gippa.__version__, prog_name="gippa")(func)
     return func
 
 
@@ -1200,6 +1206,53 @@ def _numba_cache(path: Path) -> Iterator[None]:
         yield
     finally:
         os.environ.pop("NUMBA_CACHE_DIR", None)
+
+
+# ---------------------------------------------------------------- example (M12-01)
+
+
+def _bundle_version(
+    _ctx: click.Context, _param: click.Parameter, value: str | None
+) -> tuple[int, int] | None:
+    from gippa.example import parse_version
+
+    if value is None:
+        return None
+    v = parse_version(value)
+    if v is None:
+        raise click.BadParameter(f"{value!r} is not a bundle version X.Y (or X.Y.Z)")
+    return v
+
+
+@cli.group(invoke_without_command=True)
+@click.pass_context
+def example(ctx: click.Context) -> None:
+    """The real example dataset: a region of E. coli Nissle 1917 with four input routes."""
+    if ctx.invoked_subcommand is None:  # `gippa example` alone: the group help, exit 0
+        click.echo(ctx.get_help())
+
+
+@example.command("fetch")
+@click.option(
+    "--outdir", type=_out_path, default="gippa-example", show_default=True,
+    help="Where the bundle is unpacked; must be absent or empty.",
+)  # fmt: skip
+@click.option(
+    "--version", "bundle_version", callback=_bundle_version, metavar="X.Y",
+    help="The example bundle version (default: this GIPPA's MAJOR.MINOR); not gippa --version.",
+)  # fmt: skip
+@click.option(
+    "--from-file", type=_existing_file,
+    help="Offline: verify and unpack a bundle file already on disk (no network access).",
+)  # fmt: skip
+@config_options
+def example_fetch(
+    outdir: Path, bundle_version: tuple[int, int] | None, from_file: Path | None, **_: Any
+) -> None:
+    """Download, verify and unpack the example bundle, then print the commands of its routes."""
+    from gippa.example import fetch
+
+    sys.exit(fetch(outdir, bundle_version, from_file))
 
 
 # ---------------------------------------------------------------- makedb
