@@ -7,10 +7,11 @@
 #SBATCH --cpus-per-task=16
 #SBATCH --mem=60G
 #SBATCH --time=06:00:00
-#SBATCH --exclude=rye-02
+#SBATCH --exclude=barley-01,barley-02,barley-03,barley-04,rye-01,rye-02
 #SBATCH --output=/home/classes/bios/270/khoa/giap/local/logs/%x.%A_%a.out
-# --exclude=rye-02 is a stopgap: on that node Python/JVM start-up stalls 50-250x (nightly 1870584,
-# 1896018); a slow-node guard replaces it.
+# --exclude: rye-02 stalls Python/JVM start-up 50-250x (nightly 1870584, 1896018). barley-01..04 do
+# not mount the home directory (exit 0:53 in seconds: nightlies 1927650, 1928572, 1932232, all on
+# 2026-11-03/04), and rye-01 and barley-01/02 hold jobs with "user env retrieval failed".
 # Nightly job array on the latest origin/main (GIPPA_SPEC.md §12; M2-21 lead decisions 3-5):
 #   0  tests/integration + tests/contract with --require-capabilities <ci/gates.yaml farmshare_nightly>
 #      (a missing DB fails, never skips), then nf-test test workflow/tests --profile $NF_PROFILE
