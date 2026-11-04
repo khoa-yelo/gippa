@@ -220,8 +220,8 @@ def test_micromamba_only_build_is_missing_under_docker(
     report, _ = run_preflight(PreflightInputs(genome=g, proteins=p), cfg, None, "run",
                               tmp_path / "OUT", db, profile="docker")  # fmt: skip
     (tools,) = [c for c in report.checks if c.rule_id == "environment.tools"]
-    want = (f"uniop not installed; run: {PKG} setup --uniop --profile docker "
-            f"--db-dir {db.absolute()} --accept-uniop-terms")  # fmt: skip
+    want = (f"uniop not installed; run: {PKG} setup --uniop --install-uniop-from-git "
+            f"--profile docker --db-dir {db.absolute()}")  # fmt: skip
     assert want in tools.message, tools.message
 
 
