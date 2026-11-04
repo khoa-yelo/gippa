@@ -1,0 +1,261 @@
+// Issue #536 (Khoa 2026-11-03, option 1): `gippa run --proteins` without `--peptides`, with or
+// without `--abundance`, produces the gene table and the downstream analyses through the protein
+// path. docs/user-guide/inputs.md: proteins are required "unless peptides are given"; records
+// longer than 40 aa are aligned with miniprot, then tblastn (mapping/protein_hits.tsv). Stub runs
+// only; ci.yml runs: nf-test test workflow/tests --profile test,stub.
+//
+// Pinned here (test author): with params.inputs.proteins_long and no params.inputs.peptides,
+// main.nf runs MAPPING's protein route (MINIPROT, protein_leftovers, TBLASTN) and its loci step,
+// which publishes the seven §7.2.9 files under mapping/, then GENETABLE (gene_table,
+// detectability) on that loci directory, then CONTEXT (context_stats, which writes
+// tables/genes.tsv), SENSITIVITY_RERUNS, OPERONS and DETERMINANTS: the outputs the peptides-only
+// stub runs of main_genetable_context / main_operons / main_determinants / main_report assert for
+// the `core` module. gene_table stages no `peptides` key (there is none) and, with
+// params.inputs.abundance, stages that file. Every GIPPA_STEP task's --in keys match the registry
+// fixture (data/annotate/step_registry.json): a loci step run without peptides must be declared so.
+// PR #537 review (lead decision, M3): on proteins only the peptide chain (sixframe_index, map_exact,
+// map_tolerant, placement), VARIANTS and NOVEL run 0 times, and no variants* / novel* key (nor
+// pileup / annotation_patch, their outputs) reaches REPORT. The peptides-plus-proteins test pins
+// that nothing is lost on that path.
+
+nextflow_pipeline {
+
+    name "main.nf runs the protein path without peptides (stub, issue #536)"
+    script "../main.nf"
+    options "-stub"
+    tag "genetable"
+
+    test("proteins only: MAPPING's protein route, GENETABLE and CONTEXT run; genes.tsv is published") {
+
+        when {
+            params {
+                def a = "${moduleTestDir}/data/annotate"
+                def d = "${moduleTestDir}/data/mapping"
+                outdir = "$outputDir"
+                // preflight.json as gippa run always passes it (REPORT's plots step needs it)
+                inputs = [genome: "${a}/genome.fa".toString(), replicons: "${a}/replicons.tsv".toString(),
+                          proteins_long: "${d}/proteins.long.faa".toString(),
+                          preflight: "${moduleTestDir}/data/genetable/preflight.json".toString()]
+                modules = ['core']
+                annotation = new groovy.json.JsonSlurper().parse(new File("${a}/annotation.json"))
+                db_dir = "${moduleTestDir}/data/genetable/db".toString()
+            }
+        }
+
+        then {
+            def H = new GroovyShell().evaluate(new File("${moduleTestDir}/lib/annotate_stub.groovy"))
+            def REG = new File("${moduleTestDir}/data/annotate/step_registry.json")
+            def work = workDir.toString()
+            def names = H.names(workflow.trace)
+            def ranTagged = { String s -> names.count { H.tagOf(it) == s } }
+            assert workflow.success
+            assert workflow.trace.failed().size() == 0
+
+            // the protein route of MAPPING, once each
+            ['MINIPROT', 'TBLASTN'].each { p ->
+                assert H.count(workflow.trace, p) == 1 : "${p} ran ${H.count(workflow.trace, p)}x without peptides: ${names}"
+            }
+            ['protein_leftovers', 'loci', 'gene_table', 'detectability', 'context_stats', 'sensitivity'].each { s ->
+                assert H.stepCount(workflow.trace, s) == 1 : "py step ${s} ran ${H.stepCount(workflow.trace, s)}x with proteins only; tasks: ${names}"
+            }
+            ['operons', 'determinants'].each { s ->
+                assert ranTagged(s) == 1 : "${s} ran ${ranTagged(s)}x with proteins only; tasks: ${names}"
+            }
+            def probs = H.registryProblems(work, REG)
+            assert probs.isEmpty() : "py step inputs vs gippa.steps registry: ${probs}"
+
+            // lead decision (PR #537 review M3): no peptide chain, no VARIANTS, no NOVEL on proteins only
+            ['sixframe_index', 'map_exact', 'map_tolerant', 'placement'].each { s ->
+                assert H.stepCount(workflow.trace, s) == 0 : "peptide-chain step ${s} ran without peptides: ${names}"
+            }
+            def peptideOnly = names.findAll { n ->
+                def t = (H.tagOf(n) ?: '').toLowerCase()
+                def p = H.procOf(n).toUpperCase()
+                t == 'variants' || t.startsWith('novel') || p.startsWith('VARIANTS') || p.contains('NOVEL')
+            }
+            assert peptideOnly.isEmpty() : "VARIANTS / NOVEL tasks ran without peptides: ${peptideOnly}"
+            def plotTag = { File dir -> H.tagOf((new File(dir, '.command.run').readLines().find { it.startsWith('### name:') } ?: '').replaceFirst(/^### name:\s*['"]/, '').replaceFirst(/['"]\s*$/, '')) }
+            def plotDirs = H.taskDirs(work).findAll { plotTag(it) == 'plots' }
+            assert plotDirs.size() == 1 : "plots ran ${plotDirs.size()}x; tasks: ${names}"
+            def reportKeys = H.stepInputs(plotDirs[0]).collect { it[0] }.toSet()
+            def leaked = reportKeys.findAll { k -> k.startsWith('variants') || k.startsWith('novel') || k in ['pileup', 'annotation_patch'] }
+            assert leaked.isEmpty() : "VARIANTS / NOVEL keys reach REPORT without peptides: ${leaked}; all ${reportKeys}"
+            ['tables/variants.tsv', 'tables/variants.vcf', 'tables/pileup.tsv.gz', 'tables/novel_orfs.tsv',
+             'tables/novel_orfs.gff3', 'tables/novel_orfs.faa', 'tables/annotation_patch.gff3'].each { f ->
+                assert !new File("${outputDir}/${f}").exists() : "${f} published without peptides"
+            }
+
+            // loci gets the long proteins and the tool outputs of the protein route
+            def lin = H.stepInputs(H.stepDirs(work, 'loci')[0])
+            assert lin.any { it[0] == 'proteins_long' && it[1].endsWith('proteins.long.faa') } : "loci inputs ${lin}"
+            assert lin.any { it[0] == 'miniprot_gff' } : "loci got no miniprot output: ${lin}"
+            assert lin.any { it[0] == 'tblastn_tsv' } : "loci got no tblastn output: ${lin}"
+            assert !lin.any { it[0] == 'peptides' } : "loci got a peptides key without --peptides: ${lin}"
+            def mp = H.procDirs(work, 'MINIPROT')[0].canonicalPath
+            def lstaged = H.staged(H.stepDirs(work, 'loci')[0]).collect { new File(it[0]).canonicalPath }
+            assert lstaged.any { it.startsWith(mp) } : "loci does not stage MINIPROT's output: ${lstaged}"
+
+            // gene_table reads the loci directory, never a peptide table
+            def gtDir = H.stepDirs(work, 'gene_table')[0]
+            def gin = H.stepInputs(gtDir)
+            assert gin.any { it[0] == 'mapping' } : "gene_table got no loci directory: ${gin}"
+            assert !gin.any { it[0] == 'peptides' } : "gene_table got a peptides key without --peptides: ${gin}"
+            def lociDir = H.stepDirs(work, 'loci')[0].canonicalPath
+            def gstaged = H.staged(gtDir).collect { new File(it[0]).canonicalPath }
+            assert gstaged.any { it.startsWith(lociDir) } : "gene_table does not stage loci's mapping/: ${gstaged}"
+
+            // context_stats reads the M3 tables of that loci directory
+            def cin = H.stepInputs(H.stepDirs(work, 'context_stats')[0])
+            ['peptide_hits', 'protein_hits', 'unmapped'].each { k ->
+                assert cin.any { it[0] == k && it[1].endsWith("${k}.tsv") } : "context_stats got no ${k}: ${cin}"
+            }
+            assert cin.any { it[0] == 'gene_table' } : "context_stats got no gene table: ${cin}"
+
+            def m = new File("${outputDir}/mapping")
+            ['peptide_hits.tsv', 'protein_hits.tsv', 'mappings.probed', 'mappings.bed', 'mappings.gff3',
+             'unmapped.tsv', 'mapping_fdr.tsv'].each { f -> assert new File(m, f).isFile() : "mapping/${f} not published" }
+            ['genetable/genes_pre.parquet', 'genetable/genes.parquet',
+             'genetable/detection_summary_parts/detectability.parquet',
+             'genetable/detection_summary_parts/tier.parquet',
+             'tables/genes.tsv', 'tables/regions_stats.tsv', 'tables/detection_summary.tsv',
+             'tables/sensitivity.tsv', 'tables/islands.tsv', 'tables/autocorrelation.tsv',
+             'tables/pairs.tsv', 'tables/operons.tsv', 'tables/operon_flags.tsv',
+             'tables/determinants_features.tsv', 'tables/determinants_model.tsv',
+             'tables/determinants_attribution.tsv'].each { f ->
+                assert new File("${outputDir}/${f}").isFile() : "${f} not published with proteins only"
+            }
+        }
+    }
+
+    test("proteins plus abundance: gene_table stages the abundance; the report gets genes.tsv") {
+
+        when {
+            params {
+                def a = "${moduleTestDir}/data/annotate"
+                def d = "${moduleTestDir}/data/mapping"
+                def g = "${moduleTestDir}/data/genetable"
+                outdir = "$outputDir"
+                inputs = [genome: "${a}/genome.fa".toString(), replicons: "${a}/replicons.tsv".toString(),
+                          proteins_long: "${d}/proteins.long.faa".toString(),
+                          abundance: "${g}/abundance.norm.parquet".toString(),
+                          preflight: "${g}/preflight.json".toString()]
+                modules = ['core']
+                annotation = new groovy.json.JsonSlurper().parse(new File("${a}/annotation.json"))
+                db_dir = "${moduleTestDir}/data/genetable/db".toString()
+            }
+        }
+
+        then {
+            def H = new GroovyShell().evaluate(new File("${moduleTestDir}/lib/annotate_stub.groovy"))
+            def REG = new File("${moduleTestDir}/data/annotate/step_registry.json")
+            def work = workDir.toString()
+            def names = H.names(workflow.trace)
+            def nameOf = { File dir -> (new File(dir, '.command.run').readLines().find { it.startsWith('### name:') } ?: '').replaceFirst(/^### name:\s*['"]/, '').replaceFirst(/['"]\s*$/, '') }
+            def byTag = { String s -> H.taskDirs(work).findAll { dir -> H.tagOf(nameOf(dir)) == s } }
+            assert workflow.success
+            assert workflow.trace.failed().size() == 0
+            ['loci', 'gene_table', 'detectability', 'context_stats'].each { s ->
+                assert H.stepCount(workflow.trace, s) == 1 : "py step ${s} ran ${H.stepCount(workflow.trace, s)}x with proteins + abundance; tasks: ${names}"
+            }
+            def probs = H.registryProblems(work, REG)
+            assert probs.isEmpty() : "py step inputs vs gippa.steps registry: ${probs}"
+
+            // lead decision (PR #537 review M3): no peptide chain, no VARIANTS, no NOVEL on proteins only
+            ['sixframe_index', 'map_exact', 'map_tolerant', 'placement'].each { s ->
+                assert H.stepCount(workflow.trace, s) == 0 : "peptide-chain step ${s} ran without peptides: ${names}"
+            }
+            def peptideOnly = names.findAll { n ->
+                def t = (H.tagOf(n) ?: '').toLowerCase()
+                def p = H.procOf(n).toUpperCase()
+                t == 'variants' || t.startsWith('novel') || p.startsWith('VARIANTS') || p.contains('NOVEL')
+            }
+            assert peptideOnly.isEmpty() : "VARIANTS / NOVEL tasks ran without peptides: ${peptideOnly}"
+            def plotTag = { File dir -> H.tagOf((new File(dir, '.command.run').readLines().find { it.startsWith('### name:') } ?: '').replaceFirst(/^### name:\s*['"]/, '').replaceFirst(/['"]\s*$/, '')) }
+            def plotDirs = H.taskDirs(work).findAll { plotTag(it) == 'plots' }
+            assert plotDirs.size() == 1 : "plots ran ${plotDirs.size()}x; tasks: ${names}"
+            def reportKeys = H.stepInputs(plotDirs[0]).collect { it[0] }.toSet()
+            def leaked = reportKeys.findAll { k -> k.startsWith('variants') || k.startsWith('novel') || k in ['pileup', 'annotation_patch'] }
+            assert leaked.isEmpty() : "VARIANTS / NOVEL keys reach REPORT without peptides: ${leaked}; all ${reportKeys}"
+            ['tables/variants.tsv', 'tables/variants.vcf', 'tables/pileup.tsv.gz', 'tables/novel_orfs.tsv',
+             'tables/novel_orfs.gff3', 'tables/novel_orfs.faa', 'tables/annotation_patch.gff3'].each { f ->
+                assert !new File("${outputDir}/${f}").exists() : "${f} published without peptides"
+            }
+
+            def gin = H.stepInputs(H.stepDirs(work, 'gene_table')[0])
+            assert gin.any { it[0] == 'abundance' && it[1].endsWith('abundance.norm.parquet') } : "gene_table got no abundance: ${gin}"
+            assert gin.any { it[0] == 'preflight' && it[1].endsWith('preflight.json') } : "gene_table got no preflight.json (abundance scale): ${gin}"
+            assert !gin.any { it[0] == 'peptides' } : "gene_table got a peptides key without --peptides: ${gin}"
+            def cin = H.stepInputs(H.stepDirs(work, 'context_stats')[0])
+            assert cin.any { it[0] == 'abundance' } : "context_stats got no abundance: ${cin}"
+
+            // REPORT gets the gene table outputs, as on the peptides path
+            def pl = byTag('plots')
+            assert pl.size() == 1 : "plots ran ${pl.size()}x; tasks: ${names}"
+            def keys = H.stepInputs(pl[0]).collect { it[0] }.toSet()
+            ['genes_tsv', 'detection_summary', 'regions_stats', 'mapping', 'genes_pre'].each { k ->
+                assert k in keys : "plots lacks ${k} with proteins + abundance; has ${keys}"
+            }
+
+            ['genetable/genes.parquet', 'tables/genes.tsv', 'tables/detection_summary.tsv',
+             'mapping/protein_hits.tsv', 'report/report.html'].each { f ->
+                assert new File("${outputDir}/${f}").isFile() : "${f} not published with proteins + abundance"
+            }
+        }
+    }
+
+    test("peptides plus proteins (no regression): the peptide chain, the protein route and every core table") {
+
+        when {
+            params {
+                def a = "${moduleTestDir}/data/annotate"
+                def d = "${moduleTestDir}/data/mapping"
+                outdir = "$outputDir"
+                inputs = [genome: "${a}/genome.fa".toString(), replicons: "${a}/replicons.tsv".toString(),
+                          peptides: "${d}/peptides.norm.parquet".toString(),
+                          proteins_long: "${d}/proteins.long.faa".toString()]
+                modules = ['core']
+                annotation = new groovy.json.JsonSlurper().parse(new File("${a}/annotation.json"))
+                db_dir = "${moduleTestDir}/data/genetable/db".toString()
+            }
+        }
+
+        then {
+            def H = new GroovyShell().evaluate(new File("${moduleTestDir}/lib/annotate_stub.groovy"))
+            def REG = new File("${moduleTestDir}/data/annotate/step_registry.json")
+            def work = workDir.toString()
+            def names = H.names(workflow.trace)
+            def ranTagged = { String s -> names.count { H.tagOf(it) == s } }
+            assert workflow.success
+            assert workflow.trace.failed().size() == 0
+            ['MINIPROT', 'TBLASTN'].each { p ->
+                assert H.count(workflow.trace, p) == 1 : "${p} ran ${H.count(workflow.trace, p)}x: ${names}"
+            }
+            ['sixframe_index', 'map_exact', 'map_tolerant', 'placement', 'protein_leftovers', 'loci',
+             'gene_table', 'detectability', 'context_stats', 'sensitivity', 'novel_candidates',
+             'novel_orfs'].each { s ->
+                assert H.stepCount(workflow.trace, s) == 1 : "py step ${s} ran ${H.stepCount(workflow.trace, s)}x; tasks: ${names}"
+            }
+            ['operons', 'determinants', 'variants'].each { s ->
+                assert ranTagged(s) == 1 : "${s} ran ${ranTagged(s)}x; tasks: ${names}"
+            }
+            def probs = H.registryProblems(work, REG)
+            assert probs.isEmpty() : "py step inputs vs gippa.steps registry: ${probs}"
+
+            def lin = H.stepInputs(H.stepDirs(work, 'loci')[0])
+            ['peptides', 'proteins_long', 'placement', 'mapping_fdr', 'hits_exact', 'hits_tolerant'].each { k ->
+                assert lin.any { it[0] == k } : "loci got no ${k}: ${lin}"
+            }
+            def gin = H.stepInputs(H.stepDirs(work, 'gene_table')[0])
+            assert gin.any { it[0] == 'peptides' } : "gene_table lost the peptides: ${gin}"
+            assert gin.any { it[0] == 'mapping' } : "gene_table got no loci directory: ${gin}"
+
+            ['genetable/genes_pre.parquet', 'genetable/genes.parquet', 'tables/genes.tsv',
+             'tables/regions_stats.tsv', 'tables/detection_summary.tsv', 'tables/sensitivity.tsv',
+             'tables/pairs.tsv', 'tables/operons.tsv', 'tables/operon_flags.tsv',
+             'tables/determinants_features.tsv', 'tables/novel_orfs.tsv', 'tables/variants.tsv',
+             'mapping/peptide_hits.tsv', 'mapping/protein_hits.tsv'].each { f ->
+                assert new File("${outputDir}/${f}").isFile() : "${f} not published"
+            }
+        }
+    }
+}

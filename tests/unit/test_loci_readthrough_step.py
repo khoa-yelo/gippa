@@ -117,7 +117,8 @@ def _loci(
     sixframe: Path | None = None,
 ) -> Path:
     spec = reg.get("loci")
-    given = {k: paths[k] for k in spec.inputs}
+    keys = (*spec.inputs, *spec.optional_inputs)  # #536: the peptide inputs are optional
+    given = {k: paths[k] for k in keys if k in paths and k != "sixframe"}
     if six:
         given["sixframe"] = sixframe or paths["sixframe"]
     out = tmp / "mapping"

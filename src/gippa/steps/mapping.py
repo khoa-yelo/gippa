@@ -575,20 +575,50 @@ def _peptide_rows(
 
 @step(
     "loci",
-    inputs=[
-        "placement", "mapping_fdr", "hits_exact", "hits_tolerant", "peptides", "genome",
-        "genes", "features", "replicons",
+    inputs=["genome", "genes", "features", "replicons"],
+    optional_inputs=[
+        "peptides", "placement", "mapping_fdr", "hits_exact", "hits_tolerant",
+        "proteins_long", "miniprot_gff", "tblastn_tsv", "contaminants", "sixframe",
     ],
-    optional_inputs=["proteins_long", "miniprot_gff", "tblastn_tsv", "contaminants", "sixframe"],
     outputs=["mapping"],
 )  # fmt: skip
 def loci(ctx: StepContext) -> None:
-    """Locus classes and genes, protein assignment, unmapped bucket and the seven §7.2.9 files."""
+    """Locus classes and genes, protein assignment, unmapped bucket and the seven §7.2.9 files.
+
+    Without ``peptides`` (a proteins-only run, issue #536) the peptide chain did not run: the
+    C11 ``peptide_hits`` and ``mapping_fdr`` tables are written header-only.
+    """
     cfg = ctx.cfg
     gm = _gene_model(ctx)
+    gpath = _path(ctx.inputs["genome"])
+    if "peptides" in ctx.inputs:
+        _require(ctx, "placement", "mapping_fdr", "hits_exact", "hits_tolerant")
+        _loci_with_peptides(ctx, gm, gpath)
+        return
+    prot_hits, state = _proteins(ctx, gm)
+    unmapped = unmapped_table(
+        pd.DataFrame(), pd.DataFrame(), state, {}, {}, cfg.input.contaminant_prefixes,
+        tolerant_min_len=cfg.mapping.tolerant.min_len, q_value_max=cfg.input.q_value_max,
+    )  # fmt: skip
+    out = ctx.outputs["mapping"]
+    out.mkdir(parents=True, exist_ok=True)
+    sha = hashlib.sha256(gpath.read_bytes()).hexdigest()
+    empty = pd.DataFrame()  # header-only C11 peptide_hits and mapping_fdr
+    write_mapping_outputs(out, empty, prot_hits, unmapped, empty, gm.replicons, sha)
+    ctx.log.info("loci: no peptides; %d protein rows, %d unmapped", len(prot_hits), len(unmapped))
+
+
+def _require(ctx: StepContext, *keys: str) -> None:
+    missing = [k for k in keys if k not in ctx.inputs]
+    if missing:
+        raise ValueError(f"loci: peptides given without {', '.join(missing)}")
+
+
+def _loci_with_peptides(ctx: StepContext, gm: GeneModel, gpath: Path) -> None:
+    """The peptide route of :func:`loci` (the peptide chain ran)."""
+    cfg = ctx.cfg
     queries = _resolved_queries(ctx, gm)
     per = pd.read_parquet(_path(ctx.inputs["placement"]))
-    gpath = _path(ctx.inputs["genome"])
     genome = _genome(gpath)
     rows = _peptide_rows(_hits(ctx, "hits_exact", "hits_tolerant"), per, queries, cfg)
     six = _opt(ctx, "sixframe")

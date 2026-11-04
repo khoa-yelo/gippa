@@ -359,7 +359,9 @@ def run_preflight(
             proteins = read_protein_fasta(inp.proteins)
         except FastaFormatError as exc:
             proteins, protein_error = [], _scrub(exc, inp.proteins)
-        checks_proteins = protein_checks(proteins, protein_error, (lo, hi))
+        checks_proteins = protein_checks(
+            proteins, protein_error, (lo, hi), peptides_given=inp.peptides is not None
+        )
 
     user_peptides: pd.DataFrame | None = None
     checks_peptides: list[Check] = []
