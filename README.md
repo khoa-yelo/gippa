@@ -47,9 +47,13 @@ also needs Nextflow, Java 17 or newer, Docker or Apptainer, the tool images and 
 With pip (Bioconda is pending):
 
 ```bash
-pip install gippa                                     # Python package and the `gippa` command
+pip install --prefer-binary gippa                     # Python 3.12 (3.11 also works)
 micromamba install -c conda-forge -c bioconda gippa   # from Bioconda, once the recipe is merged
 ```
+
+`--prefer-binary` keeps pip on prebuilt wheels: a plain `pip install gippa` can try to build
+numpy or numba from source and fail on older systems
+([#502](https://github.com/khoa-yelo/gippa/issues/502)).
 
 From a checkout (Python >= 3.11):
 
@@ -65,14 +69,16 @@ on a Slurm cluster.
 ## Quickstart
 
 ```bash
-pip install gippa                         # or: conda install -c bioconda gippa
+pip install --prefer-binary gippa         # or: conda install -c bioconda gippa
 gippa demo                                # about 2 minutes; prints the report path
-gippa setup                               # databases and images for the detected runtime
+gippa setup --yes --accept-uniop-terms    # databases and images; no questions
 gippa run --genome g.fna --peptides p.tsv --outdir out
 ```
 
 `gippa demo` runs a small bundled synthetic genome with no Nextflow, containers, databases or
 network. `gippa setup` and `gippa run` detect the Nextflow profile (pass `--profile` to choose).
+`--yes` skips setup's "Proceed?" question; `--accept-uniop-terms` means you decide that your use of
+UniOP, which has no licence file, is permitted.
 The guided walk-through, with example inputs and outputs, is
 [Quick start](https://khoa-yelo.github.io/gippa/get-started/quickstart/)
 ([source](docs/get-started/quickstart.md)). With raw spectra and no peptide table yet, see
