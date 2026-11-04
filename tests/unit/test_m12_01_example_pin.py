@@ -94,6 +94,39 @@ def test_loader_rejects_two_example_rows_with_one_version(
         _load(tmp_path, monkeypatch, _row("1.1", "  size_bytes: 1\n") + twin)
 
 
+def _custom(name: str, version: str, size: str = "  size_bytes: 1\n") -> str:
+    return (
+        _row("1.1", size)
+        .replace("example_1_1:", f"{name}:")
+        .replace('version: "1.1"', f'version: "{version}"')
+    )
+
+
+def test_loader_rejects_example_versions_equal_as_minor(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Review #542 L6: ``1.1`` and ``1.1.0`` are the same bundle minor: a duplicate."""
+    with pytest.raises(ValueError, match=r"1\.1"):
+        _load(tmp_path, monkeypatch, _row("1.1", "  size_bytes: 1\n")
+              + _custom("example_1_1_0", "1.1.0"))  # fmt: skip
+
+
+@pytest.mark.parametrize("bad", ["one.two", "1", "v1.1", ""])
+def test_loader_rejects_an_unparsable_example_version(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, bad: str
+) -> None:
+    """L6: an ``example_*`` row whose version is not ``X.Y`` (or ``X.Y.Z``) is a ValueError, not a
+    row that ``gippa example`` silently ignores."""
+    with pytest.raises(ValueError, match="example_9_9"):
+        _load(tmp_path, monkeypatch, _custom("example_9_9", bad))
+
+
+def test_loader_rejects_null_size_bytes(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """L6: ``size_bytes: null`` is a ValueError naming the row (not ``int(None)``'s TypeError)."""
+    with pytest.raises(ValueError, match="example_1_1"):
+        _load(tmp_path, monkeypatch, _row("1.1", "  size_bytes: null\n"))
+
+
 def test_loader_still_accepts_equal_versions_of_other_rows() -> None:
     """``bakta_light`` and ``bakta_full`` share version 6.0: the rule is for example rows only."""
     from gippa.setupdb.items import SOURCES

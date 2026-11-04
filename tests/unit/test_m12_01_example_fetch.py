@@ -15,9 +15,11 @@ import errno
 import itertools
 import os
 import re
+import shlex
 import sys
 import tarfile
 import tempfile
+from collections.abc import Callable, Iterator
 from pathlib import Path
 
 import pytest
@@ -30,6 +32,8 @@ from helpers.example_m12_01 import (
     Member,
     block_https,
     build_bundle,
+    bundle_files,
+    checksums_text,
     fill,
     flat,
     gippa,
@@ -41,8 +45,11 @@ from helpers.example_m12_01 import (
     raise_,
     serve,
     set_installed,
+    sha256_hex,
+    tree_members,
     url_of,
     verify_tree,
+    write_tar,
 )
 from helpers.uniop_14u1 import Route, install_fake_net
 from hypothesis import HealthCheck, given, settings
@@ -266,7 +273,8 @@ def test_download_with_another_sha256(
     data = bytearray(bundle.data)
     data[-9] ^= 0xFF  # inside the gzip trailer (CRC): same size, other sha256
     install_fetcher(monkeypatch, serve(bytes(data)))
-    err = _fails_clean(work, _fetch("--outdir", "ex"), listing(work))
+    before = listing(work)
+    err = _fails_clean(work, _fetch("--outdir", "ex"), before)
     assert "checksum mismatch" in err and f"pinned {bundle.sha256}" in err, err
 
 
@@ -275,7 +283,8 @@ def test_download_with_another_size(
 ) -> None:
     work, bundle = world
     install_fetcher(monkeypatch, serve(bundle.data + b"\0"))
-    err = _fails_clean(work, _fetch("--outdir", "ex"), listing(work))
+    before = listing(work)
+    err = _fails_clean(work, _fetch("--outdir", "ex"), before)
     assert "size" in err and str(bundle.size) in err, err
 
 
@@ -292,7 +301,8 @@ def test_no_network_message(
     work, bundle = world
     log = install_fetcher(monkeypatch, raise_(SourceError("github.com", reason)))
     out_dir = work / "ex"
-    err = _fails_clean(work, _fetch("--outdir", str(out_dir)), listing(work))
+    before = listing(work)
+    err = _fails_clean(work, _fetch("--outdir", str(out_dir)), before)
     assert f"gippa example: cannot download {bundle.url} (github.com: {reason})" in err, err
     assert "gippa example: on a machine with internet access, download that URL" in err
     assert (f"gippa example fetch --from-file gippa-example-1.1.tar.gz --outdir {out_dir}"
@@ -310,7 +320,8 @@ def test_disk_full_while_downloading(
     """AC 10: exit 2 with the disk-full advice; nothing left."""
     work, _ = world
     install_fetcher(monkeypatch, raise_(OSError(code, os.strerror(code))))
-    err = _fails_clean(work, _fetch("--outdir", "ex"), listing(work))
+    before = listing(work)
+    err = _fails_clean(work, _fetch("--outdir", "ex"), before)
     assert re.search(r"disk|quota", err, re.I) and "--outdir" in err, err
 
 
@@ -325,26 +336,54 @@ def test_disk_full_while_unpacking(
         raise OSError(errno.ENOSPC, "No space left on device")
 
     monkeypatch.setattr(tarfile.TarFile, "extractall", full)
-    err = _fails_clean(work, _fetch("--outdir", "ex"), listing(work))
+    before = listing(work)
+    err = _fails_clean(work, _fetch("--outdir", "ex"), before)
     assert re.search(r"disk|quota", err, re.I), err
 
 
 def test_failure_in_existing_empty_outdir_leaves_it_empty(
     world: tuple[Path, Bundle], monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    work, _ = world
-    (work / "ex").mkdir()
-    install_fetcher(monkeypatch, serve(b"garbage"))
-    _fails_clean(work, _fetch("--outdir", "ex"), listing(work))
-    assert list((work / "ex").iterdir()) == []
+    """The failure happens after two entries have moved into the user's empty DIR (the third
+    move into DIR hits a full disk): DIR is left empty, staging removed, exit 2."""
+    work, bundle = world
+    target = work / "ex"
+    target.mkdir()
+    install_fetcher(monkeypatch, serve(bundle.data))
+    moved: list[str] = []
+    real_rename, real_replace = os.rename, os.replace
+
+    def failing(real: Callable[..., None]) -> Callable[..., None]:
+        def move(src: str | os.PathLike[str], dst: str | os.PathLike[str], **k: object) -> None:
+            if Path(dst).parent == target:
+                if len(moved) == 2:
+                    raise OSError(errno.ENOSPC, "No space left on device")
+                moved.append(Path(dst).name)
+            real(src, dst, **k)
+
+        return move
+
+    monkeypatch.setattr(os, "rename", failing(real_rename))
+    monkeypatch.setattr(os, "replace", failing(real_replace))
+    before = listing(work)
+    assert before == ["ex"]
+    err = _fails_clean(work, _fetch("--outdir", "ex"), before)
+    assert len(moved) == 2, (moved, err)  # the failure came after entries had moved into DIR
+    assert list(target.iterdir()) == []
+    assert re.search(r"disk|quota", err, re.I), err
 
 
 def test_created_parents_are_removed_on_failure(
     world: tuple[Path, Bundle], monkeypatch: pytest.MonkeyPatch
 ) -> None:
+    """A failed fetch into ``new/deeper/ex`` removes ``new/`` (it created it) and nothing else."""
     work, _ = world
+    (work / "keep").mkdir()
     install_fetcher(monkeypatch, serve(b"garbage"))
-    _fails_clean(work, _fetch("--outdir", "new/deeper/ex"), listing(work))
+    before = listing(work)
+    assert before == ["keep"]
+    _fails_clean(work, _fetch("--outdir", "new/deeper/ex"), before)
+    assert not (work / "new").exists() and (work / "keep").is_dir()
 
 
 def test_unexpected_exception_is_exit_5(
@@ -353,7 +392,8 @@ def test_unexpected_exception_is_exit_5(
     """Exit 5 with the standard internal-error message; staging removed."""
     work, _ = world
     install_fetcher(monkeypatch, raise_(RuntimeError("boom")))
-    err = _fails_clean(work, _fetch("--outdir", "ex"), listing(work), code=5)
+    before = listing(work)
+    err = _fails_clean(work, _fetch("--outdir", "ex"), before, code=5)
     assert "internal error (a bug)" in err, err
 
 
@@ -377,7 +417,8 @@ def test_unsafe_member(
     work, _ = world
     bad = build_bundle(work.parent / "bad", "1.1", members=[member])
     _pinned(monkeypatch, bad)
-    err = _fails_clean(work, _fetch("--outdir", "ex"), listing(work))
+    before = listing(work)
+    err = _fails_clean(work, _fetch("--outdir", "ex"), before)
     assert "unsafe member" in err, err
     assert not (work.parent / "x").exists() and not (work / "x").exists()
     assert not Path("/tmp/gippa-m12-01-absolute-member").exists()
@@ -394,7 +435,8 @@ def test_malformed_top_level(
     top = "gippa-example-1.2" if kind == "wrong_name" else None
     bad = build_bundle(work.parent / "bad", "1.1", members=extra, top=top)
     _pinned(monkeypatch, bad)
-    _fails_clean(work, _fetch("--outdir", "ex"), listing(work))
+    before = listing(work)
+    _fails_clean(work, _fetch("--outdir", "ex"), before)
 
 
 @pytest.mark.parametrize("kind, name", [
@@ -412,7 +454,8 @@ def test_content_checksums(
           "missing": {"drop": [name]}}[kind]  # fmt: skip
     bad = build_bundle(work.parent / "bad", "1.1", **kw)  # type: ignore[arg-type]
     _pinned(monkeypatch, bad)
-    err = _fails_clean(work, _fetch("--outdir", "ex"), listing(work))
+    before = listing(work)
+    err = _fails_clean(work, _fetch("--outdir", "ex"), before)
     assert name in err, err
 
 
@@ -429,7 +472,8 @@ def test_property_any_tampered_file_is_named(
     with pytest.MonkeyPatch.context() as mp, tempfile.TemporaryDirectory(dir=work.parent) as d:
         bad = build_bundle(Path(d), "1.1", alter={name: blob})
         _pinned(mp, bad)
-        err = _fails_clean(work, _fetch("--outdir", "ex"), listing(work))
+        before = listing(work)
+        err = _fails_clean(work, _fetch("--outdir", "ex"), before)
         assert name in err, (name, err)
 
 
@@ -662,7 +706,8 @@ def test_real_fetcher_404_says_not_published(
 ) -> None:
     work, _ = world
     _real_fetcher_world(world, monkeypatch)  # every unknown route is a 404
-    err = _fails_clean(work, _fetch("--outdir", "ex"), listing(work))
+    before = listing(work)
+    err = _fails_clean(work, _fetch("--outdir", "ex"), before)
     assert "may not be published yet" in err and "--from-file" in err, err
 
 
@@ -719,3 +764,276 @@ def test_setup_plan_never_holds_an_example_row(
     ):
         opts = items.SetupOptions(tmp_path, bakta, **dict(zip(flags, values, strict=True)))  # type: ignore[arg-type]
         assert not [i.name for i in items.plan(opts) if i.name.startswith("example_")], opts
+
+
+# ---------------------------------------------------------------- review #542: links, duplicates
+
+
+def _checksums_plus(version: str, *lines: str) -> bytes:
+    files = bundle_files(version)
+    return checksums_text(files) + "".join(f"{ln}\n" for ln in lines).encode()
+
+
+def test_listed_in_tree_symlink_is_refused(
+    world: tuple[Path, Bundle], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A symlink listed in ``CHECKSUMS.sha256`` that points at a file with the listed content is
+    still not a regular file: exit 2, nothing left."""
+    work, _ = world
+    data = bundle_files("1.1")["D_generic/peptides.tsv"]
+    sums = _checksums_plus("1.1", f"{sha256_hex(data)}  D_generic/link.tsv")
+    link = Member("gippa-example-1.1/D_generic/link.tsv", kind="sym", link="peptides.tsv")
+    bad = build_bundle(work.parent / "bad", "1.1", alter={"CHECKSUMS.sha256": sums},
+                       members=[link])  # fmt: skip
+    _pinned(monkeypatch, bad)
+    before = listing(work)
+    err = _fails_clean(work, _fetch("--outdir", "ex"), before)
+    assert "link.tsv" in err, err
+
+
+def test_unlisted_in_tree_symlink_is_refused(
+    world: tuple[Path, Bundle], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    work, _ = world
+    link = Member("gippa-example-1.1/A_diann/alias.parquet", kind="sym", link="report.parquet")
+    bad = build_bundle(work.parent / "bad", "1.1", members=[link])
+    _pinned(monkeypatch, bad)
+    before = listing(work)
+    err = _fails_clean(work, _fetch("--outdir", "ex"), before)
+    assert "alias.parquet" in err, err
+
+
+@pytest.mark.parametrize("with_files", [False, True])
+def test_top_level_symlink_is_refused(
+    world: tuple[Path, Bundle], monkeypatch: pytest.MonkeyPatch, with_files: bool
+) -> None:
+    """``gippa-example-1.1 -> .`` (alone, or with the bundle files at the archive root, so that
+    following the link would show a valid tree) is a malformed archive: exit 2."""
+    work, _ = world
+    files = bundle_files("1.1")
+    listed = {**files, "CHECKSUMS.sha256": checksums_text(files)}
+    members = [Member("gippa-example-1.1", kind="sym", link=".")]
+    if with_files:
+        members += [m for m in tree_members(".", listed) if m.name != "."]
+        members = [Member(m.name.removeprefix("./"), m.data, m.kind, m.link) for m in members]
+    path = write_tar(work.parent / "bad" / "gippa-example-1.1.tar.gz", members)
+    data = path.read_bytes()
+    bad = Bundle("1.1", path, f"sha256:{sha256_hex(data)}", len(data), listed)
+    _pinned(monkeypatch, bad)
+    before = listing(work)
+    _fails_clean(work, _fetch("--outdir", "ex"), before)
+
+
+def test_duplicate_name_in_checksums_is_refused(
+    world: tuple[Path, Bundle], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    work, _ = world
+    data = bundle_files("1.1")["README.md"]
+    sums = _checksums_plus("1.1", f"{sha256_hex(data)}  README.md")
+    bad = build_bundle(work.parent / "bad", "1.1", alter={"CHECKSUMS.sha256": sums})
+    _pinned(monkeypatch, bad)
+    before = listing(work)
+    err = _fails_clean(work, _fetch("--outdir", "ex"), before)
+    assert "CHECKSUMS.sha256" in err, err
+
+
+# ---------------------------------------------------------------- review #542 M1: runs/ in DIR
+
+
+def test_refetch_with_route_outputs_in_runs_is_a_noop(
+    world: tuple[Path, Bundle], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """M1: the printed routes write to ``{dir}/runs``; a re-fetch after a route ran is still
+    ``already fetched`` (exit 0, offline) and leaves ``runs/`` untouched."""
+    work, bundle = world
+    install_fetcher(monkeypatch, serve(bundle.data))
+    assert _fetch("--outdir", "ex").code == 0
+    out = work / "ex" / "runs" / "A" / "peptides.tsv"
+    out.parent.mkdir(parents=True)
+    out.write_bytes(b"peptide\trun\nPEPTIDE\tWT_1\n")
+    snap = {p: (work / p).read_bytes() for p in listing(work) if (work / p).is_file()}
+    log = install_fetcher(monkeypatch, None)
+    hosts = block_https(monkeypatch)
+    res = _fetch("--outdir", "ex")
+    assert res.code == 0, res.err
+    assert "already fetched" in res.out + res.err
+    assert log.constructed == 0 and hosts == []
+    assert snap == {p: (work / p).read_bytes() for p in listing(work) if (work / p).is_file()}
+
+
+def test_refetch_with_runs_still_refuses_an_edited_listed_file(
+    world: tuple[Path, Bundle], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    work, bundle = world
+    install_fetcher(monkeypatch, serve(bundle.data))
+    assert _fetch("--outdir", "ex").code == 0
+    (work / "ex" / "runs" / "A").mkdir(parents=True)
+    (work / "ex" / "runs" / "A" / "peptides.tsv").write_bytes(b"peptide\trun\n")
+    (work / "ex" / "D_generic" / "peptides.tsv").write_bytes(b"edited by the user\n")
+    install_fetcher(monkeypatch, None)
+    res = _fetch("--outdir", "ex")
+    assert res.code == 1, res.err
+    assert "exists and is not this example; use --outdir or remove it" in res.err
+
+
+# ---------------------------------------------------------------- review #542 M2: not writable
+
+
+@pytest.fixture
+def read_only() -> Iterator[Callable[[Path], Path]]:
+    """``chmod 555`` on a directory, restored at teardown; skipped as root."""
+    if hasattr(os, "geteuid") and os.geteuid() == 0:
+        pytest.skip("root ignores directory permissions")
+    done: list[Path] = []
+
+    def make(d: Path) -> Path:
+        d.chmod(0o555)
+        done.append(d)
+        return d
+
+    yield make
+    for d in done:
+        d.chmod(0o755)
+
+
+def test_outdir_parent_not_writable_is_exit_1(
+    world: tuple[Path, Bundle], monkeypatch: pytest.MonkeyPatch, read_only: Callable[[Path], Path]
+) -> None:
+    """M2: the parent of ``--outdir`` exists but cannot be written: exit 1, "choose another
+    --outdir", nothing left (no staging, no DIR), no download."""
+    work, bundle = world
+    (work / "ro").mkdir()
+    read_only(work / "ro")
+    log = install_fetcher(monkeypatch, serve(bundle.data))
+    before = listing(work)
+    err = _fails_clean(work, _fetch("--outdir", "ro/ex"), before, code=1)
+    assert "choose another --outdir" in err, err
+    assert log.calls == []
+
+
+def test_existing_empty_outdir_not_writable_is_exit_1(
+    world: tuple[Path, Bundle], monkeypatch: pytest.MonkeyPatch, read_only: Callable[[Path], Path]
+) -> None:
+    work, bundle = world
+    (work / "ex").mkdir()
+    read_only(work / "ex")
+    log = install_fetcher(monkeypatch, serve(bundle.data))
+    before = listing(work)
+    err = _fails_clean(work, _fetch("--outdir", "ex"), before, code=1)
+    assert "choose another --outdir" in err, err
+    assert list((work / "ex").iterdir()) == []
+    assert log.calls == []
+
+
+# ---------------------------------------------------------------- review #542 L4, L5: quoting
+
+
+_ODD = "my  ex\tdir"  # two consecutive spaces and a tab
+_TOKEN = "@@GIPPA-DIR@@"
+
+
+def test_printed_commands_round_trip_through_shlex(
+    world: tuple[Path, Bundle], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """L4: each printed command, split by ``shlex``, is the argv of its ``example_routes.yaml``
+    command with DIR (two spaces and a tab in its name) as one unchanged word part."""
+    work, bundle = world
+    install_fetcher(monkeypatch, serve(bundle.data))
+    out_dir = work / _ODD
+    res = _fetch("--outdir", _ODD)
+    assert res.code == 0, res.err
+    verify_tree(out_dir, bundle.files)
+    printed = [ln for ln in res.out.splitlines()[1:] if ln.startswith("gippa ")]
+    want = [[w.replace(_TOKEN, str(out_dir)) for w in shlex.split(fill(cmd, _TOKEN))]
+            for route in load_routes().values() for cmd in route["commands"]]  # fmt: skip
+    assert [shlex.split(ln) for ln in printed] == want
+
+
+def test_no_network_hint_quotes_the_outdir(
+    world: tuple[Path, Bundle], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """L5: the ``--from-file`` command of the no-network message is shell-quoted."""
+    from gippa.setupdb.run import SourceError
+
+    work, _ = world
+    install_fetcher(monkeypatch, raise_(SourceError("github.com", "timed out")))
+    out_dir = work / _ODD
+    before = listing(work)
+    err = _fails_clean(work, _fetch("--outdir", str(out_dir)), before)
+    start = err.index("gippa example fetch --from-file")
+    hint = err[start:].splitlines()[0]
+    want = ["gippa", "example", "fetch", "--from-file", "gippa-example-1.1.tar.gz"]
+    assert shlex.split(hint) == [*want, "--outdir", str(out_dir)], hint
+
+
+# ---------------------------------------------------------------- review #542 L1: bugs are exit 5
+
+
+def test_programming_error_in_unpack_is_exit_5(
+    world: tuple[Path, Bundle], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """L1: a ``TypeError`` raised inside the unpacker is a bug (exit 5, the internal-error
+    message), not a "malformed archive" (exit 2)."""
+    import gippa.example
+
+    work, bundle = world
+    install_fetcher(monkeypatch, serve(bundle.data))
+
+    def bug(*_a: object, **_k: object) -> None:
+        raise TypeError("unpack_archive() got an unexpected keyword argument")
+
+    monkeypatch.setattr(gippa.example, "unpack_archive", bug)
+    before = listing(work)
+    err = _fails_clean(work, _fetch("--outdir", "ex"), before, code=5)
+    assert "malformed archive" not in err, err
+    assert "internal error (a bug)" in err, err
+
+
+@pytest.mark.parametrize("kind", ["truncated", "not_a_tar"])
+def test_corrupt_archive_is_still_exit_2(
+    world: tuple[Path, Bundle], monkeypatch: pytest.MonkeyPatch, kind: str
+) -> None:
+    """L1: a real corrupt ``.tar.gz`` whose bytes match the pin is a malformed archive, exit 2."""
+    import gzip
+
+    work, bundle = world
+    data = (bundle.data[: len(bundle.data) // 2] if kind == "truncated"
+            else gzip.compress(b"this is not a tar archive\n" * 40, mtime=0))  # fmt: skip
+    path = work.parent / "corrupt" / "gippa-example-1.1.tar.gz"
+    path.parent.mkdir()
+    path.write_bytes(data)
+    bad = Bundle("1.1", path, f"sha256:{sha256_hex(data)}", len(data), {})
+    _pinned(monkeypatch, bad)
+    before = listing(work)
+    err = _fails_clean(work, _fetch("--outdir", "ex"), before)
+    assert "internal error" not in err, err
+
+
+# ---------------------------------------------------------------- review #542 L3: other major
+
+
+def test_explicit_version_of_another_major_is_exit_2(
+    world: tuple[Path, Bundle], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """L3, spec section 1 > Pin ("every older bundle row it can still run (same major)") and
+    section 6 ("another major: exit 2"): ``--version 1.1`` on GIPPA 2.0 is exit 2, without the
+    same-major fallback warning and without a download."""
+    _pins(monkeypatch, "1.1")
+    set_installed(monkeypatch, "2.0.0")
+    res, urls = _asked(monkeypatch, "--version", "1.1")
+    err = res.err  # type: ignore[attr-defined]
+    assert res.code == 2 and urls == [], err  # type: ignore[attr-defined]
+    assert "no bundle for" not in err and "using 1.1" not in err, err
+    assert "GIPPA 2" in err, err
+
+
+def test_select_pin_never_warns_across_majors() -> None:
+    """L3 (pure): ``select_pin`` with installed 2.0 and ``--version 1.1`` raises exit 2 and never
+    builds the "no bundle for 2.0; using 1.1" warning."""
+    from gippa.example import ExampleError, select_pin
+
+    row = pin_row(version="1.1")
+    with pytest.raises(ExampleError) as info:
+        select_pin({(1, 1): row}, "2.0.0", (1, 1))
+    assert int(info.value.code) == 2
+    assert not any("using 1.1" in ln for ln in info.value.lines)

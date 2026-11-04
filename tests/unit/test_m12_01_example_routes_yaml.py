@@ -113,6 +113,36 @@ def test_preflight_checks_the_inputs_of_the_run(
             assert pre.get(opt) == run[opt], (rid, opt, pre.get(opt), run[opt])
 
 
+_SETTING_KEYS = ("modules", "annotation.bakta.db", "annotation.terminators.tool",
+                 "annotation.promoter_calculator.enabled")  # fmt: skip
+
+
+def _settings(cmd: str) -> dict[str, str]:
+    """The run settings of one command: ``--set k=v``, ``--modules`` and ``--terminators``, with
+    ``modules=[a,b]`` read as ``a,b``."""
+    opts = options(cmd)
+    out: dict[str, str] = {}
+    for kv in opts.get("--set", []):
+        key, _, value = kv.partition("=")
+        out[key] = value.strip("[]") if key == "modules" else value
+    for opt, key in (("--modules", "modules"), ("--terminators", "annotation.terminators.tool")):
+        for value in opts.get(opt, []):
+            assert out.setdefault(key, value) == value, (cmd, key)
+    return out
+
+
+@pytest.mark.parametrize("rid", ROUTE_IDS)
+def test_preflight_checks_the_settings_of_the_run(
+    routes: dict[str, dict[str, object]], rid: str
+) -> None:
+    """Review #542: preflight gets the same modules, Bakta DB, terminator tool and Promoter
+    Calculator setting as its run (no drift between the two commands)."""
+    pre = _settings(_cmds(routes, rid, "preflight")[0])
+    run = _settings(_cmds(routes, rid, "run")[0])
+    for key in _SETTING_KEYS:
+        assert key in run and pre.get(key) == run[key], (rid, key, pre.get(key), run.get(key))
+
+
 def test_no_forbidden_option(routes: dict[str, dict[str, object]]) -> None:
     for cmd in _all(routes):
         for opt in FORBIDDEN:
