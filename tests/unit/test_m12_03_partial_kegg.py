@@ -111,3 +111,45 @@ def test_provenance_with_kegg_keeps_the_date(tmp_path: Path) -> None:
 
     lines = _provenance_lines(tmp_path, [], kegg_db=True)
     assert lines["KEGG retrieval date"] == KEGG_DATE, lines
+
+
+# ---------------------------------------------------------------- #541 review M1, M2
+
+
+@pytest.mark.parametrize("item", KEGG_RESOURCES)
+def test_lone_kegg_item_is_not_staged(tmp_path: Path, item: str) -> None:
+    """M2: a lone KEGG item is never staged by the local executor's resource lookup."""
+    from gippa.setupdb.installed import function_resources
+
+    other = next(k for k in KEGG_RESOURCES if k != item)
+    got = function_resources(_db(tmp_path / "db", (other,)))
+    assert not set(KEGG_RESOURCES) & set(got), got
+    assert {"go_basic", "goslim_generic", "cog2020_fun"} <= set(got), got
+
+
+def test_both_kegg_items_are_staged(tmp_path: Path) -> None:
+    from gippa.setupdb.installed import function_resources
+
+    assert set(function_resources(_db(tmp_path / "db", ()))) == set(FUNCTION_RESOURCES)
+
+
+def test_provenance_partial_kegg_says_not_installed(tmp_path: Path) -> None:
+    """M1: with the flag, a lone KEGG item's retrieval date is not shown."""
+    lines = _provenance_lines(tmp_path, ["layer_missing:kegg"], kegg_db=True)
+    assert lines["KEGG retrieval date"] == "KEGG not installed", lines
+
+
+@pytest.mark.parametrize("items", [(), ("kegg_ko_pathway",), ("kegg_pathway_names",),
+                                   ("kegg_ko_pathway", "kegg_pathway_names")])  # fmt: skip
+def test_kegg_licence_note_only_with_both_items(items: tuple[str, ...]) -> None:
+    """M1: the KEGG academic-use note is recorded only when both KEGG items are installed."""
+    from types import SimpleNamespace
+    from typing import Any
+
+    from gippa.manifest import KEGG_NOTE, licence_notes
+
+    db = {"items": [{"name": n, "status": "ok"} for n in ("go_basic", "cog2020_fun", *items)]}
+    src: Any = SimpleNamespace(cfg=SimpleNamespace(modules=["core", "function"]),
+                               tool_reports=[], db_manifest=db, operon_meta=None)  # fmt: skip
+    notes = licence_notes(src, {"function"})
+    assert (KEGG_NOTE in notes) == (len(items) == 2), notes

@@ -936,7 +936,6 @@ _ROWS: dict[str, tuple[tuple[str, Kind, str | None], ...]] = {
     "function": (("go", "db", None), ("kegg", "db", None), ("cog", "db", None)),
 }
 # Requirements a module runs without (M12-03, Khoa 2026-11-04): KEGG is academic use only.
-_OPTIONAL = frozenset({"kegg"})
 # rule id, human rule and warning message of each optional requirement when it is missing
 _OPTIONAL_CHECKS: dict[str, tuple[str, str, str]] = {
     "kegg": (
@@ -946,6 +945,7 @@ _OPTIONAL_CHECKS: dict[str, tuple[str, str, str]] = {
         "(gippa setup --kegg installs KEGG)",
     ),
 }
+_OPTIONAL = frozenset(_OPTIONAL_CHECKS)
 
 
 def requirements(modules: Sequence[str], promoters_mode: str) -> list[Requirement]:
