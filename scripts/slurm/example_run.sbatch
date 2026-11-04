@@ -4,7 +4,7 @@
 #SBATCH --qos=normal
 #SBATCH --cpus-per-task=8
 #SBATCH --mem=32G
-#SBATCH --time=03:00:00
+#SBATCH --time=01:00:00
 #SBATCH --output=/home/classes/bios/270/khoa/giap/local/logs/%x.%j.out
 # Quick-start example timing (feat/example-dataset): convert one route of a bundle built by
 # scripts/example/build_example.py, then one `gippa run` with real tools on the local executor
@@ -55,5 +55,5 @@ set -e
 t2=$(date +%s)
 { echo "job=${SLURM_JOB_ID:-} node=$(hostname) cpus=$CPUS route=$ROUTE modules=$MODULES name=$NAME"
   echo "convert_s=$((t1-t0)) run_s=$((t2-t1)) total_s=$((t2-t0)) exit=$rc"
-  echo "commit=$(git -C "$WT" rev-parse HEAD)"; } | tee "$R/timing.txt"
+  echo "commit=$(git -C "$WT" rev-parse HEAD)"; echo "extra_args=${*:-none}" | tr " " "_"; } | tee "$R/timing.txt"
 exit $rc
