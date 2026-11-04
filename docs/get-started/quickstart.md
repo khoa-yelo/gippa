@@ -1,14 +1,18 @@
 # Quick start
 
 From nothing to a finished GIPPA run. Paths in angle brackets, such as `<db-dir>`, are yours to
-choose.
+choose. Expect about 5 min to install, about 1.5 h for setup on 4 CPUs and 3–4 h per run
+([measured times](install.md#how-long-each-step-takes)).
 
 ## 1. Install and check
 
+Use Python 3.12 (3.11 also works). If `python3 --version` is older, get 3.12 first
+([Install › Python](install.md#python)).
+
 ```bash
-python3 -m venv <venv-dir> && source <venv-dir>/bin/activate    # Python 3.11 or newer
-pip install gippa              # glibc < 2.28 (CentOS 7): pip install --prefer-binary gippa
-gippa demo                     # about 2 min on bundled synthetic data; prints the report path
+python3.12 -m venv <venv-dir> && source <venv-dir>/bin/activate
+pip install --prefer-binary gippa   # prefer wheels: no numpy/numba builds from source
+gippa demo                          # about 2 min on bundled synthetic data; prints the report path
 ```
 
 `gippa run` also needs Java 17 or newer and Apptainer or Docker on `PATH`. `gippa setup` installs
@@ -20,11 +24,16 @@ Nextflow if none is found ([Install](install.md#prerequisites)).
 gippa setup --db-dir <db-dir> --profile apptainer --accept-download-plan --install-uniop-from-git
 ```
 
-`<db-dir>` needs about 50 GB free, on a filesystem your compute nodes can read. Setup shows a plan
-before downloading (`--accept-download-plan` skips its confirmation). On a cluster, run it as a
-batch job. geNOMAD is non-commercial only (`--no-genomad`) and KEGG academic only (`--no-kegg`).
-UniOP, the operon predictor, is built only if you agree at the prompt or pass
-`--install-uniop-from-git`. [More](setup-databases.md).
+`--accept-download-plan` skips the "Proceed?" question after the download plan.
+`--install-uniop-from-git` builds UniOP, the operon predictor, from its authors' GitHub: it has no
+licence file, so passing the flag means you decide that your use is permitted.
+`<db-dir>` needs about 50 GB free where your compute nodes can read it; on a cluster, run setup as
+a batch job. Flags you may change ([all flags](setup-databases.md#flags)):
+
+- `--no-genomad` for commercial use (geNOMAD is non-commercial only), then run with
+  `--modules core,bgc,function`;
+- `--no-kegg` outside academia without a KEGG licence, then run with `--modules core,mobile,bgc`;
+- `--bakta full`: functions for more genes, about 84 GB more; `--minimal` for small disks.
 
 ## 3. Run
 

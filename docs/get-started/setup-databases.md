@@ -15,6 +15,11 @@ gippa setup --db-dir /path/to/db --profile apptainer \
   --accept-download-plan --install-uniop-from-git      # or --profile docker
 ```
 
+The last two flags answer setup's two questions in advance, so it also runs as a batch job:
+`--accept-download-plan` the "Proceed?" after the download plan, and `--install-uniop-from-git` the UniOP build
+(UniOP has no licence file; the flag means you decide your use is permitted). Leave them out to be
+asked ([Install › Step 3](install.md#the-five-steps)).
+
 That is the Bakta light database, the geNOMAD database, the antiSMASH databases, the Promotech
 models, GO, KEGG, COG, the contaminant library and, with `--profile`, the container images. Each
 item has an opt-out: `--no-genomad`, `--no-antismash`, `--no-go`, `--no-kegg`, `--no-cog`,
@@ -47,49 +52,76 @@ On a shared cluster, run `gippa setup` as a batch job: `--bakta full` alone down
 
 ## Flags
 
-Every flag is listed in the [CLI reference](../reference/cli.md#gippa-setup).
+Every flag of `gippa setup`, in plain words. The [CLI reference](../reference/cli.md#gippa-setup)
+has the same flags in short form. Sizes are the unpacked files (a compressing filesystem stores
+less). Times are single measurements on one cluster, mostly with 4 CPUs (conditions in
+[Install › How long each step takes](install.md#how-long-each-step-takes)); they depend on your
+network and CPUs.
 
-| Flag | Default | Installs | Needed by |
+"Preflight stops" means: `gippa run` (and `gippa preflight --profile`) exits with code 2 before
+Nextflow starts and names what is missing. Every module's databases are checked, so when you leave
+an item out, also leave out the module that needs it with `gippa run --modules`.
+
+### Where and how
+
+| Flag | Default | What it does | Turn it off or change it when |
 |---|---|---|---|
-| `--db-dir` | required | the target directory | every item |
-| `--bakta` | `light` | `light`, `full` or `skip`: Bakta DB v6.0 (Zenodo record 14916843; `bakta_db download` also runs `amrfinder_update`) | annotation, unless `--annotation bakta.json` is given |
-| `--genomad` / `--no-genomad` | on | geNOMAD DB v1.9 (Zenodo record 14886553) | module `mobile` |
-| `--antismash` / `--no-antismash` | on | antiSMASH 8.0.4 databases (skipped when the image already contains them) | module `bgc` |
-| `--promotech-models` / `--no-promotech-models` | on | Promotech RF-HOT model | promoter predictions (core) |
-| `--go` / `--no-go` | on | `go-basic.obo` and `goslim_generic.obo` | module `function` |
-| `--kegg` / `--no-kegg` | on | KEGG KO-to-pathway links and pathway names | module `function` |
-| `--cog` / `--no-cog` | on | COG 2020 category tables (`cog-20.def.tab`, `fun-20.tab`) | `cog_category` in `genes.tsv`; module `function` |
-| `--contaminants` / `--no-contaminants` | on | the universal protein contaminant FASTA | contaminant labels in mapping; `gippa makedb` |
-| `--minimal` | off | Bakta light, Promotech, GO, KEGG, COG, contaminants; no geNOMAD, no antiSMASH | modules `core`, `function` |
-| `--images [all]` / `--no-images` | on with `--profile` | the pinned container images the modules need (`all`: every pinned image) | `gippa run` with a container profile |
-| `--check` | off | nothing: only verifies what is installed | — |
-| `--accept-download-plan` | off | nothing: skips the confirmation of the download plan (what will be downloaded, sizes); does not accept any licence terms | a run on a terminal that should not stop at the plan (without a terminal, setup never asks) |
-| `--install-uniop-from-git` | off | UniOP, built during the normal setup (with the databases and images): fetched from its authors' GitHub repository (hongsua/UniOP) at the pinned commit, sha256-checked and built locally; UniOP has no licence file, and passing this flag means you accept that your use is permitted (no prompt). Not with `--no-uniop`, nor with `--no-images` unless `--uniop` is given | operon predictions (UniOP) |
-| `--uniop` | off | UniOP only: no databases and no images (add `--install-uniop-from-git` to accept its terms without a prompt) | operon predictions (UniOP) |
-| `--nextflow` / `--no-nextflow` | on | the pinned Nextflow 26.10.0 `-dist` launcher (GitHub release `v26.10.0`), only when no `nextflow` is on `PATH`; never under `--uniop` or `--check` | `gippa run` without its own Nextflow |
+| `--db-dir DIR` | `$GIPPA_DB_DIR`, else the directory the last setup recorded, else `$XDG_DATA_HOME/gippa/db` or `~/.local/share/gippa/db` | where everything is installed; recorded, so `gippa run`, `preflight` and `makedb` find it without the flag | always set it to a filesystem with about 50 GB free that your compute nodes can read |
+| `--profile` | `auto` | the container runtime for the images and the UniOP build: `apptainer` or `docker` (a comma-joined Nextflow profile is accepted); `auto` detects one and prints it | set it when `auto` picks the wrong runtime; it must match the `--profile` of your runs |
+| `--images [all]` / `--no-images` | on when `--profile` names a runtime | pulls the pinned container images the configured modules need (`all`: every pinned image). `gippa run` never pulls: a missing image stops preflight. Size and time: 11 images, 8.7 GB; 58 min on 4 CPUs, 7 min 15 s on 18 CPUs | `--no-images` when the images are already in the cache, or you run with the `conda` profile |
+| `--cache-dir DIR` | `$NXF_APPTAINER_CACHEDIR`, else `DIR/containers` | the Apptainer image cache and UniOP build directory, for this setup command only | rarely: set `NXF_APPTAINER_CACHEDIR` instead, so preflight and run see the same cache ([Install › Step 3](install.md#the-five-steps)) |
+| `--nextflow` / `--no-nextflow` | on | installs the pinned Nextflow 26.10.0 launcher as `DIR/bin/nextflow`, only when no `nextflow` is on `PATH`. 47 MiB; 2 s | `--no-nextflow` when you install Nextflow yourself |
+| `--accept-download-plan` | off | answers the "Proceed?" question after the download plan with yes; does not accept any licence terms; in a batch job (no terminal) it is never asked | use it in scripts and batch jobs |
+| `--check` | off | downloads nothing and asks nothing: verifies what is installed and prints each item's status | after setup, or to find what is missing |
+| `--config FILE` / `--set key=value` | the defaults | the run configuration, as for `gippa run`; setup reads `modules` from it to choose the images and whether UniOP is needed | when you will run fewer modules, for example `--set modules=core,function` |
+| `--log-level` | `INFO` | how much setup prints | for debugging |
 
-The shared options `--config`, `--set`, `--log-level` and `--version` work as for every command.
+### What it downloads
+
+| Flag | Default | Downloads (size; time) | Terms | Needed by; if you leave it out | Turn it off when |
+|---|---|---|---|---|---|
+| `--bakta` `light`, `full` or `skip` | `light` | Bakta database v6.0 (Zenodo record 14916843) for genome annotation; `bakta_db download` also runs `amrfinder_update`. Light: 4.2 GB (1.3 GB archive), time not measured. Full: about 84 GB, 3 h 04 min | see the Zenodo record | module `core`, always: preflight requires a Bakta database even with `--annotation bakta.json`, so `skip` stops preflight. The full database assigns functions to more genes; runs with the light one carry the flag `bakta_db_light`, and the report says the light database assigns fewer functions | use `full` when gene functions matter (the `function` module's GO, KEGG and COG sets); keep `light` for small disks and quick tests |
+| `--genomad` / `--no-genomad` | on | geNOMAD database v1.9 (Zenodo record 14886553): 1.5 GB; the 803 MiB download took about 3 min (unpacking not timed) | **non-commercial use only** | module `mobile` (prophages and plasmids). Without it, run `--modules core,bgc,function` | commercial use, or small disks (`--minimal`) |
+| `--antismash` / `--no-antismash` | on | antiSMASH 8.0.4 databases, through antiSMASH's own downloader in its image (skipped when the image already holds them): 10.1 GB, 9 min 46 s | antiSMASH is AGPL-3.0 and runs as a separate program | module `bgc` (biosynthetic gene clusters). Without it, run `--modules core,mobile,function` | small disks (`--minimal`), or no interest in gene clusters |
+| `--promotech-models` / `--no-promotech-models` | on | the Promotech RF-HOT promoter model (`www.cs.mun.ca`, else the authors' GitHub LFS copy): 4.8 GB (the 1.0 GB archive and the 3.8 GB model in it); 1 min 46 s | Promotech is GPL-3.0 and runs as a separate program | module `core` (promoter predictions), always: without it preflight stops | only when you put the model in place by hand ([Download the databases by hand](manual-databases.md)) |
+| `--go` / `--no-go` | on | `go-basic.obo` and `goslim_generic.obo` (release 2026-05-19): 32 MB; 11 s together with KEGG, COG and the contaminants | CC BY 4.0 | module `function` (GO enrichment). Without it, run `--modules core,mobile,bgc` | when you do not run `function` |
+| `--kegg` / `--no-kegg` | on | KEGG KO-to-pathway links and pathway names from `rest.kegg.jp` (unversioned: the retrieval date and SHA-256 are recorded): 2.3 MB; see GO for the time | **free for academic use only**; others need a KEGG licence | module `function`. Preflight requires all of GO, KEGG and COG for `function`, so without KEGG run `--modules core,mobile,bgc` | non-academic use without a KEGG licence |
+| `--cog` / `--no-cog` | on | the COG 2020 category tables `cog-20.def.tab` and `fun-20.tab` (NCBI FTP): 0.4 MB; see GO for the time | public (NCBI FTP) | module `function` and the `cog_category` column of `genes.tsv`. Without it, run `--modules core,mobile,bgc` | when you do not run `function` |
+| `--contaminants` / `--no-contaminants` | on | the universal protein contaminant FASTA (commit `bddf6da9`): 0.2 MB; see GO for the time | no licence file: downloaded from its authors, never redistributed | contaminant labels on peptides in mapping and novel-ORF calls, and `gippa makedb`. Preflight does not require it: without it, peptides from common contaminants are not labelled | rarely |
+| `--minimal` | off | everything above except geNOMAD and antiSMASH, and only the images of the `core` and `function` modules | as above | a later `gippa run` on this directory without `--modules` runs `core,function` and says so | small disks |
+
+### UniOP
+
+UniOP, the operon predictor, has no licence file, so GIPPA never redistributes it: setup fetches
+its source from the authors (pinned commit) and builds it on your machine ([Install › UniOP](install.md#uniop)).
+
+| Flag | Default | What it does | If you leave UniOP out |
+|---|---|---|---|
+| `--install-uniop-from-git` | off: setup asks `Build UniOP for your own use? [y/N]` on a terminal, and skips UniOP in a batch job | answers that question with yes: **you decide that your use of UniOP is permitted**; UniOP is fetched from its authors' GitHub repository (hongsua/UniOP) at the pinned commit, sha256-checked and built during the normal setup. Fetch and build: 4 min 56 s; the Apptainer image is 0.3 GB | operons and transcription units come from the intergenic-distance model; the run carries the flag `operon_source_distance_model` |
+| `--no-uniop` | off | does not build UniOP under `--images`, and asks nothing | as above |
+| `--uniop` | off | installs only UniOP (no databases, no other images); add `--install-uniop-from-git` to skip the question | — |
 
 ## Layout and sizes
 
-The paths are relative to `--db-dir`, from `src/gippa/data/db_sources.yaml`. Approximate sizes on
-disk are from GIPPA_SPEC.md §3.9. Where §3.9 gives no size, the table says "not recorded". In that
-case, measure the size after your first download.
+The paths are relative to `--db-dir`, from `src/gippa/data/db_sources.yaml`. Sizes are the
+unpacked files of an installed copy (measured 2026-10-15 and 2026-11-03); a compressing filesystem
+stores less. Setup checks free space against the larger `size_gib` reserves of `db_sources.yaml`.
 
-| Item | Path | Size on disk (approx.) |
+| Item | Path | Size |
 |---|---|---|
-| Bakta light DB v6.0 | `bakta/db-light` | 3.9 GB unpacked (the 1.3 GB archive can be deleted) |
-| Bakta full DB v6.0 | `bakta/db` | about 84 GB unpacked |
-| geNOMAD DB v1.9 | `genomad_db` | about 0.8 GB; `gippa setup` asks for 4 GiB of free space before downloading |
-| antiSMASH databases | `antismash` | not recorded |
-| Promotech RF-HOT | `promotech` | not recorded |
-| GO | `go/go-basic.obo`, `go/goslim_generic.obo` | not recorded |
-| KEGG | `kegg/ko_pathway.tsv`, `kegg/pathway_names.tsv` | not recorded |
-| COG 2020 | `cog/cog-20.def.tab`, `cog/fun-20.tab` | not recorded |
-| Contaminants | `contaminants/contaminants.fasta` | not recorded |
+| Bakta light DB v6.0 | `bakta/db-light` | 4.2 GB (the 1.3 GB archive can be deleted) |
+| Bakta full DB v6.0 | `bakta/db` | about 84 GB |
+| geNOMAD DB v1.9 | `genomad_db` | 1.5 GB (803 MiB archive) |
+| antiSMASH databases | `antismash` | 10.1 GB |
+| Promotech RF-HOT | `promotech` | 4.8 GB (`RF-HOT.zip` 1.0 GB and the 3.8 GB `RF-HOT.model`) |
+| GO | `go/go-basic.obo`, `go/goslim_generic.obo` | 32 MB |
+| KEGG | `kegg/ko_pathway.tsv`, `kegg/pathway_names.tsv` | 2.3 MB |
+| COG 2020 | `cog/cog-20.def.tab`, `cog/fun-20.tab` | 0.4 MB |
+| Contaminants | `contaminants/contaminants.fasta` | 0.2 MB |
 | Nextflow launcher 26.10.0 | `bin/nextflow` | 47 MiB (49,084,616 bytes) |
 
-The Apptainer images take a separate 15–25 GB in the image cache (§3.9).
+The Apptainer images take a separate 8.7 GB in the image cache for the 11 pinned images, plus
+0.3 GB for the UniOP build (measured 2026-11-03).
 
 ## `db_manifest.json`
 

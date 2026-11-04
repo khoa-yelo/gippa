@@ -26,10 +26,22 @@ The cell words (tested, smoke-tested, untested) and the CI jobs are explained on
 
 | Requirement | Version | Where it is pinned |
 |---|---|---|
-| Python | Python ≥ 3.11 | `requires-python = ">=3.11"` in `pyproject.toml` |
+| Python | Python ≥ 3.11 | `requires-python = ">=3.11"` in `pyproject.toml`; 3.12 is the version to use ([Python](#python)) |
 | Nextflow | 26.10.0 is the pinned, tested version; at least 25.04.8 (advice: GIPPA does not check the version) | the launcher pin `nextflow` in `src/gippa/data/db_sources.yaml` |
 | Java | 17 or newer, which Nextflow needs; tested with OpenJDK 21 | checked by `gippa run` (`src/gippa/runner/prereqs.py`) |
 | Docker or Apptainer | the `docker` CLI with access to a daemon, Docker 20.10 or later (podman 3.0 or later through podman-docker: best effort, untested), or `apptainer` | see [Platforms](../user-guide/platforms.md) |
+
+### Python
+
+Use Python 3.12: the release package is built and smoke-tested with it. CI also tests 3.11 and
+3.13; any Python 3.11 or newer is accepted. When the system `python3` is older, get 3.12 one of
+these ways, then make the venv with it:
+
+```bash
+module avail python; module load python/3.12        # clusters: the module name varies by site
+uv python install 3.12 && uv venv --seed -p 3.12 <venv-dir>    # uv, no root; --seed adds pip
+micromamba create -n gippa -c conda-forge python=3.12          # or conda; then activate it
+```
 
 **Nextflow.** When `nextflow` is not on `PATH`, `gippa setup` downloads the official
 self-contained launcher `nextflow-26.10.0-dist` from the `nextflow-io/nextflow` GitHub release
@@ -62,8 +74,8 @@ way the configured code says (it tells 11 from 4/25, not 4 from 25)
 ## The five steps
 
 ```bash
-# 1. the Python package
-pip install gippa
+# 1. the Python package (Python 3.12; 3.11 also works)
+pip install --prefer-binary gippa
 gippa --version
 
 # 2. Nextflow, Java and Docker or Apptainer on PATH (Prerequisites above)
@@ -82,22 +94,38 @@ gippa run --genome genome.fna --peptides peptides.tsv --db-dir /path/to/db \
     --outdir out --profile apptainer                     # or: --profile docker
 ```
 
-!!! note "Older Linux (glibc < 2.28, such as CentOS or RHEL 7)"
-    On these systems the newest numpy, numba and pyarrow releases have no compatible wheels.
-    pip then falls back to their sdists, and the build fails. Install with
-    `pip install --prefer-binary gippa` instead. This was verified on a CentOS 7 cluster (glibc
-    2.17, Python 3.12): pip chose numpy 2.2.6, numba 0.67.0, pyarrow 20.0.0 and lightgbm 3.3.5,
-    and `gippa demo` passed. These older versions are not part of GIPPA's tested matrix
-    ([#502](https://github.com/khoa-yelo/gippa/issues/502)).
+`pip install --prefer-binary` makes pip choose the newest release that has a wheel for your
+system over a newer one that it would have to build from source. Use it everywhere. On older Linux
+(glibc < 2.28, such as CentOS or RHEL 7) a plain `pip install gippa` fails, because the newest
+numpy, numba and pyarrow have no wheels there. With the flag, on a CentOS 7 cluster (glibc 2.17,
+Python 3.12), pip chose numpy 2.2.6, numba 0.67.0, pyarrow 20.0.0 and lightgbm 3.3.5, and
+`gippa demo` passed. These older versions are not part of GIPPA's tested matrix
+([#502](https://github.com/khoa-yelo/gippa/issues/502)).
 
-`uv tool install gippa` works in place of `pip install gippa`. The extra `gippa[docs]` installs
-MkDocs Material for building this site. **Bioconda:** the recipe is pending (M11-10); until it
-is merged, use PyPI.
+**When `pip install` fails:**
+
+- `ERROR: Could not find a version that satisfies the requirement gippa (from versions: none)`:
+  the Python is older than 3.11. Make the venv with Python 3.12 ([Python](#python)).
+- pip builds numba or numpy from source and stops with `NumPy requires GCC >= 10.3` (or another
+  compiler error): rerun with `pip install --prefer-binary gippa`
+  ([#502](https://github.com/khoa-yelo/gippa/issues/502)).
+
+`uv tool install gippa` works in place of `pip install --prefer-binary gippa`. The extra
+`gippa[docs]` installs MkDocs Material for building this site. **Bioconda:** the recipe is
+pending (M11-10); until it is merged, use PyPI.
 
 **Step 3.** `gippa setup` pulls the images, then downloads the databases. Every item is on by
 default; each has an opt-out such as `--no-antismash` (the flags are on
 [Set up the databases](setup-databases.md)). Before downloading, setup prints the licence terms
 of geNOMAD (non-commercial use only) and KEGG (academic use only).
+
+`gippa setup` asks at most two questions, and only when stdin is a terminal. No other `gippa`
+command asks anything. To run setup without questions, pass the flags in the last column:
+
+| Question | When | Flag that answers it |
+|---|---|---|
+| `gippa setup: Proceed? [Y/n]` (default yes) | after the download plan, before the first download or pull | `--accept-download-plan`; in a batch job (no terminal) it is not asked and setup goes on |
+| `Build UniOP for your own use? [y/N]` (default no) | after `Proceed?`, when setup builds UniOP: with `--profile` when the modules need it, or with `--uniop` | `--install-uniop-from-git` (yes: you decide your use is permitted) or `--no-uniop` (skip UniOP); in a batch job without either, UniOP is skipped ([UniOP](#uniop)) |
 
 - With `--profile`, setup pulls the pinned images that the configuration's modules need;
   `--images all` pulls every pinned image and `--no-images` none. Without `--profile` the images
@@ -199,6 +227,33 @@ commit from GitHub, checks its sha256, and builds it on your machine. Nothing is
   error; set `annotation.uniop.enabled: false` to publish with the distance model.
 - `gippa compare` warns `compare.operon_source` when two runs used different operon sources.
 
+## How long each step takes
+
+Single measurements, not averages. Unless the row says otherwise, they were taken on 2026-11-03
+in one Slurm job with 4 CPUs (Intel Xeon Gold 6148) and 16 GB, Apptainer 1.4.4 and Python 3.12,
+writing to a network filesystem. Downloads depend on your network and the source servers; image
+pulls also depend on CPUs (Apptainer converts every image with `mksquashfs`).
+
+| Step | Time | Notes |
+|---|---|---|
+| `pip install --prefer-binary gippa` | 3 min 35 s | fresh venv, no pip cache |
+| `gippa demo` | 1 min 55 s | 92 s in a second 4-CPU job on the same day |
+| `gippa preflight` | 2 s; 10 s with `--profile` | demo inputs (100 kb genome, 1,685 peptides) |
+| `gippa setup`: the 11 pinned images | 58 min | 8.7 GB of images; the antiSMASH image alone took 11 min 30 s. With 18 CPUs on another node (2026-10-30): 7 min 15 s |
+| `gippa setup`: UniOP | 4 min 56 s | 13 s to fetch the source, 4 min 43 s to build |
+| `gippa setup`: Bakta light database | not measured | 1.3 GB download |
+| `gippa setup`: geNOMAD database | about 3 min | the 803 MiB archive at 4.5 MiB/s (2026-10-14, 4 CPUs); unpacking not timed |
+| `gippa setup`: antiSMASH databases | 9 min 46 s | antiSMASH's downloader (2026-10-14, 4 CPUs) |
+| `gippa setup`: Promotech model | 1 min 46 s | from the GitHub LFS copy |
+| `gippa setup`: GO, KEGG, COG, contaminants | 11 s | all four together |
+| `gippa setup`: Nextflow launcher | 2 s | |
+| `gippa setup --bakta full` (not the default) | 3 h 04 min | about 84 GB: download and unpack (2026-10-14, 4 CPUs) |
+| `gippa run`, E. coli K-12, all modules | 3 h 41 min | mean of 2 runs, 16 threads and 64 GB ([Runtimes](../user-guide/runtimes.md)) |
+
+In total: about 5 min to install and check; for a default `gippa setup` on 4 CPUs, 1 h 20 min
+for the measured rows plus the Bakta light download (not measured), so plan for about 1.5 h; and
+3–4 h per run.
+
 ## Execution profiles
 
 `gippa run --profile` takes one or more of these Nextflow profiles, joined by commas: `slurm`,
@@ -265,8 +320,8 @@ that fetches them.
 
 A prebuilt env counts only with its marker file `.gippa-built`, holding the SHA-256 of
 `workflow/envs/<tool>.yml`. Preflight also reads `DIR/db_manifest.json` for the databases
-([Set up the databases](setup-databases.md)). The antiSMASH image alone is about 9 GB
-([Set up the databases › Layout and sizes](setup-databases.md#layout-and-sizes)).
+([Set up the databases](setup-databases.md)). The antiSMASH image alone is 4.9 GB, and all 11
+images 8.7 GB ([Set up the databases › Layout and sizes](setup-databases.md#layout-and-sizes)).
 
 ## What `gippa setup` needs
 
