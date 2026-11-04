@@ -360,13 +360,15 @@ def provenance(view: RunView, doc: Mapping[str, Any] | None, note: str | None) -
             str(d.get("retrieved", ""))] for d in _databases(doc)]  # fmt: skip
     go = [str(d.get("version")) for d in _databases(doc) if d.get("name") == "go_basic"]
     dirty = " (uncommitted changes)" if doc.get("git_dirty") else ""
-    kegg_absent = KEGG_ABSENT if "layer_missing:kegg" in view.run_flags() else NOT_RECORDED_RUN
+    # M12-03: the flag wins over a lone KEGG item's date (a partial KEGG install is not used)
+    kegg_line = (KEGG_ABSENT if "layer_missing:kegg" in view.run_flags()
+                 else kegg_date(doc) or NOT_RECORDED_RUN)  # fmt: skip
     lines = [
         ("GIPPA version", str(doc.get("gippa_version", NOT_RECORDED))),
         ("commit", f"{doc.get('git_commit') or NOT_RECORDED}{dirty}"),
         ("command line", _command_line(doc) or NOT_RECORDED),
         ("seed", str(seeds.get("master")) if isinstance(seeds, Mapping) else NOT_RECORDED),
-        ("KEGG retrieval date", kegg_date(doc) or kegg_absent),
+        ("KEGG retrieval date", kegg_line),
         ("GO release", ", ".join(go) or NOT_RECORDED),
         ("manifest digest (SHA-256 of run_manifest.json)", view.digest("run_manifest") or ""),
     ]
