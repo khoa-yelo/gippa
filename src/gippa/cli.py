@@ -942,7 +942,7 @@ def _local_roots(
 
     from gippa.preflight.run import PreflightInputs, exit_code, run_preflight, write_outputs
     from gippa.runner.local import contaminant_library
-    from gippa.setupdb.installed import FUNCTION_RESOURCES, cog_table, resource
+    from gippa.setupdb.installed import cog_table, function_resources
 
     inp = PreflightInputs(
         genome,
@@ -986,10 +986,7 @@ def _local_roots(
     if cog is not None:
         roots["cog2020_def"] = cog
     if "function" in cfg.modules:  # M8-06 item 7: only an installed resource, only when switched on
-        for name in FUNCTION_RESOURCES:
-            path = resource(db_path, name)
-            if path is not None:
-                roots[name] = path
+        roots |= function_resources(db_path)  # M12-03: no lone KEGG item
     produced = {"abundance": work / "abundance.norm.parquet",
                 "preflight": outdir / "preflight" / "preflight.json"}  # fmt: skip
     roots |= {k: p for k, p in produced.items() if p.is_file()}
@@ -1182,12 +1179,13 @@ def _demo_local(ctx: click.Context, outdir: Path) -> None:
 def _demo_full(ctx: click.Context, outdir: Path) -> None:
     """``gippa run`` (Nextflow, the profile it resolves itself) on the bundled genome and
     peptides with the real tools; adds ``function`` when its resources are installed."""
-    from gippa.setupdb.installed import FUNCTION_RESOURCES, resource
+    from gippa.setupdb.installed import FUNCTION_RESOURCES, KEGG_RESOURCES, function_resources
 
     env_db = os.environ.get("GIPPA_DB_DIR")
     db = Path(env_db) if env_db else None
     modules = list(_DEMO_MODULES)
-    if db is not None and all(resource(db, n) is not None for n in FUNCTION_RESOURCES):
+    needed = set(FUNCTION_RESOURCES) - set(KEGG_RESOURCES)  # M12-03: KEGG is optional
+    if db is not None and needed <= set(function_resources(db)):
         modules.append("function")
     data = _demo_data()
     ctx.invoke(run, genome=data / "sim100k.fna.gz", peptides=data / "sim100k_peptides.tsv.gz",

@@ -253,7 +253,6 @@ def test_b_group_with_one_part_not_ok_is_missing(
 
 
 @pytest.mark.parametrize(("item", "req"), [("go_basic", "go"), ("cog2020_fun", "cog"),
-                                           ("kegg_pathway_names", "kegg"),
                                            ("promotech_models", "promotech")])  # fmt: skip
 def test_b_partial_group_fails_environment_tools_by_requirement_name(
     tmp_path: Path, item: str, req: str
@@ -266,6 +265,19 @@ def test_b_partial_group_fails_environment_tools_by_requirement_name(
     tools = environment_checks(reqs, probe, 0, 0)[0]
     assert tools.level == "error" and tools.exit_code == 2
     assert tools.value == {"missing": [req]}, tools.value
+
+
+def test_b_partial_kegg_group_is_the_optional_kegg_warning(tmp_path: Path) -> None:
+    """M12-03: KEGG is optional for ``function``; a partial group warns, tools stays ok."""
+    db = write_setup_manifest(tmp_path / "db", drop=["kegg_pathway_names"])
+    found = read_manifest(str(db))
+    assert found is not None
+    reqs = requirements(ALL_MODULES, "targeted")
+    probe = EnvProbe(found=found, free_disk_bytes=500 * GIB, total_ram_bytes=64 * GIB)
+    checks = environment_checks(reqs, probe, 0, 0)
+    assert checks[0].level == "ok", checks[0]
+    (kegg,) = [c for c in checks if c.rule_id == "environment.kegg"]
+    assert kegg.level == "warn" and kegg.exit_code == 0
 
 
 def test_b_bakta_light_or_full_satisfies_bakta_db(tmp_path: Path) -> None:

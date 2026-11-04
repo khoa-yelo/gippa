@@ -11,8 +11,8 @@ results.
   `--modules core,bgc,function`, and install with `gippa setup --no-genomad`.
 - **KEGG is free for academic use only.** `gippa setup` downloads the KEGG KO-to-pathway
   links and pathway names from `rest.kegg.jp` by default (`--no-kegg` leaves them out). Academic
-  users may use them freely. Other users need a licence from KEGG. Runs with the `function` module
-  contain KEGG pathway names, and the manifest records the KEGG retrieval date.
+  users may use them freely. Other users need a licence from KEGG. When KEGG is installed, runs with the
+  `function` module contain KEGG pathway names, and the manifest records the KEGG retrieval date.
 - **Where the terms are recorded.** `gippa setup` prints the geNOMAD and KEGG terms before it
   downloads anything. Each run lists the terms of what it used in `run_manifest.json`
   (`licence_notes`, e.g. `geNOMAD: non-commercial`, `KEGG: academic use`), and the report's

@@ -404,8 +404,9 @@ def licence_notes(src: ManifestSources, executed: set[str]) -> list[str]:
     operons came from UniOP."""
     mods = set(src.cfg.modules)
     genomad = "genomad" in executed or any(t.get("name") == "genomad" for t in src.tool_reports)
-    kegg = any(i.get("name") in _KEGG_ITEMS and i.get("status") == "ok"
-               for i in _list((src.db_manifest or {}).get("items")))  # fmt: skip
+    ok = {i.get("name") for i in _list((src.db_manifest or {}).get("items"))
+          if i.get("status") == "ok"}  # fmt: skip
+    kegg = set(_KEGG_ITEMS) <= ok  # M12-03: a lone KEGG item is not staged, so not used
     notes = [GENOMAD_NOTE] if "mobile" in mods and genomad else []
     notes += [KEGG_NOTE] if "function" in mods and "function" in executed and kegg else []
     notes += [UNIOP_NOTE] if (src.operon_meta or {}).get("operon_source") == "uniop" else []

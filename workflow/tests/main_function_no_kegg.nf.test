@@ -1,0 +1,81 @@
+// M12-03 (GIPPA 1.1.0): main.nf runs FUNCTION on GO and COG when KEGG is not installed
+// (`gippa setup --no-kegg`; Khoa 2026-11-04). Stub runs only; ci.yml runs:
+// nf-test test workflow/tests --profile test,stub.
+//
+// Pinned here: the KEGG-dependent work is a no-op inside the one `function` py step, not a
+// separate process. functionResources() stages only the setup items listed in
+// <db_dir>/db_manifest.json, so with GO and COG listed and KEGG absent FUNCTION_STEP (tag
+// "function") runs once with gene_table, replicons, tu_folds, go_basic, goslim_generic and
+// cog2020_fun, and no kegg_* input; the three tables/*.tsv are published. The step itself then
+// records layer_missing:kegg (tests/unit/test_m12_03_function_without_kegg.py). The tmp db_dir
+// holds empty stand-ins (stub tasks never read them) and a per-name manifest
+// (gippa.preflight.environment.read_manifest's provisional form), as main_function.nf.test does.
+
+nextflow_pipeline {
+
+    name "main.nf runs FUNCTION on GO and COG without KEGG (stub)"
+    script "../main.nf"
+    options "-stub"
+    tag "function"
+
+    test("modules core,function, KEGG not installed: FUNCTION_STEP runs with GO and COG only and publishes its tables") {
+
+        when {
+            params {
+                def a = "${moduleTestDir}/data/annotate"
+                def d = "${moduleTestDir}/data/mapping"
+                def db = java.nio.file.Files.createTempDirectory('m1203_db').toFile()
+                def rel = [cog2020_def: 'cog/cog-20.def.tab', go_basic: 'go/go-basic.obo',
+                           goslim_generic: 'go/goslim_generic.obo', cog2020_fun: 'cog/fun-20.tab']
+                rel.each { k, r -> def f = new File(db, r); f.parentFile.mkdirs(); f.text = '' }
+                new File(db, 'db_manifest.json').text = groovy.json.JsonOutput.toJson(
+                    rel.collectEntries { k, r -> [(k): [path: r, version: 'stub']] })
+                outdir = "$outputDir"
+                inputs = [genome: "${a}/genome.fa".toString(), replicons: "${a}/replicons.tsv".toString(),
+                          peptides: "${d}/peptides.norm.parquet".toString()]
+                modules = ['core', 'function']
+                annotation = new groovy.json.JsonSlurper().parse(new File("${a}/annotation.json"))
+                db_dir = db.canonicalPath
+            }
+        }
+
+        then {
+            def H = new GroovyShell().evaluate(new File("${moduleTestDir}/lib/annotate_stub.groovy"))
+            def ranTagged = { String step -> H.names(workflow.trace).count { H.tagOf(it) == step } }
+            def dirsTagged = { String w, String step ->
+                H.taskDirs(w).findAll { d ->
+                    def l = new File(d, '.command.run').readLines().find { it.startsWith('### name:') } ?: ''
+                    H.tagOf(l.replaceFirst(/^### name:\s*['"]?/, '').replaceFirst(/['"]\s*$/, '')) == step
+                }
+            }
+            def REG = new File("${moduleTestDir}/data/annotate/step_registry.json")
+            def work = workDir.toString()
+            assert workflow.success
+            assert workflow.trace.failed().size() == 0
+
+            assert ranTagged('function') == 1 : "function ran ${ranTagged('function')}x; tasks: ${H.names(workflow.trace)}"
+            assert H.names(workflow.trace).any { H.procOf(it) == 'FUNCTION_STEP' } : "no FUNCTION_STEP alias: ${H.names(workflow.trace)}"
+            def probs = H.registryProblems(work, REG)
+            assert probs.isEmpty() : "py step inputs vs gippa.steps registry: ${probs}"
+
+            def fd = dirsTagged(work, 'function')[0]
+            def din = H.stepInputs(fd)
+            def keys = din.collect { it[0] }.sort()
+            assert keys == ['cog2020_fun', 'gene_table', 'go_basic', 'goslim_generic', 'replicons',
+                            'tu_folds'] : "function inputs ${din}"
+            assert !keys.any { it.startsWith('kegg') } : "a KEGG item was staged without KEGG installed: ${keys}"
+            def src = { String k -> new File(fd, din.find { it[0] == k }[1]).canonicalPath }
+            def db = new File(params.db_dir).canonicalPath
+            [go_basic: 'go/go-basic.obo', goslim_generic: 'go/goslim_generic.obo', cog2020_fun: 'cog/fun-20.tab'].each { k, r ->
+                assert src(k) == new File(db, r).canonicalPath : "${k} staged from ${src(k)}, expected <db_dir>/${r}"
+            }
+            // no task of the run (function or any other) got a KEGG file
+            assert !H.names(workflow.trace).any { it.toLowerCase().contains('kegg') } : "a KEGG process ran: ${H.names(workflow.trace)}"
+
+            ['tables/category_summary.tsv', 'tables/enrichment_detection.tsv', 'tables/enrichment_gsea.tsv',
+             'genetable/tu_folds.parquet', 'tables/operons.tsv'].each { f ->
+                assert new File("${outputDir}/${f}").isFile() : "${f} not published"
+            }
+        }
+    }
+}
