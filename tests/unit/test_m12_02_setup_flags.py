@@ -786,3 +786,28 @@ def test_help_install_uniop_from_git_says_add_uniop_for_uniop_only() -> None:
 def test_help_uniop_still_means_uniop_only() -> None:
     text = _option_help(UNIOP)
     assert "uniop" in text and "deprecat" not in text, text
+
+
+# ---------------------------------------------------------------- review of #534: silent skips
+
+
+def test_install_uniop_from_git_warns_when_the_config_does_not_use_uniop(
+    calls: Calls, tmp_path: Path
+) -> None:
+    """With UniOP disabled in the config the flag cannot build it: say so instead of nothing."""
+    code, out = _run(tmp_path, NEW_PLAN, NEW_UNIOP, "--set", "annotation.uniop.enabled=false")
+    assert code == 0, out
+    assert calls.uniop == []
+    assert "--install-uniop-from-git: UniOP is not built" in out, out
+    assert "annotation.uniop.enabled" in out, out
+
+
+def test_install_uniop_from_git_without_a_runtime_points_to_uniop(
+    calls: Calls, tmp_path: Path
+) -> None:
+    """A profile with no container runtime (conda): the warning names --uniop, which can still
+    build UniOP (micromamba under conda)."""
+    code, out = _run(tmp_path, NEW_PLAN, NEW_UNIOP, "--profile", "conda")
+    assert code == 0, out
+    assert "--install-uniop-from-git: UniOP is not built without a container runtime" in out, out
+    assert "--uniop" in out.split("without a container runtime", 1)[1], out

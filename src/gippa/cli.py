@@ -343,7 +343,8 @@ def setup(
             click.echo(f"{_PKG} setup: warning: {why}", err=True)
             if from_git and not uniop:  # the UniOP build needs the runtime of the images
                 click.echo(f"{_PKG} setup: warning: --install-uniop-from-git: UniOP is not built "
-                           "without a container runtime; pass --profile apptainer|docker",
+                           "without a container runtime; pass --profile apptainer|docker, "
+                           "or add --uniop to build UniOP only",
                            err=True)  # fmt: skip
         pull = None
     fetcher = HttpsFetcher()
@@ -361,6 +362,10 @@ def setup(
     code = ExitCode.SUCCESS
     needed = pull is not None and not no_uniop and "uniop" in {
         t.name for t in required_tools(cfg)}  # fmt: skip
+    if from_git and not uniop and not check and pull is not None and not needed:
+        click.echo(f"{_PKG} setup: warning: --install-uniop-from-git: UniOP is not built "
+                   "because this configuration does not use it (annotation.uniop.enabled)",
+                   err=True)  # fmt: skip
     want = pull is not None and runtime is not None and not check
     tools = image_set(cfg, pull == "all") if want else []
     items = [] if check else [(i.name, float(i.size_gib), i.path) for i in plan(dbs)]

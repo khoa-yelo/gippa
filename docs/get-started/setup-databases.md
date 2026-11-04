@@ -11,7 +11,8 @@ see [Download the databases by hand](manual-databases.md).
 `function` (COG, GO, KEGG). `gippa setup` installs everything they need by default:
 
 ```bash
-gippa setup --db-dir /path/to/db --profile apptainer   # or --profile docker
+gippa setup --db-dir /path/to/db --profile apptainer \
+  --accept-download-plan --install-uniop-from-git      # or --profile docker
 ```
 
 That is the Bakta light database, the geNOMAD database, the antiSMASH databases, the Promotech
@@ -62,7 +63,7 @@ Every flag is listed in the [CLI reference](../reference/cli.md#gippa-setup).
 | `--minimal` | off | Bakta light, Promotech, GO, KEGG, COG, contaminants; no geNOMAD, no antiSMASH | modules `core`, `function` |
 | `--images [all]` / `--no-images` | on with `--profile` | the pinned container images the modules need (`all`: every pinned image) | `gippa run` with a container profile |
 | `--check` | off | nothing: only verifies what is installed | — |
-| `--accept-download-plan` | off | nothing: skips the confirmation of the download plan (what will be downloaded, sizes); does not accept any licence terms | scripts and batch jobs on a terminal (without one, setup never asks) |
+| `--accept-download-plan` | off | nothing: skips the confirmation of the download plan (what will be downloaded, sizes); does not accept any licence terms | a run on a terminal that should not stop at the plan (without a terminal, setup never asks) |
 | `--install-uniop-from-git` | off | UniOP, built during the normal setup (with the databases and images): fetched from its authors' GitHub repository (hongsua/UniOP) at the pinned commit, sha256-checked and built locally; UniOP has no licence file, and passing this flag means you accept that your use is permitted (no prompt). Not with `--no-uniop`, nor with `--no-images` unless `--uniop` is given | operon predictions (UniOP) |
 | `--uniop` | off | UniOP only: no databases and no images (add `--install-uniop-from-git` to accept its terms without a prompt) | operon predictions (UniOP) |
 | `--nextflow` / `--no-nextflow` | on | the pinned Nextflow 26.10.0 `-dist` launcher (GitHub release `v26.10.0`), only when no `nextflow` is on `PATH`; never under `--uniop` or `--check` | `gippa run` without its own Nextflow |

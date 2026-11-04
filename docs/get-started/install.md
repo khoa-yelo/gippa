@@ -70,7 +70,8 @@ gippa --version
 
 # 3. pinned images, databases and the local UniOP build
 export NXF_APPTAINER_CACHEDIR=/big/disk/gippa-images     # optional, apptainer only (below)
-gippa setup --db-dir /path/to/db --profile apptainer   # or: --profile docker
+gippa setup --db-dir /path/to/db --profile apptainer \
+  --accept-download-plan --install-uniop-from-git      # or: --profile docker; no prompts
 
 # 4. check the inputs and the installed tools
 GIPPA_DB_DIR=/path/to/db gippa preflight --genome genome.fna --peptides peptides.tsv \
