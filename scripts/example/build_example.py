@@ -115,7 +115,10 @@ def write_fasta(path: Path, records: Iterable[tuple[str, str]], width: int = 60)
     data = buf.getvalue().encode()
     if path.suffix == ".gz":
         # mtime=0 and no file name: byte-identical rebuilds
-        with path.open("wb") as raw, gzip.GzipFile(fileobj=raw, mode="wb", mtime=0, filename="") as gz:
+        with (
+            path.open("wb") as raw,
+            gzip.GzipFile(fileobj=raw, mode="wb", mtime=0, filename="") as gz,
+        ):
             gz.write(data)
     else:
         path.write_bytes(data)
@@ -193,8 +196,10 @@ def abundance(sub: pd.DataFrame) -> pd.DataFrame:
 def generic_table(sub: pd.DataFrame) -> pd.DataFrame:
     d = sub.copy()
     d["peptide"] = d["Stripped.Sequence"].astype(str)
-    d["proforma"] = d["Modified.Sequence"].astype(str).str.replace(
-        r"\(UniMod:(\d+)\)", r"[UNIMOD:\1]", regex=True
+    d["proforma"] = (
+        d["Modified.Sequence"]
+        .astype(str)
+        .str.replace(r"\(UniMod:(\d+)\)", r"[UNIMOD:\1]", regex=True)
     )
     d["is_decoy"] = d["Decoy"].astype(int) == 1
     d["inten"] = d["Precursor.Normalised"].where(~d["is_decoy"])
@@ -241,14 +246,17 @@ def write_tsv_rows(path: Path, header: list[str], rows: list[dict[str, str]]) ->
 
 
 def deterministic_tar(out: Path, base: Path, members: list[Path]) -> None:
-    with out.open("wb") as raw, gzip.GzipFile(fileobj=raw, mode="wb", mtime=0, filename="") as gz:
-        with tarfile.open(fileobj=gz, mode="w", format=tarfile.PAX_FORMAT) as tar:
-            for m in sorted(members):
-                info = tar.gettarinfo(str(m), arcname=str(m.relative_to(base.parent)))
-                info.mtime, info.uid, info.gid, info.uname, info.gname = 0, 0, 0, "", ""
-                info.mode = 0o644
-                with m.open("rb") as fh:
-                    tar.addfile(info, fh)
+    with (
+        out.open("wb") as raw,
+        gzip.GzipFile(fileobj=raw, mode="wb", mtime=0, filename="") as gz,
+        tarfile.open(fileobj=gz, mode="w", format=tarfile.PAX_FORMAT) as tar,
+    ):
+        for m in sorted(members):
+            info = tar.gettarinfo(str(m), arcname=str(m.relative_to(base.parent)))
+            info.mtime, info.uid, info.gid, info.uname, info.gname = 0, 0, 0, "", ""
+            info.mode = 0o644
+            with m.open("rb") as fh:
+                tar.addfile(info, fh)
 
 
 def build(start: int, end: int, name: str, out_root: Path, root: Path) -> dict[str, object]:
@@ -315,7 +323,7 @@ def build(start: int, end: int, name: str, out_root: Path, root: Path) -> dict[s
             "scores are per spectrum. Nothing was re-searched or re-scored for the subset."
         ),
         "counts": {
-            "region_proteins": int(len(prot)),
+            "region_proteins": len(prot),
             "region_proteins_cds": int((prot["kind"] == "cds").sum()),
             "region_proteins_sorf": int((prot["kind"] == "sorf").sum()),
             "A": {
@@ -324,15 +332,17 @@ def build(start: int, end: int, name: str, out_root: Path, root: Path) -> dict[s
                 "distinct_target_peptides_q01": int(
                     targets.loc[targets["Global.Q.Value"] <= 0.01, "Stripped.Sequence"].nunique()
                 ),
-                "proteins_with_rows": int(
-                    len({p for x in targets["Protein.Ids"] for p in str(x).split(";")})
+                "proteins_with_rows": len(
+                    {p for x in targets["Protein.Ids"] for p in str(x).split(";")}
                 ),
-                "rows_per_run": {k: int(v) for k, v in sub["Run"].value_counts().sort_index().items()},
+                "rows_per_run": {
+                    k: int(v) for k, v in sub["Run"].value_counts().sort_index().items()
+                },
             },
-            "B": {"abundance_rows": int(len(ab)), "fasta_records": int(len(ab))},
+            "B": {"abundance_rows": len(ab), "fasta_records": len(ab)},
             "C": c_counts,
             "D": {
-                "rows": int(len(gen)),
+                "rows": len(gen),
                 "decoy_rows": int((gen["is_decoy"] == "true").sum()),
             },
         },
@@ -345,7 +355,9 @@ def build(start: int, end: int, name: str, out_root: Path, root: Path) -> dict[s
         "D_generic": [d_path],
     }
     files = [g_path, *(p for ps in routes.values() for p in ps)]
-    sel["outputs"] = {str(p.relative_to(out)): {"bytes": p.stat().st_size, "sha256": sha256(p)} for p in files}
+    sel["outputs"] = {
+        str(p.relative_to(out)): {"bytes": p.stat().st_size, "sha256": sha256(p)} for p in files
+    }
     sel_path = out / "SELECTION.json"
     sel_path.write_text(json.dumps(sel, indent=2) + "\n")
     sizes: dict[str, int] = {}
@@ -362,7 +374,9 @@ def build(start: int, end: int, name: str, out_root: Path, root: Path) -> dict[s
 
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
-    ap.add_argument("--start", type=int, required=True, help="0-based region start on NZ_CP058217.1")
+    ap.add_argument(
+        "--start", type=int, required=True, help="0-based region start on NZ_CP058217.1"
+    )
     ap.add_argument("--end", type=int, required=True, help="exclusive region end")
     ap.add_argument("--name", required=True)
     ap.add_argument("--out", type=Path, default=None, help="default $GIPPA_ROOT/example")
