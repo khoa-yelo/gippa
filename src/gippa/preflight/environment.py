@@ -690,7 +690,7 @@ class UniopResolution:
 def uniop_setup_command(profile: str | None = None, db_dir: str | None = None) -> str:
     """The command that installs UniOP for ``profile`` into ``db_dir`` (spec item 3)."""
     return (
-        f"{_PKG} setup --install-uniop-from-git --profile {profile or '<profile>'} "
+        f"{_PKG} setup --uniop --install-uniop-from-git --profile {profile or '<profile>'} "
         f"--db-dir {db_dir or '<db_dir>'}"
     )
 

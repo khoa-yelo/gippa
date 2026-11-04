@@ -17,13 +17,14 @@ Nextflow if none is found ([Install](install.md#prerequisites)).
 ## 2. Set up databases and images (once)
 
 ```bash
-gippa setup --db-dir <db-dir> --profile apptainer     # or --profile docker
+gippa setup --db-dir <db-dir> --profile apptainer --accept-download-plan --install-uniop-from-git
 ```
 
 `<db-dir>` needs about 50 GB free, on a filesystem your compute nodes can read. Setup shows a plan
-and asks before downloading. On a cluster, run it as a batch job. geNOMAD is non-commercial only
-(`--no-genomad`) and KEGG academic only (`--no-kegg`). UniOP, the operon predictor, is built only
-if you agree at the prompt or pass `--install-uniop-from-git`. [More](setup-databases.md).
+before downloading (`--accept-download-plan` skips its confirmation). On a cluster, run it as a
+batch job. geNOMAD is non-commercial only (`--no-genomad`) and KEGG academic only (`--no-kegg`).
+UniOP, the operon predictor, is built only if you agree at the prompt or pass
+`--install-uniop-from-git`. [More](setup-databases.md).
 
 ## 3. Run
 

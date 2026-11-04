@@ -219,11 +219,16 @@ def _profile_help(lead: str) -> str:
     "from_git",
     is_flag=True,
     help="Fetch UniOP from its authors' GitHub repository (hongsua/UniOP) at the pinned commit, "
-    "check its sha256 and build it locally (UniOP only; add --images to pull the images too). "
-    "UniOP has no licence file: passing this flag means you accept its terms, i.e. that your use "
-    "is permitted.",
+    "check its sha256 and build it locally, during the normal setup (with the databases and "
+    "images); add --uniop to install UniOP only. UniOP has no licence file: passing this flag "
+    "means you accept its terms, i.e. that your use is permitted.",
 )
-@click.option("--uniop", is_flag=True, hidden=True, help="Deprecated: --install-uniop-from-git.")
+@click.option(
+    "--uniop",
+    is_flag=True,
+    help="Install UniOP only (no databases, no images); add --install-uniop-from-git to accept "
+    "its terms without a prompt.",
+)
 @click.option(
     "--accept-uniop-terms", is_flag=True, hidden=True, help="Deprecated: --install-uniop-from-git."
 )
@@ -280,16 +285,20 @@ def setup(
 
     if from_git and no_uniop:
         raise click.UsageError("--install-uniop-from-git and --no-uniop exclude each other")
+    if from_git and no_images and not uniop:  # UniOP is built with the images, or by --uniop
+        raise click.UsageError(
+            "--install-uniop-from-git and --no-images exclude each other (add --uniop to install "
+            "UniOP only)"
+        )
     if uniop and no_uniop:
         raise click.UsageError("--uniop and --no-uniop exclude each other")
     for old, used, new in (("--yes", yes, "--accept-download-plan"),
-                           ("--uniop", uniop, "--install-uniop-from-git"),
                            ("--accept-uniop-terms", accept_uniop_terms,
                             "--install-uniop-from-git")):  # fmt: skip
         if used:
             click.echo(f"{_PKG} setup: warning: {old} is deprecated; use {new}", err=True)
-    # --install-uniop-from-git is the old --uniop --accept-uniop-terms (M12-02)
-    uniop, accept_uniop_terms = uniop or from_git, accept_uniop_terms or from_git
+    # --install-uniop-from-git replaces --accept-uniop-terms; it does not imply --uniop (M12-02)
+    accept_uniop_terms = accept_uniop_terms or from_git
     yes = yes or accept_plan
     if images is not None and no_images:
         raise click.UsageError("--images and --no-images exclude each other")
@@ -332,6 +341,10 @@ def setup(
                 else f"images: no pull for {chosen} yet; pass --profile apptainer|docker"
             )
             click.echo(f"{_PKG} setup: warning: {why}", err=True)
+            if from_git and not uniop:  # the UniOP build needs the runtime of the images
+                click.echo(f"{_PKG} setup: warning: --install-uniop-from-git: UniOP is not built "
+                           "without a container runtime; pass --profile apptainer|docker",
+                           err=True)  # fmt: skip
         pull = None
     fetcher = HttpsFetcher()
     # under --check the archive is only verified; else the UniOP step fetches it (spec item 1b).

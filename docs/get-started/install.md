@@ -159,7 +159,7 @@ the CPUs available unless you set it or a Slurm profile runs the tasks. See
 ### UniOP
 
 UniOP, the operon predictor, has no licence file, so GIPPA never redistributes it: there is no
-UniOP image. `setup --images` (or `setup --install-uniop-from-git` alone) fetches the authors' archive at the pinned
+UniOP image. `setup --images` (or `setup --uniop` alone) fetches the authors' archive at the pinned
 commit from GitHub, checks its sha256, and builds it on your machine. Nothing is pushed anywhere.
 
 - **Terms.** Setup prints this notice whenever it builds or checks a local build:
@@ -174,7 +174,7 @@ commit from GitHub, checks its sha256, and builds it on your machine. Nothing is
   `apptainer build --fakeroot --ignore-fakeroot-command`. The build is named in
   `DIR/local_tools.config`, which `gippa run` passes to Nextflow.
 - **When the build fails** (no network, no Docker daemon access, no fakeroot), setup records the
-  reason and exits 2 (once the terms are accepted, under `--images` and `--install-uniop-from-git` alike). The ways
+  reason and exits 2 (once the terms are accepted, under `--images` and `--uniop` alike). The ways
   out:
     - run `setup` again on a machine that can build, with the same DB directory and cache on a
       filesystem the run host sees (preflight checks the run host: the Docker image ID or the
@@ -183,7 +183,7 @@ commit from GitHub, checks its sha256, and builds it on your machine. Nothing is
       annotation.uniop.enabled=auto`;
     - or run without UniOP. `annotation.uniop.enabled` is `auto` by default: with UniOP missing,
       preflight warns `uniop not installed (unlicensed, not distributed); operons use the distance
-      model; run: gippa setup --install-uniop-from-git --profile <profile> --db-dir <db_dir>`
+      model; run: gippa setup --uniop --install-uniop-from-git --profile <profile> --db-dir <db_dir>`
       and the run goes on. `--set annotation.uniop.enabled=true` makes a missing UniOP an error
       (exit 2) instead.
 - **What the distance model loses.** Without UniOP, the operon pairs and the TUs come from the
