@@ -2,8 +2,10 @@
 // written by `gippa run`. With a genome and replicons.tsv it runs ANNOTATE (M2-07), then MAPPING
 // (M3-17), VARIANTS (M7-04), GENETABLE (M4-15), CONTEXT (M4-18, M4-19), beside CONTEXT, OPERONS
 // (M6-08), NOVEL (M7-08) and DETERMINANTS (M8-10, after CONTEXT: it takes the gene context) when
-// params.inputs.peptides (peptides.norm.parquet) is given, and FUNCTION (M8-06) when 'function' is
-// in params.modules; without inputs it runs one GIPPA_STEP smoke task (skeleton check, M2-06).
+// params.inputs.peptides (peptides.norm.parquet) or params.inputs.proteins_long is given, and
+// FUNCTION (M8-06) when 'function' is in params.modules; VARIANTS and NOVEL need peptides and are
+// skipped on a proteins-only run (#536: MAPPING's protein route, tier protein_list). Without inputs
+// it runs one GIPPA_STEP smoke task (skeleton check, M2-06).
 // SENSITIVITY_RERUNS (M8-16) runs after DETERMINANTS and FUNCTION.
 // GENETABLE, CONTEXT, OPERONS and DETERMINANTS skip themselves when an input they require is absent
 // (MVP-01). Under a precomputed regions layer region_layer still writes C7/C8 (MVP-02). REPORT runs
@@ -74,13 +76,18 @@ workflow {
                    kv('annotation', pick(ANNOTATE.out.context, 'annotation')),
                    kv('genes', gm.map { a -> a[0] }), kv('features', gm.map { a -> a[1] }),
                    kv('replicons', gm.map { a -> a[2] })]
-        if (inputs.peptides) {
+        def mapped = inputs.peptides || inputs.proteins_long
+        if (mapped) {
             def gene_model = ANNOTATE.out.gene_model
             MAPPING(genome, opt(inputs.peptides), opt(inputs.proteins_long), gene_model,
                     opt(inputs.reference_peptides), opt(contaminantLibrary(inputs)))
             // Module 5 (M7-04): independent of GENETABLE; CONTEXT takes its variants_qc (M7-14)
-            VARIANTS(genome, gene_model, MAPPING.out.mapping, MAPPING.out.hits_tolerant,
-                     opt(inputs.peptides), opt(inputs.reference_peptides), opt(inputs.peptide_spectra))
+            def variants_qc = channel.empty()
+            if (inputs.peptides) {
+                VARIANTS(genome, gene_model, MAPPING.out.mapping, MAPPING.out.hits_tolerant,
+                         opt(inputs.peptides), opt(inputs.reference_peptides), opt(inputs.peptide_spectra))
+                variants_qc = VARIANTS.out.variants_qc
+            }
             GENETABLE(gene_model, ANNOTATE.out.contract, MAPPING.out.mapping, opt(inputs.peptides),
                       opt(inputs.abundance), opt(inputs.preflight), opt(cogTable()))
             CONTEXT(GENETABLE.out.gene_table, GENETABLE.out.detectability_summary, gene_model,
@@ -88,10 +95,12 @@ workflow {
                     MAPPING.out.stratum0, opt(inputs.peptides), opt(inputs.abundance),
                     opt(inputs.replicon_depth), GENETABLE.out.tier_summary,
                     ANNOTATE.out.layers_for_pairs.mix(kv('operon_meta', ANNOTATE.out.operon_meta)),
-                    VARIANTS.out.variants_qc)
-            NOVEL(genome, gene_model, ANNOTATE.out.contract, MAPPING.out.mapping, opt(inputs.peptides),
-                  opt(contaminantLibrary(inputs)), GENETABLE.out.gene_table, ANNOTATE.out.layer_pairs,
-                  MAPPING.out.hits_exact.combine(MAPPING.out.hits_tolerant).combine(MAPPING.out.placement_costs).first())
+                    variants_qc)
+            if (inputs.peptides) {
+                NOVEL(genome, gene_model, ANNOTATE.out.contract, MAPPING.out.mapping, opt(inputs.peptides),
+                      opt(contaminantLibrary(inputs)), GENETABLE.out.gene_table, ANNOTATE.out.layer_pairs,
+                      MAPPING.out.hits_exact.combine(MAPPING.out.hits_tolerant).combine(MAPPING.out.placement_costs).first())
+            }
             // M6-05H: C11 peptide_hits joins the optional [key, path] inputs (M6-02 detection-limit model)
             // M11-14d: operon_meta (the operon source) rides along for the ADR-0061 row flags
             OPERONS(GENETABLE.out.gene_table, gene_model, ANNOTATE.out.contract,
@@ -104,9 +113,14 @@ workflow {
                                ANNOTATE.out.layers_for_pairs, GENETABLE.out.tu_folds,
                                DETERMINANTS.out.determinants_features,
                                'function' in (params.modules ?: []) ? functionResources() : channel.empty())
+            if (inputs.peptides) {  // the peptide-only modules (#536)
+                pub += [kv('pileup', VARIANTS.out.pileup), kv('variants', VARIANTS.out.variants),
+                        kv('variants_vcf', VARIANTS.out.variants_vcf), kv('variants_qc', VARIANTS.out.variants_qc),
+                        kv('novel_orfs', NOVEL.out.novel_orfs), kv('novel_orfs_gff3', NOVEL.out.novel_orfs_gff3),
+                        kv('novel_orfs_faa', NOVEL.out.novel_orfs_faa), kv('annotation_patch', NOVEL.out.annotation_patch),
+                        kv('novel_class_fdr', NOVEL.out.novel_class_fdr)]
+            }
             pub += [outs('mapping', MAPPING.out.mapping),
-                    kv('pileup', VARIANTS.out.pileup), kv('variants', VARIANTS.out.variants),
-                    kv('variants_vcf', VARIANTS.out.variants_vcf), kv('variants_qc', VARIANTS.out.variants_qc),
                     kv('gene_table', GENETABLE.out.gene_table), kv('detectability_summary', GENETABLE.out.detectability_summary),
                     kv('tier_summary', GENETABLE.out.tier_summary), kv('genes_pre', GENETABLE.out.genes_pre),
                     kv('tu_folds', GENETABLE.out.tu_folds),
@@ -117,9 +131,6 @@ workflow {
                     kv('genes_tsv', CONTEXT.out.genes_tsv), kv('sensitivity', SENSITIVITY_RERUNS.out.sensitivity),
                     kv('pairs', OPERONS.out.pairs), kv('operons', OPERONS.out.operons),
                     kv('operon_flags', OPERONS.out.operon_flags),
-                    kv('novel_orfs', NOVEL.out.novel_orfs), kv('novel_orfs_gff3', NOVEL.out.novel_orfs_gff3),
-                    kv('novel_orfs_faa', NOVEL.out.novel_orfs_faa), kv('annotation_patch', NOVEL.out.annotation_patch),
-                    kv('novel_class_fdr', NOVEL.out.novel_class_fdr),
                     kv('determinants_features', DETERMINANTS.out.determinants_features),
                     kv('determinants_model', DETERMINANTS.out.determinants_model),
                     kv('determinants_attribution', DETERMINANTS.out.determinants_attribution),
@@ -136,10 +147,10 @@ workflow {
         }
         // the step event logs, merged in a content order, under the key 'events' as the local
         // executor's live logs/events.jsonl: the plots read their run flags from it (M9-13)
-        def ev = inputs.peptides ? ANNOTATE.out.events.mix(MAPPING.out.events, VARIANTS.out.events,
-            GENETABLE.out.events, CONTEXT.out.events, SENSITIVITY_RERUNS.out.events, NOVEL.out.events,
-            OPERONS.out.events) : ANNOTATE.out.events
-        if (inputs.peptides && 'function' in (params.modules ?: [])) ev = ev.mix(FUNCTION.out.events)
+        def ev = mapped ? ANNOTATE.out.events.mix(MAPPING.out.events, GENETABLE.out.events,
+            CONTEXT.out.events, SENSITIVITY_RERUNS.out.events, OPERONS.out.events) : ANNOTATE.out.events
+        if (inputs.peptides) ev = ev.mix(VARIANTS.out.events, NOVEL.out.events)
+        if (mapped && 'function' in (params.modules ?: [])) ev = ev.mix(FUNCTION.out.events)
         pub += [kv('events', ev.collectFile(name: 'events.jsonl', sort: { f -> f.text }))]
         REPORT(pub.inject(channel.empty()) { acc, c -> acc.mix(c) })
     } else {

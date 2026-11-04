@@ -1,7 +1,9 @@
 // MAPPING subworkflow (GIPPA_SPEC.md §6.1, §6.2, §7.2; M3-17): six-frame index -> exact ->
 // tolerant (+ decoys) -> placement FDR -> loci; long proteins -> MINIPROT -> leftovers -> TBLASTN.
 // py steps run through GIPPA_STEP aliases (M2-07; keys as in gippa.steps.mapping); the protein route
-// runs only when proteins_long emits. Outputs: params.outdir/mapping/ (seven §7.2.9 files).
+// runs only when proteins_long emits, the peptide chain (six-frame index -> placement) only when
+// peptides emits (#536: a proteins-only run; loci then writes header-only C11 and mapping_fdr).
+// Outputs: params.outdir/mapping/ (seven §7.2.9 files).
 include { GIPPA_STEP as SIXFRAME_INDEX; GIPPA_STEP as MAP_EXACT; GIPPA_STEP as MAP_TOLERANT;
           GIPPA_STEP as PLACEMENT; GIPPA_STEP as PROTEIN_LEFTOVERS;
           GIPPA_STEP as LOCI } from '../../modules/local/gippa_step/main'
@@ -24,7 +26,7 @@ def lociSpec() {
 workflow MAPPING {
     take:
     genome              // genome.norm.fa
-    peptides            // peptides.norm.parquet
+    peptides            // peptides.norm.parquet, or channel.empty()
     proteins_long       // proteins.long.faa, or channel.empty()
     annotation          // [genes.parquet, features.parquet, replicons.parquet]
     reference_peptides  // reference peptide table, or channel.empty()
@@ -36,19 +38,20 @@ workflow MAPPING {
     def prot = kv('proteins_long', proteins_long)
     def gm = [kv('genes', annotation.map { a -> a[0] }), kv('features', annotation.map { a -> a[1] }), kv('replicons', annotation.map { a -> a[2] })]
 
-    def si = stepIn('sixframe_index', [g, pep, gm[2], gm[0]])
+    def si = stepIn('sixframe_index', [g, pep, gm[2], gm[0]], ['peptides'])
     SIXFRAME_INDEX(si.files, si.keys, ['sixframe=sixframe.npz'])
     def six = kv('sixframe', pick(SIXFRAME_INDEX.out.outputs, 'sixframe.npz'))
 
-    def me = stepIn('map_exact', [pep, six])
+    def me = stepIn('map_exact', [pep, six], ['peptides', 'sixframe'])
     MAP_EXACT(me.files, me.keys, ['hits_exact=hits_exact.parquet'])
     def hx = kv('hits_exact', pick(MAP_EXACT.out.outputs, 'hits_exact.parquet'))
 
-    def mt = stepIn('map_tolerant', [pep, six, hx])
+    def mt = stepIn('map_tolerant', [pep, six, hx], ['peptides', 'sixframe', 'hits_exact'])
     MAP_TOLERANT(mt.files, mt.keys, ['hits_tolerant=hits_tolerant.parquet'])
     def ht = kv('hits_tolerant', pick(MAP_TOLERANT.out.outputs, 'hits_tolerant.parquet'))
 
-    def pl = stepIn('placement', [pep, six, hx, ht, kv('reference_peptides', reference_peptides)] + gm)
+    def pl = stepIn('placement', [pep, six, hx, ht, kv('reference_peptides', reference_peptides)] + gm,
+                    ['peptides', 'sixframe', 'hits_exact', 'hits_tolerant'])
     // stratum0_classes = the ADR-0019 stratum-0 pi-hat per length class (an input of context_stats)
     PLACEMENT(pl.files, pl.keys, ['placement=placement.parquet', 'mapping_fdr=mapping_fdr.parquet', 'stratum0_classes=stratum0_classes.parquet',
         'placement_costs=placement_costs.parquet'])
@@ -72,6 +75,7 @@ workflow MAPPING {
 
     emit:
     mapping  = LOCI.out.outputs
+    // the peptide chain's outputs: empty without peptides
     hits_exact = pick(MAP_EXACT.out.outputs, 'hits_exact.parquet')   // NOVEL (M7-11b)
     hits_tolerant = pick(MAP_TOLERANT.out.outputs, 'hits_tolerant.parquet')   // VARIANTS (M7-04), NOVEL
     placement_costs = pick(P, 'placement_costs.parquet')   // NOVEL: de novo class lists (M7-11b)

@@ -115,9 +115,17 @@ def inputs_checks(
 
 
 def protein_checks(
-    records: Sequence[ProteinRecord], parse_error: str | None, peptide_len: tuple[int, int]
+    records: Sequence[ProteinRecord],
+    parse_error: str | None,
+    peptide_len: tuple[int, int],
+    *,
+    peptides_given: bool = True,
 ) -> list[Check]:
-    """Evaluate every protein rule; only ``proteins.ids`` when the file gave no records."""
+    """Evaluate every protein rule; only ``proteins.ids`` when the file gave no records.
+
+    ``peptides_given`` is False when no ``--peptides`` was given: records routed to the peptide
+    path are then not used, and ``proteins.short_records_unused`` warns with their count (#536).
+    """
     ids_rule = "non-empty, unique IDs; UniProt sp|ACC|NAME and A;B groups parsed → else error"
     if parse_error is not None:
         return [_check("proteins", "proteins.ids", "error", ids_rule, parse_error, parse_error)]
@@ -183,6 +191,20 @@ def protein_checks(
             msg,
         )
     )
+    n_short = routes["peptide"]
+    if not peptides_given and n_short:
+        out.append(
+            _check(
+                "proteins",
+                "proteins.short_records_unused",
+                "warn",
+                f"records of {lo}-{hi} aa without --peptides → not used, warn",
+                n_short,
+                f"{n_short} protein record{'s' if n_short > 1 else ''} of {lo}-{hi} aa "
+                f"{'are' if n_short > 1 else 'is'} not used without --peptides; "
+                "pass them as a peptide table with --peptides to use them",
+            )
+        )
 
     by_seq: dict[str, list[str]] = {}
     for r in records:

@@ -356,7 +356,7 @@ def test_uniop_without_acceptance_and_no_tty_builds_nothing(
     assert net.contacted == [], "nothing is fetched before the terms are accepted"
     assert docker_calls(tmp_path, "build") == []
     assert not (db / DB_PATH).exists()
-    assert "--accept-uniop-terms" in out
+    assert "--install-uniop-from-git" in out
 
 
 def test_images_without_acceptance_builds_nothing_and_exits_0(
