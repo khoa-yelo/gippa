@@ -12,6 +12,7 @@ import codecs
 import dataclasses
 import errno
 import fcntl
+import gzip
 import http.client
 import os
 import posixpath
@@ -22,6 +23,7 @@ import sys
 import tarfile
 import threading
 import zipfile
+import zlib
 from collections.abc import Iterator, Mapping, Sequence
 from contextlib import contextmanager
 from pathlib import Path, PurePosixPath
@@ -53,6 +55,7 @@ from gippa.setupdb.space import DISK_FULL, disk_full, is_disk_full
 
 __all__ = [
     "LOCK",
+    "UNPACK_ERRORS",
     "CommandRunner",
     "Fetcher",
     "HttpsFetcher",
@@ -64,6 +67,7 @@ __all__ = [
     "nextflow_on_path",
     "run_setup",
     "setup_nextflow",
+    "unpack_archive",
 ]  # fmt: skip
 
 LOCK = ".giap_setup.lock"
@@ -347,6 +351,20 @@ def _unpack(archive: Path, out: Path) -> str | None:
             if bad is None:
                 tar.extractall(out, filter="data")
     return None if bad is None else f"unsafe member {bad!r} in {archive.name}"
+
+
+UNPACK_ERRORS: tuple[type[BaseException], ...] = (
+    tarfile.TarError,  # includes tarfile.FilterError (an unsafe member the data filter refuses)
+    EOFError,
+    zlib.error,
+    gzip.BadGzipFile,
+    zipfile.BadZipFile,
+    zipfile.LargeZipFile,
+)
+"""What ``unpack_archive`` raises for a malformed or unsafe archive (the source's fault);
+anything else it raises is a bug (or an ``OSError`` of our disk)."""
+
+unpack_archive = _unpack  # the public name (gippa example, M12-01); ``_unpack`` stays an alias
 
 
 def _host(url: str) -> str:

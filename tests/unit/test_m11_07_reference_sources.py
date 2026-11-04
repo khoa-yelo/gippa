@@ -108,7 +108,8 @@ def _visible_commands() -> list[str]:
 
 
 def test_example1_sections(cli_md: str) -> None:
-    heads = [h for h in _sections(cli_md) if h.startswith("gippa ")]
+    # top-level command sections only; a group's subcommands follow it (M12-01 `example fetch`)
+    heads = [h for h in _sections(cli_md) if h.startswith("gippa ") and h.count(" ") == 1]
     expected = ["compare", "convert", "makedb", "preflight", "report", "run", "setup"]
     assert set(expected) <= {h.removeprefix("gippa ") for h in heads}
     assert heads == [f"gippa {n}" for n in _visible_commands()]  # command order
