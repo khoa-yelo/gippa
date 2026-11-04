@@ -63,6 +63,12 @@ def functionResources() {
                  kegg_ko_pathway: installed('kegg_ko_pathway', 'kegg/ko_pathway.tsv'),
                  kegg_pathway_names: installed('kegg_pathway_names', 'kegg/pathway_names.tsv'),
                  cog2020_fun: installed('cog2020_fun', 'cog/fun-20.tab')]
+    // M12-03: KEGG is optional and counts as installed only when both KEGG items are; a lone
+    // kegg_ko_pathway would name its pathway sets "NA"
+    if (found.kegg_ko_pathway == null || found.kegg_pathway_names == null) {
+        found.kegg_ko_pathway = null
+        found.kegg_pathway_names = null
+    }
     return channel.fromList(found.findAll { k, p -> p != null }.collect { k, p -> [k, p] })
 }
 
