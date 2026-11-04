@@ -10,7 +10,8 @@ spec-writer (this file), lead (ADR-0074, routing), validation (`scripts/example/
 `tests/e2e/test_m12_01_example_routes.py`, the nav and docs tests), implementer
 (`src/gippa/example.py`, `src/gippa/cli.py`, `src/gippa/data/`, `scripts/docs/gen_reference.py`),
 docs (`docs/get-started/`, `docs/tutorials/`, `docs/release.md`) · source: Khoa, 2026-11-03 (in
-session).
+session); measurements: `scripts/example/README.md` on `feat/example-dataset` @0698587f
+(2026-11-03) · blocked in part by #536 (route B).
 
 ## Source: Khoa's decisions, 2026-11-03 (in session)
 
@@ -25,6 +26,14 @@ Further decisions in the same session (Khoa, 2026-11-03):
   **lifted for this subset only**. Everything else of the pilot stays aggregate-only.
 - Real tools only: no precomputed annotation layers. The data is a small genome region.
 - Hosting is a GitHub release asset: not inside the wheel, and not on Zenodo.
+
+Khoa's answers to this spec's questions (2026-11-03, in session):
+
+- The four faster real-tool settings: "accept" (Bakta light DB, TransTermHP, Promoter Calculator
+  off, `mobile` off; section 3).
+- #536 (`gippa run` with `--proteins` and no `--peptides` writes no gene table): "fix", so route
+  B works once that lands.
+- The data licence (Q-K1): "use the data", with the default statement (section 2).
 
 ## Spec sections touched
 
@@ -107,7 +116,8 @@ because the root `--version` is only on the `gippa` group. The help text says "b
 8. **Print** to stdout: one line `gippa example <X.Y>: <DIR>` and then, per route, a heading and
    its commands, with `DIR` resolved to an absolute path. The command text comes from
    `gippa/data/example_routes.yaml` (below), never from the downloaded bundle. A last line says
-   that the routes need `gippa setup` (at least `--minimal`) and a container runtime.
+   that the routes need `gippa setup --no-genomad` (Bakta light and the antiSMASH databases) and
+   a container runtime.
    Progress and warnings go to stderr, prefixed `gippa example:`.
 
 On every failure after step 3 the staging directory is removed. A failed fetch leaves no `DIR`
@@ -181,8 +191,9 @@ gippa-example-<X.Y>/
 ├── LICENSE-DATA.md        the licence statement (below)
 ├── CHECKSUMS.sha256       sha256 of every other file, sorted by path
 ├── bundle.json            bundle version, GIPPA version and commit used for expected/, region, counts, tool and DB versions
+├── SELECTION.json         the selection rule, counts, sha256 of every source and output (written by the build script)
 ├── genome/
-│   └── region.fna.gz      the Nissle region (and, if kept, one whole plasmid)
+│   └── <name>.fna.gz      the Nissle region, one linear contig
 ├── A_diann/
 │   └── report.parquet     DIA-NN 2.3.1 report rows of the region (targets and decoys)
 ├── B_proteins/
@@ -199,98 +210,119 @@ gippa-example-<X.Y>/
     └── README.md          the same numbers as a table, with the file and column each comes from
 ```
 
-The archive is a deterministic tar.gz: members sorted, mode 0644/0755, uid/gid 0, empty
+The bundle is **0.48 MB** (measured). The archive is a deterministic tar.gz: members sorted, mode 0644/0755, uid/gid 0, empty
 user/group names, mtime 0, gzip header without name and with mtime 0. Two builds from the same
 inputs give the same sha256.
 
 ### Routes (one input set each, same region)
 
-| Route | Input | Commands (about three) | Expected tier (to be measured) |
+| Route | Input | Commands (about three) | Tier (measured at 200 kb) |
 |---|---|---|---|
-| A | `A_diann/report.parquet` | `gippa convert --from diann … --out {out}/A/peptides.tsv --search-db same`; `gippa preflight`; `gippa run --peptides …` | `decoy_picked` if ≥ 80 % of the region decoys pair, else `mayu` |
-| B | `B_proteins/proteins.faa` + `abundance.tsv` | `gippa preflight --proteins … --abundance …`; `gippa run --proteins … --abundance … --abundance-type maxlfq` | `protein_list` |
-| C | `C_cascadia/*.ssl` | `gippa convert --from cascadia … --out {out}/C/peptides.tsv`; `gippa preflight`; `gippa run --peptides …` | `two_peptide`; `c_assumed` (no reference peptides) |
-| D | `D_generic/peptides.tsv` | `gippa convert --from generic … --out {out}/D/peptides.tsv --source database --search-db same`; `gippa preflight`; `gippa run --peptides …` | `mayu` (q-values, no decoys) |
+| A | `A_diann/report.parquet` | `gippa convert --from diann … --out {out}/A/peptides.tsv --search-db same`; `gippa preflight`; `gippa run --peptides …` | **`mayu`**: 158 genes, 99 detected, gene FDR 0.012 at q 0.01. 37 decoy rows survive, but only 4 of 10 decoy peptides pair with a gene, below the 80 % `decoy_picked` threshold (warning `decoy_pairing_low`) |
+| B | `B_proteins/proteins.faa` + `abundance.tsv` | `gippa preflight --proteins … --abundance …`; `gippa run --proteins … --abundance … --abundance-type maxlfq` | `protein_list`, **after #536**. In GIPPA 1.0.0 `workflow/main.nf` runs MAPPING only with `inputs.peptides`, so this route runs ANNOTATE and REPORT and writes no gene table |
+| C | `C_cascadia/*.ssl` | `gippa convert --from cascadia … --out {out}/C/peptides.tsv`; `gippa preflight`; `gippa run --peptides …` | `two_peptide`, `c_assumed`; 76 rows, **4 genes detected**. A **format demo**, not a result |
+| D | `D_generic/peptides.tsv` | `gippa convert --from generic … --out {out}/D/peptides.tsv --source database --search-db same`; `gippa preflight`; `gippa run --peptides …` | the same decoys as A, so expected `mayu`; the measured value goes into `expected/D.json` (PR 7) |
 
-Every `gippa run` uses `--genome {dir}/genome/region.fna.gz --genome-relation same --modules core
---outdir {out}/<route>` and the thread and memory values chosen by the measurement (default
-`--threads 4 --memory 16.GB`). No route uses `--annotation`, `--strict` or `--resume`: Bakta and
-every other core tool run live (Khoa: real tools only).
+Every `gippa run` uses `--genome {dir}/genome/<name>.fna.gz --genome-relation same --outdir
+{out}/<route> --threads 4` and the example settings Khoa accepted:
 
-**Route D's table.** Built from the route-A subset, as an engine without a GIPPA converter would
-write it: columns `peptide`, `modified_peptide` (mass-bracket notation such as `M[+15.995]`, so
-the generic converter's stripping is exercised), `protein_ids`, `q_value`, `intensity`, `run`; no
-decoy rows and no `is_decoy` column. It therefore shows the column-to-tier table of
-`from-spectra.md` route D: q-values give `mayu`, not `decoy_picked`.
+```
+--modules core,bgc --set annotation.bakta.db=light --terminators transtermhp \
+  --set annotation.promoter_calculator.enabled=false
+```
 
-### Subset rules (requirements on the build script)
+No route uses `--annotation`, `--strict` or `--resume`. Bakta, antiSMASH, Promotech, TransTermHP,
+miniprot and the mappers run live (Khoa: real tools only). `function` is off: the Bakta light DB
+carries no COG, GO or KEGG IDs, so the module would give 0 rows. `bgc` needs the antiSMASH
+databases, which `gippa setup --minimal` leaves out, so the prerequisite is `gippa setup
+--no-genomad` (Bakta light is the default) and not `--minimal`.
 
-The build script (below) implements these; its internals are not specified here.
+**Route A's tier is `mayu`, and the README says so (Q-L2, resolved: accept `mayu`).** Live Bakta
+writes new locus tags, so decoys pair only through peptide votes. Adding the search FASTA
+(`--proteins`) pairs every decoy (tested at 100 kb), but the `decoy_picked` q floor is then 1/24 >
+0.01 and 0 genes are detected. With this few decoys, `mayu` is the honest tier.
 
-1. **Region.** One contiguous slice of chromosome CP171242.1 (GCA_043228065.1), not crossing its
-   origin. Both ends fall in intergenic gaps of the pilot's Bakta annotation (no gene cut), so no
-   gene is partial by construction. Written as a linear contig (no topology tag), ID
-   `CP171242.1_<start0>_<end0>` (0-based half-open, matches `[A-Za-z0-9._-]+`), description
-   `region <start1>-<end1> of CP171242.1 (1-based closed)`. Optionally (measurement decides) one
-   whole Nissle plasmid with `[topology=circular]`, to exercise a circular replicon. Region choice
-   (size, place) is TBD until measured; when two candidates score equal, the lower start wins.
-2. **Region proteins.** A pilot protein (`validation/pilot/db_a2/db_id_map.tsv`) belongs to the
-   region when its CDS or sORF lies wholly inside it, on either strand.
-3. **DIA-NN rows (A).** Keep a row of the A2 pass-1 report (`A2_report.parquet`, sha256
-   `733a3884…`) when any ID in `Protein.Ids`, after stripping the decoy prefix, is a region
-   protein. Targets and decoys use the **same** rule, so the target/decoy balance of the region is
-   not biased. All columns are kept, apart from the scrubbing below.
-4. **Protein table (B).** The region proteins in protein groups that pass q ≤ 0.01 in the A2
-   report (target, non-contaminant), with sequences from `db_a2/strain_db.faa.gz`;
-   `abundance.tsv` = those groups' rows of the A2 `--abundance-out` table (`maxlfq`, the median of
-   `PG.MaxLFQ` over runs).
-5. **Cascadia rows (C).** Rows of the three A3 `.ssl` files whose peptide the pilot's A3 run placed
-   inside the region (`mapping/peptide_hits.tsv`, any accepted locus in the region), plus a seeded
-   random sample of the rows that run left unplaced, at the region's share of the genome length.
-   Without the second part every kept row would be placeable, and the example's placement rate
-   would be inflated. The seed is fixed in the script and recorded in `PROVENANCE.md`.
-6. **No empty route.** The build fails if any route keeps zero rows or zero proteins, or if route
+**FDR caveat (README).** The q-values, PEPs and MaxLFQ values of routes A, B and D are DIA-NN's,
+computed on the whole-proteome search (4,685 strain proteins plus contaminants, three runs). The
+subset does not recompute them.
+
+**Route D's table.** Built from route A's rows, grouped by (stripped peptide, run), as an engine
+without a GIPPA converter would write it. The columns are `peptide`, `modified_peptide` (ProForma,
+`(UniMod:n)` written as `[UNIMOD:n]`, so the generic converter's stripping is exercised),
+`protein_ids`, `q_value`, `pep`, `is_decoy`, `intensity` and `run`.
+
+### Subset rules (as `build_example.py` implements them)
+
+The script's docstring holds the rule and copies it verbatim into the bundle's `SELECTION.json`,
+with the sha256 of every source and output file. In summary:
+
+1. **Region.** `NZ_CP058217.1:1965001-2165000` (1-based closed; `[1965000, 2165000)` 0-based
+   half-open; 200 kb), the chromosome of GCF_021559835.1 (ASM2155983v1; GenBank twin
+   GCA_021559835.1), the pilot's pass-3 assembly (`validation/pilot/README.md` › pass 3). It holds
+   the colibactin *pks* island and the yersiniabactin HPI. antiSMASH calls both as one
+   NRPS/T1PKS/NRP-metallophore region over the first 117 kb. It is written as one linear contig
+   (no topology tag) and does not cross the origin. **No plasmid** (Q-K6, resolved): the region is
+   a piece of the chromosome. It holds no prophage, because geNOMAD is too slow to include.
+2. **Region proteins.** Records of the pass-3 A2 strain database (`db_id_map.tsv`, 1-based closed)
+   on `NZ_CP058217.1` with `start - 1 >= region start` and `end <= region end` (CDS and sORF), on
+   either strand.
+3. **DIA-NN rows (A).** A row is kept iff **every** ID in `Protein.Ids` is a region protein.
+   The same rule applies to target and decoy rows (DIA-NN decoys carry the target IDs with
+   `Decoy = 1`), so the target/decoy balance of the region is not biased by the rule. Rows with a
+   contaminant (`Cont_`) or out-of-region ID are dropped. All 71 columns are kept.
+4. **Protein table (B).** The protein groups of route A's target rows with a non-missing, non-zero
+   `PG.MaxLFQ`; value = median over runs (the `gippa convert --abundance-out` rule). A group `A;B`
+   is one row per member ID. The FASTA holds each member's sequence from the strain database.
+5. **Cascadia rows (C).** A row is kept iff its stripped sequence (I and L equated) is an exact
+   substring of a stop-free stretch of the region's six-frame translation (code 11). Every kept
+   row is therefore placeable, which inflates the placement rate. The README says so, and calls
+   route C a format demo.
+6. **Route D.** As described above.
+7. **No empty route.** The build fails if any route keeps zero rows or zero proteins, or if route
    A keeps no decoy.
-7. **Scrubbing (R12).** Columns that hold absolute paths (`File.Name` in the DIA-NN report, the
-   file column of the `.ssl`) are rewritten to the base file name (for example
-   `MLA1914689_WT_P1_1_Y-D7_1_13119.d`). No other value is changed. `PROVENANCE.md` lists each
-   rewritten column.
+8. **Scrubbing (R12).** The `.ssl` `file` column is reduced to the mzML base name, whose stem is
+   the run name. Any DIA-NN column holding an absolute path is shortened the same way, and
+   `SELECTION.json` lists each rewritten column. No other value is changed.
 
 ### `PROVENANCE.md` (content)
 
 - The PXD078459 record (URL, retrieval date, record sha256 `5d3f16c3…`), the three runs WT_1–WT_3
   with their file names, the instrument.
-- The genome: GCA_043228065.1, NCBI md5 and the sha256 of `tests/data/genomes/nissle1917.fna.gz`;
-  the region in both coordinate conventions; the plasmid, if kept.
+- The genome: GCF_021559835.1 (`NZ_CP058217.1`; GenBank twin GCA_021559835.1), the sha256 of the
+  pass-3 genome file; the region in both coordinate conventions.
 - Route A: DIA-NN 2.3.1 Academia, the image sha256, `validation/pilot/diann_A2.cfg`, the input
   report's sha256, row counts kept (targets, decoys).
 - Route B: the A2 convert table sha256s (`a2_abundance.tsv.gz`), protein counts.
-- Route C: Cascadia 0.0.7, the weights sha256, the three `.ssl` sha256s, rows kept per run (placed,
-  sampled), the seed.
+- Route C: Cascadia 0.0.7, the weights sha256, the three `.ssl` sha256s, rows kept per run.
 - Route D: how it was derived from route A.
 - The build: script path and commit, Slurm job ID, GIPPA version and commit that produced
-  `expected/`, the Bakta DB (light 6.0) and image digests used, and that UniOP was not installed.
+  `expected/`, the Bakta DB (light 6.0) and image digests used, the run settings, and that UniOP was
+  not installed.
+- `SELECTION.json` (the rule and all sha256s) sits next to it.
 
-### Licence statement (`LICENSE-DATA.md`, default until Khoa answers Q-K1)
+### Licence statement (`LICENSE-DATA.md`; Khoa, 2026-11-03: "use the data")
 
 > The GIPPA software is MIT-licensed. This licence does **not** cover the data files of this
 > bundle.
 >
 > The files under `A_diann/`, `B_proteins/`, `C_cascadia/` and `D_generic/` are derived from the
-> ProteomeXchange dataset PXD078459 (iProX IPX0017169000). The dataset record states no licence.
-> They are redistributed unchanged in content (rows selected; file paths shortened) for the sole
-> purpose of demonstrating and testing GIPPA, with attribution to the depositors of PXD078459.
-> No licence to them is granted by the GIPPA authors. Cite PXD078459 if you use them. If you are a
-> rights holder and object, open an issue and the bundle will be withdrawn.
+> ProteomeXchange dataset **PXD078459** (iProX **IPX0017169000**), announced 2026-05-16. The
+> dataset record states no licence, and its publication is pending. The files are redistributed
+> for the sole purpose of demonstrating and testing GIPPA, with attribution to the depositors of
+> PXD078459. The content is unchanged: rows were selected and file paths shortened. The GIPPA
+> authors grant no licence to these files. Cite PXD078459 if you use them. If you are a rights
+> holder and object, open an issue and the bundle will be withdrawn.
 >
-> `genome/` holds a region of GenBank GCA_043228065.1 (INSDC data, no use restrictions by NCBI).
-> `expected/`, `README.md`, `PROVENANCE.md`, `bundle.json` and `CHECKSUMS.sha256` are written by
-> GIPPA tooling and are MIT, as GIPPA.
+> `genome/` holds a region of the *E. coli* Nissle 1917 assembly GCF_021559835.1 (GenBank
+> GCA_021559835.1), which is INSDC data with no use restrictions by NCBI. `expected/`, `README.md`,
+> `PROVENANCE.md`, `SELECTION.json`, `bundle.json` and `CHECKSUMS.sha256` are written by GIPPA
+> tooling and are MIT-licensed, like GIPPA.
 
 ### `expected/` (key numbers)
 
 One JSON file per route, with a `tolerance` per key, made by running the four routes with the
-release's GIPPA at the release-prep commit (Bakta light DB 6.0, no UniOP, default seed).
+release's GIPPA at the release-prep commit, with the example settings (Bakta light DB 6.0, no
+UniOP, default seed).
 
 | Key | Source | Tolerance |
 |---|---|---|
@@ -317,19 +349,30 @@ full DB, or an installed UniOP, can change the gene and operon numbers.
 - The numbers are for a region, not the genome: shared peptides of a region gene and an
   out-of-region paralog look unique here, and genome-wide statistics see few genes. Do not compare
   them with the pilot.
-- Route C keeps placed rows plus a share of unplaced rows (rule 5); its precision is not the
-  pilot's.
+- Route A's tier is `mayu`, not `decoy_picked`: too few decoys pair on a region (above).
+- Route C keeps only rows that match the region exactly (rule 5) and detects 4 genes: a format
+  demo. Its precision is not the pilot's.
+- Route B needs #536 (until then it writes no gene table).
+- The q-values come from the whole-proteome search (FDR caveat above).
+- Empty or not estimable on this region: islands (0), enrichment and GSEA (the light DB has no
+  categories), autocorrelation (`not_estimable`), variants (0) and novel ORFs (0). Non-empty:
+  46 operons with 4 significant operon flags, and the BGC contrast (bgc_1: 71 genes, 30 detected
+  against 42.4 expected).
+- **The defaults take longer.** The example uses four faster real-tool settings. A run with the
+  defaults is slower; the measured default times are in section 3 and are repeated in the README.
 - Preflight info rows expected on the region (for example `genome.small_replicons`, a short total
   length or N50) are listed, so users do not read them as faults.
 
 ## 3. How the bundle is built
 
 `scripts/example/build_example.py` (validation agent, branch `feat/example-dataset`; internals not
-designed here) reads the pilot files under `$GIPPA_ROOT/pilot/` and the committed
-`validation/pilot/db_a2/`, applies the subset rules above, writes the layout above
-deterministically, and writes or checks `validation/example/bundles.tsv`. It runs through
-`scripts/slurm/build_example.sbatch` (job name `gippa-example-build`, R14) and leaves the bundle,
-read-only, at `$GIPPA_ROOT/example/gippa-example-<X.Y>.tar.gz`. Requirements on it:
+designed here) reads the pilot's pass-3 files under `$GIPPA_ROOT/pilot/`, applies the subset rules
+above, and writes `$GIPPA_ROOT/example/<name>/` with `SELECTION.json`. It runs in seconds.
+`scripts/example/example_run.sbatch` converts one route and runs `gippa run` with
+`-profile farmshare_local,apptainer`. `summarize_runs.py` prints the wall and per-process times.
+Still to add (PR 3 or 7): the release layout above, the archive, and the writing or checking of
+`validation/example/bundles.tsv`. The bundle is left read-only at
+`$GIPPA_ROOT/example/gippa-example-<X.Y>.tar.gz`. Requirements on the script:
 
 - **Reproducible.** Two builds at the same commit give the same archive sha256 (the sbatch builds
   twice and compares).
@@ -341,54 +384,68 @@ columns `version`, `file`, `size_bytes`, `sha256`, `url`, `release_tag`, `build_
 `build_job`, `expected_commit`, `asset_digest` (the GitHub API `digest` of the uploaded asset;
 empty until Khoa uploads it).
 
-### Region, size and modules: TBD until measured
+### Measured times (2026-11-03, wheat nodes, warm image cache)
 
-The 5-minute target (Khoa) is the wall time of **one route's commands** (convert, preflight,
-run) from start to `report/report.html`, after `gippa setup --minimal` and with the images already
-pulled. Measured on a FarmShare `wheat` node, 4 threads and 16 GB, Apptainer, no `--resume`, as a
-Slurm job. Setup and image pulls are not counted, and the docs say so.
+The 5-minute target (Khoa) is the wall time of one route's `gippa run`, after setup and with the
+images already pulled. Setup and image pulls are not counted, and the docs say so. Settings: the
+200 kb region and the example settings above. Source: `scripts/example/README.md` @0698587f.
 
-| Route | Region (kb) | Genes | convert | preflight | run | Total | ≤ 5 min? | Job | Commit |
-|---|---|---|---|---|---|---|---|---|---|
-| A | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD |
-| B | TBD | TBD | n/a | TBD | TBD | TBD | TBD | TBD | TBD |
-| C | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD |
-| D | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD |
-| `gippa demo --full` (SIM100K, the fixed-cost yardstick) | 108 | 85 | n/a | TBD | TBD | TBD | n/a | TBD | TBD |
+| Route | Region | CPUs (granted) | Nextflow span | Slurm elapsed | ≤ 5 min? | Top steps (s) |
+|---|---|---|---|---|---|---|
+| A | 200 kb | 9 | 5:05 | 5:46 | about (Nextflow 5:00–5:07) | MAP_TOLERANT 72, Promotech 65, Bakta 62, plots 31, antiSMASH 30 |
+| A | 200 kb | 5 | 5:00 | 5:47 | about | Bakta 64, MAP_TOLERANT 61, Promotech 59 |
+| C | 200 kb | 9 | 5:07 | 5:45 | about | |
+| D | 200 kb | 9 | 4:59 | 5:41 | yes | |
+| B | 200 kb | 9 | 3:08 | 3:41 | yes, but only ANNOTATE and REPORT run until #536 | |
 
-Measure `gippa demo --full` first: it is the same pipeline on 108 kb, so it bounds the fixed cost
-(Nextflow start, container start, Bakta DB load) before any region is chosen. Also record the
-Bakta task's own time from `logs/trace.tsv`.
+`gippa convert` and `gippa preflight` take seconds and are not in the table. About 35 tasks run
+in sequence along the critical path, and each `gippa _step` task takes about 10 s, mostly start-up.
+So 4 and 8 CPUs give the same time, and so do 100 and 200 kb. The docs and printed commands use
+`--threads 4`. The docs give the time as "about 5 min (Nextflow), about 6 min as a Slurm job".
+Route B is re-measured after #536 (PR 7).
 
-**Fallback if real tools cannot meet 5 min**, in this order, each re-measured:
+**The four faster settings (accepted by Khoa, 2026-11-03).** Each one replaces a step whose time
+does not fall when the region gets smaller:
 
-1. a smaller region, down to a floor of about 40 genes in the region, so that each route still
-   detects genes and route A still has decoys;
-2. drop the plasmid, if one was kept;
-3. faster **real-tool** settings for the example commands: `--terminators transtermhp`,
-   `--sensitivity off` (`--promoters targeted` is already the default);
-4. if the fixed cost alone (step 0: `demo --full`, or the Bakta task) is above 5 min, publish the
-   measured time instead ("about N min") and ask Khoa (Q-K3). Precomputed layers or a Bakta JSON
-   are **not** a fallback (Khoa: real tools only).
+| Default | Measured cost | Example setting |
+|---|---|---|
+| Bakta full DB (`psc.dmnd`, 46 GB) | 26 min on 55 kb: DIAMOND reads the whole database | `--set annotation.bakta.db=light` (1.3 GB): about 1 min |
+| TerminatorNet | 4.5–4.8 min per strand of 100 kb on 4 CPUs; it sets the critical path | `--terminators transtermhp`: 1 s |
+| geNOMAD (`mobile`) | 4.6–5.4 min, roughly fixed (100 kb) | module off (`--modules core,bgc`) |
+| Promoter Calculator | 100 s on 100 kb, 428 s on 200 kb (one task) | `--set annotation.promoter_calculator.enabled=false`; Promotech still runs |
 
-The docs quote only measured times.
+`function` is off too, for content rather than time: 13 s, but 0 rows with the light DB.
+
+**Measured times with the defaults** (route A; the README and docs page repeat them, so users
+know the defaults take longer):
+
+| Region | Settings | Nextflow span | Slurm elapsed |
+|---|---|---|---|
+| 55 kb | `core`, Bakta full DB, other defaults | not finished: Bakta alone took 1,563 s (26 min) before a PATH bug in the first sbatch stopped the job at 26:51 | n/a |
+| 100 kb | default modules, Bakta light | 13:45 | 14:14 |
+| 100 kb | `core`, Bakta light | 8:51 | 9:28 |
+| 200 kb | `core`, Bakta light, TransTermHP (Promoter Calculator on) | 10:29 | 11:07 |
+
+A full-default run on the 200 kb region (full DB, all modules) was not measured. From the rows
+above, expect well over 30 min. The docs say "not measured", not a number.
 
 ## 4. Docs
 
 - **New page `docs/get-started/example.md`, "Try the example"**, in the Get started nav right after
   the quick start. Content: what the bundle is (one paragraph, PXD078459, Nissle region, licence
-  link); prerequisites (`pip install gippa`, `gippa setup --minimal`, a container runtime); `gippa
+  link); prerequisites (`pip install gippa`, `gippa setup --no-genomad`, a container runtime); `gippa
   example fetch`, and `--from-file` for offline compute nodes; routes A–D, about three commands
-  each, taken from `example_routes.yaml`; how to compare with `expected/README.md`; the measured
-  time table; a pointer to [From raw spectra](from-spectra.md) for how such inputs are made. No
+  each, taken from `example_routes.yaml`; what the four faster settings change, and the
+  measured default times; route A's `mayu` tier, route B's #536 note (until it lands) and route C as
+  a format demo; how to compare with `expected/README.md`; the measured time table; a pointer to [From raw spectra](from-spectra.md) for how such inputs are made. No
   peptide sequence or other row-level content on the page (the lifted rule covers the bundle, not
   the site); the M11-08 guard (`PEPTIDE_LIKE`) covers this page too.
 - **Quick start.** In section 1, after `gippa demo`, one line:
-  `gippa example fetch   # real Nissle data, four input routes, about N min each after setup ([Try the example](example.md))`.
+  `gippa example fetch   # real Nissle data, four input routes, about 5 min each after setup ([Try the example](example.md))`.
 - **`docs/tutorials/ecoli-k12.md`** is a stub in the nav. Default (Q-K4): replace it with
   `docs/tutorials/example-routes.md`, "Tutorial: one Nissle region, four routes": run the four
   routes, read `genes.tsv` and the report per route, see how the tier changes with the input
-  (`decoy_picked`/`mayu`, `protein_list`, `two_peptide`), and compare the four runs with
+  (`mayu`, `protein_list`, `two_peptide`), and compare the four runs with
   `gippa compare {out}/A {out}/B {out}/C {out}/D --labels A,B,C,D`. Aggregates only. The K-12
   tutorial moves to `docs/backlog.md`. `tutorials/nissle-pilot.md` stays a stub (out of scope).
 - **`from-spectra.md`** and **`user-guide/convert.md`**: one sentence each linking the example as a
@@ -419,12 +476,14 @@ checks the pin.
 
 ### Slow route test (`tests/e2e/test_m12_01_example_routes.py`)
 
-Markers `e2e`, `slow`, `needs_apptainer`, `needs_bakta_db`, `needs_promotech_models`. Submitted with
+Markers `e2e`, `slow`, `needs_apptainer`, `needs_bakta_db`, `needs_promotech_models`; the antiSMASH
+databases must be installed (`bgc`). Submitted with
 `scripts/slurm/example_routes.sbatch` (job `gippa-example-routes`, 4 CPUs, 16 GB, R14), never in
 CI or the session allocation. It runs `gippa example fetch --from-file
 $GIPPA_ROOT/example/gippa-example-<X.Y>.tar.gz` (so the offline path is exercised), then the
 printed commands of each route, and compares each run with `expected/<route>.json` by the
-tolerances there. It writes the per-route wall times to a TSV next to the outputs; times are
+tolerances there. Route B is part of the test only once #536 has landed; until then it is
+listed as a known gap in the test's docstring, not skipped silently. It writes the per-route wall times to a TSV next to the outputs; times are
 recorded, not asserted (a shared node is noisy; the table in section 3 is filled from them).
 
 ### Acceptance criteria
@@ -456,7 +515,8 @@ recorded, not asserted (a shared node is noisy; the table in section 3 is filled
 | 14 | `example_routes.yaml` | every command starts with `gippa`, names only options in `docs/reference/cli.md`, uses only `{dir}`/`{out}`; route A has `--from diann`, B `--proteins` and `--abundance`, C `--from cascadia`, D `--from generic`; no `--annotation`, `--strict`, `--resume` or `--executor` | unit |
 | 15 | `docs/get-started/example.md` | its fenced route commands equal `example_routes.yaml`'s, with `{dir}` written as `gippa-example`; page in nav after the quick start; no `PEPTIDE_LIKE` match | unit (docs) |
 | 16 | `docs/reference/cli.md` | has `## gippa example fetch` with `--outdir`, `--version`, `--from-file`; `gen_reference.py --check` passes | unit (docs) |
-| 17 | the slow route test on the published bundle | all four routes exit 0, `status: completed`, every compared key within tolerance | e2e (Slurm) |
+| 17 | the slow route test on the published bundle | all four routes exit 0, `status: completed`, every compared key within tolerance; route A `detection_tier = mayu`, route C `two_peptide`, route B `protein_list` (after #536) | e2e (Slurm) |
+| 17b | `example_routes.yaml` route commands | every `gippa run` carries the four example settings, `--modules core,bgc`, `--threads 4` | unit |
 | 18 | `build_example.py` twice at one commit | same sha256; `--check` passes against `bundles.tsv` | the build script's own tests + the sbatch |
 | 19 | `docs/release.md` | has the build, attach and verify steps below | unit (docs) |
 
@@ -482,12 +542,13 @@ recorded, not asserted (a shared node is noisy; the table in section 3 is filled
 
 | Case | Expected |
 |---|---|
-| Linear region of a circular chromosome | written without a topology tag, so it is linear; nothing wraps; boundaries are intergenic, so no `partial_excluded` gene from the cut. Preflight's `genome.topology` info row says linear |
-| Plasmid kept (circular) | tagged `[topology=circular]`; a gene or peptide may cross its origin; `expected/` covers it |
-| Region must not cross the CP171242.1 origin | the build refuses such a region (it would need an unwrapped interval and a rotated contig) |
-| Minus-strand genes at a region end | containment (rule 2) does not depend on strand; a minus-strand gene ending at the boundary gap is wholly inside or wholly outside |
-| Shared peptides across the boundary | a row is kept when any of its proteins is in the region; its out-of-region IDs stay in `Protein.Ids` and map to no gene (they vote nowhere). README caveat |
-| Decoy pairing on the region | decoys pair through the peptide vote of `protein_gene_map` (pilot locus tags are not the region's Bakta locus tags). If < 80 % pair, route A's tier is `mayu` with `decoy_pairing_low`; `expected/A.json` records whichever is measured. The lead decides whether a `mayu` route A is acceptable (Q-L2) |
+| Linear region of a circular chromosome | written without a topology tag, so it is linear; nothing wraps. A gene that Bakta calls across a region end is `partial` and `partial_excluded`; `expected/` counts them as measured. Preflight's `genome.topology` info row says linear |
+| No circular replicon in the bundle | no plasmid (Q-K6); origin-crossing is not exercised by the example (the demo and the unit tests cover it) |
+| Region must not cross the `NZ_CP058217.1` origin | the build refuses such a region (it would need an unwrapped interval and a rotated contig) |
+| Minus-strand genes at a region end | containment (rule 2) does not depend on strand: a protein on either strand is in the region only if both of its ends are |
+| Shared peptides across the boundary | a DIA-NN row is kept only when **every** protein ID is in the region (rule 3), so a peptide shared with an out-of-region paralog is dropped. Within the region, peptides look as unique as they are in the region genome. README caveat |
+| Decoy pairing on the region | decoys pair through the peptide vote of `protein_gene_map` (live Bakta writes new locus tags): 4 of 10 pair, so route A is `mayu` with `decoy_pairing_low` (Q-L2 resolved: accepted and stated) |
+| Route B before #536 | preflight accepts it; the run writes no gene table. The docs say so until #536 lands; the slow test adds route B then |
 | Empty route after subsetting | build fails (rule 6); never shipped |
 | Empty `--from-file` | exit 1, size mismatch |
 | Empty existing `--outdir` | allowed |
@@ -495,31 +556,35 @@ recorded, not asserted (a shared node is noisy; the table in section 3 is filled
 | Region ties in the build | equal scores: the lower start wins |
 | Installed GIPPA newer than every pin | newest pin of the same major, with the warning; another major: exit 2 |
 | The asset is not uploaded yet (between `release.yml` and step 13b) | 404, exit 2 with "may not be published yet"; step 13b follows the release immediately |
-| User has Bakta full DB, or UniOP | runs fine; gene or operon numbers can differ; README says so |
+| User has Bakta full DB, or UniOP | the example sets `annotation.bakta.db=light`, so a full-only install fails preflight with the missing light DB (exit 2); with UniOP installed the operon numbers can differ. README says so |
+| No antiSMASH databases (`setup --minimal`) | `bgc` fails preflight (exit 2) naming them; the page's prerequisite is `setup --no-genomad` |
 | User passes `--strict` | the region's preflight warnings give exit 3; the printed commands never use it |
 | Bundle on a compute node without internet | `--from-file`, documented on the page and in the no-network message |
 | Disk full in the middle of unpacking | exit 2; staging removed; `DIR` not created |
 
 ## 7. Open questions
 
-### For Khoa (each with the reversible default used until he answers)
+### For Khoa
+
+Resolved on 2026-11-03: Q-K1 (licence: "use the data", statement in section 2), Q-K3 (the four
+faster settings: "accept"), Q-K6 (no plasmid: the region is a chromosome piece), and #536 ("fix").
+Still open, each with its reversible default:
 
 | # | Question | Default |
 |---|---|---|
-| Q-K1 | The data licence. PXD078459 states no licence. Use the statement above, or contact the depositors for permission or a licence first? Also: is redistributing DIA-NN 2.3.1 Academia **output** rows acceptable to you under its licence? | the statement above (no licence granted, attribution, demonstration and testing use, withdraw on request); DIA-NN output is data, not software, so it is shipped. Reversible: delete the asset and the pin row |
 | Q-K2 | Bundle cadence: one per minor (above), or one per release? | one per minor; patches reuse it |
-| Q-K3 | What "5 min" means and what to do if real tools cannot reach it | one route's convert + preflight + run, after setup, 4 threads, 16 GB; if unmet after the fallbacks, publish the measured time, still no precomputed layers |
 | Q-K4 | Replace the empty `tutorials/ecoli-k12.md` with the example tutorial? | yes; the K-12 tutorial goes to the backlog |
-| Q-K5 | The asset upload is a manual step by you (13b), since the bundle is built on FarmShare and `release.yml` cannot see it. Fine, or should the release wait on an agent-built draft? | manual step 13b by Khoa |
-| Q-K6 | Keep one whole Nissle plasmid (circular) in the region bundle? | yes, if the measured time allows |
-| Q-K7 | Paths in `File.Name` and the `.ssl` file column are shortened to base names. Acceptable? | yes |
+| Q-K5 | The asset upload is a manual step by you (13b), because the bundle is built on FarmShare and `release.yml` cannot see it. Fine? | manual step 13b by Khoa |
+| Q-K7 | File paths in the data are shortened to base names. Acceptable? | yes |
 
 ### For the lead
 
 | # | Question | Default |
 |---|---|---|
 | Q-L1 | ADR-0074 (R1, R10): the command, hosting, the lifted row-level rule, the licence statement | the lead writes it as PR 2; Khoa accepts before PR 5 merges |
-| Q-L2 | Is a route A at tier `mayu` (decoy pairing below 80 % on the region) acceptable, or must the region be chosen so that `decoy_picked` holds? | prefer regions where it holds; accept `mayu` if no region under the time target gives it, and say so in the README |
+| Q-L2 | Route A at `mayu` | **resolved**: accept `mayu` and say so (README, docs page) |
+| Q-L7 | **Genome accession.** Khoa's answer names GCA_043228065.1, but the measured region is on `NZ_CP058217.1` of GCF_021559835.1 (GenBank twin GCA_021559835.1), the pilot's pass-3 assembly, and `build_example.py` reads that one. This spec, the licence statement and PROVENANCE use the assembly the data actually comes from | GCF_021559835.1 / GCA_021559835.1; confirm with Khoa that the answer meant "the Nissle genome, INSDC" |
+| Q-L8 | `bgc` needs the antiSMASH databases (about 10 GB), so the prerequisite is `gippa setup --no-genomad`, not `--minimal`. Keep `bgc` in the example, or drop it so that `--minimal` is enough? | keep `bgc` (it shows the pks/HPI contrast), and document `--no-genomad` |
 | Q-L3 | `_unpack` is private in `gippa.setupdb.run`; make a public alias? | yes, `unpack_archive` with `_unpack` kept |
 | Q-L4 | Group rendering in `gen_reference.py` and the `test_m11_08_docs.py` option-drift parser (`## gippa <name>` assumes one word) both need changes for `gippa example fetch` | yes; the test-author updates the parser in PR 4 |
 | Q-L5 | The nav and page lists in `test_m11_07_mkdocs_config.py` and `test_m11_08_docs.py` are exact; adding `get-started/example.md` and renaming the tutorial needs test edits | test-author PR 6a, before the docs PR |
@@ -535,7 +600,7 @@ recorded, not asserted (a shared node is noisy; the table in section 3 is filled
 | 4 | `test(example): gippa example fetch` | test-author | `test_m12_01_example_fetch.py` (AC 1–12), `test_m12_01_example_pin.py` (AC 13), `test_m12_01_example_routes_yaml.py` (AC 14), parser update for groups (Q-L4); red | 0 / ≈ 400 | 1 |
 | 5 | `feat(cli): gippa example fetch` | implementer | `src/gippa/example.py`, the `example` group in `cli.py`, `DbItem.size_bytes`, `example_routes.yaml`, the `unpack_archive` alias, `gen_reference.py` group rendering, regenerated `cli.md`, changelog fragment | ≈ 250 / 0 | 2, 4 |
 | 6 | `test(example): slow route test` | test-author | `tests/e2e/test_m12_01_example_routes.py`, `scripts/slurm/example_routes.sbatch` | ≈ 40 / ≈ 150 | 5 |
-| 7 | `chore(example): measure and pin bundle 1.1` | validation | the runs of section 3, the filled time table (this spec and the page), `expected/`, the `example_1_1` row, the `bundles.tsv` row, the "current minor has a row" assertion (test-author commit) | ≈ 20 / ≈ 10 | 3, 5, 6 |
+| 7 | `chore(example): pin bundle 1.1` | validation | re-measure at the release-prep commit (route B after #536), `expected/`, the `example_1_1` row, the `bundles.tsv` row, the "current minor has a row" assertion (test-author commit) | ≈ 20 / ≈ 10 | 3, 5, 6, #536 |
 | 8a | `test(docs): example page and tutorial` | test-author | nav lists, `TUTORIALS`, AC 15, 16, 19; red | 0 / ≈ 80 | 4 |
 | 8b | `docs: try the example, tutorial, quick start` | docs | `get-started/example.md`, `tutorials/example-routes.md` (replacing `ecoli-k12.md`), `mkdocs.yml`, quick start, from-spectra and convert links, backlog entry | 0 (prose) | 7, 8a |
 | 9 | `docs(release): build and attach the example bundle` | docs | `docs/release.md` steps 6, 13b, 14, 15 | 0 (prose) | 7 |
