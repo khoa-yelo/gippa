@@ -267,7 +267,7 @@ echo "1f6b96f0a8659ad28e4f4b1ed49d538ded82f5f7669af74b265583d837a4108a  UniOP-3e
 chmod 600 UniOP-3ed14dfc2a5d69b993d99a26e50c1f8e9723c087.tar.gz
 ```
 
-Then run `gippa setup --uniop --profile apptainer --db-dir "$DB" --accept-uniop-terms` (or
+Then run `gippa setup --uniop --install-uniop-from-git --profile apptainer --db-dir "$DB"` (or
 `--profile docker`). It adopts the archive and builds the image, but the build itself still
 needs network access: the base image and the conda packages come from their registries. Build
 where the network is, on a filesystem the run host also sees. Setup keeps `uniop/` at mode `0700`

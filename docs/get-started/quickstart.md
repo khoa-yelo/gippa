@@ -21,11 +21,12 @@ Nextflow if none is found ([Install](install.md#prerequisites)).
 ## 2. Set up databases and images (once)
 
 ```bash
-gippa setup --db-dir <db-dir> --profile apptainer --yes --accept-uniop-terms   # or --profile docker
+gippa setup --db-dir <db-dir> --profile apptainer --accept-download-plan --install-uniop-from-git
 ```
 
-`--yes` skips the "Proceed?" question after the download plan. `--accept-uniop-terms` means you
-decide that your use of UniOP, the operon predictor, is permitted: it has no licence file.
+`--accept-download-plan` skips the "Proceed?" question after the download plan.
+`--install-uniop-from-git` builds UniOP, the operon predictor, from its authors' GitHub: it has no
+licence file, so passing the flag means you decide that your use is permitted.
 `<db-dir>` needs about 50 GB free where your compute nodes can read it; on a cluster, run setup as
 a batch job. Flags you may change ([all flags](setup-databases.md#flags)):
 

@@ -83,7 +83,7 @@ gippa --version
 # 3. pinned images, databases and the local UniOP build
 export NXF_APPTAINER_CACHEDIR=/big/disk/gippa-images     # optional, apptainer only (below)
 gippa setup --db-dir /path/to/db --profile apptainer \
-    --yes --accept-uniop-terms                           # or: --profile docker
+  --accept-download-plan --install-uniop-from-git      # or: --profile docker; no prompts
 
 # 4. check the inputs and the installed tools
 GIPPA_DB_DIR=/path/to/db gippa preflight --genome genome.fna --peptides peptides.tsv \
@@ -124,8 +124,8 @@ command asks anything. To run setup without questions, pass the flags in the las
 
 | Question | When | Flag that answers it |
 |---|---|---|
-| `gippa setup: Proceed? [Y/n]` (default yes) | after the download plan, before the first download or pull | `--yes`; in a batch job (no terminal) it is not asked and setup goes on |
-| `Build UniOP for your own use? [y/N]` (default no) | after `Proceed?`, when setup builds UniOP: with `--profile` when the modules need it, or with `--uniop` | `--accept-uniop-terms` (yes: you decide your use is permitted) or `--no-uniop` (skip UniOP); in a batch job without either, UniOP is skipped ([UniOP](#uniop)) |
+| `gippa setup: Proceed? [Y/n]` (default yes) | after the download plan, before the first download or pull | `--accept-download-plan`; in a batch job (no terminal) it is not asked and setup goes on |
+| `Build UniOP for your own use? [y/N]` (default no) | after `Proceed?`, when setup builds UniOP: with `--profile` when the modules need it, or with `--uniop` | `--install-uniop-from-git` (yes: you decide your use is permitted) or `--no-uniop` (skip UniOP); in a batch job without either, UniOP is skipped ([UniOP](#uniop)) |
 
 - With `--profile`, setup pulls the pinned images that the configuration's modules need;
   `--images all` pulls every pinned image and `--no-images` none. Without `--profile` the images
@@ -195,9 +195,9 @@ commit from GitHub, checks its sha256, and builds it on your machine. Nothing is
   "UniOP (github.com/hongsua/UniOP @3ed14dfc) is fetched from its authors and built on this
   machine; it has no licence file, so gippa does not distribute it and whether your use is
   permitted is yours to decide." On a terminal it asks `Build UniOP for your own use? [y/N]`; the
-  default is no. For scripts and batch jobs, pass `--accept-uniop-terms`. Without either, nothing
+  default is no. For scripts and batch jobs, pass `--install-uniop-from-git`. Without either, nothing
   is fetched: `setup --images` warns `image:uniop: terms not accepted; rerun with
-  --accept-uniop-terms` and exits 0; `setup --uniop` exits 2.
+  --install-uniop-from-git` and exits 0; `setup --uniop` exits 2.
 - **Runtime.** micromamba when a profile enables conda, else Apptainer, else Docker. Apptainer
   runs `apptainer build --fakeroot` (plain `apptainer build` as root), and retries once as
   `apptainer build --fakeroot --ignore-fakeroot-command`. The build is named in
@@ -212,7 +212,7 @@ commit from GitHub, checks its sha256, and builds it on your machine. Nothing is
       annotation.uniop.enabled=auto`;
     - or run without UniOP. `annotation.uniop.enabled` is `auto` by default: with UniOP missing,
       preflight warns `uniop not installed (unlicensed, not distributed); operons use the distance
-      model; run: gippa setup --uniop --profile <profile> --db-dir <db_dir> --accept-uniop-terms`
+      model; run: gippa setup --uniop --install-uniop-from-git --profile <profile> --db-dir <db_dir>`
       and the run goes on. `--set annotation.uniop.enabled=true` makes a missing UniOP an error
       (exit 2) instead.
 - **What the distance model loses.** Without UniOP, the operon pairs and the TUs come from the

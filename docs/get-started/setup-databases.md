@@ -11,11 +11,12 @@ see [Download the databases by hand](manual-databases.md).
 `function` (COG, GO, KEGG). `gippa setup` installs everything they need by default:
 
 ```bash
-gippa setup --db-dir /path/to/db --profile apptainer --yes --accept-uniop-terms   # or --profile docker
+gippa setup --db-dir /path/to/db --profile apptainer \
+  --accept-download-plan --install-uniop-from-git      # or --profile docker
 ```
 
 The last two flags answer setup's two questions in advance, so it also runs as a batch job:
-`--yes` the "Proceed?" after the download plan, and `--accept-uniop-terms` the UniOP build
+`--accept-download-plan` the "Proceed?" after the download plan, and `--install-uniop-from-git` the UniOP build
 (UniOP has no licence file; the flag means you decide your use is permitted). Leave them out to be
 asked ([Install › Step 3](install.md#the-five-steps)).
 
@@ -70,7 +71,7 @@ an item out, also leave out the module that needs it with `gippa run --modules`.
 | `--images [all]` / `--no-images` | on when `--profile` names a runtime | pulls the pinned container images the configured modules need (`all`: every pinned image). `gippa run` never pulls: a missing image stops preflight. Size and time: 11 images, 8.7 GB; 58 min on 4 CPUs, 7 min 15 s on 18 CPUs | `--no-images` when the images are already in the cache, or you run with the `conda` profile |
 | `--cache-dir DIR` | `$NXF_APPTAINER_CACHEDIR`, else `DIR/containers` | the Apptainer image cache and UniOP build directory, for this setup command only | rarely: set `NXF_APPTAINER_CACHEDIR` instead, so preflight and run see the same cache ([Install › Step 3](install.md#the-five-steps)) |
 | `--nextflow` / `--no-nextflow` | on | installs the pinned Nextflow 26.10.0 launcher as `DIR/bin/nextflow`, only when no `nextflow` is on `PATH`. 47 MiB; 2 s | `--no-nextflow` when you install Nextflow yourself |
-| `--yes` | off | answers the "Proceed?" question after the download plan with yes; in a batch job (no terminal) it is never asked | use it in scripts and batch jobs |
+| `--accept-download-plan` | off | answers the "Proceed?" question after the download plan with yes; does not accept any licence terms; in a batch job (no terminal) it is never asked | use it in scripts and batch jobs |
 | `--check` | off | downloads nothing and asks nothing: verifies what is installed and prints each item's status | after setup, or to find what is missing |
 | `--config FILE` / `--set key=value` | the defaults | the run configuration, as for `gippa run`; setup reads `modules` from it to choose the images and whether UniOP is needed | when you will run fewer modules, for example `--set modules=core,function` |
 | `--log-level` | `INFO` | how much setup prints | for debugging |
@@ -96,9 +97,9 @@ its source from the authors (pinned commit) and builds it on your machine ([Inst
 
 | Flag | Default | What it does | If you leave UniOP out |
 |---|---|---|---|
-| `--accept-uniop-terms` | off: setup asks `Build UniOP for your own use? [y/N]` on a terminal, and skips UniOP in a batch job | answers that question with yes: **you decide that your use of UniOP is permitted**. Fetch and build: 4 min 56 s; the Apptainer image is 0.3 GB | operons and transcription units come from the intergenic-distance model; the run carries the flag `operon_source_distance_model` |
+| `--install-uniop-from-git` | off: setup asks `Build UniOP for your own use? [y/N]` on a terminal, and skips UniOP in a batch job | answers that question with yes: **you decide that your use of UniOP is permitted**; UniOP is fetched from its authors' GitHub repository (hongsua/UniOP) at the pinned commit, sha256-checked and built during the normal setup. Fetch and build: 4 min 56 s; the Apptainer image is 0.3 GB | operons and transcription units come from the intergenic-distance model; the run carries the flag `operon_source_distance_model` |
 | `--no-uniop` | off | does not build UniOP under `--images`, and asks nothing | as above |
-| `--uniop` | off | installs only UniOP (no databases, no other images) | — |
+| `--uniop` | off | installs only UniOP (no databases, no other images); add `--install-uniop-from-git` to skip the question | — |
 
 ## Layout and sizes
 

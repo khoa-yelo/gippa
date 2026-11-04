@@ -71,14 +71,15 @@ on a Slurm cluster.
 ```bash
 pip install --prefer-binary gippa         # or: conda install -c bioconda gippa
 gippa demo                                # about 2 minutes; prints the report path
-gippa setup --yes --accept-uniop-terms    # databases and images; no questions
+gippa setup --accept-download-plan --install-uniop-from-git   # databases, images, UniOP; no questions
 gippa run --genome g.fna --peptides p.tsv --outdir out
 ```
 
 `gippa demo` runs a small bundled synthetic genome with no Nextflow, containers, databases or
 network. `gippa setup` and `gippa run` detect the Nextflow profile (pass `--profile` to choose).
-`--yes` skips setup's "Proceed?" question; `--accept-uniop-terms` means you decide that your use of
-UniOP, which has no licence file, is permitted.
+`--accept-download-plan` skips setup's "Proceed?" question; `--install-uniop-from-git` builds UniOP
+from its authors' GitHub and means you decide that your use of UniOP, which has no licence file, is
+permitted.
 The guided walk-through, with example inputs and outputs, is
 [Quick start](https://khoa-yelo.github.io/gippa/get-started/quickstart/)
 ([source](docs/get-started/quickstart.md)). With raw spectra and no peptide table yet, see

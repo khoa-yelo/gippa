@@ -37,7 +37,7 @@ NOTICE = (
     "permitted is yours to decide."
 )
 PROMPT = "Build UniOP for your own use? [y/N]"
-TERMS_NOT_ACCEPTED = "terms not accepted; rerun with --accept-uniop-terms"
+TERMS_NOT_ACCEPTED = "terms not accepted; rerun with --install-uniop-from-git"
 GLIBC = "/.singularity.d/libs/faked: /lib64/libc.so.6: version `GLIBC_2.38' not found"
 APPTAINER_FAILED = (
     "apptainer build failed (fakeroot unavailable or build error): {line}; use --profile docker "

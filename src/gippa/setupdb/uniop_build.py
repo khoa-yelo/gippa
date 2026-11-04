@@ -11,7 +11,7 @@ runtime) and recorded as the ``image:uniop`` item of ``db_manifest.json`` with i
 object (one per item: the last build wins). Nothing is ever pushed. Builders: docker (14u1),
 apptainer with the fakeroot fallback, micromamba under plain ``conda``, and the check of the
 prebuilt env under ``farmshare*`` (14u2). UniOP has no licence, so the terms notice is always
-printed and nothing is fetched until the user accepts (``--accept-uniop-terms`` or the prompt).
+printed and nothing is fetched until the user accepts (``--install-uniop-from-git`` or the prompt).
 """
 
 from __future__ import annotations
@@ -72,7 +72,7 @@ __all__ = [
 
 Terms = Literal["flag", "prompt", ""]
 SOURCE_ITEM = "uniop_source"
-TERMS_NOT_ACCEPTED = "terms not accepted; rerun with --accept-uniop-terms"
+TERMS_NOT_ACCEPTED = "terms not accepted; rerun with --install-uniop-from-git"
 NOTICE = (
     "UniOP (github.com/hongsua/UniOP @3ed14dfc) is fetched from its authors and built on this "
     f"machine; it has no licence file, so {__name__.split('.', 1)[0]} does not distribute it and "
@@ -368,7 +368,7 @@ def stdin_is_tty() -> bool:
 
 
 def _terms(accepted: bool) -> Terms:
-    """``flag`` with ``--accept-uniop-terms``; else, on a TTY, ``prompt`` when the user answers
+    """``flag`` with ``--install-uniop-from-git``; else, on a TTY, ``prompt`` when the user answers
     yes; ``""`` otherwise (the default is no; end of input is a no)."""
     if accepted:
         return "flag"

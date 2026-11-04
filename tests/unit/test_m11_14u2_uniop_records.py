@@ -331,8 +331,8 @@ def test_example_19b_nothing_built_names_the_command(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     tools = _preflight_tools(tmp_path, Path("/data/db"), "apptainer", monkeypatch)
-    want = (f"uniop not installed; run: {PKG} setup --uniop --profile apptainer --db-dir /data/db "
-            "--accept-uniop-terms")  # fmt: skip
+    want = (f"uniop not installed; run: {PKG} setup --uniop --install-uniop-from-git "
+            "--profile apptainer --db-dir /data/db")  # fmt: skip
     assert "uniop" in _missing(tools) and want in tools.message, tools.message
 
 
@@ -344,8 +344,8 @@ def test_example_19c_stale_preflight_message(
     tools = _preflight_tools(tmp_path, db, "docker", monkeypatch)
     assert "uniop" in _missing(tools)
     assert f"local build 0123456789ab does not match this release ({uniop_key()})" in tools.message
-    want = (f"run: {PKG} setup --uniop --profile docker --db-dir {db.absolute()} "
-            "--accept-uniop-terms")  # fmt: skip
+    want = (f"run: {PKG} setup --uniop --install-uniop-from-git --profile docker "
+            f"--db-dir {db.absolute()}")  # fmt: skip
     assert want in tools.message, tools.message
 
 
