@@ -23,6 +23,7 @@ export GIPPA_REPO="$WT"
 source "$WT/scripts/farmshare_env.sh"
 export TMPDIR="$(mktemp -d /tmp/gippa.XXXXXX)"; trap 'rm -rf "$TMPDIR"' EXIT
 export PYTHONPATH="$WT/src"
+export PATH="$UV_PROJECT_ENVIRONMENT/bin:$PATH"   # tasks call `gippa _step` from PATH
 GIPPA="$UV_PROJECT_ENVIRONMENT/bin/gippa"
 NAME=$1; ROUTE=$2; MODULES=$3; shift 3
 CPUS=${SLURM_CPUS_PER_TASK:-8}
