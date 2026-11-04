@@ -192,6 +192,9 @@ def test_staged_resources_are_written_and_listed_iff_function_on(
         roots = _roots(root / "OUT", genome, prot, db.root, FN if function_on else ["core"])
         got = {k for k in FUNCTION_RESOURCES if k in roots}
         want = (written & listed & set(FUNCTION_RESOURCES)) if function_on else set()
+        kegg = {"kegg_ko_pathway", "kegg_pathway_names"}
+        if not kegg <= want:  # M12-03: a lone KEGG item is not staged
+            want -= kegg
         assert got == want
         for k in got:
             assert _same(roots[k], db.root / PATHS[k])

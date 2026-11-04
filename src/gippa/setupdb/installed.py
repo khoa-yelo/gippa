@@ -4,11 +4,23 @@ from __future__ import annotations
 
 from pathlib import Path
 
-__all__ = ["FUNCTION_RESOURCES", "cog_table", "resource"]
+__all__ = ["FUNCTION_RESOURCES", "KEGG_RESOURCES", "cog_table", "function_resources", "resource"]
 
 #: the setup items the ``function`` step reads (M8-06 item 7), in ``read_resources`` key form
 FUNCTION_RESOURCES: tuple[str, ...] = ("go_basic", "goslim_generic", "kegg_ko_pathway",
                                        "kegg_pathway_names", "cog2020_fun")  # fmt: skip
+
+
+#: KEGG counts as installed only when both items are (M12-03); a lone item is not staged
+KEGG_RESOURCES: tuple[str, ...] = ("kegg_ko_pathway", "kegg_pathway_names")
+
+
+def function_resources(db_dir: Path | None) -> dict[str, Path]:
+    """The installed ``FUNCTION_RESOURCES`` to stage, without a lone KEGG item (M12-03)."""
+    found = {n: p for n in FUNCTION_RESOURCES if (p := resource(db_dir, n)) is not None}
+    if not all(n in found for n in KEGG_RESOURCES):
+        found = {n: p for n, p in found.items() if n not in KEGG_RESOURCES}
+    return found
 
 
 def resource(db_dir: Path | None, name: str) -> Path | None:
