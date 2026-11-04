@@ -225,8 +225,8 @@ picked target–decoy FDR at the gene level, the `decoy_picked` tier. With DIA-N
 
 - The ID is the first token of the header. UniProt `sp|ACC|NAME` and `tr|ACC|NAME` resolve to
   `ACC`. A protein group written `A;B` is split.
-- Records of 40 aa or shorter go to the peptide path, and records shorter than 7 aa are dropped
-  with a warning.
+- With `--peptides`, records of 40 aa or shorter go to the peptide path. Records shorter than 7 aa
+  are dropped with a warning.
 - Allowed letters are the 20 amino acids plus U. X, B, Z and J are counted, and an internal `*`
   warns.
 
@@ -236,8 +236,11 @@ Proteins longer than 40 aa are aligned to the genome with miniprot, then tblastn
 A run with `--proteins` and no `--peptides` still writes the mapping files, the gene table
 (`tables/genes.tsv`), the context, operon and determinant tables and the report. Its detection tier
 is `protein_list`: a gene is detected when a mapped input protein names it, and the gene q-value is
-not estimated. Variants and novel ORFs need peptides, so the run skips them. If the FASTA holds
-records of 40 aa or shorter, they take the peptide path, and the tier follows from that evidence.
+not estimated. Variants and novel ORFs need peptides, so the run skips them.
+
+Without `--peptides`, records of 7-40 aa are not used. Preflight warns with their count
+(`proteins.short_records_unused`); like any warning, it makes a `--strict` run exit 3. To use
+them, pass them as a peptide table with `--peptides`.
 
 ## Abundance table (`--abundance`)
 
