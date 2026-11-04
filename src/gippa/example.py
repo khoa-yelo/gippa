@@ -29,8 +29,8 @@ import yaml
 import gippa
 from gippa.exitcodes import ExitCode
 from gippa.setupdb import SOURCES, HttpsFetcher, SourceError
-from gippa.setupdb.items import DbItem, file_digest
-from gippa.setupdb.run import unpack_archive
+from gippa.setupdb.items import DbItem, file_digest, parse_minor
+from gippa.setupdb.run import UNPACK_ERRORS, unpack_archive
 from gippa.setupdb.space import DISK_FULL
 
 __all__ = [
@@ -48,7 +48,6 @@ __all__ = [
 CHECKSUMS = "CHECKSUMS.sha256"
 MARKER = ".gippa-example.json"
 _PREFIX = "gippa example"
-_VERSION = re.compile(r"(\d+)\.(\d+)(?:\.\d+)?")
 _INSTALLED = re.compile(r"(\d+)\.(\d+)")
 SETUP_LINE = (
     "These routes need `gippa setup --no-genomad` (Bakta light and the antiSMASH databases) and a "
@@ -78,8 +77,7 @@ class Selection:
 
 def parse_version(text: str) -> Version | None:
     """``X.Y`` or ``X.Y.Z`` (read as ``X.Y``); ``None`` otherwise."""
-    m = _VERSION.fullmatch(text.strip())
-    return (int(m.group(1)), int(m.group(2))) if m else None
+    return parse_minor(text)
 
 
 def _vstr(v: Version) -> str:
@@ -100,7 +98,8 @@ def select_pin(
     rows: Mapping[Version, DbItem], installed: str, requested: Version | None
 ) -> Selection:
     """Section 1 step 1: the requested pin, else the installed ``MAJOR.MINOR``, else the newest
-    older minor of the same major (with the warning); else ``ExampleError``."""
+    older minor of the same major (with the warning); else ``ExampleError``. A requested pin of
+    another major is exit 2 (never a fallback, never a warning)."""
     m = _INSTALLED.match(installed)
     if m is None:
         raise ExampleError(ExitCode.ENVIRONMENT, f"cannot read the GIPPA version {installed!r}")
@@ -110,6 +109,10 @@ def select_pin(
             listed = ", ".join(_vstr(v) for v in sorted(rows)) or "none"
             raise ExampleError(ExitCode.INVALID_INPUT, f"no example bundle {_vstr(requested)}; "
                                f"pinned versions: {listed}")  # fmt: skip
+        if requested[0] != inst[0]:
+            raise ExampleError(ExitCode.ENVIRONMENT, f"example bundle {_vstr(requested)} is for "
+                               f"GIPPA {requested[0]}.x; this is GIPPA {inst[0]} ({installed}): "
+                               f"install GIPPA {requested[0]}.x to use it")  # fmt: skip
         chosen = requested
     else:
         same = [v for v in rows if v[0] == inst[0] and v[1] <= inst[1]]
@@ -132,13 +135,14 @@ def _routes() -> list[dict[str, Any]]:
 
 def route_lines(version: str, directory: Path, routes: Sequence[Mapping[str, Any]]) -> list[str]:
     """The stdout block: the bundle line, each route's heading and commands, the setup line."""
-    d = shlex.quote(str(directory))
+    d = str(directory)
     out = [f"{_PREFIX} {version}: {directory}"]
     for route in routes:
         out += ["", f"# {route['title']}"]
         for cmd in route["commands"]:
-            out.append(" ".join(str(cmd).replace("{out}", "{dir}/runs").replace("{dir}", d)
-                                .split()))  # fmt: skip
+            words = (w.replace("{out}", "{dir}/runs").replace("{dir}", d)
+                     for w in shlex.split(str(cmd)))  # fmt: skip
+            out.append(" ".join(shlex.quote(w) for w in words))
     return [*out, "", SETUP_LINE]
 
 
@@ -157,9 +161,11 @@ def _listed(text: str) -> dict[str, str] | str:
     return out
 
 
-def content_problems(root: Path, ignore: frozenset[str] = frozenset({CHECKSUMS})) -> list[str]:
-    """Every ``CHECKSUMS.sha256`` line matches its regular file, and no file outside ``ignore``
-    is unlisted; the problems, each naming its file."""
+def content_problems(
+    root: Path, ignore: frozenset[str] = frozenset({CHECKSUMS}), *, unlisted: bool = True
+) -> list[str]:
+    """Every ``CHECKSUMS.sha256`` line matches its regular file, and (when ``unlisted``) no file
+    outside ``ignore`` is unlisted; the problems, each naming its file."""
     try:
         listed = _listed((root / CHECKSUMS).read_text(encoding="utf-8"))
     except (OSError, UnicodeDecodeError):
@@ -173,7 +179,7 @@ def content_problems(root: Path, ignore: frozenset[str] = frozenset({CHECKSUMS})
             problems.append(f"missing file {name}")
         elif file_digest(f, "sha256") != f"sha256:{want}":
             problems.append(f"checksum mismatch for {name}")
-    for f in sorted(root.rglob("*")):
+    for f in sorted(root.rglob("*")) if unlisted else ():
         rel = f.relative_to(root).as_posix()
         if (f.is_symlink() or not f.is_dir()) and rel not in listed and rel not in ignore:
             problems.append(f"unlisted file {rel}")
@@ -194,14 +200,15 @@ def _marker(row: DbItem, installed: str) -> dict[str, str]:
 
 
 def _already_fetched(directory: Path, row: DbItem) -> bool:
-    """``DIR`` holds a fetch of ``row``: its marker names the pin and every file verifies."""
+    """``DIR`` holds a fetch of ``row``: its marker names the pin and every listed file verifies.
+    Unlisted entries (the routes' ``DIR/runs/``) are the user's and ignored."""
     try:
         mark = json.loads((directory / MARKER).read_text(encoding="utf-8"))
     except (OSError, ValueError):
         return False
     same = isinstance(mark, dict) and (mark.get("archive_sha256"), mark.get("bundle_version")) == (
         row.checksum, row.version)  # fmt: skip
-    return same and not content_problems(directory, frozenset({CHECKSUMS, MARKER}))
+    return same and not content_problems(directory, frozenset({CHECKSUMS, MARKER}), unlisted=False)
 
 
 def _first_missing(path: Path) -> Path:
@@ -213,6 +220,16 @@ def _first_missing(path: Path) -> Path:
 def _disk_full(directory: Path) -> ExampleError:
     return ExampleError(ExitCode.ENVIRONMENT, f"disk quota exceeded or disk full at "
                         f"{directory.parent}: choose a larger disk with --outdir")  # fmt: skip
+
+
+def _not_writable(where: Path, exc: OSError | None = None) -> ExampleError:
+    why = f" ({exc.strerror or exc})" if exc is not None else ""
+    return ExampleError(ExitCode.INVALID_INPUT, f"cannot write to {where}{why}; choose another "
+                        "--outdir")  # fmt: skip
+
+
+def _writable(d: Path) -> bool:
+    return os.access(d, os.W_OK | os.X_OK)
 
 
 def _check_archive(
@@ -246,8 +263,9 @@ def _download(row: DbItem, dest: Path, directory: Path) -> None:
     except SourceError as exc:
         lines = [f"cannot download {row.url} ({exc.host}: {exc.reason})",
                  "on a machine with internet access, download that URL, copy the file here and "
-                 f"run\n  gippa example fetch --from-file {PurePosixPath(row.path).name} "
-                 f"--outdir {directory}"]  # fmt: skip
+                 "run\n  gippa example fetch --from-file "
+                 f"{shlex.quote(PurePosixPath(row.path).name)} "
+                 f"--outdir {shlex.quote(str(directory))}"]  # fmt: skip
         if "HTTP 404" in exc.reason:
             lines.append(f"the bundle may not be published yet (GIPPA {row.version} release)")
         raise ExampleError(ExitCode.ENVIRONMENT, *lines) from exc
@@ -258,14 +276,14 @@ def _unpack(archive: Path, tree: Path, version: str) -> Path:
     tree.mkdir()
     try:
         unsafe = unpack_archive(archive, tree)
+    except UNPACK_ERRORS as exc:  # a malformed archive is the source's fault; others are bugs
+        raise ExampleError(
+            ExitCode.ENVIRONMENT, f"malformed archive {archive.name}: {exc}"
+        ) from exc
     except OSError as exc:
         if exc.errno in DISK_FULL:
             raise
         raise ExampleError(ExitCode.ENVIRONMENT, f"cannot unpack {archive.name}: {exc}") from exc
-    except Exception as exc:  # tarfile's errors: a malformed archive is the source's fault
-        raise ExampleError(
-            ExitCode.ENVIRONMENT, f"malformed archive {archive.name}: {exc}"
-        ) from exc
     if unsafe is not None:
         raise ExampleError(ExitCode.ENVIRONMENT, unsafe)
     top = f"gippa-example-{version}"
@@ -282,7 +300,10 @@ def _install(
 ) -> None:  # fmt: skip
     """Steps 3-7 inside a staging directory next to ``directory``; removed whatever happens."""
     directory.parent.mkdir(parents=True, exist_ok=True)
-    staging = Path(tempfile.mkdtemp(prefix=f"{directory.name}.partial-", dir=directory.parent))
+    try:
+        staging = Path(tempfile.mkdtemp(prefix=f"{directory.name}.partial-", dir=directory.parent))
+    except PermissionError as exc:
+        raise _not_writable(directory.parent, exc) from exc
     try:
         if from_file is None:
             archive = staging / PurePosixPath(row.path).name
@@ -296,11 +317,14 @@ def _install(
                                f"{CHECKSUMS}: " + "; ".join(problems))  # fmt: skip
         (top / MARKER).write_text(json.dumps(_marker(row, installed), sort_keys=True) + "\n",
                                   encoding="utf-8")  # fmt: skip
-        if directory.is_dir():
-            for entry in sorted(top.iterdir()):
-                entry.rename(directory / entry.name)
-        else:
-            top.rename(directory)
+        try:
+            if directory.is_dir():
+                for entry in sorted(top.iterdir()):
+                    entry.rename(directory / entry.name)
+            else:
+                top.rename(directory)
+        except PermissionError as exc:
+            raise _not_writable(directory, exc) from exc
     except OSError as exc:
         if exc.errno in DISK_FULL:
             raise _disk_full(directory) from exc
@@ -332,6 +356,8 @@ def fetch(outdir: Path, version: Version | None, from_file: Path | None) -> int:
             if not directory.is_dir() or any(directory.iterdir()):
                 raise ExampleError(ExitCode.INVALID_INPUT, f"{directory} exists and is not this "
                                    "example; use --outdir or remove it")  # fmt: skip
+            if not _writable(directory):
+                raise _not_writable(directory)
             existed_empty = True
         else:
             created = _first_missing(directory)
@@ -342,6 +368,8 @@ def fetch(outdir: Path, version: Version | None, from_file: Path | None) -> int:
                     ExitCode.INVALID_INPUT,
                     f"cannot create {directory} ({exc.strerror or exc}); choose another --outdir",
                 ) from exc
+            if not _writable(directory.parent):
+                raise _not_writable(directory.parent)
         _install(sel.row, rows, directory, from_file, installed)
     except BaseException as exc:
         if created is not None:

@@ -31,6 +31,7 @@ __all__ = [
     "count_fasta_records",
     "file_digest",
     "licence_lines",
+    "parse_minor",
     "plan",
     "tree_size",
     "verify",
@@ -111,6 +112,31 @@ class SetupOptions:
     nextflow: bool = True  # the Nextflow -dist launcher when none is on PATH (M11-15 item 5)
 
 
+_MINOR = re.compile(r"(\d+)\.(\d+)(?:\.\d+)?")
+
+
+def parse_minor(text: str) -> tuple[int, int] | None:
+    """``X.Y`` or ``X.Y.Z`` (read as ``X.Y``); ``None`` otherwise (example bundle versions)."""
+    m = _MINOR.fullmatch(text.strip())
+    return (int(m.group(1)), int(m.group(2))) if m else None
+
+
+def _check_examples(out: Mapping[str, DbItem]) -> None:
+    """Every ``example_*`` row has an ``X.Y`` (or ``X.Y.Z``) version, and no two rows are the
+    same bundle minor (``1.1`` and ``1.1.0`` are twins); ``ValueError`` naming the row."""
+    seen: dict[tuple[int, int], str] = {}
+    for name, row in out.items():
+        if not name.startswith("example_"):
+            continue
+        v = parse_minor(row.version)
+        if v is None:
+            raise ValueError(f"db_sources.yaml: {name} has version {row.version!r}, not X.Y")
+        if v in seen:
+            raise ValueError(f"db_sources.yaml: two example bundle rows with version "
+                             f"{v[0]}.{v[1]}: {seen[v]} and {name}")  # fmt: skip
+        seen[v] = name
+
+
 def _safe_name(name: str) -> bool:
     """A non-empty relative POSIX path with no ``..`` component."""
     p = PurePosixPath(name)
@@ -127,6 +153,8 @@ def _load_sources() -> Mapping[str, DbItem]:
         if not _safe_name(path):
             raise ValueError(f"db_sources.yaml: unsafe path {path!r} for {name}")
         alt = tuple(str(u) for u in row.get("alt_urls") or ())
+        if "size_bytes" in row and not isinstance(row["size_bytes"], int):
+            raise ValueError(f"db_sources.yaml: size_bytes of {name} must be an integer")
         if any(urlparse(u).scheme != "https" for u in alt):
             raise ValueError(f"db_sources.yaml: alt_urls of {name} must be https")
         out[name] = DbItem(
@@ -145,9 +173,7 @@ def _load_sources() -> Mapping[str, DbItem]:
             alt_urls=alt,
             size_bytes=int(row.get("size_bytes", 0)),
         )
-    versions = [r.version for n, r in out.items() if n.startswith("example_")]
-    if twins := sorted({v for v in versions if versions.count(v) > 1}):
-        raise ValueError(f"db_sources.yaml: two example bundle rows with version {twins[0]}")
+    _check_examples(out)
     return MappingProxyType(out)
 
 
