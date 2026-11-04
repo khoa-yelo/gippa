@@ -15,6 +15,9 @@ pip install --prefer-binary gippa   # prefer wheels: no numpy/numba builds from 
 gippa demo                          # about 2 min on bundled synthetic data; prints the report path
 ```
 
+To try real data next: `gippa example fetch` gets a Nissle 1917 region with four input routes,
+about 5 min each after setup ([Try the example](example.md)).
+
 `gippa run` also needs Java 17 or newer and Apptainer or Docker on `PATH`. `gippa setup` installs
 Nextflow if none is found ([Install](install.md#prerequisites)).
 
