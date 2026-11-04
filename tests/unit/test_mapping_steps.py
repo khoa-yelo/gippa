@@ -159,7 +159,7 @@ def test_step_keys_follow_the_section_6_2_files(steps: ModuleType) -> None:
     key_like(pl.outputs, "mapping_fdr")
     key_like(pl.outputs, "stratum0_classes")  # ADR-0019 class table (M3-25 decision 3)
     lo = steps.get("loci")
-    assert key_like(pl.outputs, "placement") in lo.inputs
+    assert key_like(pl.outputs, "placement") in set(lo.inputs) | set(lo.optional_inputs)  # #536
     assert "genes" in set(lo.inputs) | set(lo.optional_inputs)
 
 

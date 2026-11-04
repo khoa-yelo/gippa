@@ -290,7 +290,8 @@ def _tsv_only(src: Path, ids: set[str], dst: Path) -> Path:
 def test_loci_runs_without_peptides(protein_only_loci: dict[str, Any]) -> None:
     from helpers.mapping_steps import MODULE2_FILES, module2_files, read_tsv_df
 
-    files = module2_files(protein_only_loci["work"], protein_only_loci["avail"])
+    avail = protein_only_loci["avail"]
+    files = module2_files(protein_only_loci["work"], avail)
     assert set(files) == set(MODULE2_FILES)
     assert read_tsv_df(files["peptide_hits.tsv"]).empty  # header-only: there are no peptides
     hits = read_tsv_df(files["protein_hits.tsv"])
@@ -313,11 +314,14 @@ def test_proteins_only_loci_output_loads_as_the_m3_contract(
 
     from gippa.io.work_tables import load_m4_inputs
 
-    files = module2_files(protein_only_loci["work"], protein_only_loci["avail"])
+    avail = protein_only_loci["avail"]
+    files = module2_files(protein_only_loci["work"], avail)
     d = files["protein_hits.tsv"].parent
     _m4, issues = load_m4_inputs({"peptide_hits": d / "peptide_hits.tsv",
                                   "protein_hits": d / "protein_hits.tsv",
-                                  "unmapped": d / "unmapped.tsv"})  # fmt: skip
+                                  "unmapped": d / "unmapped.tsv",
+                                  "genes": avail["genes"],
+                                  "replicons": avail["replicons"]})  # fmt: skip
     bad = [i for i in issues if i.severity == "error" and i.code.split(".")[1] in
            ("peptide_hits", "protein_hits", "unmapped")]  # fmt: skip
     assert not bad, bad
