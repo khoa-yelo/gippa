@@ -23,7 +23,7 @@ gippa setup --db-dir <db-dir> --profile apptainer     # or --profile docker
 `<db-dir>` needs about 50 GB free, on a filesystem your compute nodes can read. Setup shows a plan
 and asks before downloading. On a cluster, run it as a batch job. geNOMAD is non-commercial only
 (`--no-genomad`) and KEGG academic only (`--no-kegg`). UniOP, the operon predictor, is built only
-if you agree at the prompt or pass `--accept-uniop-terms`. [More](setup-databases.md).
+if you agree at the prompt or pass `--install-uniop-from-git`. [More](setup-databases.md).
 
 ## 3. Run
 

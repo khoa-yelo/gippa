@@ -214,11 +214,18 @@ def _profile_help(lead: str) -> str:
     help="Apptainer image cache and UniOP build context [default: NXF_APPTAINER_CACHEDIR, "
     "$GIPPA_ROOT/containers, DIR/containers].",
 )
-@click.option("--uniop", is_flag=True, help="Fetch UniOP from its authors and build it locally.")
 @click.option(
-    "--accept-uniop-terms",
+    "--install-uniop-from-git",
+    "from_git",
     is_flag=True,
-    help="UniOP has no licence file: you decide that your use is permitted (needed without a TTY).",
+    help="Fetch UniOP from its authors' GitHub repository (hongsua/UniOP) at the pinned commit, "
+    "check its sha256 and build it locally (UniOP only; add --images to pull the images too). "
+    "UniOP has no licence file: passing this flag means you accept its terms, i.e. that your use "
+    "is permitted.",
+)
+@click.option("--uniop", is_flag=True, hidden=True, help="Deprecated: --install-uniop-from-git.")
+@click.option(
+    "--accept-uniop-terms", is_flag=True, hidden=True, help="Deprecated: --install-uniop-from-git."
 )
 @click.option("--no-uniop", is_flag=True, help="Do not build UniOP under --images.")
 @click.option(
@@ -226,7 +233,14 @@ def _profile_help(lead: str) -> str:
     default=True,
     help="Install the pinned Nextflow launcher in DIR/bin when none is on PATH.",
 )
-@click.option("--yes", is_flag=True, help="Do not ask before downloading (no TTY: never asked).")
+@click.option(
+    "--accept-download-plan",
+    "accept_plan",
+    is_flag=True,
+    help="Skip the confirmation of the download plan (what will be downloaded, sizes); does not "
+    "accept any licence terms.",
+)
+@click.option("--yes", is_flag=True, hidden=True, help="Deprecated: --accept-download-plan.")
 @shared_options
 def setup(
     config_file: Path | None,
@@ -236,9 +250,11 @@ def setup(
     no_images: bool,
     profile: str,
     cache_dir: Path | None,
+    from_git: bool,
     uniop: bool,
     accept_uniop_terms: bool,
     no_uniop: bool,
+    accept_plan: bool,
     yes: bool,
     **opts: Any,
 ) -> None:
@@ -262,8 +278,19 @@ def setup(
     from gippa.setupdb.space import DISK_FULL, disk_full, in_shared_home, review_plan, setup_plan
     from gippa.setupdb.uniop_build import setup_uniop
 
+    if from_git and no_uniop:
+        raise click.UsageError("--install-uniop-from-git and --no-uniop exclude each other")
     if uniop and no_uniop:
         raise click.UsageError("--uniop and --no-uniop exclude each other")
+    for old, used, new in (("--yes", yes, "--accept-download-plan"),
+                           ("--uniop", uniop, "--install-uniop-from-git"),
+                           ("--accept-uniop-terms", accept_uniop_terms,
+                            "--install-uniop-from-git")):  # fmt: skip
+        if used:
+            click.echo(f"{_PKG} setup: warning: {old} is deprecated; use {new}", err=True)
+    # --install-uniop-from-git is the old --uniop --accept-uniop-terms (M12-02)
+    uniop, accept_uniop_terms = uniop or from_git, accept_uniop_terms or from_git
+    yes = yes or accept_plan
     if images is not None and no_images:
         raise click.UsageError("--images and --no-images exclude each other")
     if opts["minimal"]:  # an explicit --genomad/--antismash is not dropped silently

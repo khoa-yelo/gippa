@@ -62,7 +62,9 @@ Every flag is listed in the [CLI reference](../reference/cli.md#gippa-setup).
 | `--minimal` | off | Bakta light, Promotech, GO, KEGG, COG, contaminants; no geNOMAD, no antiSMASH | modules `core`, `function` |
 | `--images [all]` / `--no-images` | on with `--profile` | the pinned container images the modules need (`all`: every pinned image) | `gippa run` with a container profile |
 | `--check` | off | nothing: only verifies what is installed | — |
-| `--nextflow` / `--no-nextflow` | on | the pinned Nextflow 26.10.0 `-dist` launcher (GitHub release `v26.10.0`), only when no `nextflow` is on `PATH`; never under `--uniop` or `--check` | `gippa run` without its own Nextflow |
+| `--accept-download-plan` | off | nothing: skips the confirmation of the download plan (what will be downloaded, sizes); does not accept any licence terms | scripts and batch jobs on a terminal (without one, setup never asks) |
+| `--install-uniop-from-git` | off | UniOP only: fetched from its authors' GitHub repository (hongsua/UniOP) at the pinned commit, sha256-checked and built locally; UniOP has no licence file, and passing this flag means you accept that your use is permitted (add `--images` to pull the images too) | operon predictions (UniOP) |
+| `--nextflow` / `--no-nextflow` | on | the pinned Nextflow 26.10.0 `-dist` launcher (GitHub release `v26.10.0`), only when no `nextflow` is on `PATH`; never under `--install-uniop-from-git` or `--check` | `gippa run` without its own Nextflow |
 
 The shared options `--config`, `--set`, `--log-level` and `--version` work as for every command.
 

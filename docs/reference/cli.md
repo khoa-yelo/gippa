@@ -158,11 +158,10 @@ Download databases and models (writes DIR/db_manifest.json).
 | `--no-images` | flag | — | — | Do not pull container images. |
 | `--profile` | `auto|apptainer|docker` | `auto` | — | Container runtime for --images (a comma-joined Nextflow profile is accepted); auto detects one. |
 | `--cache-dir` | `PATH` | — | — | Apptainer image cache and UniOP build context [default: NXF_APPTAINER_CACHEDIR, $GIPPA_ROOT/containers, DIR/containers]. |
-| `--uniop` | flag | — | — | Fetch UniOP from its authors and build it locally. |
-| `--accept-uniop-terms` | flag | — | — | UniOP has no licence file: you decide that your use is permitted (needed without a TTY). |
+| `--install-uniop-from-git` | flag | — | — | Fetch UniOP from its authors' GitHub repository (hongsua/UniOP) at the pinned commit, check its sha256 and build it locally (UniOP only; add --images to pull the images too). UniOP has no licence file: passing this flag means you accept its terms, i.e. that your use is permitted. |
 | `--no-uniop` | flag | — | — | Do not build UniOP under --images. |
 | `--nextflow` / `--no-nextflow` | flag | `true` | — | Install the pinned Nextflow launcher in DIR/bin when none is on PATH. |
-| `--yes` | flag | — | — | Do not ask before downloading (no TTY: never asked). |
+| `--accept-download-plan` | flag | — | — | Skip the confirmation of the download plan (what will be downloaded, sizes); does not accept any licence terms. |
 | `--version` | flag | — | — | Show the version and exit. |
 | `--config` | `FILE` | — | — | YAML config file. |
 | `--set` | `KEY=VALUE` | — | — | Override any config key (dotted, repeatable; VALUE is YAML). |

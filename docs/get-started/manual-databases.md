@@ -29,7 +29,7 @@ contact the source for that item. The checks run offline (`verify` in `src/gippa
 | COG | the file's SHA-256 equals the pin |
 | Contaminants | the file's SHA-256 equals the pin, and the file holds 381 FASTA records |
 | KEGG | **cannot be adopted**: see [KEGG](#kegg) |
-| UniOP archive | the archive's SHA-256 equals the pin (`setup --uniop` adopts it, then builds) |
+| UniOP archive | the archive's SHA-256 equals the pin (`setup --install-uniop-from-git` adopts it, then builds) |
 | Apptainer images | `<cache>/<name>.img` exists (`setup --profile apptainer` skips the pull) |
 
 Three things to know:
@@ -98,7 +98,7 @@ see [Layout and sizes](setup-databases.md#layout-and-sizes).
 | `kegg_ko_pathway`, `kegg_pathway_names` | on; `--no-kegg` | `kegg/ko_pathway.tsv`, `kegg/pathway_names.tsv` | retrieval date | — | module `function` |
 | `cog2020_def`, `cog2020_fun` | on; `--no-cog` | `cog/cog-20.def.tab`, `cog/fun-20.tab` | 2020 | — | module `function`; `cog_category` in `genes.tsv` |
 | `contaminants` | on; `--no-contaminants` | `contaminants/contaminants.fasta` | commit `bddf6da9` | — | contaminant labels in mapping; `gippa makedb` |
-| `uniop_source` | with the images, or `--uniop` alone | `uniop/UniOP-3ed14dfc2a5d69b993d99a26e50c1f8e9723c087.tar.gz` | commit `3ed14dfc` | — | operon predictions (UniOP; optional, see [Install › UniOP](install.md#uniop)) |
+| `uniop_source` | with the images, or `--install-uniop-from-git` alone | `uniop/UniOP-3ed14dfc2a5d69b993d99a26e50c1f8e9723c087.tar.gz` | commit `3ed14dfc` | — | operon predictions (UniOP; optional, see [Install › UniOP](install.md#uniop)) |
 
 Preflight requires every part of a group to be `ok`: `function` needs both GO files, both KEGG
 tables and both COG tables.
@@ -267,7 +267,7 @@ echo "1f6b96f0a8659ad28e4f4b1ed49d538ded82f5f7669af74b265583d837a4108a  UniOP-3e
 chmod 600 UniOP-3ed14dfc2a5d69b993d99a26e50c1f8e9723c087.tar.gz
 ```
 
-Then run `gippa setup --uniop --profile apptainer --db-dir "$DB" --accept-uniop-terms` (or
+Then run `gippa setup --install-uniop-from-git --profile apptainer --db-dir "$DB"` (or
 `--profile docker`). It adopts the archive and builds the image, but the build itself still
 needs network access: the base image and the conda packages come from their registries. Build
 where the network is, on a filesystem the run host also sees. Setup keeps `uniop/` at mode `0700`
