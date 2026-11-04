@@ -240,6 +240,8 @@ def _peptide_rows(
     tolerant_min_len: int,
     q_value_max: float,
 ) -> list[UnmappedRow]:
+    if peptides.empty:  # no peptide queries (a proteins-only run, issue #536)
+        return []
     state = _placement_state(placements)
     searched = _searched(peptides, q_value_max)
     ids_of: dict[str, list[str]] = {}
@@ -299,7 +301,8 @@ def unmapped_table(
     :func:`match_contaminant_proteins` (empty when the library is absent); ``tolerant_min_len``
     is ``mapping.tolerant.min_len``. Only searched peptides enter the bucket: engine decoys
     (``is_decoy``) and peptides with ``q_value > q_value_max`` (``input.q_value_max``) are
-    excluded; ``q_value == q_value_max`` and a missing q-value are kept.
+    excluded; ``q_value == q_value_max`` and a missing q-value are kept. Empty ``peptides`` (no
+    peptide queries, any columns) give protein rows only.
     """
     prefixes = tuple(p for p in contaminant_prefixes if p)
     rows = _peptide_rows(peptides, placements, pep_matches, prefixes, tolerant_min_len, q_value_max)

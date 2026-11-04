@@ -152,16 +152,16 @@
       "features",
       "genes",
       "genome",
-      "hits_exact",
-      "hits_tolerant",
-      "mapping_fdr",
-      "peptides",
-      "placement",
       "replicons"
     ],
     "optional_inputs": [
       "contaminants",
+      "hits_exact",
+      "hits_tolerant",
+      "mapping_fdr",
       "miniprot_gff",
+      "peptides",
+      "placement",
       "proteins_long",
       "sixframe",
       "tblastn_tsv"

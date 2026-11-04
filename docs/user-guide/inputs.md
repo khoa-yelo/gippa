@@ -233,6 +233,12 @@ picked target–decoy FDR at the gene level, the `decoy_picked` tier. With DIA-N
 Proteins longer than 40 aa are aligned to the genome with miniprot, then tblastn
 (`mapping/protein_hits.tsv`).
 
+A run with `--proteins` and no `--peptides` still writes the mapping files, the gene table
+(`tables/genes.tsv`), the context, operon and determinant tables and the report. Its detection tier
+is `protein_list`: a gene is detected when a mapped input protein names it, and the gene q-value is
+not estimated. Variants and novel ORFs need peptides, so the run skips them. If the FASTA holds
+records of 40 aa or shorter, they take the peptide path, and the tier follows from that evidence.
+
 ## Abundance table (`--abundance`)
 
 The first column is a protein ID: one that matches `--proteins`, a locus tag or a gene ID. Exactly
