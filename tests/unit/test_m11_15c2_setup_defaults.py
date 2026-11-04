@@ -248,7 +248,7 @@ def test_help_lists_every_opt_out_and_minimal() -> None:
     from gippa.cli import cli
 
     text = CliRunner().invoke(cli, ["setup", "--help"]).output
-    for flag in (*NO_FLAG.values(), "--no-images", "--minimal", "--accept-uniop-terms"):
+    for flag in (*NO_FLAG.values(), "--no-images", "--minimal", "--install-uniop-from-git"):
         assert re.search(rf"(?<![\w-]){re.escape(flag)}(?![\w-])", text), flag
 
 
