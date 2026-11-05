@@ -265,10 +265,13 @@ def test_points_are_drawn_in_kb_and_blue(tmp_path: Path, cfg1: GippaConfig) -> N
 
 
 def test_legend_names_the_loess_span(tmp_path: Path, cfg: GippaConfig, cfg1: GippaConfig) -> None:
-    for c, want in ((cfg1, "trend (LOESS, span 1)"), (cfg, "trend (LOESS, span 0.1)")):
+    # the span goes through fmt_num or fmt_alpha (M12-04 PR 5 review r1 L1), not ":g"
+    for c, frac in ((cfg1, 1.0), (cfg, 0.1)):
+        wants = {f"trend (LOESS, span {style.fmt_num(frac)})",
+                 f"trend (LOESS, span {style.fmt_alpha(frac)})"}  # fmt: skip
         genes = [gene(f"g{i}", 2_000 * i + 1_000, float(i % 5)) for i in range(40)]
-        inst = _render(landscape_out(tmp_path / want, genes=genes, islands=[]), c)
-        assert want in _fig_texts(inst)
+        inst = _render(landscape_out(tmp_path / str(frac), genes=genes, islands=[]), c)
+        assert wants & set(_fig_texts(inst)), (wants, _fig_texts(inst))
         assert "express" not in " ".join(_fig_texts(inst)).lower()
 
 
