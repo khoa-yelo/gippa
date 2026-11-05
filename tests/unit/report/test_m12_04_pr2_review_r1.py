@@ -276,8 +276,9 @@ def test_autocorrelation_caveats_name_their_rows(source: str, tmp_path: Path) ->
 
 # ---------------------------------------------------------------- L2
 
-#: plot -> (index stem, a drawn-instance stem prefix)
-INDEX_STEMS = {"V03": "V03_locus", "V13": "V13_novel_orfs_locus"}
+#: plot -> its index instance stem; V03's index is an image-free table since M12-04 PR 4 (P-12)
+INDEX_STEMS = {"V13": "V13_novel_orfs_locus"}
+V03_INDEX_CAPTION = "Locus views, in display order"
 
 
 def _captions_by_stem(page_: Page, pid: str) -> dict[str, str]:
@@ -302,8 +303,7 @@ def _plot_files(pid: str, suffixes: list[str | None], tmp: Path) -> Any:
     return read_plot_files(tmp)[pid]
 
 
-@pytest.mark.parametrize(("pid", "suffixes"), [("V03", ["ISL0001", "PRO0002", None]),
-                                               ("V13", [None, "locus_N1", "locus"])])  # fmt: skip
+@pytest.mark.parametrize(("pid", "suffixes"), [("V13", [None, "locus_N1", "locus"])])
 def test_index_instance_has_its_own_caption(pid: str, suffixes: list[str | None],
                                             tmp_path: Path) -> None:  # fmt: skip
     from gippa.report.content import CAPTIONS
@@ -329,14 +329,22 @@ def test_index_instance_has_its_own_caption(pid: str, suffixes: list[str | None]
     assert not flag_tokens(idx), idx
 
 
-def test_sim_plots_v03_index_caption() -> None:
+def test_sim_plots_v03_index_is_a_table_with_its_own_caption() -> None:
+    """M12-04 PR 4 (P-12): the V03 index is a table under its own caption; every V03 figure is a
+    drawn locus view with the drawn caption."""
+    from gippa.report.content import CAPTIONS
+
     page_, _ = sim_report("sim_plots")
     caps = _captions_by_stem(page_, "V03")
-    assert INDEX_STEMS["V03"] in caps, sorted(caps)
-    idx = caps.pop(INDEX_STEMS["V03"])
     assert caps, "sim_plots has no drawn V03 locus"
-    assert idx.startswith(QUESTIONS["V03"]) and re.search(r"\bindex\b", idx, re.I), idx
-    assert all(c != idx for c in caps.values()), caps
+    assert "V03_locus" not in caps, sorted(caps)
+    assert all(c == words(CAPTIONS["V03"]) for c in caps.values()), caps
+    tables = page_.slot("V03").find_all(lambda n: n.tag == "table"
+                                        and n.attrs.get("data-index") == "V03")  # fmt: skip
+    assert len(tables) == 1
+    (caption,) = tables[0].by_tag("caption")
+    assert words(caption.text()).startswith(V03_INDEX_CAPTION), words(caption.text())
+    assert not flag_tokens(words(caption.text()))
 
 
 # ---------------------------------------------------------------- L3

@@ -394,7 +394,8 @@ def test_example4_header_only_is_the_empty_state(
     out = _out(tmp_path / "run", [])
     insts = _run(out, cfg, nov)
     main = _main(insts)
-    assert main.title == "No novel ORF candidates in this run"
+    # M12-04 P-14: "Nothing to show: <reason>. <what would change it>."
+    assert main.title.startswith("Nothing to show: no novel ORF candidates in this run. ")
     assert list(main.data.columns) == COUNT_COLUMNS
     assert len(main.data) == 0
     assert _views(insts) == []

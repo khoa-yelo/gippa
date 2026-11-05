@@ -58,6 +58,7 @@ from gippa.io.plot_files import write_instance
 from gippa.io.run_view import RunView
 from gippa.viz import base, style
 from gippa.viz.base import Instance, Skip
+from gippa.viz.operon_pairs import CLASS_COLOUR as _CLASS_COLOUR
 
 REPO = Path(__file__).resolve().parents[3]
 VAL_OUT = Path(os.environ.get("GIPPA_ROOT", REPO / "local")) / "runs" / "val-mvp-2026-10-22" / "OUT"
@@ -76,7 +77,9 @@ COLUMNS = [
     "n",
 ]
 CLASS_ORDER = ("OP", "NO", "CV", "SW", "DV")
-CLASS_COLOUR = {"OP": "#0072B2", "NO": "#E69F00", "CV": "#009E73", "SW": "#CC79A7"}
+#: the plot's class colours (M12-04 P-11 moved NO off the detection "unestimated" orange); the
+#: rule is pinned in ``test_class_colours_are_distinct_and_no_is_not_a_detection_colour``
+CLASS_COLOUR = {c: v.upper() for c, v in _CLASS_COLOUR.items()}
 FLAGS = (
     "internal_promoter_supported",
     "internal_terminator_supported",
@@ -519,6 +522,12 @@ def test_single_pair_class_is_a_single_bin_histogram(tmp_path: Path, cfg: GippaC
     assert max(dens) == pytest.approx(N_BINS / 1.2, rel=1e-5)
 
 
+def test_class_colours_are_distinct_and_no_is_not_a_detection_colour() -> None:
+    assert set(CLASS_COLOUR) == {"OP", "NO", "CV", "SW"}
+    assert len(set(CLASS_COLOUR.values())) == len(CLASS_COLOUR)
+    assert CLASS_COLOUR["NO"] not in {c.upper() for c in style.DETECTION.values()}
+
+
 def test_panel_a_draws_class_colours_and_a_legend_with_n(tmp_path: Path, cfg: GippaConfig) -> None:
     pairs = _full_pairs()
     inst = _render(_out(tmp_path, pairs, _full_flags(pairs)), cfg)
@@ -696,22 +705,20 @@ def test_panel_c_colours_by_class_and_draws_identity(tmp_path: Path, cfg: GippaC
 def test_validation_like_unmeasured_pairs_empty_states(tmp_path: Path, cfg: GippaConfig) -> None:
     pairs = [_pair(1, "OP"), _pair(2, "NO"), _pair(3, "CV"), _pair(4, "DV"), _pair(5, "SW")]
     inst = _render(_out(tmp_path, pairs, flags=[]), cfg)
-    assert inst.title == "0 pairs flagged at q ≤ 0.1; too few measured pairs for densities"
-    assert len(_bin_rows(inst)) == 0
-    assert _counts(inst) == {c: 0 for c in CLASS_ORDER}
-    assert len(_rows(inst, "b")) == 0
-    assert len(_rows(inst, "c")) == 0
-    assert _texts(_ax(inst, "a"))
-    assert _texts(_ax(inst, "c"))
-    assert "no lfdr values" in _texts(_ax(inst, "b"))
-    assert _points(_ax(inst, "c")) == []
+    # M12-04 P-11: every panel would be empty: one empty state
+    assert inst.empty is True
+    assert inst.title == "No measured operon pairs: partner comparisons need abundance."
+    assert len(inst.data) == 0
+    assert all(not ax.axison for ax in inst.figure.axes)
+    assert all(_points(ax) == [] for ax in inst.figure.axes)
 
 
 def test_no_no_pairs_uses_the_too_few_title(tmp_path: Path, cfg: GippaConfig) -> None:
     pairs = [*_delta_pairs("OP", [0.2, 0.5], 1), *_delta_pairs("CV", [1.0], 3)]
     pairs_flags = [_flag_row(pairs[0], "unexplained_discordance", 0.01)]
     inst = _render(_out(tmp_path, pairs, pairs_flags), cfg)
-    assert inst.title == "1 pairs flagged at q ≤ 0.1; too few measured pairs for densities"
+    # M12-04 P-11: the title names only the classes drawn (OP; no NO pair)
+    assert inst.title == f"Median |Δ| OP {style.fmt_num(0.35)} log2; 1 pairs flagged at q ≤ 0.1"
 
 
 def test_header_only_pairs_is_the_framework_empty_state(tmp_path: Path, cfg: GippaConfig) -> None:

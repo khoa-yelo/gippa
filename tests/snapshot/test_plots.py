@@ -126,7 +126,9 @@ def test_rich_fixture_plants_the_spec_features() -> None:
 
 
 #: plots whose primary table is header-only on ``sim_empty`` and so draw ``base.empty_state``
-EMPTY_STATE_PIDS = ("V02", "V03", "V05", "V07", "V08", "V10", "V11", "V12", "V13", "V14", "V15",
+#: V03 has no instance on the empty fixture: no locus, and its index is an image-free table
+#: (M12-04 PR 4, P-12)
+EMPTY_STATE_PIDS = ("V02", "V05", "V07", "V08", "V10", "V11", "V12", "V13", "V14", "V15",
                     "V16")  # fmt: skip
 
 
@@ -151,6 +153,7 @@ def test_empty_fixture_renders_every_plot_in_its_empty_state() -> None:
     assert skipped == {}
     not_empty = [p for p in EMPTY_STATE_PIDS if not all(map(checklist.is_empty_state, results[p]))]
     assert not_empty == []
+    assert results["V03"] == []  # no locus to draw; the index is a data table (M12-04 P-12)
 
 
 # ---------------------------------------------------------------- baselines
@@ -178,7 +181,9 @@ def test_baselines_cover_all_16_plots_on_both_fixtures() -> None:
     pids = set(base.registered())
     for fixture in sf.FIXTURES:
         have = {c.pid for c in CASES if c.fixture == fixture and c.error is None}
-        assert have == pids, f"{fixture}: missing {sorted(pids - have)}"
+        # M12-04 PR 4 (P-12): V03 draws only locus views, none on the empty fixture
+        want = pids - {"V03"} if fixture == sf.EMPTY else pids
+        assert have == want, f"{fixture}: missing {sorted(want - have)}"
         for pid, prefix in (("V03", "V03_locus_"), ("V13", "V13_novel_orfs_locus_")):
             stems = [c.stem for c in CASES if c.fixture == fixture and c.pid == pid]
             loci = [s for s in stems if s.startswith(prefix)]

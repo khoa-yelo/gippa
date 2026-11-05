@@ -56,6 +56,7 @@ from gippa.io.plot_files import write_instance
 from gippa.io.run_view import RunView
 from gippa.viz import style
 from gippa.viz.base import Instance, Skip
+from gippa.viz.words import plain
 
 REPO = Path(__file__).resolve().parents[3]
 COLUMNS = [
@@ -432,7 +433,10 @@ def test_all_na_contig_shows_not_estimable(tmp_path: Path, cfg: GippaConfig) -> 
     axes = _contig_axes(inst, "chrB")
     assert axes, [a.get_label() for a in inst.figure.axes]
     notes = [t for ax in axes for t in _notes(ax)]
-    assert any(t.startswith("not estimable (") and "few_values" in t for t in notes), notes
+    # M12-04 P-06: the flags in plain words, never as raw tokens
+    few = plain("few_values")
+    assert any(t.startswith("Not drawn: ") and few in " ".join(t.split()) for t in notes), notes
+    assert not any("few_values" in t for t in notes), notes
     assert all(markers(ax) == [] for ax in axes)
     assert inst.title == EX4_TITLE
 
@@ -471,15 +475,12 @@ def test_validation_like_run_is_not_estimable(tmp_path: Path, cfg: GippaConfig) 
     """Example 6 in miniature: every row NA (``few_values`` / ``not_estimable``) on two contigs."""
     rows = [*na_correlogram_rows("chrA"), *na_correlogram_rows("chrB")]
     inst = _render(_out(tmp_path, rows, (CHR_A, CHR_B)), cfg)
-    assert inst.title == NOT_ESTIMABLE
-    for contig in ("chrA", "chrB"):
-        axes = _contig_axes(inst, contig)
-        assert axes, contig
-        notes = [t for ax in axes for t in _notes(ax)]
-        assert any(t.startswith("not estimable (") for t in notes), (contig, notes)
-        assert all(markers(ax) == [] for ax in axes)
-    assert len(inst.data) == 2 * 2 * 2 * 20
-    assert not inst.data["significant"].astype(bool).any()
+    # M12-04 P-06: no Moran's I row to draw: one empty state naming the detected genes
+    assert inst.empty is True
+    assert inst.title == "Too few detected genes (1 of 1) to estimate autocorrelation."
+    assert all(not ax.axison for ax in inst.figure.axes)
+    assert all(markers(ax) == [] for ax in inst.figure.axes)
+    assert "significant" not in inst.data or not inst.data["significant"].astype(bool).any()
 
 
 def test_header_only_table_is_an_empty_state(tmp_path: Path, cfg: GippaConfig) -> None:

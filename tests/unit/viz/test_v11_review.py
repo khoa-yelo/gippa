@@ -45,6 +45,7 @@ from test_v11_operon_pairs import (  # type: ignore[import-not-found]
 
 from gippa.config import GippaConfig, resolve_config
 from gippa.viz import style
+from gippa.viz.operon_pairs import EMPTY_MEASURED
 
 NOTE_B = "lfdr ranks pairs; flags use q"
 IMPUTED = "abundance_imputed"
@@ -187,6 +188,9 @@ def test_b2_property_adding_imputed_pairs_changes_neither_a_nor_c(
     with tempfile.TemporaryDirectory() as tmp:
         inst = _render(_out(Path(tmp) / "all", pairs), resolve_config())
         want = _render(_out(Path(tmp) / "kept", kept), resolve_config()) if kept else None
+    if not kept:  # no measured pair: the M12-04 P-11 empty state, nothing drawn
+        assert inst.empty is True and inst.title == EMPTY_MEASURED
+        return
     want_ids = {str(p["pair_id"]) for p in kept}
     got_c = set(_by_pair(_rows(inst, "c"))) if len(_rows(inst, "c")) else set()
     assert got_c == want_ids

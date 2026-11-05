@@ -212,7 +212,11 @@ def test_example_5_header_only_is_the_empty_state(tmp_path: Path, cfg: GippaConf
     assert len(inst.data) == 0
     assert set(inst.data.columns) == COLUMNS
     assert inst.data.columns[0] == "panel"
-    assert inst.title == "No ALT site supported by peptides"
+    # M12-04 P-14: "Nothing to show: <reason>. <what would change it>."
+    assert inst.title == (
+        "Nothing to show: no peptide supports an alternative allele (ALT) site in this run. "
+        "Peptides over sites where the strain differs from the reference would add some."
+    )
     assert inst.suffix is None
 
 
@@ -221,10 +225,8 @@ def test_genome_relation_same_empty_state_title(tmp_path: Path) -> None:
     out = vv.build_out(tmp_path, [], [])
     inst = _render(out, cfg)
     assert len(inst.data) == 0
-    assert inst.title in (
-        "No ALT calls (genome relation same)",
-        "No ALT calls (genome relation `same`)",
-    )
+    assert inst.title.startswith("Nothing to show: ")
+    assert "no ALT calls" in inst.title and "`" not in inst.title
 
 
 def test_renders_without_peptide_hits(tmp_path: Path, cfg: GippaConfig) -> None:
