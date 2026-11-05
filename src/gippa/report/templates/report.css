@@ -20,3 +20,5 @@ code { font-size: 0.95em; }
 .this-run .version { color: #555; font-size: 0.9em; }
 nav#toc { position: sticky; top: 0; z-index: 1; background: #fff; border-bottom: 1px solid #ccc; padding: 0.3em 0; font-size: 0.85em; }
 nav#toc ul { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 0.3em 1em; }
+.anchor { scroll-margin-top: 4em; }
+@media print { nav#toc { position: static; } }

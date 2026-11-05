@@ -173,16 +173,22 @@ def _novel_fdr(novel: pd.DataFrame) -> str | None:
     fdrs = pd.to_numeric(called["class_fdr"], errors="coerce")
     flags = called["flags"].fillna("").astype(str).str.split(";")
     k = int(flags.map(lambda f: "denovo_only_unsupported" in f).sum())
-    suffix = (f"; {k} of {len(called)} calls de novo-only without database or RBS support "
-              "(exact de novo errors are not covered by the class FDR)") if k else ""  # fmt: skip
+    suffix = (f"; {style.fmt_count(k)} of {style.fmt_count(len(called))} de novo-only, no database"
+              " or RBS support") if k else ""  # fmt: skip
     if called.empty or bool(fdrs.isna().any()):
         return UNESTIMATED + suffix if k else None
-    return f"class FDR ≤ {format_value(float(fdrs.max()))}{suffix}"
+    return f"class FDR {_at_most(float(fdrs.max()))}{suffix}"
+
+
+def _at_most(q: float) -> str:
+    """``"≤ 0.87"``; ``"< 0.001"`` for a q below 0.001 (``fmt_q``)."""
+    text = style.fmt_q(q)
+    return text if text.startswith("<") else f"≤ {text}"
 
 
 #: tier -> the genes card estimate; ``{fdr}`` and ``{q}`` are filled in (M12-04 PR 1)
 _TIER_FDR = {
-    "decoy_picked": "picked target–decoy gene-level FDR {fdr} at gene-level q ≤ {q}",
+    "decoy_picked": "picked target–decoy gene-level FDR {fdr} at q ≤ {q}",
     "mayu": "Mayu gene-level FDR {fdr}, from peptides at q ≤ {q}",
 }
 _NO_FDR = {
@@ -192,6 +198,9 @@ _NO_FDR = {
 #: tiers where the two-peptide count is a separate statement
 _TWO_PEP_LINE = ("decoy_picked", "mayu")
 NO_POWER = "no predictive power"
+#: why a card shows no ``.estimate`` (``checks.unlabelled_numbers`` accepts these)
+EXACT_COUNT = "an exact count"
+SD_IN_VALUE = "the CV SD is shown with the value"
 
 
 def _alt_estimate(alt: pd.DataFrame) -> str | None:
@@ -201,8 +210,8 @@ def _alt_estimate(alt: pd.DataFrame) -> str | None:
     known, n_un = rates.dropna(), int(rates.isna().sum())
     if known.empty:
         return None
-    lo, hi = format_value(float(known.min())), format_value(float(known.max()))
-    tail = f" ({n_un} unestimated)" if n_un else ""
+    lo, hi = style.fmt_q(float(known.min())), style.fmt_q(float(known.max()))
+    tail = f" ({style.fmt_count(n_un)} unestimated)" if n_un else ""
     return f"class error rate {lo if lo == hi else f'{lo}–{hi}'} (pooled per class){tail}"
 
 
@@ -247,20 +256,27 @@ def cards(view: RunView, cfg: GippaConfig) -> tuple[list[dict[str, Any]], list[s
         return [f"{PATHS[key]}:{c}" for c in cols] if view.has(key) else []
 
     def add(name: str, label: str, value: int | str, estimate: str | None, sources: list[str],
-            **extra: str) -> None:  # fmt: skip
-        out.append({"name": name, "label": label, "value": str(value),
-                    "estimate": estimate or UNESTIMATED, "sources": sources, **extra})  # fmt: skip
+            *, no_estimate: str | None = None, **extra: str) -> None:  # fmt: skip
+        """A card; a missing ``estimate`` reads ``unestimated``, or is left out when
+        ``no_estimate`` says why none applies (an exact count, an SD in the value)."""
+        card: dict[str, Any] = {"name": name, "label": label, "value": str(value),
+                                "estimate": estimate or ("" if no_estimate else UNESTIMATED),
+                                "sources": sources, **extra}  # fmt: skip
+        if no_estimate and not estimate:
+            card["no_estimate"] = no_estimate
+        out.append(card)
 
     def n_unmapped(kind: str) -> int:
         unmapped = table("unmapped")
         return 0 if unmapped is None else int((unmapped["kind"] == kind).sum())
 
-    roles = head.input_roles(view)
+    roles = head.manifest_roles(view)  # gate on the manifest record only
     count = style.fmt_count
 
     def genes(t: pd.DataFrame) -> None:
-        tiers = sorted({str(x) for x in t["detection_tier"].dropna()})
-        tier = tiers[0] if len(tiers) == 1 else None
+        if t.empty:
+            return  # no genes: no card, never "0 of 0" (M12-04 PR 1 review r1)
+        tier = head.tier_of(view, t)  # the box's tier: manifest first
         sources = src("genes_tsv", "detected", "detection_tier", "detected_2pep")
         label = f"of {count(len(t))} genes detected"
         n = _count(t, "detected")
@@ -291,7 +307,8 @@ def cards(view: RunView, cfg: GippaConfig) -> tuple[list[dict[str, Any]], list[s
         if (roles is not None and "proteins" not in roles) or n_in == 0:
             return
         add("proteins_placed", f"of {count(n_in)} proteins placed", count(n), None,
-            src("protein_hits", "protein_id") + src("unmapped", "kind"))  # fmt: skip
+            src("protein_hits", "protein_id") + src("unmapped", "kind"),
+            no_estimate=EXACT_COUNT)  # fmt: skip
 
     def islands(t: pd.DataFrame) -> None:
         add("islands", "abundance islands", _count(t, "p_value", a.context),
@@ -312,12 +329,12 @@ def cards(view: RunView, cfg: GippaConfig) -> tuple[list[dict[str, Any]], list[s
         counts = alt["confidence"].astype(str).value_counts()
         known = [c for c in ("high", "candidate") if c in counts.index]
         order = known + sorted(c for c in counts.index if c not in known)
-        by = ", ".join(f"{int(counts[c])} {c}" for c in order)
-        add("alt_calls", f"ALT calls ({by or 'none'})", len(alt), _alt_estimate(alt),
+        by = ", ".join(f"{count(int(counts[c]))} {c}" for c in order)
+        add("alt_calls", f"ALT calls ({by or 'none'})", count(len(alt)), _alt_estimate(alt),
             src("variants", "call", "confidence", "class_error_rate"))  # fmt: skip
 
     def novel(t: pd.DataFrame) -> None:
-        add("novel_orfs", "novel ORFs called", _count(t, "called"), _novel_fdr(t),
+        add("novel_orfs", "novel ORFs called", count(_count(t, "called")), _novel_fdr(t),
             src("novel_orfs", "called", "class_fdr"))  # fmt: skip
 
     def model(t: pd.DataFrame) -> None:
@@ -332,12 +349,13 @@ def cards(view: RunView, cfg: GippaConfig) -> tuple[list[dict[str, Any]], list[s
             add("model_r2", "", "not fitted:", _not_fitted(view, table("genes_tsv")), sources,
                 prefix="Model R²:")  # fmt: skip
             return
-        value = style.fmt_num(r2) if sd is None else f"{style.fmt_num(r2)} ± {style.fmt_num(sd)}"
+        value = style.fmt_num(r2) if sd is None else head.mean_sd(r2, sd)
         no_power = r2 <= 0 or (sd is not None and r2 - sd <= 0)
-        label = f"(CV), {NO_POWER};" if no_power else "(CV);"
+        label = f"(CV), {NO_POWER}" if no_power else "(CV)"
         unc = " (uncalibrated)" if "null_uncalibrated" in flags else ""
         est = None if p is None else f"null p {style.fmt_q(p)}{unc}"
-        add("model_r2", label, value, est, sources, prefix="Model R²:")
+        add("model_r2", label if est is None else f"{label};", value, est, sources,
+            no_estimate=None if sd is None else SD_IN_VALUE, prefix="Model R²:")  # fmt: skip
 
     specs = [("genes_tsv", genes), ("peptide_hits", peptides), ("protein_hits", proteins),
              ("islands", islands), ("operon_flags", operons), ("variants", variants),
