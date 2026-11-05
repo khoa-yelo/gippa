@@ -130,8 +130,9 @@ def render_readme(out: Path) -> str:
     lines += _section("Files", files, _WIDE)
     legacy = legacy_entries(out)
     if legacy:
-        lines += _name_list("From an earlier GIPPA version (step intermediates, now written under "
-                            "intermediate/); they can be removed:", out, legacy)  # fmt: skip
+        lines += _name_list(
+            "From GIPPA 1.0 (now under intermediate/); they can be removed:", out, legacy
+        )
     shown = {n for n, _ in FOLDERS if n in present and (out / n).is_dir()}
     shown |= {n for n, _ in FILES if n in present and (out / n).is_file()}
     other = sorted(present - shown - set(legacy))
