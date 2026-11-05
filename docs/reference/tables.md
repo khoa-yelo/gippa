@@ -54,7 +54,7 @@ Sites with an ALT or mixed call, plus frameshift events.
 | `class_error_rate` | string | — | Class-specific error rate (%.6g) or unestimated | required; pattern `unestimated|[0-9.eE+-]+` |
 | `class_error_n` | integer | — | Paired de novo observations (reads) pooled into the class error rate | minimum 0 |
 | `source` | string | — | Semicolon-joined sources of the ALT peptides | required; pattern `(?:database|denovo)(?:;(?:database|denovo))*` |
-| `flags` | string | — | Semicolon-joined flags from the Variants vocabulary (§9.4) | pattern `(?:mass_equivalent|snv|multi_nt|strain_difference|database_derived|start_codon|stop_codon|vcf_unrepresentable)(?:;(?:mass_equivalent|snv|multi_nt|strain_difference|database_derived|start_codon|stop_codon|vcf_unrepresentable))*` |
+| `flags` | string | — | Semicolon-joined flags from the Variants vocabulary (§9.4) | pattern `(?:mass_equivalent|snv|multi_nt|strain_difference|database_derived|putative_start|start_codon|stop_codon|vcf_unrepresentable)(?:;(?:mass_equivalent|snv|multi_nt|strain_difference|database_derived|putative_start|start_codon|stop_codon|vcf_unrepresentable))*` |
 
 ## `novel_orfs`
 

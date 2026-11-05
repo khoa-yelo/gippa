@@ -4,7 +4,8 @@
 (a) Grouped bars of the ``variants.tsv`` sites: x = ``call`` (ALT, mixed), one bar per
 ``confidence``, stacked by §7.5.3 flag (a site with several flags counts once in each; sites
 without flags count under "no flag"); the "all" total is printed above each bar. (b) Monospace
-text alignments of the ``gippa.viz.support.top_alt_sites`` (at most 30): a header line, the
+text alignments of the ``gippa.viz.support.top_alt_sites`` (at most 15, ``SHOWN_SITES``; the title
+says "top 15 of <n>" when more ALT sites exist): a header line, the
 reference window from ``plots/support/variant_windows.tsv`` (absent: no ``ref`` line) and one
 peptide line, the covering peptide that spans most of the ±10 aa display window, with the ALT
 residue bold vermillion, then "(N peptides)", the distinct covering count (lead decision 8).
@@ -19,7 +20,9 @@ lies in ``[start, end)`` and the codon is in frame with the placement (lead deci
 circular replicon the codon is also tried one replicon length further (origin-crossing
 placements). ``alt_type`` block / frameshift sites list a peptide unaligned with ``NOTE``.
 Panel (b) residue positions are protein positions, so ``-`` strand and origin-crossing genes need
-no special case. Pure: tables come from the ``RunView``.
+no special case. Figure text writes residue ``J`` as "I/L"; the plotted data keeps ``J``. When the
+title says "class error unestimated", the site lines do not repeat it. Pure: tables come from the
+``RunView``.
 """
 
 from __future__ import annotations
@@ -51,13 +54,21 @@ COLUMNS = (
 CALLS = ("ALT", "mixed")
 CONFIDENCES = ("high", "candidate")
 NO_FLAG, ALL = "no flag", "all"
+#: flags drawn in the colour of another: ``putative_start`` shares ``start_codon``'s (both are
+#: start-codon artefacts; Okabe-Ito has 8 colours besides grey for 9 flags)
+SHARED_COLOUR: Mapping[str, str] = {"putative_start": "start_codon"}
 #: §9.4 flag -> Okabe-Ito colour, assigned in flag order (grey is kept for "no flag")
-FLAG_COLOUR: Mapping[str, str] = dict(
-    zip(FLAG_ORDER, [c for k, c in style.OKABE_ITO.items() if k != "grey"], strict=False)
-)
+_OWN = dict(
+    zip([f for f in FLAG_ORDER if f not in SHARED_COLOUR],
+        [c for k, c in style.OKABE_ITO.items() if k != "grey"], strict=True)
+)  # fmt: skip
+FLAG_COLOUR: Mapping[str, str] = {f: _OWN[SHARED_COLOUR.get(f, f)] for f in FLAG_ORDER}
 NO_FLAG_COLOUR = style.OKABE_ITO["grey"]
 ALT_COLOUR = style.OKABE_ITO["vermillion"]
 EN_DASH = "\N{EN DASH}"
+#: panel (b) draws the first 15 top sites (P-17); the support data keeps ``MAX_TOP_SITES``
+SHOWN_SITES = 15
+UNESTIMATED = "class error unestimated"
 NOTE = "length-changing: shown unaligned"
 UNALIGNED = frozenset({"block", "frameshift"})
 EMPTY = "No ALT site supported by peptides"
@@ -172,7 +183,7 @@ def panel_b(
     hits, lengths, windows = view.table("peptide_hits"), _lengths(view), _windows(view)
     rows: list[dict[str, object]] = []
     peps: list[dict[str, int]] = []
-    for rank, (_, s) in enumerate(top_alt_sites(variants).iterrows(), start=1):
+    for rank, (_, s) in enumerate(top_alt_sites(variants, SHOWN_SITES).iterrows(), start=1):
         cov = covering(s, hits, lengths)
         win = windows.get(str(s["variant_id"]))
         row = {"panel": "b", "rank": rank, "confidence": s["confidence"]}
@@ -210,7 +221,15 @@ def title(variants: pd.DataFrame) -> str:
     if _has_one(variants):
         rng += DEGENERATE_MARK
     pooled = f", {POOLED}" if rates else ""
-    return f"{h} high-confidence and {c} candidate ALT sites (class error {rng}{pooled})"
+    top = ""
+    if len(alt) > SHOWN_SITES:
+        top = f" (top {SHOWN_SITES} of {len(alt)}; all in tables/variants.tsv)"
+    return f"{h} high-confidence and {c} candidate ALT sites{top} (class error {rng}{pooled})"
+
+
+def residues(aa: str) -> str:
+    """Residues as figure text: ``J`` (I or L, not told apart by mass) reads "I/L"."""
+    return aa.replace("J", "I/L")
 
 
 def _draw_a(ax: Axes, rows: Sequence[Mapping[str, object]]) -> None:
@@ -288,7 +307,7 @@ def _header(r: Mapping[str, object]) -> str:
         where = f"{cell('contig')}:{cell('codon_start')} ({cell('strand')})  no gene (aa NA)"
     else:
         where = f"{r['gene']} aa {r['aa_pos']}"
-    return (f"{where}  {cell('ref_aa')}→{cell('alt_aa')}  {cell('alt_type')}  "
+    return (f"{where}  {residues(cell('ref_aa'))}→{residues(cell('alt_aa'))}  {cell('alt_type')}  "
             f"{cell('confidence')}  n_alt {cell('n_alt')} / n_ref {cell('n_ref')}  "
             f"{error}")  # fmt: skip
 
@@ -304,12 +323,18 @@ def _best(cov: Mapping[str, int]) -> str:
 
 
 def _draw_b(ax: Axes, rows: Sequence[Mapping[str, object]], peps: Sequence[Mapping[str, int]],
-            windows: Mapping[str, tuple[int, str]], footnote: bool = False) -> None:  # fmt: skip
+            windows: Mapping[str, tuple[int, str]], footnote: bool = False,
+            shared_error: bool = False) -> None:  # fmt: skip
+    """``shared_error``: the title already says "class error unestimated" for every site shown,
+    so the site lines leave it out (stated once)."""
     ax.set_axis_off()
     ax.set_title("(b) peptides at the top ALT sites", loc="left")
     lines = _Lines(ax)
     for r, cov in zip(rows, peps, strict=True):
-        lines.put(0, _header(r))
+        head = _header(r)
+        if shared_error and head.endswith(f"  {UNESTIMATED}"):
+            head = head.removesuffix(f"  {UNESTIMATED}")
+        lines.put(0, head)
         lines.next()
         genic = not pd.isna(r["aa_pos"])  # no gene: shown unaligned (lead decision 11)
         pos = int(str(r["aa_pos"])) if genic else 0
@@ -360,9 +385,9 @@ def variants(view: RunView, cfg: GippaConfig) -> list[base.Instance] | base.Skip
     ax_a = fig.add_axes((0.08, (h_b + 0.6) / height, 0.7, (h_a - 0.9) / height), label="a")
     ax_b = fig.add_axes((0.03, 0.1 / height, 0.94, h_b / height), label="b")
     _draw_a(ax_a, rows_a)
-    _draw_b(ax_b, rows_b, peps, _windows(view), footnote)
+    text = title(table)
+    _draw_b(ax_b, rows_b, peps, _windows(view), footnote, UNESTIMATED in text)
     if not rows_b:
         ax_b.text(0.0, 0.9, "no ALT site", transform=ax_b.transAxes, color="#555555")
-    text = title(table)
     fig.suptitle(text, y=1 - 0.12 / height)
     return [base.Instance(None, fig, data_frame([*rows_a, *rows_b]), text)]

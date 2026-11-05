@@ -37,7 +37,7 @@ VARIANTS_COLUMNS: tuple[str, ...] = (
 )  # fmt: skip
 _FLAG_ORDER: tuple[str, ...] = (
     "mass_equivalent", "snv", "multi_nt", "strain_difference", "database_derived",
-    "start_codon", "stop_codon", "vcf_unrepresentable",
+    "putative_start", "start_codon", "stop_codon", "vcf_unrepresentable",
 )  # fmt: skip
 VARIANT_FLAGS: frozenset[str] = frozenset(_FLAG_ORDER)
 UNESTIMATED = "unestimated"

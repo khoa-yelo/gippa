@@ -9,6 +9,7 @@
 - `multi_nt`
 - `strain_difference`
 - `database_derived`
+- `putative_start`
 - `start_codon`
 - `stop_codon`
 - `vcf_unrepresentable`

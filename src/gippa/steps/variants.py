@@ -44,6 +44,8 @@ from gippa.variants.error_rates import alt_support, annotate_sites, class_rates,
 from gippa.variants.flags import flags_for, left_block_site, start_codons
 from gippa.variants.pileup import Support, eligible, pileup, sites
 from gippa.variants.qc import id_mixups, site_support
+from gippa.variants.starts import FLAG as PUTATIVE_START
+from gippa.variants.starts import is_putative_start, putative_start_codons
 from gippa.variants.vcf_records import FORMAT_FIELDS, INFO_FIELDS, vcf_records
 
 LAYER_MISSING_HITS_TOLERANT = "layer_missing:hits_tolerant"
@@ -97,7 +99,9 @@ def run_variants(
     """Rule 2's chain: the pileup (with its ``attrs``), the ``variants.tsv`` frame and the VCF
     records. ``peptide_hits`` is 0-based half-open with ``;``-joined ``diff_types``. Each site
     carries its M7-05 flags and its M7-10 class error rate from the C17 ``spectra`` (none:
-    ``unestimated``); neither changes a call, confidence or count. Pure."""
+    ``unestimated``); neither changes a call or count. ``putative_start`` rows (an unannotated
+    start read as M, ``gippa.variants.starts``) are capped at ``candidate``; no other flag
+    changes confidence. Pure."""
     pile, table, records, _ = run_variants_qc(peptide_hits, hits_tolerant, peptides, gm, genome,
                                               cfg, spectra)  # fmt: skip
     return pile, table, records
@@ -128,12 +132,16 @@ def run_variants_qc(
     for a in aligns:
         by_pep.setdefault(a.peptide, []).append(a)
     tol = cfg.variants.mass_equivalent_tol_da
-    flags = []
+    start_set = putative_start_codons(cfg.annotation.start_codons)
+    flags, capped = [], []
     for r, peps in zip(st.to_dict("records"), alt_peps, strict=True):
         alt_aligns = [a for p in sorted(peps) for a in by_pep.get(p, ())]
         left = left_block_site(r, alt_aligns, genome, gm.replicons, tol, table=tt)
         alt_src = {(support[p].source, support[p].search_db) for p in peps}
-        flags.append(tuple(flags_for(r, starts, cfg, alt_src, left_block=left)))
+        fl = tuple(flags_for(r, starts, cfg, alt_src, left_block=left))
+        cap = is_putative_start(r, alt_aligns, genome, gm.replicons, start_set, starts, table=tt)
+        flags.append((*fl, PUTATIVE_START) if cap else fl)  # vcf_records orders them (§9.4)
+        capped.append(cap)
     st["flags"] = flags
     rates = []
     if spectra is not None:
@@ -141,6 +149,9 @@ def run_variants_qc(
         is_dn = spectra["source"].astype(str).eq("denovo").to_numpy(dtype=bool)
         rates = class_rates(paired_observations(spectra[is_dn], spectra[~is_dn], sup))
     st = annotate_sites(st, rates)
+    if any(capped):  # after the class rates, before the records: VCF CONF = TSV confidence
+        st["confidence"] = ["candidate" if c else v for c, v in zip(capped, st["confidence"],
+                                                                    strict=True)]  # fmt: skip
     records, table = vcf_records(st, pile, genome, gm.replicons, table=tt)
     sources = {p: (str(s.source), str(s.search_db)) for p, s in support.items()}
     return pile, table, records, site_support(table["variant_id"], alt_peps, sources)

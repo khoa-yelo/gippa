@@ -133,6 +133,7 @@ FLAG_TEXT: Mapping[str, str] = MappingProxyType(
         "snv": "single nucleotide change",
         "multi_nt": "change of more than one nucleotide",
         "database_derived": "supported by a peptide from another database",
+        "putative_start": "likely an unannotated start read as methionine; capped at candidate",
         "start_codon": "variant at a start codon",
         "stop_codon": "variant at a stop codon",
         "vcf_unrepresentable": "spans the origin; not written to the VCF",
