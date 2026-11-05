@@ -530,7 +530,7 @@ def _page(
     absent = not_applicable(view, plots)
     off = {sid for sid, _, _ in absent}
     shown_sections = [s for s in SECTIONS if s.id not in off]
-    sections = [
+    sections: list[dict[str, Any]] = [
         {"id": s.id, "heading": s.heading,
          "plots": [_plot_slot(p, plots.get(p), skipped, twins, True, linked)
                    for p in s.plots],
@@ -539,6 +539,15 @@ def _page(
     ]  # fmt: skip
     summary, notes = cards(view, cfg)
     doc, note = content.read_manifest(view)
+    det = _detection(view)
+    if redact:  # the unreadable-table notes, paths rewritten (review r1)
+        outdir = str((doc or {}).get("outdir") or "")
+        notes = [content.redact_note(n, outdir) for n in notes]
+        for t in (t for s in sections for t in s["tables"]):
+            if t.get("error"):
+                t["error"] = content.redact_note(t["error"], outdir)
+        if det and det.get("error"):
+            det["error"] = content.redact_note(det["error"], outdir)
     shown = any(i.stem in twins and not i.empty for s in shown_sections for p in s.plots
                 if p in plots for i in plots[p].instances)  # fmt: skip
     entries = [(s.id, s.heading) for s in shown_sections]
@@ -552,7 +561,7 @@ def _page(
         box=head.run_box(view, plots, skipped, cfg),
         toc=head.toc(view, entries), not_applicable=[(n, r) for _, n, r in absent],
         not_applicable_heading=NOT_APPLICABLE, glossary=content.GLOSSARY,
-        detection=_detection(view),
+        detection=det,
         provenance=content.provenance(view, doc, note, redact), extras=content.extras(view, doc),
         warnings=content.summary_warnings(view), snippets=content.snippets(),
         code_note=content.genetic_code_note(table),

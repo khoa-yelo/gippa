@@ -373,11 +373,34 @@ def _shown_path(value: str, outdir: str, redact: bool = False) -> str:
     return path.name or value
 
 
+#: a URL (left unchanged) or a path: a ``/`` at the start or after ``=``, ``,``, ``[``, ``{``,
+#: whitespace, a quote or ``:``, running to the next ``,``, ``]``, ``}``, quote or whitespace
+_STOP = r",\]}'\"\s"
+_URL = rf"[A-Za-z][A-Za-z0-9+.\-]*://[^{_STOP}]*"
+_ARG_PATH = re.compile(rf"(?P<url>{_URL})|(?:^|(?<=[=,\[{{\s'\":]))/[^{_STOP}]*")
+#: the same in prose (an unreadable-table note): also after ``(``, also ending at ``)``
+_NOTE_PATH = re.compile(rf"(?P<url>{_URL})|(?:^|(?<=[=,\[{{(\s'\":]))/[^{_STOP})]*")
+
+
+def _redact_paths(text: str, outdir: str, pattern: re.Pattern[str] = _ARG_PATH) -> str:
+    """``text`` with every path of ``pattern`` redacted (``_shown_path``); URLs unchanged."""
+    return pattern.sub(lambda m: m[0] if m["url"] else _shown_path(m[0], outdir, True), text)
+
+
+def redact_note(text: str, outdir: str) -> str:
+    """An unreadable-table note for ``gippa report --redact``: its absolute paths rewritten as
+    in ``redact_command_line`` (a path may also follow ``(`` and end at ``)``)."""
+    return _redact_paths(text, outdir, _NOTE_PATH)
+
+
 def redact_command_line(args: Sequence[str], outdir: str) -> str:
     """``args`` joined by single spaces for a shareable report (``gippa report --redact``,
     R-09): every absolute path as ``<input>/<file name>``, a path under ``outdir`` as
     ``<outdir>/<relative>`` (``<outdir>`` itself), the ``--profile`` value as ``<profile>``
-    (next token or after ``--profile=``); relative arguments are unchanged."""
+    (next token or after ``--profile=``); relative arguments and URLs are unchanged. A path
+    starts a token, follows ``=`` (``--set=k=/a=b/c`` is the path ``/a=b/c``), ``,``, ``[``,
+    ``{``, a space, a quote or ``:``, or is attached to a short option (``-o/x``); it runs to
+    the next ``,``, ``]``, ``}``, quote or whitespace (review r1 M1)."""
     shown, prev = [], ""
     for arg in map(str, args):
         if prev == "--profile":
@@ -385,7 +408,8 @@ def redact_command_line(args: Sequence[str], outdir: str) -> str:
         elif arg.startswith("--profile="):
             shown.append("--profile=<profile>")
         else:
-            shown.append(_local_path(arg, outdir, redact=True))
+            cut = 2 if _SHORT_PATH.match(arg) else 0
+            shown.append(arg[:cut] + _redact_paths(arg[cut:], outdir))
         prev = arg
     return " ".join(shown)
 

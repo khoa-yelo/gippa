@@ -115,11 +115,14 @@ dpi match the run. `--config` or `--set` override them, for example
 The report's size budget is 25 MB. Beyond it, `--strict` exits with code 3.
 
 Gene detection shows two views of `tables/detection_summary.tsv` instead of its first rows: genes
-detected by q threshold (detected, genes, FDR, FDR with two peptides, expected false positives;
-the counts only for the protein-list and two-peptide tiers), and observed over expected
-detection (O/E) by replicon, feature class and COG category. A link leads to the full table. Use
-`gippa report --redact` before you share or publish a report: the provenance command line then
-shows `<input>/<file name>` for every absolute path, `<outdir>` for the output directory and
-`<profile>` for the profile; nothing else changes. When the report with every figure inlined would
+detected by q threshold (detected, genes, FDR, FDR with two peptides, expected false positives),
+and observed over expected detection (O/E) by replicon, feature class and COG category. The q
+threshold view shows only the columns the tier estimates: a decoy-picked run shows detected and
+FDR only. The protein-list tier shows its detected count only, the two-peptide tier also the count
+detected with at least two peptides. A link leads to the full table. Use `gippa report --redact`
+before you share or publish a report. It rewrites the absolute paths in the provenance command line
+and in the notes about tables that could not be read: a path under the output directory becomes
+`<outdir>/<relative path>`, any other `<input>/<file name>` (file names are kept), and the profile
+becomes `<profile>`. URLs (`https://…`, `s3://…`) are left unchanged, and nothing else changes. When the report with every figure inlined would
 reach 20 MB (80 % of the size budget), the V13 locus views are linked to their SVG files under
 `plots/` instead of being inlined, so keep `plots/` next to `report/` when you move the report.

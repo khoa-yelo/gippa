@@ -3,9 +3,11 @@
 Pure: the long file as read by ``RunView.table`` in, header and rows of two pivoted tables out.
 The long file is unchanged and no table file is written (Q8).
 
-- **Tier view:** one row per ``q_threshold`` group of the ``tier`` section, ascending, with
-  ``n_detected``, ``n_genes``, ``fdr``, ``fdr_2pep`` and ``fp``. A tier without such rows
-  (``protein_list``, ``two_peptide``) shows its counts only (``group_type = tier`` rows).
+- **Tier view:** one row per ``q_threshold`` group of the ``tier`` section, ascending (a group
+  that is no finite number after the finite ones), with ``n_detected``, ``n_genes``, ``fdr``,
+  ``fdr_2pep`` and ``fp``; a column NA on every row is dropped (``decoy_picked``:
+  ``q | detected | FDR``). A tier without such rows shows its counts only (``group_type = tier``
+  rows): ``protein_list`` its detected count, ``two_peptide`` also the 2-peptide count.
 - **Detectability view:** observed over expected by group (the ``o_over_e`` rows of the
   ``basic`` section, ``gippa.context.summary.basic_rows``), in file order.
 
@@ -29,6 +31,8 @@ TIER_METRICS = ("n_detected", "n_genes", "fdr", "fdr_2pep", "fp")
 TIER_HEADER = ["q", "detected", "genes", "FDR", "FDR (2-pep)", "FP"]
 COUNT_METRICS = ("n_detected", "n_detected_2pep")
 COUNT_HEADER = ["tier", "detected", "detected with ≥ 2 peptides"]
+#: the count-only tiers that report a 2-peptide count
+TWO_PEP_TIERS = frozenset({"two_peptide"})
 OE_METRICS = ("n_genes", "n_detected", "expected", "o_over_e")
 OE_HEADER = ["grouping", "group", "genes", "detected (O)", "expected (E)", "O/E"]
 _COUNTS = frozenset({"n_detected", "n_detected_2pep", "n_genes"})
@@ -56,11 +60,20 @@ def _pivot(rows: pd.DataFrame, metrics: Sequence[str]) -> list[str]:
     return [cell(m, by.get(m)) for m in metrics]
 
 
-def _float_key(group: str) -> tuple[float, str]:
+def _float_key(group: str) -> tuple[bool, float, str]:
+    """Finite thresholds ascending, then any other group by its text (review r1 L5)."""
     try:
-        return float(group), group
+        q = float(group)
     except ValueError:
-        return math.inf, group
+        q = math.nan
+    finite = math.isfinite(q)
+    return not finite, q if finite else 0.0, group
+
+
+def _drop_na(header: list[str], rows: list[list[str]]) -> Grid:
+    """``header`` and ``rows`` without the columns (but the first) NA on every row."""
+    keep = [0] + [k for k in range(1, len(header)) if any(r[k] != "NA" for r in rows)]
+    return [header[k] for k in keep], [[r[k] for k in keep] for r in rows]
 
 
 def tier_view(frame: pd.DataFrame) -> Grid | None:
@@ -70,13 +83,14 @@ def tier_view(frame: pd.DataFrame) -> Grid | None:
     if len(curve):
         groups = sorted(set(_col(curve, "group")), key=_float_key)
         rows = [[g, *_pivot(curve[_col(curve, "group") == g], TIER_METRICS)] for g in groups]
-        return TIER_HEADER, rows
+        return _drop_na(TIER_HEADER, rows)
     counts = tier[_col(tier, "group_type") == "tier"]
     if not len(counts):
         return None
     groups = list(dict.fromkeys(_col(counts, "group")))
-    return COUNT_HEADER, [[g, *_pivot(counts[_col(counts, "group") == g], COUNT_METRICS)]
-                          for g in groups]  # fmt: skip
+    width = 3 if TWO_PEP_TIERS & set(groups) else 2
+    rows = [[g, *_pivot(counts[_col(counts, "group") == g], COUNT_METRICS)] for g in groups]
+    return COUNT_HEADER[:width], [r[:width] for r in rows]
 
 
 def oe_view(frame: pd.DataFrame) -> Grid | None:
