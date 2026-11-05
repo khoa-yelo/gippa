@@ -111,6 +111,7 @@ Rebuild plots and report from existing tables.
 | `--no-interactive` | flag | — | — | Static report only. |
 | `--plots` | `TEXT` | — | — | Comma-separated plot IDs (V01,V02,...). |
 | `--strict` | flag | — | — | Exit 3 when the report exceeds its size budget. |
+| `--redact` | flag | — | — | Shareable report: local paths and the profile in the command line are replaced. |
 | `--version` | flag | — | — | Show the version and exit. |
 | `--config` | `FILE` | — | — | YAML config file. |
 | `--set` | `KEY=VALUE` | — | — | Override any config key (dotted, repeatable; VALUE is YAML). |

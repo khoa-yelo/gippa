@@ -93,31 +93,46 @@ def contig_order(data: pd.DataFrame, fasta: Sequence[str]) -> list[str]:
     return [c for c in fasta if c in present] + sorted(present - set(fasta))
 
 
-def _lag1(data: pd.DataFrame, contig: str) -> pd.Series | None:
+def _lag1(data: pd.DataFrame, contig: str, null: str) -> pd.Series | None:
     hit = data[
         (data["contig"] == contig)
         & (data["statistic"] == "morans_i")
-        & (data["null_model"] == "tu_block")
+        & (data["null_model"] == null)
         & (data["lag"] == 1)
     ]
     if not len(hit):
         return None
     row = hit.iloc[0]
-    finite = all(math.isfinite(float(row[c])) for c in ("value", "null_lo", "null_hi"))
+    finite = all(math.isfinite(float(row[c])) for c in ("value", "null_lo", "null_hi", "q_value"))
     return row if finite else None
 
 
+def lag1_moran(data: pd.DataFrame, order: Sequence[str]) -> tuple[str, pd.Series] | None:
+    """The lag-1 ``morans_i`` row the V02 and V10 titles both name, with its null: the first
+    usable row (``value``, ``q_value``, ``null_lo`` and ``null_hi`` all finite) trying the
+    TU-block null first, then the gene-label null (old runs), each over the contigs in
+    ``order`` (FASTA order). ``data`` is ``drawn(data_frame(...))``; ``None`` if no row is usable
+    (M12-04 PR 5 review 1, M1)."""
+    for null in NULLS[::-1]:
+        for contig in order:
+            row = _lag1(data, contig, null)
+            if row is not None:
+                return null, row
+    return None
+
+
 def title(data: pd.DataFrame, order: Sequence[str]) -> str:
-    """The lag-1 Moran's I of the first contig with a finite TU-block row against that row's
-    envelope and q (lead decision 4)."""
-    for contig in order:
-        row = _lag1(data, contig)
-        if row is None:
-            continue
-        v, lo, hi, q = (float(row[c]) for c in ("value", "null_lo", "null_hi", "q_value"))
-        word = "above" if v > hi else "below" if v < lo else "within"
-        return f"Lag-1 Moran's I {base.sig(v)}: {word} the TU-block envelope (q = {base.sig(q)})"
-    return NOT_ESTIMABLE
+    """The lag-1 Moran's I of ``lag1_moran``'s row against that row's envelope and q, naming
+    the null (lead decision 4; M12-04 P-04)."""
+    found = lag1_moran(data, order)
+    if found is None:
+        return NOT_ESTIMABLE
+    null, row = found
+    v, lo, hi, q = (float(row[c]) for c in ("value", "null_lo", "null_hi", "q_value"))
+    word = "above" if v > hi else "below" if v < lo else "within"
+    name = NULL_LABEL[null]
+    return (f"Lag-1 Moran's I {style.fmt_num(v)}: {word} the {name} envelope "
+            f"({style.q_equals(q)}, {name} null)")  # fmt: skip
 
 
 def _flags(rows: pd.DataFrame) -> str:

@@ -91,12 +91,13 @@ def _row(panel: str, **cells: object) -> list[object]:
 
 def _f2(v: float) -> str:
     """Two decimals with a Unicode minus (decision 5, S2), but at least two significant digits
-    (``base.sig``) below 0.1 so a small non-zero value never reads 0.00; NaN reads
-    "unestimated"."""
+    (``style.fmt_num``) below 0.1 so a small non-zero value never reads 0.00; zero (either sign)
+    is ``fmt_num``'s zero, never a signed zero; NaN reads "unestimated"."""
     if math.isnan(v):
         return "unestimated"
-    out = f"{v:.2f}" if v == 0 or abs(v) >= 0.1 else base.sig(v)
-    return out.replace("-", MINUS)
+    if v == 0 or abs(v) < 0.1:
+        return style.fmt_num(0.0 if v == 0 else v)
+    return f"{v:.2f}".replace("-", MINUS)
 
 
 # ---------------------------------------------------------------- data
@@ -321,7 +322,7 @@ def _panel_c(ax: Axes, c: pd.DataFrame) -> None:
     bar.set_label("feature value rank", fontsize=6)
 
 
-def _panel_d(ax: Axes, d: pd.DataFrame, r2: str) -> None:
+def _panel_d(ax: Axes, d: pd.DataFrame, r2: str, lab: str = style.ABUNDANCE_FALLBACK) -> None:
     """Above 20,000 rows the model genes are binned (log counts, decision 5 B4); the flagged
     genes stay points."""
     x, y = _floats(d["x"]), _floats(d["y"])
@@ -357,8 +358,8 @@ def _panel_d(ax: Axes, d: pd.DataFrame, r2: str) -> None:
     lo, hi = float(np.nanmin([x.min(), y.min()])), float(np.nanmax([x.max(), y.max()]))
     ax.plot([lo, hi], [lo, hi], color=style.OKABE_ITO["grey"], linewidth=0.6, linestyle=":")
     ax.text(1.0, 1.02, r2, transform=ax.transAxes, ha="right", va="bottom", fontsize=6)
-    ax.set_xlabel("predicted log2 abundance (LightGBM out-of-fold)")
-    ax.set_ylabel("observed log2 abundance")
+    ax.set_xlabel(f"predicted {lab} (LightGBM out-of-fold)")
+    ax.set_ylabel(f"observed {lab}")
     handles, _ = ax.get_legend_handles_labels()
     ax.legend(handles=[*proxy, *handles], frameon=False, loc="best", fontsize=6)
     ax.set_title(D_HEADER, loc="left", pad=14)  # above the R² line
@@ -369,7 +370,7 @@ def footnotes(model: pd.DataFrame) -> list[str]:
     p = _metric(model, "elastic_net", "null_p")
     if p is not None and not _na(p["value"]):
         cal = " (uncalibrated: valid only for exchangeable TUs, ADR-0034)"
-        notes.append(f"null p {float(p['value']):.2g}"
+        notes.append(f"null p {style.fmt_q(float(p['value']))}"
                      + (cal if "null_uncalibrated" in _flags(p["flags"]) else ""))  # fmt: skip
     if (model["metric"] == "delta_r2").any():
         notes.append(DELTA_FOOT)
@@ -382,7 +383,7 @@ def footnotes(model: pd.DataFrame) -> list[str]:
     "V15",
     "determinants",
     needs=("determinants_model",),
-    optional=("determinants_attribution", "determinants_features"),
+    optional=("determinants_attribution", "determinants_features", "genes_tsv"),
     layers=("abundance",),
 )
 def determinants(view: RunView, cfg: GippaConfig) -> list[base.Instance] | base.Skip:
@@ -417,7 +418,8 @@ def determinants(view: RunView, cfg: GippaConfig) -> list[base.Instance] | base.
     if len(sub["d"]):
         r2 = (f"CV R² {cv_text(model, 'lightgbm')} (LightGBM, plotted); "
               f"elastic net {cv_text(model)} (primary)")  # fmt: skip
-        _panel_d(ax_d, sub["d"], r2)
+        lab = style.run_abundance_label(view.table("genes_tsv")) or style.ABUNDANCE_FALLBACK
+        _panel_d(ax_d, sub["d"], r2, lab)
     else:
         _note(ax_d, "no out-of-fold predictions", D_HEADER)
     for i, note in enumerate(footnotes(model)):

@@ -261,14 +261,17 @@ def test_points_are_drawn_in_kb_and_blue(tmp_path: Path, cfg1: GippaConfig) -> N
     assert [x for x, _ in pts] == pytest.approx([m / 1000 for m in EX1_MIDS], abs=1e-3)
     assert [y for _, y in pts] == pytest.approx(EX1_LOG2)
     assert ax.get_xlabel() == "position (kb)"
-    assert ax.get_ylabel() == "log2 abundance"
+    assert ax.get_ylabel() == style.run_abundance_label(pd.DataFrame(_ex1_genes()))  # P-13
 
 
 def test_legend_names_the_loess_span(tmp_path: Path, cfg: GippaConfig, cfg1: GippaConfig) -> None:
-    for c, want in ((cfg1, "trend (LOESS, span 1)"), (cfg, "trend (LOESS, span 0.1)")):
+    # the span goes through fmt_num or fmt_alpha (M12-04 PR 5 review r1 L1), not ":g"
+    for c, frac in ((cfg1, 1.0), (cfg, 0.1)):
+        wants = {f"trend (LOESS, span {style.fmt_num(frac)})",
+                 f"trend (LOESS, span {style.fmt_alpha(frac)})"}  # fmt: skip
         genes = [gene(f"g{i}", 2_000 * i + 1_000, float(i % 5)) for i in range(40)]
-        inst = _render(landscape_out(tmp_path / want, genes=genes, islands=[]), c)
-        assert want in _fig_texts(inst)
+        inst = _render(landscape_out(tmp_path / str(frac), genes=genes, islands=[]), c)
+        assert wants & set(_fig_texts(inst)), (wants, _fig_texts(inst))
         assert "express" not in " ".join(_fig_texts(inst)).lower()
 
 
@@ -344,7 +347,7 @@ def test_island_alpha_follows_the_config_inclusively(tmp_path: Path) -> None:
     assert len(_spans(_ax(inst, "chr1"))) == 1
 
 
-def test_title_adds_the_lag1_gene_label_morans_i(tmp_path: Path, cfg1: GippaConfig) -> None:
+def test_title_adds_the_lag1_tu_block_morans_i(tmp_path: Path, cfg1: GippaConfig) -> None:
     rows = correlogram_rows(
         overrides={
             ("morans_i", "gene_label", 1): (0.31, -0.002, -0.05, 0.05, 0.002),
@@ -354,8 +357,10 @@ def test_title_adds_the_lag1_gene_label_morans_i(tmp_path: Path, cfg1: GippaConf
     islands = [island("ISL_1", "high", 20_001, 40_000, 0.01)]
     out = landscape_out(tmp_path, genes=_ex1_genes(), islands=islands, autocorr=rows)
     inst = _render(out, cfg1)
+    # M12-04 P-04: the TU-block row, with its null named; P-18: q through fmt_q
     assert inst.title == (
-        "1 high and 0 low abundance islands at FWER ≤ 0.05; lag-1 Moran's I 0.31 (q = 0.002)"
+        "1 high and 0 low abundance islands at FWER ≤ 0.05; lag-1 Moran's I "
+        f"{style.fmt_num(0.31)} ({style.q_equals(0.03)}, TU-block null)"
     )
 
 

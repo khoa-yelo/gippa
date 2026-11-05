@@ -97,9 +97,18 @@ def test_skipped_plots_have_no_twin(built: tuple[Path, Page]) -> None:
 def test_page_twins_equal_figure_json_of_the_data_tsvs(
     built: tuple[Path, Page], tmp_path: Path
 ) -> None:
+    from helpers.report_fixtures import cfg
+
+    from gippa.io.run_view import RunView
+    from gippa.steps.plots import twin_meta
+
     _, page = built
     specs = _specs(page)
     assert {f"plotly-{p}" for p in RENDERED} <= set(specs), set(specs)
+    # the plots step hands every twin the run's meta (alpha, replicons and, since M12-04 P-13,
+    # abundance_label); the comparison twin gets the same meta
+    meta = twin_meta(RunView.from_outdir(tmp_path / "OUT"), cfg())
+    assert meta["abundance_label"] is not None, meta
     for stem, path in _data_tsvs(tmp_path / "work" / "plots").items():
         pid = stem[:3]
         if f"plotly-{pid}" not in specs:
@@ -107,7 +116,8 @@ def test_page_twins_equal_figure_json_of_the_data_tsvs(
         # decision 7: the page title is the finding title stored in the static SVG
         svg = path.parents[1] / f"{stem}.svg"
         title = (svg_title(svg.read_text(encoding="utf-8")) if svg.exists() else None) or stem
-        text = tw.figure_text(pid, tw.read(path.read_text(encoding="utf-8")), title)
+        data = tw.read(path.read_text(encoding="utf-8"))
+        text = tw.load().figure_json(pid, data, title, meta)
         assert text is not None
         assert specs[f"plotly-{pid}"] == json.loads(text), pid
 

@@ -23,7 +23,7 @@ from matplotlib.axes import Axes
 
 from gippa.viz import null_panels
 from gippa.viz.base import Instance, plot
-from gippa.viz.style import OKABE_ITO, new_figure
+from gippa.viz.style import OKABE_ITO, fmt_num, new_figure
 
 if TYPE_CHECKING:
     from gippa.config import GippaConfig
@@ -63,7 +63,7 @@ def _row(panel: str, table: str, **cells: object) -> _Row:
 
 
 def _g2(v: float) -> str:
-    return "NA" if not math.isfinite(v) else f"{v:.2g}"
+    return "NA" if not math.isfinite(v) else fmt_num(v)
 
 
 def in_unit(p: float) -> bool:

@@ -28,12 +28,13 @@ from gippa.viz.operon_pairs import CLASS_COLOUR, DENSITY_CLASSES, NOTE_B
 from gippa.viz.operon_pairs import COLUMNS as V11_COLUMNS
 from gippa.viz.qc import COLUMNS as V17_COLUMNS
 from gippa.viz.qc import IMPUTED, KIND_COLOUR, LEVEL_COLOUR, LEVELS, PLACED, UNMAPPED
-from gippa.viz.style import OKABE_ITO
+from gippa.viz.style import OKABE_ITO, fmt_alpha, fmt_count
 from gippa.viz.twins import (
     BLACK,
     DOT,
     MUTED,
     Meta,
+    abundance,
     alpha,
     contigs,
     finish,
@@ -128,8 +129,6 @@ FLAG_SYMBOL = {"internal_promoter_supported": "triangle-up", "unexplained_discor
                "internal_terminator_supported": "triangle-down", "other": "x",
                "conflict_terminator_in_operon": "square", "novel_operon_candidate": "star",
                "coabundant_despite_terminator": "cross"}  # fmt: skip
-DX = "|Δ| partner log2 abundance"
-PARTNERS = ("upstream partner log2 abundance", "downstream partner log2 abundance")
 
 
 @interactive("V11", V11_COLUMNS)
@@ -155,7 +154,8 @@ def v11(data: pd.DataFrame, title: str, meta: Meta = None) -> Any:
                              mode="lines+markers", hoverinfo="text", name="lfdr",
                              line={"color": CLASS_COLOUR["NO"]}), row=1, col=2)  # fmt: skip
     fig.add_hline(y=level, line={"dash": "dash", "color": MUTED, "width": 1}, row=1, col=2,
-                  annotation_text=f"flag threshold (q) {level:g}" if known else None)  # fmt: skip
+                  annotation_text=f"flag threshold (q) {fmt_alpha(level)}" if known
+                  else None)  # fmt: skip
     note(fig, NOTE_B, "2", 0.3, 0.97)
     c = data[data["panel"] == "c"]
     q, flag = floats(c["q_value"]), np.array(["" if isna(f) else str(f) for f in c["flag"]])
@@ -174,7 +174,9 @@ def v11(data: pd.DataFrame, title: str, meta: Meta = None) -> Any:
                                          "color": colour,
                                          "line": {"color": BLACK, "width": 1 if big else 0}}),
                       row=1, col=3)  # fmt: skip
-    for col, (xt, yt) in enumerate(((DX, "density"), (DX, "local fdr"), PARTNERS), start=1):
+    dx = abundance(meta, "|Δ| partner ")
+    partners = (abundance(meta, "upstream partner "), abundance(meta, "downstream partner "))
+    for col, (xt, yt) in enumerate(((dx, "density"), (dx, "local fdr"), partners), start=1):
         titles(fig, {"row": 1, "col": col}, xt, yt)
     return finish(fig, title, 400, barmode="overlay", bargap=0,
                   legend={"orientation": "h", "y": -0.25})  # fmt: skip
@@ -251,7 +253,7 @@ def v18(data: pd.DataFrame, title: str) -> Any:
     names = ["a  detectability reliability"]
     for t, f in drawn:
         extra = f", {outside[t, f]} outside [0, 1]" if outside.get((t, f)) else ""
-        names.append(f"{t}<br>{f}, n = {total[t, f]:g}{extra}")
+        names.append(f"{t}<br>{f}, n = {fmt_count(total[t, f])}{extra}")
     specs: list[list[dict[str, Any] | None]] = [[{"colspan": 2}, None, None, None]]
     fig = make_subplots(rows=1 + n_rows, cols=4, specs=specs + [[{}] * 4] * n_rows,
                         subplot_titles=names, vertical_spacing=0.3 / (1 + n_rows))  # fmt: skip

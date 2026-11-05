@@ -205,10 +205,12 @@ def test_b2_property_adding_imputed_pairs_changes_neither_a_nor_c(
 
 def test_b3_title_medians_are_medians_printed_with_2g(tmp_path: Path, cfg: GippaConfig) -> None:
     """OP |Δ| 0.1, 0.123, 0.9 (median 0.123 -> "0.12"; mean 0.374 -> "0.37");
-    NO |Δ| 1.0, 1.04, 2.5 (median 1.04 -> "1", %.3g "1.04"; mean 1.51 -> "1.5")."""
+    NO |Δ| 1.0, 1.04, 2.5 (median 1.04 -> "1.0" via fmt_num, %.3g "1.04"; mean 1.51 -> "1.5")."""
     pairs = [*_delta_pairs("OP", [0.1, -0.123, 0.9], 1), *_delta_pairs("NO", [1.0, 1.04, -2.5], 4)]
     inst = _render(_out(tmp_path, pairs), cfg)
-    assert inst.title == "Median |Δ| OP 0.12 vs NO 1 log2; 0 pairs flagged at q ≤ 0.1"
+    n = style.fmt_num  # M12-04 P-18: 2 significant digits, trailing zeros kept
+    want = f"Median |Δ| OP {n(0.123)} vs NO {n(1.04)} log2; 0 pairs flagged at q ≤ 0.1"
+    assert inst.title == want
 
 
 # --- B4: q exactly alpha ------------------------------------------------------------------------

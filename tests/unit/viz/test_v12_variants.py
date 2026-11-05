@@ -496,8 +496,8 @@ def test_without_support_panel_b_shows_peptides_only(tmp_path: Path, cfg: GippaC
 def test_title_counts_and_class_error_range(tmp_path: Path, cfg: GippaConfig) -> None:
     inst = _main(tmp_path, cfg)
     expected = (
-        "2 high-confidence and 2 candidate ALT sites (class error 0.004\u20130.02,"
-        " pooled per class over ALT and mixed sites)"
+        f"2 high-confidence and 2 candidate ALT sites (class error {style.fmt_num(0.004)}\u2013"
+        f"{style.fmt_num(0.02)}, pooled per class over ALT and mixed sites)"
     )
     assert inst.title == expected
     assert expected in _all_texts(inst)

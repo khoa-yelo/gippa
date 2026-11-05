@@ -208,7 +208,7 @@ def title(variants: pd.DataFrame) -> str:
     alt = variants[variants["call"] == "ALT"]
     h, c = int((alt["confidence"] == "high").sum()), int((alt["confidence"] == "candidate").sum())
     rates = [r for r in (class_error_value(v) for v in alt["class_error_rate"]) if r is not None]
-    lo, hi = (base.sig(min(rates)), base.sig(max(rates))) if rates else ("", "")
+    lo, hi = (style.fmt_num(min(rates)), style.fmt_num(max(rates))) if rates else ("", "")
     rng = plain("unestimated") if not rates else lo if lo == hi else f"{lo}{EN_DASH}{hi}"
     if _has_one(variants):
         rng += DEGENERATE_MARK
@@ -286,7 +286,7 @@ def _header(r: Mapping[str, object]) -> str:
         mark = DEGENERATE_MARK if rate == 1 else ""
         n = r.get("class_error_n")
         reads = "NA" if _na(n) else f"{n}"
-        error = f"class error {base.sig(rate)}{mark} (pooled, class of {reads} paired reads)"
+        error = f"class error {style.fmt_num(rate)}{mark} (pooled, class of {reads} paired reads)"
     if _na(r["gene"]) or _na(r["aa_pos"]):
         where = f"{cell('contig')}:{cell('codon_start')} ({cell('strand')})  no gene (aa NA)"
     else:

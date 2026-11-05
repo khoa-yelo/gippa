@@ -42,6 +42,7 @@ from gippa.viz.words import plain
 SNAPSHOT = Path(__file__).resolve().parents[2] / "data" / "snapshot" / "sim_plots" / "OUT"
 needs_snapshot = pytest.mark.skipif(not SNAPSHOT.is_dir(), reason="M9-25 snapshot fixture absent")
 EN_DASH = "\u2013"
+_n = style.fmt_num  # M12-04 P-18: V12 class-error text
 
 
 @pytest.fixture(autouse=True)
@@ -230,8 +231,11 @@ def _site(rate: object, **kw: object) -> dict[str, object]:
 
 @pytest.mark.parametrize(
     ("rate", "shown"),
-    [(0.872576, "0.87"), (1.0, "1"), (0.933333, "0.93"), (0.0234567, "0.023"), (0.0, "0"),
-     ("0.872576", "0.87"), (math.nan, "NA")],
+    # M12-04 P-18: the rate prints through style.fmt_num (trailing zeros kept: 1 -> "1.0");
+    # PR 11c: NA shows the flag's plain words
+    [(0.872576, _n(0.872576)), (1.0, _n(1.0)), (0.933333, _n(0.933333)),
+     (0.0234567, _n(0.0234567)), (0.0, _n(0.0)), ("0.872576", _n(0.872576)),
+     (math.nan, "NA")],
 )  # fmt: skip
 def test_v12_site_line_rounds_the_class_error(rate: object, shown: str) -> None:
     from gippa.viz.variants import _header
@@ -240,7 +244,7 @@ def test_v12_site_line_rounds_the_class_error(rate: object, shown: str) -> None:
     if shown == "NA":  # M12-04 PR 11c: the flag's plain words
         assert text.endswith(plain("class_error_unestimated")), text
     else:
-        star = "*" if shown == "1" else ""
+        star = "*" if float(rate) == 1 else ""  # type: ignore[arg-type]
         assert text.endswith(f"class error {shown}{star} (pooled, class of 1805 paired reads)"), (
             text
         )
@@ -248,11 +252,11 @@ def test_v12_site_line_rounds_the_class_error(rate: object, shown: str) -> None:
 
 @settings(max_examples=200, deadline=None)
 @given(st.floats(min_value=1e-3, max_value=1.0, allow_nan=False))
-def test_v12_site_line_class_error_is_base_sig(rate: float) -> None:
+def test_v12_site_line_class_error_is_fmt_num(rate: float) -> None:
     from gippa.viz.variants import _header
 
     star = "*" if rate == 1 else ""
-    want = f"class error {base.sig(rate)}{star} (pooled, class of 1805 paired reads)"
+    want = f"class error {_n(rate)}{star} (pooled, class of 1805 paired reads)"
     assert _header(_site(rate)).endswith(want)
 
 
@@ -273,7 +277,7 @@ def test_v12_snapshot_panel_b_site_lines_are_rounded() -> None:
     assert all("(pooled, class of " in line for line in lines if na not in line)
     assert "0.87" in tails
     for tail in tails:
-        assert tail == na or tail == base.sig(float(tail)), tail
+        assert tail == na or tail == _n(float(tail)), tail
     assert not any("0.872576" in line for line in lines)
 
 
@@ -285,8 +289,8 @@ def _alt(rates: list[object]) -> pd.DataFrame:
 
 @pytest.mark.parametrize(
     ("rates", "rng"),
-    [([0.872576, 1.0], f"0.87{EN_DASH}1*"), ([1.0, 1.0], "1*"), ([0.996, 1.0], "1*"),
-     ([0.5], "0.5"), ([0.8721, 0.8749, 0.87], "0.87")],
+    [([0.872576, 1.0], f"{_n(0.87)}{EN_DASH}{_n(1.0)}*"), ([1.0, 1.0], f"{_n(1.0)}*"),
+     ([0.996, 1.0], f"{_n(1.0)}*"), ([0.5], _n(0.5)), ([0.8721, 0.8749, 0.87], _n(0.87))],
 )  # fmt: skip
 def test_v12_title_equal_ends_print_once(rates: list[object], rng: str) -> None:
     from gippa.viz.variants import title
@@ -302,7 +306,7 @@ def test_v12_title_equal_ends_print_once(rates: list[object], rng: str) -> None:
 def test_v12_title_range_property(rates: list[float]) -> None:
     from gippa.viz.variants import title
 
-    lo, hi = base.sig(min(rates)), base.sig(max(rates))
+    lo, hi = _n(min(rates)), _n(max(rates))
     want = lo if lo == hi else f"{lo}{EN_DASH}{hi}"
     want += "*" if max(rates) == 1 else ""
     got = title(_alt(list(rates)))

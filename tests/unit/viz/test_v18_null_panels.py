@@ -344,6 +344,11 @@ def _ax(inst: Instance, key: str) -> Axes:
     return axes[key]
 
 
+def _pq(p: float, q: float) -> str:
+    """A region caption's p and q, printed with fmt_q (M12-04 P-18)."""
+    return f"p {style.fmt_q(p)}, q {style.fmt_q(q)}"
+
+
 def _texts(ax: Axes) -> list[str]:
     return [t.get_text() for t in ax.findobj(Text) if t.get_text()]
 
@@ -677,9 +682,10 @@ def test_uncalibrated_caption_while_flagged(tmp_path: Path, cfg: GippaConfig) ->
     _support(out, "null_determinants", ND_COLUMNS, rows)
     inst = _render(out, cfg)
     flagged = _texts(_ax(inst, "determinants_model / lightgbm"))
-    assert any("null p 0.001 (uncalibrated, ADR-0034)" in t for t in flagged), flagged
+    p = style.fmt_q(0.001)  # M12-04 P-18
+    assert any(f"null p {p} (uncalibrated, ADR-0034)" in t for t in flagged), flagged
     plain = _texts(_ax(inst, "determinants_model / elastic_net"))
-    assert any("null p 0.001" in t for t in plain), plain
+    assert any(f"null p {p}" in t for t in plain), plain
     assert any(UNCALIBRATED_NOTE in t for t in plain), plain  # unconditional (lead decision 4)
 
 
@@ -1060,9 +1066,9 @@ def test_b1_split_region_draws_each_contig_alone(tmp_path: Path, cfg: GippaConfi
         ("regions_stats", f3),
     ]
     for fam, values, obs, caption in (
-        (f1, chr1, 5.0, "p 0.01, q 0.02"),
-        (f2, r02, 0.5, "p 0.03, q 0.04"),
-        (f3, pa, -1.0, "p 0.4, q 0.5"),
+        (f1, chr1, 5.0, _pq(0.01, 0.02)),
+        (f2, r02, 0.5, _pq(0.03, 0.04)),
+        (f3, pa, -1.0, _pq(0.4, 0.5)),
     ):
         _check_histogram(inst, "regions_stats", fam, values)
         assert _observed(inst, "regions_stats", fam) == obs

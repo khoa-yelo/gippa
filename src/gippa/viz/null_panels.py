@@ -22,7 +22,7 @@ import numpy as np
 import pandas as pd
 from matplotlib.axes import Axes
 
-from gippa.viz.style import OKABE_ITO
+from gippa.viz.style import OKABE_ITO, fmt_q
 
 if TYPE_CHECKING:
     from gippa.io.run_view import RunView
@@ -65,7 +65,7 @@ def _num(col: pd.Series) -> np.ndarray:
 
 
 def _fmt(v: float) -> str:
-    return f"{v:.2g}" if math.isfinite(v) else "not available"
+    return fmt_q(v) if math.isfinite(v) else "not available"
 
 
 def _caption(text: str, observed: float) -> str:

@@ -79,7 +79,11 @@ EX4: dict[tuple[str, str, int], Cell] = {
     ("morans_i", "gene_label", 2): (0.08, -0.002, -0.05, 0.1, 0.4),
     ("morans_i", "tu_block", 2): (0.08, -0.004, -0.09, 0.11, 0.4),
 }
-EX4_TITLE = "Lag-1 Moran's I 0.31: above the TU-block envelope (q = 0.002)"
+#: M12-04 P-04 names the null; P-18 prints the numbers through fmt_num / fmt_q
+EX4_TITLE = (
+    f"Lag-1 Moran's I {style.fmt_num(0.31)}: above the TU-block envelope "
+    f"({style.q_equals(0.002)}, TU-block null)"
+)
 NOT_ESTIMABLE = "Autocorrelation not estimable on this genome"
 CHR_A = ("chrA", 100_000, "circular", "chromosome")
 CHR_B = ("chrB", 60_000, "circular", "chromosome")
@@ -439,7 +443,10 @@ def test_title_uses_the_first_fasta_contig_with_a_finite_row(
     rows = [*correlogram_rows("chrA", overrides=EX4), *correlogram_rows("chrB")]
     inst = _render(_out(tmp_path / "ba", rows, (CHR_B, CHR_A)), cfg)
     # chrB (first in FASTA order) lag 1: 0.16 above its TU envelope (-0.094, 0.086), q 0.5
-    assert inst.title == "Lag-1 Moran's I 0.16: above the TU-block envelope (q = 0.5)"
+    assert inst.title == (
+        f"Lag-1 Moran's I {style.fmt_num(0.16)}: above the TU-block envelope "
+        f"({style.q_equals(0.5)}, TU-block null)"
+    )
     rows = [*correlogram_rows("chrA", overrides=EX4), *na_correlogram_rows("chrB")]
     inst = _render(_out(tmp_path / "na", rows, (CHR_B, CHR_A)), cfg)
     assert inst.title == EX4_TITLE
@@ -454,7 +461,10 @@ def test_title_places_lag1_against_the_tu_envelope(
         ("morans_i", "tu_block", 1): (value, -0.004, -0.05, 0.12, 0.04),
     }
     inst = _render(_out(tmp_path, correlogram_rows("chrA", overrides=over)), cfg)
-    assert inst.title == f"Lag-1 Moran's I {value:g}: {word} the TU-block envelope (q = 0.04)"
+    assert inst.title == (
+        f"Lag-1 Moran's I {style.fmt_num(value)}: {word} the TU-block envelope "
+        f"({style.q_equals(0.04)}, TU-block null)"
+    )
 
 
 def test_validation_like_run_is_not_estimable(tmp_path: Path, cfg: GippaConfig) -> None:
@@ -513,7 +523,8 @@ def test_property_marker_title_and_significance_follow_the_tu_row(
     word = "above" if value > hi else "below" if value < lo else "within"
     if tu_q is not None:
         assert inst.title == (
-            f"Lag-1 Moran's I {value:g}: {word} the TU-block envelope (q = {tu_q:g})"
+            f"Lag-1 Moran's I {style.fmt_num(value)}: {word} the TU-block envelope "
+            f"({style.q_equals(tu_q)}, TU-block null)"
         )
 
 

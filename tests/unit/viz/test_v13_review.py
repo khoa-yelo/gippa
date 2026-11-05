@@ -326,13 +326,14 @@ def test_class_with_only_uncalled_finite_rows_is_labelled_none_called(
     ]  # fmt: skip
     ax = _axes(_main(_rows_run(tmp_path, cfg, nov, rows)).figure, "counts")
     texts = sorted(_collapse(t.get_text()) for t in ax.texts if t.get_text().strip())
-    assert texts == ["FDR ≤ 0.004", "none called"]
+    assert texts == [f"FDR ≤ {style.fmt_num(0.004)}", "none called"]  # M12-04 P-18
 
 
 def test_singular_title(tmp_path: Path, cfg: GippaConfig, nov: ModuleType) -> None:
     rows = [orf("NOVEL_chr1_1001_p", start_longest=1_001, end=1_300, class_fdr="0.004")]
     main = _main(_rows_run(tmp_path, cfg, nov, rows))
-    assert _collapse(main.title) == "1 novel ORF called (class FDR ≤ 0.004), 0 unestimated"
+    want = f"1 novel ORF called (class FDR ≤ {style.fmt_num(0.004)}), 0 unestimated"
+    assert _collapse(main.title) == want
 
 
 def test_title_fdr_bound_is_the_max_over_called_rows_of_every_class(
@@ -351,7 +352,8 @@ def test_title_fdr_bound_is_the_max_over_called_rows_of_every_class(
             class_fdr="0.5", called=False, rank=5),
     ]  # fmt: skip
     main = _main(_rows_run(tmp_path, cfg, nov, rows))
-    assert _collapse(main.title) == "5 novel ORFs called (class FDR ≤ 0.02), 0 unestimated"
+    want = f"5 novel ORFs called (class FDR ≤ {style.fmt_num(0.02)}), 0 unestimated"
+    assert _collapse(main.title) == want
 
 
 def test_called_row_with_na_rank_sorts_after_every_ranked_row(

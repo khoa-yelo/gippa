@@ -630,7 +630,7 @@ def circos(view: RunView, cfg: GippaConfig) -> list[base.Instance] | base.Skip:
     d = int((genes["detection_status"] == "detected").sum())
     parts = [f"{d} of {len(genes)} genes detected ({base.title_pct(d, len(genes))})"]
     if n_isl is not None:
-        parts.append(f"{_plural(n_isl, 'island')} at FWER ≤ {alpha:g}")
+        parts.append(f"{_plural(n_isl, 'island')} at FWER ≤ {style.fmt_alpha(alpha)}")
     if markers:
         parts.append(", ".join(markers))
     title = "; ".join(parts)

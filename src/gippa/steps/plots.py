@@ -115,11 +115,18 @@ def skipped_plots(view: RunView) -> dict[str, str]:
 
 
 def twin_meta(view: RunView, cfg: GippaConfig) -> dict[str, Any]:
-    """The run context of the twins (M9-15 lead decision 5): the ``stats.alpha`` levels and the
-    replicon lengths in FASTA order."""
+    """The run context of the twins (M9-15 lead decision 5): the ``stats.alpha`` levels, the
+    replicon lengths in FASTA order and the abundance axis label (M12-04 P-13)."""
+    from gippa.viz.style import run_abundance_label
+
     reps = (view.preflight() or {}).get("replicons", [])
+    try:
+        label = run_abundance_label(view.table("genes_tsv"))
+    except (OSError, ValueError):  # an unreadable gene table: the twins keep the plain label
+        label = None
     return {"alpha": cfg.stats.alpha.model_dump(),
-            "replicons": {str(r["id"]): int(r["length"]) for r in reps}}  # fmt: skip
+            "replicons": {str(r["id"]): int(r["length"]) for r in reps},
+            "abundance_label": label}  # fmt: skip
 
 
 #: identifier columns of plot data TSVs, read as text so ``01`` / ``0001`` keep their spelling
@@ -174,13 +181,15 @@ def write_report(
     return page
 
 
-def rerender_report(outdir: Path, cfg: GippaConfig) -> Path:
+def rerender_report(outdir: Path, cfg: GippaConfig, redact: bool = False) -> Path:
     """``OUT/report/report.html`` from ``OUT/`` and the existing ``OUT/plots`` (no plot is drawn);
     atomic replace through ``report/.report.html.tmp``; returns the path. Shared by the
-    ``gippa run`` tail (after ``run_manifest.json``) and ``gippa report`` (M9-16b)."""
+    ``gippa run`` tail (after ``run_manifest.json``) and ``gippa report`` (M9-16b); ``redact``
+    rewrites the provenance command line (``gippa report --redact``, M12-04 PR 13)."""
     load_plot_modules()
     plots_dir = outdir / "plots" if (outdir / "plots").is_dir() else None
-    html = _report_html(RunView.from_outdir(outdir).with_modules(cfg.modules), plots_dir, cfg)
+    view = RunView.from_outdir(outdir).with_modules(cfg.modules)
+    html = _report_html(view, plots_dir, cfg, redact)
     report_dir = outdir / "report"
     report_dir.mkdir(parents=True, exist_ok=True)
     page, tmp = report_dir / "report.html", report_dir / ".report.html.tmp"
@@ -194,14 +203,16 @@ def rerender_report(outdir: Path, cfg: GippaConfig) -> Path:
     return page
 
 
-def _report_html(view: RunView, plots_dir: Path | None, cfg: GippaConfig) -> str:
+def _report_html(
+    view: RunView, plots_dir: Path | None, cfg: GippaConfig, redact: bool = False
+) -> str:
     from gippa.report.build import build_report
 
     files: Mapping[str, PlotFiles] = {} if plots_dir is None else read_plot_files(plots_dir)
     live = None
     if plots_dir is not None and cfg.report.interactive:
         live = twins(plots_dir, files, twin_meta(view, cfg))
-    return build_report(view, files, skipped_plots(view), cfg, live)
+    return build_report(view, files, skipped_plots(view), cfg, live, redact=redact)
 
 
 def _check_size(page: Path, log: logging.Logger) -> None:

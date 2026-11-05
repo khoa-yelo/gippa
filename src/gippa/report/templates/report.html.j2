@@ -92,6 +92,8 @@
 </details>
 {% elif i.svg is not none %}
 {{ i.svg }}
+{% elif i.img %}
+<a href="{{ i.img }}"><img src="{{ i.img }}" alt="{{ i.stem }} (linked: the report would be too large with it inlined)"></a>
 {% endif %}
 <figcaption class="links" data-stem="{{ i.stem }}">{{ i.caption }}{% for label, href in i.links %} <a href="{{ href }}">{{ label }}</a>{% endfor %}</figcaption>
 </figure>
@@ -142,6 +144,39 @@
 </div>
 {% endif %}
 {% endfor %}
+{% if s.id == "detection" and detection %}
+{% if detection.error %}
+<p class="note">{{ detection.error }}</p>
+{% else %}
+{% if detection.tier %}
+<h3>Genes detected by q threshold</h3>
+<div class="table-wrap">
+<table data-view="detection-tier">
+<thead><tr>{% for h in detection.tier[0] %}<th>{{ h }}</th>{% endfor %}</tr></thead>
+<tbody>
+{% for r in detection.tier[1] %}
+<tr>{% for v in r %}<td>{{ v }}</td>{% endfor %}</tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+{% endif %}
+{% if detection.oe %}
+<h3>Detectability: observed over expected (O/E) by group</h3>
+<div class="table-wrap">
+<table data-view="detection-oe">
+<thead><tr>{% for h in detection.oe[0] %}<th>{{ h }}</th>{% endfor %}</tr></thead>
+<tbody>
+{% for r in detection.oe[1] %}
+<tr>{% for v in r %}<td>{{ v }}</td>{% endfor %}</tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+{% endif %}
+<p>Full table: <a href="{{ detection.href }}">detection_summary.tsv</a></p>
+{% endif %}
+{% endif %}
 {% for x in extras.get(s.id, []) %}
 {% if x.rows is defined and not x.rows %}
 <p class="note">{{ x.caption }}: none.</p>

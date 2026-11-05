@@ -5,10 +5,11 @@
 - B2: the title wraps and stays inside the figure (window extent measured with
   ``FigureCanvasAgg`` after a draw; ``FigureCanvasBase`` gives false passes); every clause, with its
   q value, is still in the title text (whitespace-collapsed).
-- B3: a colour key: a colorbar on an Axes labelled ``"log2 abundance"`` (the label chosen here)
-  whose limits are the run-wide scale and whose cmap is cividis, plus legend swatches for
-  undetected (``#BBBBBB`` fill), imputed (hatched) and single_peptide_unestimated (``#E69F00``
-  outline); still >= 6 pt and no overlaps between the title, key and tracks.
+- B3: a colour key: a colorbar on an Axes labelled with the run's measure
+  (``style.run_abundance_label``, M12-04 P-13) whose limits are the run-wide scale and whose
+  cmap is cividis, plus legend swatches for not detected (``style.LOCUS_UNDETECTED``, M12-04
+  P-01), imputed (hatched) and single_peptide_unestimated (``#E69F00`` outline); still >= 6 pt
+  and no overlaps between the title, key and tracks.
 - B4: strand drawing: a ``+`` arrow's head points right, a ``-`` arrow's left; the promoter bent
   arrow's stem sits at the low coordinate on ``+`` and the high coordinate on ``-`` (lead decision
   for this round) and points downstream; ``-`` strand marks are below the gene-track centre, ``+``
@@ -47,7 +48,8 @@ from gippa.viz.base import Instance, Skip
 from gippa.viz.locus import render_locus, run_scale, select_loci
 
 SCALE = (18.0, 24.0)
-KEY_LABEL = "log2 abundance"
+#: the colour key names the run's measure (M12-04 P-13); the vl.gene fixtures are iBAQ
+KEY_LABEL = style.run_abundance_label(pd.DataFrame([vl.gene("G", "chr1", 1, 900, log2=20.0)]))
 PROMOTER = "#009E73"
 TERMINATOR = "#D55E00"
 
@@ -243,7 +245,9 @@ def _single_flag_out(tmp: Path) -> tuple[Path, list[str]]:
     flags = [
         vl.flag("PAIR_1", "BSU_12340", "BSU_12350", 0.0123, flag="coabundant_despite_terminator")
     ]
-    clauses = ["coabundant_despite_terminator between BSU_12340 and BSU_12350 (q = 0.0123)"]
+    clauses = [
+        f"coabundant_despite_terminator between BSU_12340 and BSU_12350 ({style.q_equals(0.0123)})"
+    ]
     return vl.build_out(tmp, genes=genes, tus=tus, flags=flags), clauses
 
 
@@ -260,9 +264,9 @@ def _merged_flags_out(tmp: Path) -> tuple[Path, list[str]]:
         vl.flag("PAIR_9", "g3", "g4b", 0.001, flag="conflict_terminator_in_operon"),
     ]
     clauses = [
-        "conflict_terminator_in_operon between g3 and g4b (q = 0.001)",
-        "internal_promoter_supported between g3 and g4 (q = 0.02)",
-        "unexplained_discordance between g4 and g4b (q = 0.05)",
+        f"conflict_terminator_in_operon between g3 and g4b ({style.q_equals(0.001)})",
+        f"internal_promoter_supported between g3 and g4 ({style.q_equals(0.02)})",
+        f"unexplained_discordance between g4 and g4b ({style.q_equals(0.05)})",
     ]
     return vl.build_out(tmp, genes=genes, tus=tus, flags=flags), clauses
 
@@ -406,11 +410,18 @@ def test_b3_legend_swatches_for_undetected_imputed_unestimated(
 ) -> None:
     fig = _render(_mixed_out(tmp_path), cfg, "prophage_1").figure  # no such genes: key anyway
     handles = [h for h in _legend_handles(fig) if isinstance(h, Patch)]
-    assert any(_hex(h.get_facecolor()) == "#BBBBBB" and not h.get_hatch() for h in handles)
-    assert any(h.get_hatch() for h in handles)
+    und = style.LOCUS_UNDETECTED  # M12-04 P-01: white, grey edge, hatched
+    assert any(
+        _hex(h.get_facecolor()) == _hex(und["facecolor"])
+        and _hex(h.get_edgecolor()) == _hex(und["edgecolor"])
+        and h.get_hatch() == und["hatch"]
+        for h in handles
+    )
+    # the imputed swatch: hatched, and not the not-detected swatch (now hatched too)
+    assert any(h.get_hatch() and h.get_hatch() != und["hatch"] for h in handles)
     assert any(_hex(h.get_edgecolor()) == "#E69F00" for h in handles)
     texts = _legend_texts(fig)
-    assert any("undetected" in t for t in texts), texts
+    assert any("not detected" in t for t in texts), texts
     assert any("imputed" in t for t in texts), texts
     assert any("single" in t or "unestimated" in t for t in texts), texts
 
@@ -601,9 +612,12 @@ def test_b5_imputed_gene_row_has_na_value_and_imputed_category(
         assert g.loc[tag, "category"] == "imputed", tag
     write_instance(inst, "V03", "locus", tmp_path / "plots", ["svg"], 100)
     lines = (tmp_path / "plots" / "data" / "V03_locus_prophage_1.tsv").read_text().splitlines()
-    assert "gene\tG1\tchr1\t10101\t10600\t+\t21\tdetected" in lines
-    assert "gene\tIMP\tchr1\t10701\t11200\t+\tNA\timputed" in lines
-    assert "gene\tIMPD\tchr1\t11301\t11800\t+\tNA\timputed" in lines
+    # M12-04 P-01 appends a ``fill`` column; the columns before it are unchanged
+    assert lines[0].endswith("\tvalue\tcategory\tfill"), lines[0]
+    rows = [line.rsplit("\t", 1)[0] for line in lines[1:]]
+    assert "gene\tG1\tchr1\t10101\t10600\t+\t21\tdetected" in rows
+    assert "gene\tIMP\tchr1\t10701\t11200\t+\tNA\timputed" in rows
+    assert "gene\tIMPD\tchr1\t11301\t11800\t+\tNA\timputed" in rows
 
 
 # --- test-gap survivors -------------------------------------------------------------------------
@@ -628,7 +642,7 @@ def test_pct_rounds_half_up(tmp_path: Path, cfg: GippaConfig) -> None:
         ],
     )
     (lo,) = select_loci(RunView.from_outdir(out), cfg)
-    assert lo.label == "prophage_1: 13 % detected vs 31 % expected (q = 0.003)"
+    assert lo.label == f"prophage_1: 13 % detected vs 31 % expected ({style.q_equals(0.003)})"
 
 
 def test_run_scale_with_equal_percentiles_is_one_unit_wide() -> None:

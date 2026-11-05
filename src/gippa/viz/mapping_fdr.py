@@ -148,9 +148,9 @@ def title(data: pd.DataFrame, alpha: float) -> str:
     na = [m for m, f, _ in strata if math.isnan(f)]
     accepted = f"{sum(n for _, _, n in strata)} FDR-tested placements accepted"
     if ok:
-        parts = [f"Placement FDR ≤ {alpha:g} in strata {_join(ok)}", accepted]
+        parts = [f"Placement FDR ≤ {style.fmt_alpha(alpha)} in strata {_join(ok)}", accepted]
     elif len(na) < len(strata):
-        parts = [f"No stratum with placement FDR ≤ {alpha:g}", accepted]
+        parts = [f"No stratum with placement FDR ≤ {style.fmt_alpha(alpha)}", accepted]
     else:
         parts = [accepted]
     if na:
@@ -248,7 +248,7 @@ def _panel_b(ax: Axes, b: pd.DataFrame, alpha: float) -> None:
     ax.set_xticks([m for m, _, _ in strata])
     ax.set_xlabel("differences (n_diff)")
     ax.set_ylabel("stratum FDR")
-    ax.set_title(f"(b) stratum FDR (dashed: {alpha:g})", loc="left")
+    ax.set_title(f"(b) stratum FDR (dashed: {style.fmt_alpha(alpha)})", loc="left")
 
 
 def _panel_c(ax: Axes, c: pd.DataFrame) -> bool:

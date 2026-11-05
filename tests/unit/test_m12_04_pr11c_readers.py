@@ -100,7 +100,10 @@ def test_v12_title_range_ignores_na_rows() -> None:
 def test_v12_rate_one_keeps_the_mark_and_footnote_trigger() -> None:
     """Edge case: exactly 1 stays a number; the V12 footnote logic is unchanged."""
     assert _has_one(_alt([0.2, 1.0]))
-    assert f"1{DEGENERATE_MARK}" in title(_alt([0.2, 1.0]))
+    from gippa.viz.style import fmt_num
+
+    # PR 5 (P-18): 1 prints through fmt_num ("1.0")
+    assert f"{fmt_num(1.0)}{DEGENERATE_MARK}" in title(_alt([0.2, 1.0]))
     assert not _has_one(_alt([math.nan, 0.5]))
     assert DEGENERATE_MARK in _header(_site(1.0))
 

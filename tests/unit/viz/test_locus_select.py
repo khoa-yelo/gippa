@@ -252,8 +252,8 @@ def test_example7_flags_in_one_tu_merge_into_one_locus(tmp_path: Path, cfg: Gipp
     (lo,) = loci
     assert lo.error == pytest.approx(0.02)
     assert (lo.start0, lo.end0) == (40_000, 42_000)
-    assert "internal_promoter_supported between g3 and g4 (q = 0.02)" in lo.label
-    assert "unexplained_discordance between g4 and g3 (q = 0.05)" in lo.label
+    assert f"internal_promoter_supported between g3 and g4 ({style.q_equals(0.02)})" in lo.label
+    assert f"unexplained_discordance between g4 and g3 ({style.q_equals(0.05)})" in lo.label
     _, rendered = _run(out, cfg)
     assert [i.suffix for i in rendered] == ["PAIR_7"]
     assert rendered[0].title == lo.label
@@ -390,10 +390,12 @@ def test_labels_follow_the_title_templates(tmp_path: Path, cfg: GippaConfig) -> 
     loci = {
         lo.locus_id: lo for lo in select_loci(RunView.from_outdir(_example1_out(tmp_path)), cfg)
     }
-    assert loci["prophage_1"].label == "prophage_1: 12 % detected vs 31 % expected (q = 0.003)"
+    # M12-04 P-18: q and p values through fmt_q (2 significant digits, trailing zeros kept)
+    q = style.q_equals
+    assert loci["prophage_1"].label == f"prophage_1: 12 % detected vs 31 % expected ({q(0.003)})"
     assert loci["prophage_2"].label == "prophage_2: 12 % detected vs 31 % expected (q = NA)"
-    assert loci["ISL_1"].label == "ISL_1 (high): mean log2 21.5, FWER p 0.01"
-    assert loci["PAIR_7"].label == "internal_promoter_supported between g3 and g4 (q = 0.02)"
+    assert loci["ISL_1"].label == f"ISL_1 (high): mean log2 21.5, FWER p {style.fmt_q(0.01)}"
+    assert loci["PAIR_7"].label == f"internal_promoter_supported between g3 and g4 ({q(0.02)})"
 
 
 def test_low_island_label(tmp_path: Path, cfg: GippaConfig) -> None:
@@ -402,7 +404,8 @@ def test_low_island_label(tmp_path: Path, cfg: GippaConfig) -> None:
                                      mean=17.25)]
     )  # fmt: skip
     (lo,) = select_loci(RunView.from_outdir(out), cfg)
-    assert lo.label == "ISL_3 (low): mean log2 17.2, FWER p 0.002"  # 3 significant digits
+    # mean: 3 significant digits; FWER p: fmt_q (M12-04 P-18)
+    assert lo.label == f"ISL_3 (low): mean log2 17.2, FWER p {style.fmt_q(0.002)}"
 
 
 def test_instance_files_are_named_by_sanitised_locus_id(tmp_path: Path, cfg: GippaConfig) -> None:

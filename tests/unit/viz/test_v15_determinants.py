@@ -73,20 +73,24 @@ from gippa.viz.base import Instance, Skip
 COLUMNS = ["panel", "model", "block", "feature", "x", "y", "ci_low", "ci_high", "locus_tag",
            "category", "flags"]  # fmt: skip
 VERMILLION, ORANGE = "#D55E00", "#E69F00"
+_n = style.fmt_num  # M12-04 P-18: in-figure numbers through fmt_num (trailing zeros kept)
 EX1_TITLE = (  # lead decision 5, B1 and S2: neutral head, the interval named honestly
-    "Elastic net CV R² 0.21 ± 0.03; largest block ΔR²: transcription 0.08 "
-    "(repeat t-interval 0.05–0.11, uncalibrated)"
+    f"Elastic net CV R² {_n(0.21)} ± {_n(0.03)}; largest block ΔR²: transcription {_n(0.08)} "
+    f"(repeat t-interval {_n(0.05)}–{_n(0.11)}, uncalibrated)"
 )
 NONE_ABOVE = "no block's ΔR² interval lies above 0"  # decision 5, B3
 A_HEADER = "(a) block ΔR² (t-interval over CV repeats, uncalibrated)"  # B1
 DELTA_FOOT = "ΔR² intervals uncalibrated: CV repeats share data (ADR-0031)"  # B1
 D_HEADER = "(d) observed vs. LightGBM out-of-fold"  # B2
-D_R2 = "CV R² 0.25 ± 0.04 (LightGBM, plotted); elastic net 0.21 ± 0.03 (primary)"  # B2
+D_R2 = (  # B2
+    f"CV R² {_n(0.25)} ± {_n(0.04)} (LightGBM, plotted); elastic net {_n(0.21)} ± {_n(0.03)} "
+    "(primary)"
+)
 D_FLAG = "unexplained (> 2 SD of LightGBM residuals)"  # B2
 B_LABEL = "partial dependence, LightGBM (secondary); spread over 25 CV models (not a CI)"  # S1
 HEX_BAR, HEX_PROXY = "genes per bin (log count)", "model genes (binned)"  # B4
 MINUS = "\u2212"
-NULL_FOOT = "null p 0.02 (uncalibrated: valid only for exchangeable TUs, ADR-0034)"
+NULL_FOOT = f"null p {style.fmt_q(0.02)} (uncalibrated: valid only for exchangeable TUs, ADR-0034)"
 UNI_FOOT = "univariate CIs uncalibrated (ADR-0032)"
 EN_LEGEND, LGB_LEGEND = "elastic net (primary, ADR-0033)", "LightGBM (secondary check)"
 PD_LABEL = "spread over 25 CV models (not a CI)"
@@ -135,10 +139,6 @@ def _isna(v: object) -> bool:
 
 def _f(v: object) -> float:
     return math.nan if _isna(v) else float(str(v))
-
-
-def _f2(v: float) -> str:
-    return f"{v:.2f}".replace("-", MINUS)
 
 
 def _rows(inst: Instance, panel: str) -> pd.DataFrame:
@@ -649,7 +649,7 @@ def test_property_title_rule_and_panel_a_rows(draw: dict[str, tuple[int, int]]) 
         out = vd.build_out(Path(tmp), model=vd.model_table(en), support=False)
         inst = _render(out, cfg)
         t = inst.title
-        assert t.startswith("Elastic net CV R² 0.21 ± 0.03; "), t
+        assert t.startswith(f"Elastic net CV R² {_n(0.21)} ± {_n(0.03)}; "), t
         if not excl:
             assert t.endswith(NONE_ABOVE), (t, en)
         else:
@@ -660,7 +660,7 @@ def test_property_title_rule_and_panel_a_rows(draw: dict[str, tuple[int, int]]) 
             top = next(b for b in vd.BLOCKS if b in excl and en[b][0] == best)
             assert named.group(1) == top, (t, en)
             v, lo, hi = en[top]
-            assert t.endswith(f"{top} {_f2(v)} (repeat t-interval {_f2(lo)}–{_f2(hi)}, "
+            assert t.endswith(f"{top} {_n(v)} (repeat t-interval {_n(lo)}–{_n(hi)}, "
                               "uncalibrated)"), (t, en)  # fmt: skip
         a = _rows(inst, "a")
         en_rows = a[a["model"].astype(str) == "elastic_net"]
@@ -685,7 +685,7 @@ def test_b1_title_names_the_repeat_t_interval_uncalibrated(
     tmp_path: Path, cfg: GippaConfig
 ) -> None:
     t = _main(tmp_path, cfg).title
-    assert "(repeat t-interval 0.05–0.11, uncalibrated)" in t, t
+    assert f"(repeat t-interval {_n(0.05)}–{_n(0.11)}, uncalibrated)" in t, t
     assert "95 % CI" not in t and "CI" not in t.replace("CV", ""), t
 
 
@@ -703,14 +703,15 @@ def test_b1_delta_r2_footnote(tmp_path: Path, cfg: GippaConfig) -> None:
 def test_b3_interval_wholly_below_zero_is_not_named(tmp_path: Path, cfg: GippaConfig) -> None:
     """Transcription's interval lies wholly below 0 (|ΔR²| the largest): no block is named."""
     t = _title_of(tmp_path, cfg, _en(transcription=(-0.09, -0.12, -0.06)))
-    assert t == f"Elastic net CV R² 0.21 ± 0.03; {NONE_ABOVE}", t
+    assert t == f"Elastic net CV R² {_n(0.21)} ± {_n(0.03)}; {NONE_ABOVE}", t
 
 
 def test_b3_below_zero_beside_above_zero_names_the_above(tmp_path: Path, cfg: GippaConfig) -> None:
     t = _title_of(tmp_path, cfg, _en(transcription=(-0.09, -0.12, -0.06),
                                      codon=(0.04, 0.01, 0.07)))  # fmt: skip
     assert t.endswith(
-        "largest block ΔR²: codon 0.04 (repeat t-interval 0.01–0.07, uncalibrated)"
+        f"largest block ΔR²: codon {_n(0.04)} (repeat t-interval {_n(0.01)}–{_n(0.07)}, "
+        "uncalibrated)"
     ), t
 
 
@@ -725,12 +726,15 @@ def test_n4_ties_are_broken_in_blocks_order(tmp_path: Path, cfg: GippaConfig) ->
     """transcription precedes translation in BLOCKS; alphabetically it would lose the tie."""
     t = _title_of(tmp_path, cfg, _en(transcription=(0.05, 0.01, 0.09),
                                      translation=(0.05, 0.02, 0.08)))  # fmt: skip
-    assert "largest block ΔR²: transcription 0.05 (repeat t-interval 0.01–0.09" in t, t
+    assert (
+        f"largest block ΔR²: transcription {_n(0.05)} (repeat t-interval {_n(0.01)}–{_n(0.09)}" in t
+    ), t
 
 
 def test_s2_title_uses_a_unicode_minus(tmp_path: Path, cfg: GippaConfig) -> None:
     t = _title_of(tmp_path, cfg, vd.EN_DELTAS_NULL, en_cv=(-0.05, 0.03, 0.5))
-    assert t == f"Elastic net CV R² {MINUS}0.05 ± 0.03; {NONE_ABOVE}", t
+    assert t == f"Elastic net CV R² {_n(-0.05)} ± {_n(0.03)}; {NONE_ABOVE}", t
+    assert t.startswith(f"Elastic net CV R² {MINUS}"), t
     assert "-" not in t
 
 
@@ -761,7 +765,9 @@ def test_b2_panel_d_r2_text_unicode_minus(tmp_path: Path, cfg: GippaConfig) -> N
     """A null-world LightGBM (CV R² below 0) reads with a Unicode minus (S2's formatter)."""
     out = vd.build_out(tmp_path, model=vd.model_table(lgb_cv=(-0.27, 0.05, 0.6)), support=False)
     texts = _ax_texts(_axes(_render(out, cfg), "d"))
-    want = f"CV R² {MINUS}0.27 ± 0.05 (LightGBM, plotted); elastic net 0.21 ± 0.03 (primary)"
+    want = (f"CV R² {_n(-0.27)} ± {_n(0.05)} (LightGBM, plotted); elastic net {_n(0.21)} ± "
+            f"{_n(0.03)} (primary)")  # fmt: skip
+    assert want.startswith(f"CV R² {MINUS}")
     assert want in texts, texts
 
 
