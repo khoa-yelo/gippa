@@ -79,7 +79,7 @@ def _not_wrap(s: Any, p: pd.DataFrame) -> np.ndarray:
 
 
 def _cv_gaps(s: Any, exclude: set[str] = frozenset()) -> np.ndarray:  # type: ignore[assignment]
-    p = s.pairs[s.pairs["class"] == "CV"]
+    p = s.pairs[s.pairs["pair_class"] == "CV"]
     p = p[_not_wrap(s, p)]
     out = ~(p["gene_a"].astype(str).isin(exclude) & p["gene_b"].astype(str).isin(exclude))
     return np.asarray(p.loc[out.to_numpy(), "intergenic_bp"].to_numpy(), dtype=np.int64)
@@ -182,9 +182,9 @@ def test_short_convergent_gaps_on_draws_cv_gaps_uniformly_from_minus20_to_300(se
     assert (gaps < 0).any() and (gaps > 150).any()  # 3' overlaps and the 150-300 bin (decision 23)
     assert (gaps < 50).mean() >= 0.15, (gaps < 50).mean()
     p = s.pairs[_not_wrap(s, s.pairs)]
-    dv = p.loc[(p["class"] == "DV").to_numpy(), "intergenic_bp"].to_numpy()
+    dv = p.loc[(p["pair_class"] == "DV").to_numpy(), "intergenic_bp"].to_numpy()
     assert dv.min() >= 50 and dv.max() <= 300
-    across = p[(p["class"].isin(["OP", "NO"])).to_numpy() & ~_b(p["true_operon"])]
+    across = p[(p["pair_class"].isin(["OP", "NO"])).to_numpy() & ~_b(p["true_operon"])]
     assert across["intergenic_bp"].min() >= 50
 
 
@@ -288,7 +288,7 @@ def test_detection_attack_pair_columns_follow_the_detection_truth(seed: int) -> 
 
 def _block_pairs(s: Any) -> pd.DataFrame:
     block = _block_genes(s, "prophage")
-    p = s.pairs[s.pairs["class"] != "SW"]
+    p = s.pairs[s.pairs["pair_class"] != "SW"]
     inb = p["gene_a"].astype(str).isin(block) & p["gene_b"].astype(str).isin(block)
     return p[inb.to_numpy()]
 
@@ -346,7 +346,7 @@ def test_attack_planted_pairs_are_true_no_pairs_with_small_delta(
     assert len(m) == 20 and m["pair_id"].is_unique
     p = s.pairs.set_index("pair_id")
     rows = p.loc[m["pair_id"]]
-    assert (rows["class"] == "NO").all()
+    assert (rows["pair_class"] == "NO").all()
     assert not _b(rows["true_operon"]).any()
     assert (rows["uniop_p"].astype(float) < 0.5).all()
     assert list(rows["gene_a"].astype(str)) == list(m["gene_a"].astype(str))
@@ -357,7 +357,7 @@ def test_attack_planted_pairs_are_true_no_pairs_with_small_delta(
         return np.array([abs(ab[str(b)] - ab[str(a)]) for a, b in zip(fr["gene_a"], fr["gene_b"],
                                                                       strict=True)])  # fmt: skip
 
-    others = p[(p["class"] == "NO").to_numpy() & ~_b(p["true_operon"])]
+    others = p[(p["pair_class"] == "NO").to_numpy() & ~_b(p["true_operon"])]
     others = others.loc[~others.index.isin(m["pair_id"])]
     assert np.median(absd(rows)) <= 0.25 * np.median(absd(others))
 

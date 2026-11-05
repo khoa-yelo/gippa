@@ -282,14 +282,14 @@ def simulate_a(cfgs: Any, seed: int) -> _SimA:
 
     s = sc.simulate_operons(cfgs, int(seed))
     pairs = s.pairs.copy()
-    same = pairs["class"].isin(["OP", "NO"]).to_numpy()
+    same = pairs["pair_class"].isin(["OP", "NO"]).to_numpy()
     pairs.loc[same, "uniop_p"] = p_dist(pairs.loc[same, "intergenic_bp"].to_numpy())
     pairs["source"] = np.where(same, "distance_model", None)
     _, _, t = _model()
     pairs = G.reclass(pairs, t)
     truth = dict(s.truth)
     planted = truth["missed_operons"]
-    keep = set(pairs.loc[pairs["class"] == "NO", "pair_id"].astype(str))
+    keep = set(pairs.loc[pairs["pair_class"] == "NO", "pair_id"].astype(str))
     still = planted["pair_id"].astype(str).isin(keep).to_numpy() if len(planted) else []
     truth["missed_operons"] = planted[still].reset_index(drop=True) if len(planted) else planted
     return _SimA(s.layout, s.expression, pairs, truth, int(len(planted) - int(np.sum(still))))

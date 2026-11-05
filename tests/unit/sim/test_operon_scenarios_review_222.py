@@ -84,7 +84,7 @@ def test_b2_planted_effect_is_in_units_of_the_background_sd(effect_sd: float) ->
         planted = p["pair_id"].isin(set(s.truth["missed_operons"]["pair_id"])).to_numpy()
         assert planted.sum() == 50
         both = _b(p["detected_a"]) & _b(p["detected_b"])
-        bg = (p["class"] == "NO").to_numpy() & ~_b(p["true_operon"]) & both & ~planted
+        bg = (p["pair_class"] == "NO").to_numpy() & ~_b(p["true_operon"]) & both & ~planted
         assert bg.sum() >= 100, bg.sum()
         sd_planted = float(np.std(_true_delta(s, p[planted]), ddof=1))
         sd_bg = float(np.std(_true_delta(s, p[bg]), ddof=1))
