@@ -111,7 +111,6 @@ No fixed vocabulary in the schema.
 - `nterm_extension_evidence`
 - `cai_reference`
 - `top3_lt3`
-- `detectability_constant`
 - `abundance_not_explained_by_sequence`
 
 ## `islands`
