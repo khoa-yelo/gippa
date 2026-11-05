@@ -1,10 +1,12 @@
-"""Function-term coverage of a run, read from its ``function.collections`` event (M12-04 PR 8,
+"""Function-term coverage of a run, read from its ``function.collections`` events (M12-04 PR 8,
 F-01).
 
-The ``function`` step logs one ``function.collections`` event: collection ->
-``{"n_terms", "coverage", "n_unknown_ids"}``. The last event with at least one collection is the
-run's coverage; a run without one (an old run, ``function`` off) has none, and its report and
-plots behave as before. Pure apart from the event read a ``RunView`` does.
+The ``function`` step logs a ``function.collections`` event: collection ->
+``{"n_terms", "coverage", "n_unknown_ids"}``. A collection is well-formed when it is a mapping
+holding a numeric ``coverage`` or ``n_terms``; the run's coverage is the last event with at least
+one well-formed collection (its malformed collections are dropped). When no event qualifies (an
+old run, ``function`` off, malformed events) coverage is unknown and the report and plots behave
+as before. Pure apart from the event read a ``RunView`` does.
 """
 
 from __future__ import annotations
@@ -25,6 +27,7 @@ __all__ = [
     "names",
     "no_terms",
     "no_terms_sentence",
+    "well_formed",
 ]
 
 EVENT = "function.collections"
@@ -37,16 +40,17 @@ Collections = Mapping[str, Mapping[str, Any]]
 
 
 def collections(view: RunView) -> Collections | None:
-    """The last ``function.collections`` event's collections, or ``None`` when the run has no
-    such event with at least one collection (or its events cannot be read)."""
+    """The well-formed collections of the last ``function.collections`` event that has at least
+    one, or ``None`` when no event qualifies (or the events cannot be read)."""
     try:
         found = view.events(EVENT)
     except Exception:
         return None
-    if not found:
-        return None
-    data = {str(k): v for k, v in found[-1].items() if isinstance(v, Mapping)}
-    return data or None
+    for data in reversed(found):
+        good = {str(k): v for k, v in data.items() if well_formed(v)}
+        if good:
+            return good
+    return None
 
 
 def _coverage(entry: Mapping[str, Any]) -> float | None:
@@ -59,6 +63,13 @@ def _coverage(entry: Mapping[str, Any]) -> float | None:
 def _n_terms(entry: Mapping[str, Any]) -> int | None:
     n = entry.get("n_terms")
     return int(n) if isinstance(n, int | float) and not isinstance(n, bool) else None
+
+
+def well_formed(entry: object) -> bool:
+    """Whether ``entry`` is a mapping holding a numeric ``coverage`` or ``n_terms``."""
+    return isinstance(entry, Mapping) and (
+        _coverage(entry) is not None or _n_terms(entry) is not None
+    )
 
 
 def has_terms(entry: Mapping[str, Any]) -> bool:
@@ -79,9 +90,14 @@ def kegg_terms(colls: Collections) -> bool:
 
 
 def names(colls: Collections) -> str:
-    """The collections named in the no-terms sentences: COG, GO and KEGG, or COG and GO when the
-    event has no ``kegg`` key."""
-    return "COG, GO or KEGG" if "kegg" in colls else "COG or GO"
+    """The collections whose keys the event holds, as named in the no-terms sentences: COG
+    (``cog``), GO (any ``go_*``), KEGG (``kegg``), joined "A or B" / "A, B or C"."""
+    found = [name for name, hit in (("COG", "cog" in colls),
+                                    ("GO", any(str(k).startswith("go_") for k in colls)),
+                                    ("KEGG", "kegg" in colls)) if hit]  # fmt: skip
+    if not found:
+        return "function"
+    return found[0] if len(found) == 1 else f"{', '.join(found[:-1])} or {found[-1]}"
 
 
 def no_terms_sentence(colls: Collections) -> str:
@@ -89,13 +105,24 @@ def no_terms_sentence(colls: Collections) -> str:
     return f"No {names(colls)} terms were assigned to any gene."
 
 
+_PCT_D = 10_000
+
+
 def _pct(cov: float | None) -> str:
-    return "NA" if cov is None else fmt_pct(round(cov * 10_000), 10_000)
+    """A whole percent; a share strictly between 0 and 1 never reads 0 % or 100 %."""
+    if cov is None:
+        return "NA"
+    n = round(cov * _PCT_D)
+    if 0 < cov < 1:
+        n = min(max(n, 1), _PCT_D - 1)
+    return fmt_pct(n, _PCT_D)
 
 
 def coverage_note(colls: Collections) -> str:
-    """Coverage per collection as whole percents: ``"COG 72 %, GO 41 %, KEGG 66 %"``; GO is its
-    best-covered collection; "KEGG not installed" when the event has no ``kegg`` key."""
+    """Coverage per collection as whole percents: ``"COG 72 %, GO 41 %, KEGG 66 %"``; "KEGG not
+    installed" when the event has no ``kegg`` key. GO is shown as its best-covered collection:
+    the event has no union over the GO collections, so this is a lower bound on the share of
+    genes with any GO term."""
     parts: list[str] = []
     if "cog" in colls:
         parts.append(f"COG {_pct(_coverage(colls['cog']))}")
