@@ -97,7 +97,7 @@
 </figure>
 {% endfor %}
 {% for n in p.notices %}
-<p class="notice">{{ n }}</p>
+<p class="notice">{{ n.title }}{% for label, href in n.links %} <a href="{{ href }}">{{ label }}</a>{% endfor %}</p>
 {% endfor %}
 {% if p.note %}
 <p class="note">{{ p.pid }}: {{ p.note }}</p>

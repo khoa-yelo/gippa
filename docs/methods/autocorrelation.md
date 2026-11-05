@@ -138,6 +138,14 @@ detect the failure.
 - Under this null, within-TU correlation is part of the null, so only structure between TUs counts as
   a signal.
 
+**TU-boundary error (ADR-0061).** The TU-block null assumes the TU boundaries are exact. When TUs
+are split, Moran's I under this null is anti-conservative at short lags: in simulation, the lag-1
+rejection rate at α = 0.05 under the null was 0.67 with UniOP's K-12 error rates and 0.34 with TUs
+from the intergenic-distance model (UniOP splits more TUs than the fallback: 14.7 % vs 8.4 % on
+K-12). So every `morans_i` row with `null_model = tu_block` carries the flag `tu_block_tu_error`
+on every run, and under the distance-model fallback also `tu_source_distance_model`; the report
+states both caveats. The gene-label null is not affected.
+
 ### p-value, the constant-null rule and the null summaries
 
 `lag_test(obs, null)` drops NaN null entries; `n_valid` counts the rest, including ±inf (decision 13).

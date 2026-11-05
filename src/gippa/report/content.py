@@ -28,6 +28,7 @@ from gippa.io.run_view import RunView
 from gippa.io.tsv import format_value
 from gippa.model.genetic_code import codon_table, table_name
 from gippa.viz.style import fmt_num
+from gippa.viz.words import plain
 
 #: GIPPA_SPEC.md §7.4, verbatim
 SIGMA70 = (
@@ -83,6 +84,8 @@ MORAN_TU_ERROR = (
     "short lags when TUs are split; rejection at α = 0.05 was 0.67 in simulation with UniOP's "
     "K-12 error rates"
 )
+#: the row clause of an autocorrelation caveat (review r1 L1)
+ROWS_CLAUSE = "(these rows carry the flag ‘{}’ in the table)"
 DISTANCE_MODEL = "distance_model"
 NOT_WRITTEN = "run_manifest.json not written by this GIPPA version."
 NOT_RECORDED = "not recorded"
@@ -294,9 +297,11 @@ def extras(view: RunView, doc: Mapping[str, Any] | None) -> dict[str, list[dict[
     out["function"] = _function(view, doc)
     ctx = [_p(ISLANDS, "islands")] if view.has("islands") else []
     if _tu_block_morans(view):
-        ctx.append(_p(f"{MORAN_TU_ERROR}.", "autocorrelation"))
+        rows = ROWS_CLAUSE.format(plain("tu_block_tu_error"))
+        ctx.append(_p(f"{MORAN_TU_ERROR} {rows}.", "autocorrelation"))
         if distance:
-            ctx.append(_p(f"{MORAN_DISTANCE}.", "autocorrelation"))
+            rows = ROWS_CLAUSE.format(plain("tu_source_distance_model"))
+            ctx.append(_p(f"{MORAN_DISTANCE} {rows}.", "autocorrelation"))
     if "mobile" in view.modules_off():
         ctx.append(_p(MOBILE_OFF, cls="note"))
     out["genome-context"] = ctx + _diagnostics(view)
@@ -312,12 +317,20 @@ def sensitivity_groups(frame: pd.DataFrame) -> list[tuple[str, list[list[str]]]]
         for col in frame.columns:
             v = rec[col]
             if col == "jaccard":
-                both0 = rec["n_primary"] == 0 and rec["n_variant"] == 0
+                both0 = _is_zero(rec.get("n_primary")) and _is_zero(rec.get("n_variant"))
                 missing = v is None or v is pd.NA or (isinstance(v, float) and math.isnan(v))
                 v = "no flagged set in either run" if both0 else "NA" if missing else f"{v:.2f}"
             cells.append(format_value(v))
         groups.setdefault(str(rec["family"]), []).append(cells)
     return list(groups.items())
+
+
+def _is_zero(value: Any) -> bool:
+    """Whether ``value`` is a number equal to 0 (``None``, NA and text are not)."""
+    try:
+        return float(value) == 0.0
+    except (TypeError, ValueError):
+        return False
 
 
 def _tools(doc: Mapping[str, Any]) -> list[list[str]]:
@@ -475,6 +488,28 @@ CAPTIONS: Mapping[str, str] = {
     "distribution.",
 }
 
+#: plot ID -> the stem of its index instance and that instance's caption (review r1 L2)
+INDEX_STEMS: Mapping[str, str] = {"V03": "V03_locus", "V13": "V13_novel_orfs_locus"}
+INDEX_CAPTIONS: Mapping[str, str] = {
+    "V03": "This index lists every selected locus in display order, with its kind and the error "
+    "estimate of its test family, and marks the loci not drawn as locus views.",
+    "V13": "This index lists the top called candidates drawn as locus views, by rank.",
+}
+
+
+def question(pid: str) -> str:
+    """The GIPPA_SPEC.md §10.2 Question that opens ``CAPTIONS[pid]``."""
+    return CAPTIONS[pid].split("? ", 1)[0] + "?"
+
+
+def caption(pid: str, stem: str) -> str:
+    """The caption of instance ``stem`` of plot ``pid``: the index instance has its own (the
+    Question, then what the index lists), any other the plot's ``CAPTIONS`` entry."""
+    if INDEX_STEMS.get(pid) == stem:
+        return f"{question(pid)} {INDEX_CAPTIONS[pid]}"
+    return CAPTIONS.get(pid, stem)
+
+
 #: the Methods glossary (behaviour 2): term -> plain definition
 GLOSSARY: tuple[tuple[str, str], ...] = (
     ("FDR", "False discovery rate: the expected share of false findings among the findings "
@@ -487,8 +522,9 @@ GLOSSARY: tuple[tuple[str, str], ...] = (
     ("O − E", "Observed minus expected: how many more (or fewer) genes were detected than the "
      "detectability model predicts."),
     ("π₀", "The estimated share of tested items with no true effect."),
-    ("block length (ℓ̂)", "The number of consecutive transcription units resampled together in "
-     "the block bootstrap, chosen from the estimated correlation length."),
+    ("block length (ℓ′)", "The number of consecutive transcription units resampled together in "
+     "the block bootstrap, chosen from the estimated correlation length ℓ̂ as min(20, 2ℓ̂ + 1, "
+     "number of TUs), counted per replicon."),
     ("BB join count", "The number of neighbouring gene pairs where both genes are detected, "
      "compared with its value under random placement."),
 )  # fmt: skip

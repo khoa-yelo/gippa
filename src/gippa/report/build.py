@@ -82,6 +82,9 @@ _NEEDS: Mapping[str, tuple[str, ...]] = {
     "variants": ("variants",),
     "novel-orfs": ("novel_orfs",),
 }
+#: section id -> the calling that needs peptides (named in its not-applicable reason)
+_NEEDS_PEPTIDES: Mapping[str, str] = {"variants": "variant calling",
+                                      "novel-orfs": "novel ORF calling"}  # fmt: skip
 #: section id -> the module it needs
 _MODULE: Mapping[str, str] = {"function": "function"}
 
@@ -112,21 +115,26 @@ def _script_json(text: str) -> str:
     return text.replace("<", "\\u003c")
 
 
-def not_applicable(view: RunView) -> list[tuple[str, str, str]]:
+def not_applicable(
+    view: RunView, plots: Mapping[str, PlotFiles] | None = None
+) -> list[tuple[str, str, str]]:
     """``(section id, name, plain reason)`` of each section that does not apply to the run (its
-    module off, or every table it needs absent), then the BGC content when ``bgc`` is off; the
-    mobile module is a Genome context note instead (behaviour 4, lead decisions 1-3)."""
+    module off and none of its plots drawn, or every table it needs absent), then the BGC content
+    when ``bgc`` is off; the mobile module is a Genome context note instead (behaviour 4, lead
+    decisions 1-3; review r1 M1: a drawn plot keeps a module's section)."""
     off = view.modules_off()
+    plots = plots or {}
     out = []
     for s in SECTIONS:
         mod = _MODULE.get(s.id)
         needs = _NEEDS.get(s.id)
-        if mod is not None and mod in off:
+        drawn = any(not i.empty for p in s.plots if p in plots for i in plots[p].instances)
+        if mod is not None and mod in off and not drawn:
             out.append((s.id, s.heading, plain(f"module_off:{mod}")))
         elif needs and not any(view.has(k) for k in needs):
             reason = plain(f"input_absent:{needs[0]}")
-            if s.id == "variants" and not _has_rows(view, "peptide_hits"):
-                reason += " (variant calling needs peptides)"
+            if s.id in _NEEDS_PEPTIDES and not _has_rows(view, "peptide_hits"):
+                reason += f" ({_NEEDS_PEPTIDES[s.id]} needs peptides)"
             out.append((s.id, s.heading, reason))
     if "bgc" in off:
         out.append(("", "Biosynthetic gene clusters (BGC)", "not searched, so no BGC regions "
@@ -154,20 +162,22 @@ def _plot_slot(
     if files is None or not files.instances:
         note = f"not shown: {plain(skipped[pid])}" if pid in skipped else "plot file absent"
         return {"pid": pid, "note": note, "instances": [], "notices": []}
-    insts, empty = [], []
+    insts: list[dict[str, Any]] = []
+    empty: list[dict[str, Any]] = []
     for inst in files.instances:
-        if notices and inst.empty:
-            title = None if inst.svg is None else svg_title(inst.svg)
-            empty.append(" ".join((title or "Nothing to show in this run.").split()))
-            continue
         links = [(rel.rsplit(".", 1)[1].upper(), f"../plots/{rel}") for rel in inst.images]
         if inst.data is not None:
             links.append(("data TSV", f"../plots/{inst.data}"))
+        if notices and inst.empty:  # the title and its file links, no image (review r1 M2)
+            title = None if inst.svg is None else svg_title(inst.svg)
+            empty.append({"title": " ".join((title or "Nothing to show in this run.").split()),
+                          "links": links})  # fmt: skip
+            continue
         svg = None if inst.svg is None else Markup(embed_svg(inst.svg, inst.stem))
         twin = twins.get(inst.stem)
         spec = None if twin is None else {"id": twin[0], "spec": Markup(_script_json(twin[1]))}
         insts.append({"stem": inst.stem, "svg": svg, "links": links, "twin": spec,
-                      "caption": content.CAPTIONS.get(pid, inst.stem)})  # fmt: skip
+                      "caption": content.caption(pid, inst.stem)})  # fmt: skip
     drawn = empty or any(i["svg"] is not None for i in insts)
     return {"pid": pid, "note": None if drawn else "plot file absent", "instances": insts,
             "notices": empty}  # fmt: skip
@@ -221,13 +231,21 @@ def _table(view: RunView, key: str) -> dict[str, Any]:
         "href": f"../{PATHS[key]}",
     }
     if whole is not None and len(whole):  # rendered whole, by family (M9-16 behaviour 5)
-        counts = whole[["n_primary", "n_variant"]].apply(pd.to_numeric, errors="coerce")
-        if bool((counts.fillna(0) == 0).all(axis=None)):
+        if _all_zero(whole, ("n_primary", "n_variant")):  # never on NA (review r1 L4)
             return found | {"sentence": SENSITIVITY_NONE}
         found |= {"header": list(whole.columns), "groups": content.sensitivity_groups(whole)}
     elif not rows:  # a 0-row preview is hidden (AC 2.6)
         found["none"] = True
     return found
+
+
+def _all_zero(frame: pd.DataFrame, cols: tuple[str, ...]) -> bool:
+    """Whether every ``cols`` cell of ``frame`` is a number equal to 0 (an NA or a missing column
+    is not)."""
+    if not set(cols) <= set(frame.columns):
+        return False
+    counts = frame[list(cols)].apply(pd.to_numeric, errors="coerce")
+    return bool((counts.notna() & (counts == 0)).all(axis=None))
 
 
 def _unreadable(key: str, exc: BaseException) -> str:
@@ -464,7 +482,7 @@ def build_report(
 ) -> str:
     """The report page (behaviour 2-6); deterministic, offline, no absolute path."""
     twins = twins or {}
-    absent = not_applicable(view)
+    absent = not_applicable(view, plots)
     off = {sid for sid, _, _ in absent}
     shown_sections = [s for s in SECTIONS if s.id not in off]
     sections = [
