@@ -69,10 +69,10 @@ FLAG_TEXT: Mapping[str, str] = MappingProxyType(
         "descriptive": "descriptive only; no test",
         "no_oric": "replication origin not found",
         "uncalibrated": "test not calibrated for this setting",
-        "uncalibrated:": "{} not calibrated in this run",
-        "uncalibrated:operon_distance": "the operon distance model not calibrated in this run",
-        "uncalibrated:uniop_pair_threshold": "the UniOp pair threshold not calibrated in this run",
-        "uncalibrated:terminatornet_yes": "the TerminatorNet call threshold not calibrated in "
+        "uncalibrated:": "{} is not calibrated in this run",
+        "uncalibrated:operon_distance": "the operon distance model is not calibrated in this run",
+        "uncalibrated:uniop_pair_threshold": "the UniOp pair threshold is not calibrated in this run",
+        "uncalibrated:terminatornet_yes": "the TerminatorNet call threshold is not calibrated in "
         "this run",
         "depth_adjusted": "adjusted for plasmid copy number",
         "few_shifts": "too few shifts for a significant result",
@@ -108,7 +108,7 @@ FLAG_TEXT: Mapping[str, str] = MappingProxyType(
         # enrichment
         "elim_empty": "no genes left after removing more specific terms",
         "null_degenerate": "the detection null is degenerate; no p-value",
-        "null_uncalibrated": "the permutation p-value is not calibrated for this genome",
+        "null_uncalibrated": "the permutation p-value is not calibrated (it assumes operons are exchangeable)",
         "too_few_rows": "too few genes to fit the model",
         "odds_out_of_range": "odds ratio out of range; no p-value",
         "ora_uncalibrated": "over-representation test not calibrated",
