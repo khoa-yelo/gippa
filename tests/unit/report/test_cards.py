@@ -113,7 +113,7 @@ def test_example_1_decoy_picked_812_detected(tmp_path: Path) -> None:
     text = _card(page(out), "genes_detected")
     assert re.search(r"(?<![\d.])812 of 852 genes detected\b", text), text
     fdr = _num(style.fmt_q(0.0098))
-    assert re.search(rf"picked target–decoy gene-level FDR {fdr} at gene-level {_alpha('0.01')}",
+    assert re.search(rf"picked target–decoy gene-level FDR {fdr} at {_alpha('0.01')}",
                      text), text  # fmt: skip
     assert not re.search(_num(style.fmt_q(0.0411)), text), text
     assert re.search(r"(?<![\d.])700 with ≥ 2 distinct peptides\b", text), text
@@ -125,7 +125,7 @@ def test_example_1_tier_fdr_follows_alpha_identification(tmp_path: Path) -> None
     write_tier_fdr(out, {"0.01": 0.0098, "0.05": 0.0411})
     text = _card(page(out, "stats.alpha.identification=0.05"), "genes_detected")
     fdr = _num(style.fmt_q(0.0411))
-    assert re.search(rf"gene-level FDR {fdr} at gene-level {_alpha('0.05')}", text), text
+    assert re.search(rf"gene-level FDR {fdr} at {_alpha('0.05')}", text), text
     assert not re.search(_num(style.fmt_q(0.0098)), text), text
 
 

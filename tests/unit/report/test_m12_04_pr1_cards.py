@@ -259,8 +259,7 @@ def test_ac_1_5_positive_r2_has_no_no_power_note(tmp_path: Path) -> None:
     write_fitted(run.out, 0.21, 0.03, 0.001)
     card = _card(run, "model_r2")
     assert card.startswith("Model R²:"), card
-    assert any(f"{style.fmt_num(0.21, sig=s)} ± {style.fmt_num(0.03, sig=s)}" in card
-               for s in (2, 3)), card  # fmt: skip
+    assert "0.21 ± 0.03 (CV)" in card, card  # the SD to the mean's decimals (review r1 M2)
     assert "no predictive power" not in card, card
 
 
