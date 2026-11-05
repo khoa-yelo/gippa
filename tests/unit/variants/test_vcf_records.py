@@ -135,7 +135,7 @@ def test_info_fields_rule_6() -> None:
         ("NT_CHANGES", "A", "Integer"),
         ("ALT_TYPE", "A", "String"),
         ("FLAGS", ".", "String"),
-        ("CLASS_ERR", "A", "String"),
+        ("CLASS_ERR", "A", "Float"),  # M12-04 PR 11c review r1: a number, . when NA
     ]
     assert all(f.description.strip() for f in vr().INFO_FIELDS)
 
@@ -518,7 +518,7 @@ def test_example11_pysam_round_trip(tmp_path: Path, capfd: pytest.CaptureFixture
     assert w.ref == "TCTGAT" and w.alts == ("GATAGT",) and w.info["NT_CHANGES"] == (4,)
     assert ("c2", 1000, 3) not in by_pos and ("c2", 998, 3) in by_pos
     assert all(list(x.filter) == ["PASS"] for x in got)
-    assert all(x.info["CLASS_ERR"] == tuple("." for _ in x.alts) for x in got)  # NA (PR 11c)
+    assert all(x.info["CLASS_ERR"] == tuple(None for _ in x.alts) for x in got)  # NA: Float .
     text = path.read_text(encoding="utf-8")
     assert text.startswith("##fileformat=VCFv4.3\n")
     assert f"##source=gippa-{VERSION}\n" in text and f"##reference=sha256:{SHA}\n" in text
