@@ -10,6 +10,7 @@ Interface assumed beyond the spec text:
   (U+202F); the spec allows "a thin-space or comma grouping". Integers below 10,000 may or may
   not be grouped (the spec's example ``4,373`` sits below its own threshold).
 - NA is ``None``, ``float('nan')``, ``numpy.nan`` or ``pd.NA``.
+- Review round 1 (PR #549) pins the comma: ``10000`` -> ``"10,000"``, ``4373`` -> ``"4373"``.
 """
 
 from __future__ import annotations
@@ -163,13 +164,16 @@ def test_fmt_num_numpy_integers_match_python_integers() -> None:
     assert style.fmt_num(np.int64(158)) == style.fmt_num(158)
 
 
-_HYPHEN_AS_SIGN = re.compile(r"(?<![eE])-")
-
-
 @given(st.floats(allow_nan=False, allow_infinity=False), st.integers(min_value=1, max_value=6))
 def test_fmt_num_property_never_ascii_minus_sign(x: float, sig: int) -> None:
+    """Review M4: no ASCII hyphen anywhere, the exponent included."""
     out = style.fmt_num(x, sig=sig)
-    assert _HYPHEN_AS_SIGN.search(out) is None, out
+    assert "-" not in out, out
+
+
+@given(st.floats())
+def test_fmt_q_property_never_ascii_minus_sign(q: float) -> None:
+    assert "-" not in style.fmt_q(q)
 
 
 @given(st.integers(min_value=-(10**12), max_value=10**12))
@@ -189,7 +193,7 @@ def test_fmt_num_property_round_trip_within_sig_rounding(
 ) -> None:
     x = -magnitude if negative else magnitude
     out = style.fmt_num(x, sig=sig)
-    assert _HYPHEN_AS_SIGN.search(out) is None, out
+    assert "-" not in out, out
     assert out.startswith(MINUS) == negative, out
     assert abs(_parse(out) - x) <= _half_unit(x, sig) * (1 + 1e-9), out
 
@@ -268,3 +272,180 @@ def test_instance_empty_can_be_set_and_is_frozen() -> None:
     assert inst.empty is True
     with pytest.raises(AttributeError):
         inst.empty = False  # type: ignore[misc]
+
+
+# --- review round 1 (PR #549) ------------------------------------------------------------------
+# Lead decisions: M4 (true minus in the exponent), M5 (fmt_count), M6 (fmt_alpha), L items and
+# the mutation gaps. ``fmt_count`` and ``fmt_alpha`` are assumed to live in gippa.viz.style next
+# to fmt_num.
+
+
+@pytest.mark.parametrize(
+    ("x", "sig", "expected"),
+    [
+        (1.2e-12, 2, f"1.2e{MINUS}12"),  # M4: U+2212 in the exponent
+        (-1.2e-12, 2, f"{MINUS}1.2e{MINUS}12"),
+        (1.2e-5, 2, f"1.2e{MINUS}5"),  # no leading zero: never "e<minus>05"
+        (2e6, 2, "2.0e6"),  # no "+" and no leading zero: never "e+06"
+        (1e6, 2, "1.0e6"),  # 1e6 exactly (a float) is outside the plain range
+        (999999.5, 2, "1.0e6"),  # rounds up to 1e6, so scientific
+        (999999.5, 7, "999999.5"),  # below 1e6 after rounding: plain
+        (1e-4, 2, "0.00010"),  # 1e-4 exactly is inside the plain range
+        (9.99e-5, 3, f"9.99e{MINUS}5"),  # just below 1e-4: scientific
+        (9.9e-5, 2, f"9.9e{MINUS}5"),
+        (9.99e-5, 2, "0.00010"),  # rounds up to 1.0e-4, so plain (the range is after rounding)
+        (9.995, 2, "10"),  # rounding boundaries at 2 significant digits
+        (99.95, 2, "100"),
+        (0.0995, 2, "0.10"),
+    ],
+)
+def test_fmt_num_scientific_bounds_and_rounding(x: float, sig: int, expected: str) -> None:
+    assert style.fmt_num(x, sig=sig) == expected
+
+
+@given(
+    st.one_of(
+        st.floats(min_value=1e-300, max_value=1e-5),
+        st.floats(min_value=2e6, max_value=1e300),
+    ),
+    st.booleans(),
+)
+def test_fmt_num_property_exponent_has_no_plus_or_leading_zero(x: float, negative: bool) -> None:
+    out = style.fmt_num(-x if negative else x)
+    assert "e" in out, out
+    exp = out.split("e", 1)[1]
+    assert re.fullmatch(rf"{MINUS}?[1-9]\d*", exp), out
+
+
+@pytest.mark.parametrize("x", [math.inf, -math.inf, np.inf, -np.inf])
+def test_fmt_num_and_fmt_q_infinity_is_na(x: float) -> None:
+    assert style.fmt_num(x) == "NA"
+    assert style.fmt_num(x, sig=3) == "NA"
+    assert style.fmt_q(x) == "NA"
+
+
+@pytest.mark.parametrize(("n", "expected"), [(4_373, "4373"), (9_999, "9999"),
+                                             (10_000, "10,000"), (10_001, "10,001")])  # fmt: skip
+def test_fmt_num_grouping_threshold_is_ten_thousand(n: int, expected: str) -> None:
+    assert style.fmt_num(n) == expected
+
+
+@pytest.mark.parametrize("bad", ["NA", "abc", "", pd.NaT, None])
+def test_fmt_num_and_fmt_q_non_numbers_are_na(bad: object) -> None:
+    assert style.fmt_num(bad) == "NA"
+    assert style.fmt_q(bad) == "NA"
+
+
+@pytest.mark.parametrize("b", [True, False])
+def test_fmt_num_numpy_bool_is_a_bool(b: bool) -> None:
+    assert style.fmt_num(np.bool_(b)) == style.fmt_num(b)
+
+
+@pytest.mark.parametrize("x", [1.5, 158, np.int64(3)])
+@pytest.mark.parametrize("sig", [0, -1])
+def test_fmt_num_sig_below_one_raises(x: object, sig: int) -> None:
+    with pytest.raises(ValueError):
+        style.fmt_num(x, sig=sig)
+
+
+# --- M5: fmt_count -----------------------------------------------------------------------------
+
+
+@pytest.mark.parametrize(
+    ("x", "expected"),
+    [
+        (0, "0"),
+        (158, "158"),
+        (np.int64(158), "158"),
+        (np.int32(99), "99"),
+        (158.0, "158"),  # integer-valued float
+        (np.float64(774.0), "774"),
+        (4_373, "4373"),
+        (9_999, "9999"),
+        (10_000, "10,000"),  # grouped from 10,000
+        (200_000.0, "200,000"),
+        (1_234_567, "1,234,567"),
+    ],
+)
+def test_fmt_count_examples(x: object, expected: str) -> None:
+    assert style.fmt_count(x) == expected
+
+
+@pytest.mark.parametrize("na", NA_VALUES)
+def test_fmt_count_na(na: object) -> None:
+    assert style.fmt_count(na) == "NA"
+
+
+@pytest.mark.parametrize("x", [158.5, 0.1, np.float64(2.25), -3.5])
+def test_fmt_count_non_integer_float_raises(x: float) -> None:
+    with pytest.raises(ValueError):
+        style.fmt_count(x)
+
+
+@given(st.integers(min_value=0, max_value=10**12))
+def test_fmt_count_property_matches_fmt_num_on_integers(n: int) -> None:
+    assert style.fmt_count(n) == style.fmt_num(n)
+    assert style.fmt_count(float(n)) == style.fmt_num(n)  # 10**12 < 2**53: exact as a float
+
+
+# --- M6: fmt_alpha -----------------------------------------------------------------------------
+
+
+@pytest.mark.parametrize(
+    ("alpha", "expected"),
+    [(0.01, "0.01"), (0.05, "0.05"), (0.025, "0.025"), (0.1, "0.1"), (0.001, "0.001"),
+     (np.float64(0.05), "0.05")],
+)  # fmt: skip
+def test_fmt_alpha_shortest_exact_decimal(alpha: float, expected: str) -> None:
+    assert style.fmt_alpha(alpha) == expected
+
+
+@given(st.floats(min_value=0.001, max_value=1.0))
+def test_fmt_alpha_property_round_trips_exactly(alpha: float) -> None:
+    out = style.fmt_alpha(alpha)
+    assert "e" not in out.lower() and "-" not in out, out
+    assert float(out) == alpha, out
+
+
+# --- L items: abundance_label ------------------------------------------------------------------
+
+
+def test_abundance_label_empty_scale_has_no_empty_parentheses() -> None:
+    out = style.abundance_label("ibaq", "")
+    assert out is not None and "()" not in out
+    assert out == "log2 iBAQ"
+
+
+@pytest.mark.parametrize("scale", [None, float("nan"), np.nan, pd.NA])
+@pytest.mark.parametrize(
+    ("atype", "name"),
+    [("ibaq", "iBAQ"), ("maxlfq", "MaxLFQ"), ("top3", "Top3"), ("intensity", "intensity")],
+)
+def test_abundance_label_known_type_na_scale(atype: str, name: str, scale: object) -> None:
+    assert style.abundance_label(atype, scale) == f"log2 {name}"
+
+
+@pytest.mark.parametrize(
+    ("atype", "scale", "expected"),
+    [
+        ("IBAQ", "molar", "log2 iBAQ (molar)"),
+        ("iBAQ", "molar", "log2 iBAQ (molar)"),
+        ("MaxLFQ", "relative", "log2 MaxLFQ (relative)"),
+        ("Top3", "relative", "log2 Top3 (relative)"),
+        ("Intensity", "molar", "log2 intensity (molar)"),
+        ("Unknown", "relative", "log2 abundance (measure unknown)"),
+        ("NONE", "relative", None),
+        ("None", None, None),
+    ],
+)
+def test_abundance_label_type_is_case_insensitive(
+    atype: str, scale: str | None, expected: str | None
+) -> None:
+    assert style.abundance_label(atype, scale) == expected
+
+
+def test_abundance_label_docstring_states_the_scale_vocabulary() -> None:
+    doc = style.abundance_label.__doc__ or ""
+    assert "molar" in doc and "relative" in doc
+    assert style.abundance_label("ibaq", "molar") == "log2 iBAQ (molar)"
+    assert style.abundance_label("ibaq", "relative") == "log2 iBAQ (relative)"

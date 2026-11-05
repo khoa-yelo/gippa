@@ -16,7 +16,16 @@ import logging
 from collections.abc import Mapping
 from types import MappingProxyType
 
-__all__ = ["FEATURE_LABEL", "FLAG_TEXT", "SKIP_TEXT", "TIER_TEXT", "plain"]
+__all__ = [
+    "FEATURE_LABEL",
+    "FLAG_TEXT",
+    "SCOPED_TEXT",
+    "SKIP_TEXT",
+    "TIER_NAME",
+    "TIER_TEXT",
+    "feature_label",
+    "plain",
+]
 
 _log = logging.getLogger(__name__)
 
@@ -33,10 +42,11 @@ FLAG_TEXT: Mapping[str, str] = MappingProxyType(
         "cross_strain_protein": "protein matched from another strain",
         "imputed_abundance": "abundance imputed, not measured",
         "abundance_imputed": "abundance imputed, not measured",
-        "tolerant_evidence": "supported only by mismatch-tolerant matches",
+        "tolerant_evidence": "has evidence from mismatch-tolerant matches",
         "strain_difference": "evidence points to a sequence difference from the reference strain",
         "nterm_extension_evidence": "peptides suggest an N-terminal extension",
-        "cai_reference": "codon adaptation predicted outside the reference set",
+        "cai_reference": "in the codon adaptation reference set (ribosomal proteins); not used to "
+        "fit the model",
         "top3_lt3": "Top3 abundance from fewer than three peptides",
         "detectability_constant": "detectability model not fitted; a constant rate is used",
         "abundance_not_explained_by_sequence": "abundance not explained by sequence features",
@@ -46,7 +56,8 @@ FLAG_TEXT: Mapping[str, str] = MappingProxyType(
         "st": "placement reads through a stop codon",
         "engine_protein_mismatch": "search engine protein differs from the mapped gene",
         "origin_spanning": "peptide spans the origin of a circular replicon",
-        "initiator_m": "peptide starts with the initiator methionine",
+        "initiator_m": "peptide starts with the initiator methionine at an annotated non-ATG "
+        "start codon",
         "low_complexity": "low-complexity peptide",
         "multi": "peptide maps to more than one place",
         "pyl_site": "peptide reads a TAG codon as pyrrolysine",
@@ -58,7 +69,12 @@ FLAG_TEXT: Mapping[str, str] = MappingProxyType(
         "descriptive": "descriptive only; no test",
         "no_oric": "replication origin not found",
         "uncalibrated": "test not calibrated for this setting",
-        "uncalibrated:": "{} not calibrated in this run",
+        "uncalibrated:": "{} is not calibrated in this run",
+        "uncalibrated:operon_distance": "the operon distance model is not calibrated in this run",
+        "uncalibrated:uniop_pair_threshold": "the UniOp pair threshold is not calibrated in "
+        "this run",
+        "uncalibrated:terminatornet_yes": "the TerminatorNet call threshold is not calibrated in "
+        "this run",
         "depth_adjusted": "adjusted for plasmid copy number",
         "few_shifts": "too few shifts for a significant result",
         "few_values": "too few values to scan",
@@ -66,7 +82,8 @@ FLAG_TEXT: Mapping[str, str] = MappingProxyType(
         "hl_variance_nonpositive": "variance estimate not positive; no p-value",
         "no_reference_replicon": "no reference replicon to compare with",
         "not_estimable": "statistic cannot be estimated",
-        "ci_few_units": "interval from fewer than 10 units; not a 95 % interval",
+        "ci_few_units": "fewer than 10 resampling units; the interval is unreliable or not "
+        "computed",
         "ci_unestimated": "confidence interval not estimated",
         "tu_block_tu_error": "the transcription unit null assumes exact unit boundaries",
         "tu_source_distance_model": "transcription units from the distance model",
@@ -92,6 +109,9 @@ FLAG_TEXT: Mapping[str, str] = MappingProxyType(
         # enrichment
         "elim_empty": "no genes left after removing more specific terms",
         "null_degenerate": "the detection null is degenerate; no p-value",
+        "null_uncalibrated": "the permutation p-value is not calibrated "
+        "(it assumes operons are exchangeable)",
+        "too_few_rows": "too few genes to fit the model",
         "odds_out_of_range": "odds ratio out of range; no p-value",
         "ora_uncalibrated": "over-representation test not calibrated",
         "p_detect_clipped": "detection probabilities of 0 or 1 were clipped",
@@ -132,6 +152,7 @@ FLAG_TEXT: Mapping[str, str] = MappingProxyType(
         # run
         "anti_sd_default": "the E. coli anti-Shine–Dalgarno sequence was used",
         "c_assumed": "de novo precision assumed, not measured",
+        "unreported": "de novo precision not estimable in this score bin; not reported",
         "bakta_db_light": "annotated with the light Bakta database",
         "operon_source_distance_model": "operons from the distance model",
         "input_prefiltered": "input was filtered before GIPPA",
@@ -152,6 +173,18 @@ FLAG_TEXT: Mapping[str, str] = MappingProxyType(
         "layer_missing:regions": "genomic regions not computed",
         "layer_missing:terminators": "terminators not predicted",
         "layer_missing:tx_rates": "transcription rates not computed",
+    }
+)
+
+#: table -> flag token -> sentence, where a token means something else in that table
+SCOPED_TEXT: Mapping[str, Mapping[str, str]] = MappingProxyType(
+    {
+        "pairs": MappingProxyType(
+            {"abundance_imputed": "abundance of a gene of the pair imputed, not measured"}
+        ),
+        "determinants_model": MappingProxyType(
+            {"null_degenerate": "the permutation null is degenerate; no p-value"}
+        ),
     }
 )
 
@@ -178,6 +211,14 @@ SKIP_TEXT: Mapping[str, str] = MappingProxyType(
 #: feature column -> human name
 FEATURE_LABEL: Mapping[str, str] = MappingProxyType(
     {
+        # identity columns of determinants_features.tsv
+        "locus_tag": "locus tag",
+        "tu_id": "transcription unit",
+        "detected": "detection status",
+        "abundance_log2": "log2 abundance",
+        "abundance_imputed": "abundance imputed",
+        "ribosomal_protein": "ribosomal protein",
+        # features
         "promotech_max": "promoter score",
         "promotech_tu": "promoter score of the transcription unit",
         "promoter_score": "promoter score",
@@ -232,6 +273,28 @@ TIER_TEXT: Mapping[str, str] = MappingProxyType(
     }
 )
 
+#: detection tier -> its name in prose
+TIER_NAME: Mapping[str, str] = MappingProxyType(
+    {
+        "decoy_picked": "decoy-picked",
+        "mayu": "Mayu",
+        "two_peptide": "two-peptide",
+        "protein_list": "protein list",
+    }
+)
+
+#: a template key looked up bare (no parameter) -> sentence without the placeholder
+_BARE: Mapping[str, str] = MappingProxyType(
+    {
+        "layer_missing:": "a layer was not computed",
+        "uncalibrated:": "a setting not calibrated in this run",
+        "missing_in:": "absent from another run",
+        "module_off:": "a module was not run",
+    }
+)
+#: template prefixes whose parameter is user text (a run name), filled in verbatim
+_VERBATIM = frozenset({"missing_in"})
+
 
 def _input_key(param: str) -> str:
     """``tables/variants.tsv`` -> ``variants``: an output path reduced to its table key."""
@@ -241,7 +304,20 @@ def _input_key(param: str) -> str:
     return name
 
 
+def _fill(template: str, prefix: str, param: str) -> str:
+    """``template`` with its ``{}`` filled by ``param``: underscores become spaces (a parameter is
+    a token, prose holds none) except for a verbatim prefix; an empty parameter takes the bare
+    sentence."""
+    if prefix not in _VERBATIM:
+        param = " ".join(param.replace("_", " ").split())
+    if not param:
+        return _BARE.get(f"{prefix}:", template.replace("{}", "").strip())
+    return template.replace("{}", param)
+
+
 def _lookup(token: str) -> str | None:
+    if token in _BARE:
+        return _BARE[token]
     for table in (FLAG_TEXT, SKIP_TEXT):
         if token in table:
             return table[token]
@@ -257,15 +333,36 @@ def _lookup(token: str) -> str | None:
     for table in (FLAG_TEXT, SKIP_TEXT):
         template = table.get(f"{prefix}:")
         if template is not None:
-            return template.replace("{}", param)
+            return _fill(template, prefix, param)
     return None
 
 
-def plain(token: str) -> str:
-    """The plain-words sentence for a flag token or skip reason; an unknown token comes back
-    unchanged with a logged warning. Never raises."""
-    text = _lookup(str(token))
+def plain(token: str, table: str | None = None) -> str:
+    """The plain-words sentence for a flag token or skip reason; ``table`` (a table name such as
+    ``pairs``) selects the sentence of a token that means something else there and otherwise
+    changes nothing. An unknown token comes back unchanged with a logged warning. Never raises."""
+    token = str(token)
+    if table is not None:
+        scoped = SCOPED_TEXT.get(str(table), {}).get(token)
+        if scoped is not None:
+            return scoped
+    text = _lookup(token)
     if text is None:
         _log.warning("no plain-text entry for %r", token)
-        return str(token)
+        return token
     return text
+
+
+def feature_label(col: str) -> str:
+    """The human name of a determinants column: a ``FEATURE_LABEL`` entry, or a one-hot column
+    ``<feature>_<level>`` as ``"<feature name>: <level>"`` (``start_codon_ATG`` ->
+    ``"start codon: ATG"``); any other column with its underscores turned into spaces."""
+    col = str(col)
+    label = FEATURE_LABEL.get(col)
+    if label is not None:
+        return label
+    for feat in sorted(FEATURE_LABEL, key=len, reverse=True):
+        if col.startswith(f"{feat}_") and len(col) > len(feat) + 1:
+            level = col[len(feat) + 1 :].replace("_", " ")
+            return f"{FEATURE_LABEL[feat]}: {level}"
+    return col.replace("_", " ")

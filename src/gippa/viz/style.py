@@ -160,8 +160,8 @@ _ABUNDANCE_NAME: Mapping[str, str] = MappingProxyType(
 
 
 def _is_na(x: object) -> bool:
-    """``None``, ``pd.NA`` and NaN (float or numpy) are NA."""
-    if x is None or x is pd.NA:
+    """``None``, ``pd.NA``, ``pd.NaT`` and NaN (float or numpy) are NA."""
+    if x is None or x is pd.NA or x is pd.NaT:
         return True
     try:
         return bool(math.isnan(cast(float, x)))
@@ -169,31 +169,55 @@ def _is_na(x: object) -> bool:
         return False
 
 
+def _as_number(x: object) -> int | float | None:
+    """``x`` as an ``int`` (Python, numpy and bool integers) or a ``float``; ``None`` for NA and
+    anything that does not parse as a number."""
+    if _is_na(x):
+        return None
+    if isinstance(x, (bool, np.bool_)):
+        return int(bool(x))
+    if isinstance(x, (int, np.integer)):
+        return int(x)
+    try:
+        v = float(cast(float, x))
+    except (TypeError, ValueError, OverflowError):
+        return None
+    return None if math.isnan(v) else v
+
+
 def _signed(text: str, negative: bool) -> str:
     return f"{MINUS}{text}" if negative else text
 
 
+def _grouped(n: int) -> str:
+    """An integer exactly, comma-grouped from 10,000, with a true minus."""
+    body = f"{abs(n):,}" if abs(n) >= 10_000 else str(abs(n))
+    return _signed(body, n < 0)
+
+
 def _sig_text(x: float, sig: int) -> str:
     """``|x|`` to ``sig`` significant digits, trailing zeros kept: plain inside
-    ``1e-4 <= |x| < 1e6`` after rounding, ``1.2e-12`` style outside it."""
+    ``1e-4 <= |x| < 1e6`` after rounding, ``1.2e<U+2212>12`` style outside it (a true minus, no
+    ``+`` and no leading zero in the exponent)."""
     rounded = f"{abs(x):.{sig - 1}e}"
-    mant, exp = rounded.split("e")
-    if -4 <= int(exp) < 6:
+    mant, exp_text = rounded.split("e")
+    exp = int(exp_text)
+    if -4 <= exp < 6:
         return format(Decimal(rounded), "f")
-    return f"{mant}e{int(exp):+d}" if int(exp) > 0 else f"{mant}e{int(exp)}"
+    return f"{mant}e{_signed(str(abs(exp)), exp < 0)}"
 
 
 def fmt_num(x: object, sig: int = 2) -> str:
     """A number for prose: integers exact (comma-grouped from 10,000), other values to ``sig``
-    significant digits with trailing zeros kept; a true minus (U+2212), never on zero; NA and
-    infinity -> ``"NA"``."""
-    if _is_na(x):
+    significant digits with trailing zeros kept; a true minus (U+2212), never on zero; NA,
+    infinity and non-numbers -> ``"NA"``. ``sig < 1`` raises ``ValueError``."""
+    if sig < 1:
+        raise ValueError(f"sig must be >= 1, not {sig}")
+    v = _as_number(x)
+    if v is None:
         return "NA"
-    if isinstance(x, (int, np.integer)):
-        n = int(x)
-        body = f"{abs(n):,}" if abs(n) >= 10_000 else str(abs(n))
-        return _signed(body, n < 0)
-    v = float(cast(float, x))
+    if isinstance(v, int):
+        return _grouped(v)
     if not math.isfinite(v):
         return "NA"
     if v == 0.0:
@@ -201,15 +225,40 @@ def fmt_num(x: object, sig: int = 2) -> str:
     return _signed(_sig_text(v, sig), v < 0)
 
 
+def fmt_count(x: object) -> str:
+    """A count: an integer or integer-valued float printed exactly, comma-grouped from 10,000;
+    NA -> ``"NA"``. A non-integer value raises ``ValueError``."""
+    v = _as_number(x)
+    if v is None:
+        if _is_na(x):
+            return "NA"
+        raise ValueError(f"not a count: {x!r}")
+    if isinstance(v, float):
+        if not math.isfinite(v):
+            return "NA"
+        if not v.is_integer():
+            raise ValueError(f"not a whole count: {x!r}")
+        v = int(v)
+    return _grouped(v)
+
+
+def fmt_alpha(alpha: object) -> str:
+    """An FDR level as its shortest exact decimal (``0.05`` -> ``"0.05"``, ``0.025`` ->
+    ``"0.025"``), never in scientific notation; NA -> ``"NA"``."""
+    v = _as_number(alpha)
+    if v is None or not math.isfinite(v):
+        return "NA"
+    text = format(Decimal(repr(float(v))), "f")
+    return _signed(text.lstrip("-"), v < 0)
+
+
 def fmt_q(q: object) -> str:
     """A q- or p-value: ``"< 0.001"`` below 0.001, otherwise 2 significant digits with trailing
-    zeros kept (``0.05`` -> ``"0.050"``); NA -> ``"NA"``."""
-    if _is_na(q):
+    zeros kept (``0.05`` -> ``"0.050"``); NA and non-numbers -> ``"NA"``."""
+    v = _as_number(q)
+    if v is None or not math.isfinite(v):
         return "NA"
-    v = float(cast(float, q))
-    if not math.isfinite(v):
-        return "NA"
-    return "< 0.001" if v < 0.001 else _sig_text(v, 2)
+    return "< 0.001" if v < 0.001 else _sig_text(float(v), 2)
 
 
 def fmt_pct(n: int, d: int) -> str:
@@ -224,11 +273,15 @@ def fmt_pct(n: int, d: int) -> str:
 
 
 def abundance_label(atype: object, scale: object) -> str | None:
-    """The abundance axis label from ``abundance_type`` and ``abundance_scale``; ``None`` when
-    the run has no abundance (``none`` or NA), so the caller draws no abundance axis."""
-    if _is_na(atype) or atype == "none":
+    """The abundance axis label from ``abundance_type`` (``ibaq``, ``maxlfq``, ``top3``,
+    ``intensity``, any case) and ``abundance_scale`` (``molar`` or ``relative``), e.g.
+    ``"log2 iBAQ (molar)"``; an NA or empty scale drops the parentheses. ``None`` when the run
+    has no abundance (``none`` or NA), so the caller draws no abundance axis."""
+    if _is_na(atype) or str(atype).strip().lower() == "none":
         return None
-    name = _ABUNDANCE_NAME.get(str(atype))
-    if name is None or _is_na(scale):
-        return "log2 abundance (measure unknown)" if name is None else f"log2 {name}"
-    return f"log2 {name} ({scale})"
+    name = _ABUNDANCE_NAME.get(str(atype).strip().lower())
+    if name is None:
+        return "log2 abundance (measure unknown)"
+    if _is_na(scale) or not str(scale).strip():
+        return f"log2 {name}"
+    return f"log2 {name} ({str(scale).strip()})"
