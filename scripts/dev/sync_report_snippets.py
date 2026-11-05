@@ -1,10 +1,12 @@
 """Generate the report's methods snippets from ``docs/methods`` (M9-16 behaviour 2).
 
-Every ``<topic>.md`` holding a ``<!-- report:begin -->`` ... ``<!-- report:end -->`` block becomes
-``<topic>.html``: one ``<p>`` per blank-line-separated paragraph (lines joined by a space), one
-``<ul>`` of ``<li>`` per run of ``- `` lines (indented lines continue the item), text
-HTML-escaped. ``--check`` writes nothing and exits 1 naming each topic whose snippet differs from
-its source, is missing, or has no source (an orphan). Standard library only.
+Every ``<!-- report:begin -->`` ... ``<!-- report:end -->`` block of ``<topic>.md`` becomes
+``<topic>.html``, and every keyed block ``<!-- report:begin <key> -->`` becomes
+``<topic>.<key>.html`` (M12-04 PR 3): one ``<p>`` per blank-line-separated paragraph (lines
+joined by a space), one ``<ul>`` of ``<li>`` per run of ``- `` lines (indented lines continue the
+item), text HTML-escaped. ``--check`` writes nothing and exits 1 naming each snippet (``<topic>``
+or ``<topic>.<key>``) that differs from its source, is missing, or has no source (an orphan).
+Standard library only.
 
     python scripts/dev/sync_report_snippets.py [--check] [--docs DIR] [--out DIR]
 """
@@ -12,21 +14,24 @@ its source, is missing, or has no source (an orphan). Standard library only.
 from __future__ import annotations
 
 import argparse
+import re
 import sys
 from html import escape
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
-BEGIN, END = "<!-- report:begin -->", "<!-- report:end -->"
+END = "<!-- report:end -->"
+BEGIN = re.compile(r"<!-- report:begin(?: ([A-Za-z0-9_-]+))? -->")
 
 
-def block(text: str) -> str | None:
-    """The marked block of a Markdown document, or ``None``."""
-    start = text.find(BEGIN)
-    if start < 0:
-        return None
-    stop = text.find(END, start)
-    return text[start + len(BEGIN) : stop if stop >= 0 else len(text)]
+def blocks(text: str) -> list[tuple[str | None, str]]:
+    """``(key, body)`` of every marked block of a Markdown document (key ``None`` when unkeyed);
+    a block without its end marker runs to the end of the document."""
+    found = []
+    for m in BEGIN.finditer(text):
+        stop = text.find(END, m.end())
+        found.append((m.group(1), text[m.end() : stop if stop >= 0 else len(text)]))
+    return found
 
 
 def to_html(src: str) -> str:
@@ -62,11 +67,11 @@ def to_html(src: str) -> str:
 
 
 def expected(docs: Path) -> dict[str, str]:
+    """Snippet stem (``<topic>`` or ``<topic>.<key>``) -> its HTML."""
     found = {}
     for md in sorted(docs.glob("*.md")):
-        body = block(md.read_text(encoding="utf-8"))
-        if body is not None:
-            found[md.stem] = to_html(body)
+        for key, body in blocks(md.read_text(encoding="utf-8")):
+            found[md.stem if key is None else f"{md.stem}.{key}"] = to_html(body)
     return found
 
 
@@ -80,7 +85,7 @@ def main(argv: list[str] | None = None) -> int:
     have = {p.stem: p for p in sorted(args.out.glob("*.html"))} if args.out.is_dir() else {}
     if args.check:
         bad = [t for t, h in want.items() if t not in have or have[t].read_text("utf-8") != h]
-        bad += [f"{t} (orphan: no report block in {args.docs.name}/{t}.md)"
+        bad += [f"{t} (orphan: no report block for it in {args.docs.name}/)"
                 for t in have if t not in want]  # fmt: skip
         for topic in bad:
             print(f"snippet out of sync: {topic}")

@@ -1,6 +1,6 @@
 # Plots and report
 
-GIPPA 1.0 builds 16 plots: V1–V3, V5–V8 and V10–V18. Each plot is written to `plots/` as
+GIPPA builds 16 plots: V1–V3, V5–V8 and V10–V18. Each plot is written to `plots/` as
 `Vnn_<name>.svg`, `.png` and `.pdf`. The exact data drawn is in `plots/data/Vnn_<name>.tsv`, with
 coordinates 1-based closed. Plot titles state the finding, and they are generated from the tables.
 The palettes are colourblind-safe, and a category keeps one colour across all plots.
