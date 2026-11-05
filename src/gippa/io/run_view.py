@@ -1,14 +1,16 @@
 """``RunView``: every file read of the plot framework (M9-01 behaviour 3-5; M9-index decision 2).
 
 One table, ``PATHS``, maps a key to its ``OUT/``-relative path: the ``gippa.runner.local``
-``PUBLISHED_FILES`` entries plus the files inside the ``PUBLISHED`` directories, preflight, logs
-and the resolved config. ``from_outdir`` resolves keys under ``OUT/``; ``from_inputs`` resolves
-them from a step's input map (``StepContext.inputs``: ``Path | list[Path]`` values), so both see
-the same keys and read the same frames. In an input map, a file under a ``PUBLISHED`` directory
-(``annotation/``, ``mapping/``) is found only through that directory key, so the work keys ``tus``,
-``regions`` and ``terminators`` (Parquet) never shadow the published ``tus_tsv``, ``regions_tsv``,
-``promoters_bed`` and ``terminators_bed``; any other key may name the file or a directory holding
-it (``preflight`` is the directory ``work/preflight/`` under the local executor).
+``PUBLISHED_FILES`` entries (step intermediates under ``intermediate/``, ``out_path``; their 1.0
+top-level location is a ``_FALLBACK``) plus the files inside the ``PUBLISHED`` directories,
+preflight, logs and the resolved config. ``from_outdir`` resolves keys under ``OUT/``;
+``from_inputs`` resolves them from a step's input map (``StepContext.inputs``: ``Path | list[Path]``
+values), so both see the same keys and read the same frames. In an input map, a file under a
+``PUBLISHED`` directory (``annotation/``, ``mapping/``) is found only through that directory key, so
+the work keys ``tus``, ``regions`` and ``terminators`` (Parquet) never shadow the published
+``tus_tsv``, ``regions_tsv``, ``promoters_bed`` and ``terminators_bed``; any other key may name the
+file or a directory holding it (``preflight`` is the directory ``work/preflight/`` under the local
+executor).
 The ``plots`` step takes ``step_events`` (``logs/steps``) and ``plots_support``
 (``plots/support``) as optional inputs (M9-02); ``from_inputs`` reads those directories from them.
 It also takes the analysis steps' support directories ``ANALYSIS_SUPPORT`` (M9-17; M9-21 lead
@@ -40,7 +42,7 @@ import yaml
 from gippa.config.model import Module
 from gippa.io._open import open_text
 from gippa.io.tsv import read_tsv
-from gippa.runner.local import PUBLISHED, PUBLISHED_FILES
+from gippa.runner.local import PUBLISHED, PUBLISHED_FILES, out_path
 
 _EXTRA: dict[str, str] = {
     "preflight": "preflight/preflight.json",
@@ -58,10 +60,17 @@ _EXTRA: dict[str, str] = {
     "resolved_config": "resolved_config.yaml",
     "run_manifest": "run_manifest.json",
 }
-#: key -> ``OUT/``-relative path (behaviour 3)
-PATHS: Mapping[str, str] = {**PUBLISHED_FILES, **_EXTRA}
-#: further ``OUT/``-relative candidates tried after ``PATHS[key]``
-_FALLBACK: dict[str, tuple[str, ...]] = {"resolved_config": ("work/resolved_config.yaml",)}
+#: key -> ``OUT/``-relative path (behaviour 3); step intermediates under ``intermediate/``
+PATHS: Mapping[str, str] = {
+    **{k: out_path(r) for k, r in PUBLISHED_FILES.items()},
+    **_EXTRA,
+}
+#: further ``OUT/``-relative candidates tried after ``PATHS[key]``: the work copy of the resolved
+#: config and the 1.0 top-level location of every intermediate (1.0 output trees)
+_FALLBACK: dict[str, tuple[str, ...]] = {
+    "resolved_config": ("work/resolved_config.yaml",),
+    **{k: (rel,) for k, rel in PUBLISHED_FILES.items() if out_path(rel) != rel},
+}
 STEP_EVENTS = "logs/steps"
 SUPPORT = "plots/support"
 #: the M9-17 step outputs (directories) holding further support files
@@ -84,6 +93,15 @@ ONE_BASED_STARTS: Mapping[str, tuple[str, ...]] = {
     "tus_tsv": ("start", "upstream_start"),
     "regions_tsv": ("start",),
 }
+
+
+def out_file(out: Path, key: str) -> Path | None:
+    """The file behind ``key`` in the output directory ``out``: ``PATHS[key]``, else its
+    ``_FALLBACK`` candidates in order (a 1.0 tree); ``None`` when none exists."""
+    for cand in (PATHS[key], *_FALLBACK.get(key, ())):
+        if (out / cand).is_file():
+            return out / cand
+    return None
 
 
 class NotAGippaRun(ValueError):
@@ -182,12 +200,8 @@ class RunView:
     def from_outdir(cls, out: Path) -> RunView:
         if not ((out / "tables").is_dir() or (out / "preflight").is_dir()):
             raise NotAGippaRun(f"{out} is not a GIPPA output directory (no tables/ or preflight/)")
-        files = {}
-        for key, rel in PATHS.items():
-            for cand in (rel, *_FALLBACK.get(key, ())):
-                if (out / cand).is_file():
-                    files[key] = out / cand
-                    break
+        found = {key: out_file(out, key) for key in PATHS}
+        files = {key: path for key, path in found.items() if path is not None}
         return cls(files, {d: out / d for d in (STEP_EVENTS, SUPPORT)})
 
     @classmethod

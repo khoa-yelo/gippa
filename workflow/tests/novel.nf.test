@@ -5,7 +5,8 @@
 // peptides, features, hits_exact, hits_tolerant and placement_costs, each staged from its producer
 // (the C9 peptides from the run's input, features from parse_bakta, the hit tables from map_exact /
 // map_tolerant, placement_costs from placement); novel_orfs writes novel/novel_class_fdr.parquet
-// and it is published under OUT/novel/ (runner/local.py PUBLISHED_FILES gives the same name,
+// and it is published under OUT/intermediate/novel/ (M12-04 PR 12; runner/local.py PUBLISHED_FILES
+// gives the same name,
 // tests/unit/test_local_publish_names.py). The --in keys follow the registry fixture
 // (data/annotate/step_registry.json, kept equal to gippa.steps by tests/unit/test_nf_annotate_registry.py).
 
@@ -77,7 +78,7 @@ nextflow_pipeline {
             assert src('peptides').endsWith('.parquet') : "peptides: ${src('peptides')}"
 
             assert new File(odir, 'novel/novel_class_fdr.parquet').isFile() : "novel_orfs wrote no novel_class_fdr"
-            ['novel/novel_class_fdr.parquet', 'tables/novel_orfs.tsv'].each { f ->
+            ['intermediate/novel/novel_class_fdr.parquet', 'tables/novel_orfs.tsv'].each { f ->
                 assert new File("${outputDir}/${f}").isFile() : "${f} not published"
             }
         }

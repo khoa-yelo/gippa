@@ -695,7 +695,7 @@ def test_gippa_run_publishes_the_side_table_and_the_makedb_warning(
 
     _, out, work = run1
     assert (work / "placement_costs").exists()
-    side = pd.read_parquet(out / "novel" / "novel_class_fdr.parquet")
+    side = pd.read_parquet(out / "intermediate" / "novel" / "novel_class_fdr.parquet")
     tsv = nf.tsv_dicts(out / "tables" / "novel_orfs.tsv")
     assert list(side["orf_id"]) == [r["orf_id"] for r in tsv]
     assert set(side["reason"]) == {"decoys_not_makedb"}

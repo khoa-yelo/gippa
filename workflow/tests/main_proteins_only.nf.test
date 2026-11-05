@@ -114,9 +114,9 @@ nextflow_pipeline {
             def m = new File("${outputDir}/mapping")
             ['peptide_hits.tsv', 'protein_hits.tsv', 'mappings.probed', 'mappings.bed', 'mappings.gff3',
              'unmapped.tsv', 'mapping_fdr.tsv'].each { f -> assert new File(m, f).isFile() : "mapping/${f} not published" }
-            ['genetable/genes_pre.parquet', 'genetable/genes.parquet',
-             'genetable/detection_summary_parts/detectability.parquet',
-             'genetable/detection_summary_parts/tier.parquet',
+            ['intermediate/genetable/genes_pre.parquet', 'intermediate/genetable/genes.parquet',
+             'intermediate/genetable/detection_summary_parts/detectability.parquet',
+             'intermediate/genetable/detection_summary_parts/tier.parquet',
              'tables/genes.tsv', 'tables/regions_stats.tsv', 'tables/detection_summary.tsv',
              'tables/sensitivity.tsv', 'tables/islands.tsv', 'tables/autocorrelation.tsv',
              'tables/pairs.tsv', 'tables/operons.tsv', 'tables/operon_flags.tsv',
@@ -196,7 +196,7 @@ nextflow_pipeline {
                 assert k in keys : "plots lacks ${k} with proteins + abundance; has ${keys}"
             }
 
-            ['genetable/genes.parquet', 'tables/genes.tsv', 'tables/detection_summary.tsv',
+            ['intermediate/genetable/genes.parquet', 'tables/genes.tsv', 'tables/detection_summary.tsv',
              'mapping/protein_hits.tsv', 'report/report.html'].each { f ->
                 assert new File("${outputDir}/${f}").isFile() : "${f} not published with proteins + abundance"
             }
@@ -249,7 +249,7 @@ nextflow_pipeline {
             assert gin.any { it[0] == 'peptides' } : "gene_table lost the peptides: ${gin}"
             assert gin.any { it[0] == 'mapping' } : "gene_table got no loci directory: ${gin}"
 
-            ['genetable/genes_pre.parquet', 'genetable/genes.parquet', 'tables/genes.tsv',
+            ['intermediate/genetable/genes_pre.parquet', 'intermediate/genetable/genes.parquet', 'tables/genes.tsv',
              'tables/regions_stats.tsv', 'tables/detection_summary.tsv', 'tables/sensitivity.tsv',
              'tables/pairs.tsv', 'tables/operons.tsv', 'tables/operon_flags.tsv',
              'tables/determinants_features.tsv', 'tables/novel_orfs.tsv', 'tables/variants.tsv',

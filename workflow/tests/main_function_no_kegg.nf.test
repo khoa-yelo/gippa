@@ -73,7 +73,7 @@ nextflow_pipeline {
             assert !H.names(workflow.trace).any { it.toLowerCase().contains('kegg') } : "a KEGG process ran: ${H.names(workflow.trace)}"
 
             ['tables/category_summary.tsv', 'tables/enrichment_detection.tsv', 'tables/enrichment_gsea.tsv',
-             'genetable/tu_folds.parquet', 'tables/operons.tsv'].each { f ->
+             'intermediate/genetable/tu_folds.parquet', 'tables/operons.tsv'].each { f ->
                 assert new File("${outputDir}/${f}").isFile() : "${f} not published"
             }
         }

@@ -85,7 +85,7 @@ def test_tagged_classes_have_no_unestimated_orf_but_gene_model_misses(
 
     _, out = run
     work = out / "work"
-    side = pd.read_parquet(out / "novel" / "novel_class_fdr.parquet")
+    side = pd.read_parquet(out / "intermediate" / "novel" / "novel_class_fdr.parquet")
     tagged = side[side["class"].isin(TAGGED)]
     assert set(tagged["class"]) == set(TAGGED), sorted(set(side["class"]))
     assert set(side["regime"]) <= {"picked_decoy", "unestimated"}  # database input only

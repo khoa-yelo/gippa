@@ -332,10 +332,27 @@ SUPPORT_OUTPUTS: tuple[str, ...] = (
 
 #: outputs named ``work/<file>`` are intermediates: GIPPA_STEP and :func:`publish` skip them
 UNPUBLISHED_PREFIX = "work/"
+#: the published top-level names of ``OUT/`` (``publishedTop`` in workflow/modules/local/
+#: gippa_step/main.nf); ``intermediate/`` and Nextflow's ``work/`` sit next to them
+PUBLISHED_TOP: frozenset[str] = frozenset({
+    "README.txt", "run_manifest.json", "resolved_config.yaml", "preflight", "annotation",
+    "mapping", "tables", "plots", "report", "schemas", "logs",
+})  # fmt: skip
+#: step intermediates are published under ``OUT/intermediate/<path>``
+INTERMEDIATE = "intermediate"
+
+
+def out_path(rel: str) -> str:
+    """The ``OUT/``-relative publish path of a task output named ``rel``: ``rel`` when its first
+    component is a published name or ``work`` (never published), else ``intermediate/<rel>``."""
+    if rel.split("/", 1)[0] in PUBLISHED_TOP or rel.startswith(UNPUBLISHED_PREFIX):
+        return rel
+    return f"{INTERMEDIATE}/{rel}"
 
 
 def publish(workdir: Path, outdir: Path) -> list[Path]:
-    """Copy the published step outputs of ``workdir`` to ``outdir`` (§9.1), like Nextflow."""
+    """Copy the published step outputs of ``workdir`` to ``outdir`` (§9.1), like Nextflow; a
+    ``PUBLISHED_FILES`` entry outside the published names goes to ``intermediate/``."""
     done: list[Path] = []
     for key, sub in sorted(PUBLISHED.items()):
         src, dst = workdir / key, outdir / sub
@@ -345,7 +362,7 @@ def publish(workdir: Path, outdir: Path) -> list[Path]:
     for key, rel in sorted(PUBLISHED_FILES.items()):
         if rel.startswith(UNPUBLISHED_PREFIX):
             continue
-        src, dst = workdir / key, outdir / rel
+        src, dst = workdir / key, outdir / out_path(rel)
         if src.is_file():
             dst.parent.mkdir(parents=True, exist_ok=True)
             shutil.copyfile(src, dst)
