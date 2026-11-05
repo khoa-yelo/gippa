@@ -382,7 +382,7 @@ def test_example_8_partial_gene() -> None:
     assert as_list(r["flags"]) == ["partial"]
 
 
-def test_detectability_constant_on_eligible_genes_only(
+def test_detectability_constant_is_a_run_flag_not_a_row_flag(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
 ) -> None:
     """Since 1.1 (ADR-0075) a constant model sets no row flag; the step logs the run flag once."""

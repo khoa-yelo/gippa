@@ -1165,6 +1165,7 @@
   ],
   "warnings": [
     "codon_usage:codon_usage.run_flag",
+    "detectability:detectability.run_flag",
     "novel_orfs:novel_orfs.class_q_floor_above_alpha",
     "preflight:genome.contiguity"
   ]

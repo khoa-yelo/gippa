@@ -226,3 +226,55 @@ def test_detection_summary_overall_row_stays(
     diag = pd.read_parquet(tmp_path / "summary_part")
     row = diag[(diag["section"] == "detectability") & (diag["metric"] == TOKEN)]
     assert len(row) == 1 and float(row["value"].iloc[0]) == 1.0, diag
+
+
+# ----------------------------------------------------------------------------- fitted model
+
+
+@pytest.fixture
+def fitted_run(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> tuple[pd.DataFrame, list]:
+    """gene_table on a 200-gene fixture, then ``genes_pre`` gets 100 detected / 99 undetected
+    eligible genes with varied covariates (gene 5 partial, ~100 TUs), so M4-13 fits the model."""
+    import numpy as np
+
+    from gippa.config import GippaConfig
+    from gippa.genetable.covariates import COVARIATE_COLUMNS
+    from gippa.io.genes_tsv import read_genes_parquet, write_genes_parquet
+    from gippa.steps.detectability import run_detectability
+    from gippa.steps.gene_table import run_gene_table
+
+    (tmp_path / "db").mkdir()
+    monkeypatch.setenv("GIPPA_DB_DIR", str(tmp_path / "db"))
+    work = tmp_path / "work"
+    work.mkdir()
+    fr = gt.frames_with(200)
+    fr["genes"].loc[5, "partial"] = True
+    fr["layers"].at[5, "flags"] = ["partial"]
+    _write_work(work, fr)
+    cfg = GippaConfig(seed=3)
+    pre_path = run_gene_table(work, cfg)
+    pre = read_genes_parquet(pre_path)
+    n = len(pre)
+    r = np.random.default_rng(11)
+    for c in COVARIATE_COLUMNS:
+        pre[c] = r.uniform(1.0, 500.0, n)
+    pre["detected"] = np.arange(n) % 2 == 0
+    pre["tu_id"] = [f"TU_{i // 2 + 1}" for i in range(n)]
+    write_genes_parquet(pre_path, pre)
+    with _recording() as records:
+        out = run_detectability(work, cfg)
+    return pd.read_parquet(out), list(records)
+
+
+def test_fitted_model_emits_no_run_flag(fitted_run: tuple[pd.DataFrame, list]) -> None:
+    """Kills ``if res.constant:`` → ``if True:``: only a constant model logs the run flag."""
+    df, records = fitted_run
+    by = df.set_index("locus_tag")
+    eligible = ~by["partial"].astype(bool)
+    p = by.loc[eligible, "p_detect"].astype(float)
+    assert p.notna().all() and p.nunique() > 1, "fixture did not fit a non-constant model"
+    assert _flag_records(records) == [], [(r.name, r.getMessage()) for r in records]
+    events = [_as_event(r) for r in records if isinstance(getattr(r, "event", None), str)]
+    m = build(events=events)
+    assert TOKEN not in m["flags"], m["flags"]
+    assert not any(TOKEN in str(w) for w in m.get("warnings", [])), m.get("warnings")
