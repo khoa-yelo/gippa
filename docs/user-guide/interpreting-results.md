@@ -221,6 +221,12 @@ detectability**, and ORA uses ω = 1. Treat their results as unadjusted comparis
 detected" is only an extreme case of this, where the detection-dependent tests are
 `not_estimable`.
 
+**`foreign_protein_ids` and `cross_strain_protein`.** When a protein list uses IDs that are not
+this genome's locus tags (for example RefSeq `WP_` accessions from a related annotation), the run
+carries `foreign_protein_ids` once, in `run_manifest.json` › `flags`. A gene gets the row flag
+`cross_strain_protein` only when its matched protein is not identical to it (class `near` or
+`divergent`); an identical match under a foreign ID is not flagged per gene.
+
 ## Placement FDR is not search-engine FDR
 
 Two error rates apply to a peptide, and they answer different questions.

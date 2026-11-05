@@ -73,7 +73,9 @@ def _split_layout(seed: int) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, 
 
 
 def _written(tmp: Path, seed: int, exhaustive: int, grid: bool, monkeypatch: pytest.MonkeyPatch
-             ) -> tuple[pd.DataFrame, pd.DataFrame]:  # fmt: skip
+             ) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:  # fmt: skip
+    """Null regions and ``regions_stats.tsv`` as written, plus the full-precision in-memory
+    ``regions_stats`` table handed to the writer (index reset to the file's row order)."""
     import gippa.steps.context_stats as cs
     from gippa.context.regions import region_tests
     from gippa.context.regions_table import plasmid_rows, regions_stats, subset_rows
@@ -90,7 +92,9 @@ def _written(tmp: Path, seed: int, exhaustive: int, grid: bool, monkeypatch: pyt
     cs._write_null_regions(tmp, table, nulls)
     f = next((tmp / "support").glob("null_regions.tsv*"))
     kw = {"sep": "\t", "na_values": ["NA"], "keep_default_na": False}
-    return pd.read_csv(f, **kw), pd.read_csv(tmp / "regions_stats.tsv", **kw)
+    # p_value kept as the written string: regions_stats.tsv writes it %.6g (M12-04 PR 9)
+    rs = pd.read_csv(tmp / "regions_stats.tsv", dtype={"p_value": str}, **kw)
+    return pd.read_csv(f, **kw), rs, table.reset_index(drop=True)
 
 
 def _tested(rs: pd.DataFrame) -> pd.DataFrame:
@@ -107,19 +111,25 @@ def _null_of(nr: pd.DataFrame, row: pd.Series) -> pd.DataFrame:
 @pytest.mark.parametrize("exhaustive", [20000, 100], ids=["exhaustive", "sampled"])
 def test_r1_region_nulls_reproduce_p(tmp_path: Path, seed: int, exhaustive: int,
                                      monkeypatch: pytest.MonkeyPatch) -> None:  # fmt: skip
+    from gippa.io.tsv import format_value
     from gippa.stats.permutation import perm_p
 
-    nr, rs = _written(tmp_path, seed, exhaustive, False, monkeypatch)
+    nr, rs, table = _written(tmp_path, seed, exhaustive, False, monkeypatch)
+    assert len(table) == len(rs) and list(table["region_id"]) == list(rs["region_id"])
     tested = _tested(rs)
     assert tested["flags"].astype(str).str.contains("split_contigs").sum() == 4
     assert (tested["region_id"] == "bgc_lin").sum() == 2
-    for _, row in tested.iterrows():
+    for idx, row in tested.iterrows():
         sel = _null_of(nr, row)
         assert len(sel), (row["region_id"], row["contig"], row["stat"])
         z = sel["null_value"].to_numpy(float)
         assert int(np.count_nonzero(~np.isnan(z))) == int(row["n_perm"])
         p = perm_p(float(sel["observed"].iloc[0]), z)
-        assert p == pytest.approx(float(row["p_value"]), rel=1e-6), (row["region_id"], row["stat"])
+        # exact against the written %.6g cell (M12-04 PR 9; format_value, no tolerance)
+        assert format_value(p) == row["p_value"], (row["region_id"], row["stat"], p)
+        # and against the full-precision value the writer received (the original tolerance)
+        table_p = float(table.loc[idx, "p_value"])
+        assert p == pytest.approx(table_p, rel=1e-6), (row["region_id"], row["stat"], p, table_p)
 
 
 @REGIONS
@@ -128,7 +138,7 @@ def test_r2_percentile_grid_p_is_close(tmp_path: Path, seed: int,
                                        monkeypatch: pytest.MonkeyPatch) -> None:  # fmt: skip
     from gippa.stats.permutation import perm_p
 
-    nr, rs = _written(tmp_path, seed, 20000, True, monkeypatch)
+    nr, rs, _ = _written(tmp_path, seed, 20000, True, monkeypatch)
     assert "percentile" in nr.columns and "shift_k" not in nr.columns
     small = []
     for _, row in _tested(rs).iterrows():
@@ -152,8 +162,8 @@ def test_r3_small_nulls_keep_their_values_in_grid_form(
     keep the 99-point grid."""
     (tmp_path / "ex").mkdir()
     (tmp_path / "grid").mkdir()
-    ex, rs = _written(tmp_path / "ex", seed, 20000, False, monkeypatch)
-    grid, _ = _written(tmp_path / "grid", seed, 20000, True, monkeypatch)
+    ex, rs, _ = _written(tmp_path / "ex", seed, 20000, False, monkeypatch)
+    grid, _, _ = _written(tmp_path / "grid", seed, 20000, True, monkeypatch)
     small = 0
     for _, row in _tested(rs).iterrows():
         e = _null_of(ex, row)["null_value"].to_numpy(float)

@@ -9,7 +9,6 @@ Resolved ambiguities (pinned here):
 from __future__ import annotations
 
 import json
-import math
 import sys
 from pathlib import Path
 from typing import Any
@@ -88,7 +87,7 @@ def test_written_table_header_and_na(tmp_path: Path) -> None:
 
 
 def test_written_values_round_trip(tmp_path: Path) -> None:
-    from gippa.io.tsv import read_tsv
+    from gippa.io.tsv import format_value, read_tsv
 
     df = _table()
     _, rows = read_tsv(_write(tmp_path, df))
@@ -98,7 +97,8 @@ def test_written_values_round_trip(tmp_path: Path) -> None:
             if pd.isna(want[c]):
                 assert r[j] is None, (c, r)
             else:
-                assert math.isclose(float(r[j] or "nan"), float(want[c]), rel_tol=1e-9), (c, r)
+                # M12-04 PR 9: number cells are written %.6g (format_value), exactly
+                assert r[j] == format_value(float(want[c])), (c, r)
         if pd.isna(want["n"]):
             assert r[7] is None
         else:

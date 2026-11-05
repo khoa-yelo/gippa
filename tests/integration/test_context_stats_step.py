@@ -119,14 +119,29 @@ def _write_depth(dpath: Path, depth: dict[str, float] | str) -> None:
     dpath.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
+#: In-memory ``regions_stats`` tables handed to the writer, keyed by the written path. The TSV holds
+#: ``%.6g`` numbers (M12-04 PR 9), so arithmetic identities between rows are checked on these
+#: full-precision values and the file is checked against ``format_value`` of them.
+_TABLES: dict[Path, pd.DataFrame] = {}
+
+
 def _build(work: Path, *, copy_log2: float = 0.0, plasmid: bool = True,
            depth: dict[str, float] | None = None) -> Path:  # fmt: skip
     """Write the fixture to ``work``, run the step, return ``tables/regions_stats.tsv``."""
-    from gippa.steps.context_stats import run_context_stats
+    import gippa.steps.context_stats as cs
+
+    real = cs.write_regions_stats
+
+    def keep(path: Path, df: pd.DataFrame) -> None:
+        _TABLES[Path(path)] = df.copy()
+        real(path, df)
 
     dpath = _prepare(work, copy_log2=copy_log2, plasmid=plasmid, depth=depth)
-    run_context_stats(work, _cfg(), dpath)
+    with pytest.MonkeyPatch.context() as mp:
+        mp.setattr(cs, "write_regions_stats", keep)
+        cs.run_context_stats(work, _cfg(), dpath)
     out = work / "tables" / "regions_stats.tsv"
+    assert out in _TABLES, sorted(map(str, _TABLES))
     assert out.exists(), sorted(p.name for p in (work / "tables").glob("*"))
     return out
 
@@ -206,31 +221,58 @@ def test_no_untested_row_has_a_p_value(runs: dict[str, Path], name: str) -> None
     assert not pl.empty and (pl["null_model"] == "none").all() and pl["p_value"].isna().all()
 
 
-def test_depth_adds_adjusted_plasmid_row(runs: dict[str, Path]) -> None:
-    df = _read(runs["depth"])
+def _plasmid_hl(df: pd.DataFrame) -> tuple[pd.DataFrame, pd.Series]:
     pl = df[df["region_type"] == "plasmid"]
     adj = pl[pl["label"] == sd.ADJUSTED_LABEL]
+    hl = pl[(pl["stat"] == "hl_shift") & (pl["label"] != sd.ADJUSTED_LABEL)].iloc[0]
+    return adj, hl
+
+
+def test_depth_adds_adjusted_plasmid_row(runs: dict[str, Path]) -> None:
+    from gippa.io.tsv import format_value
+
+    adj, hl = _plasmid_hl(_read(runs["depth"]))
     assert len(adj) == 1 and adj.iloc[0]["stat"] == "hl_shift"
     assert sd.DEPTH_FLAG in str(adj.iloc[0]["flags"]).split(";")
-    hl = pl[(pl["stat"] == "hl_shift") & (pl["label"] != sd.ADJUSTED_LABEL)].iloc[0]
-    assert float(adj.iloc[0]["effect"]) == pytest.approx(float(hl["effect"]) - 3.0, abs=1e-9)
+    # the identity on the full-precision table the writer received (the TSV is %.6g)
+    m_adj, m_hl = _plasmid_hl(_TABLES[runs["depth"]])
+    assert len(m_adj) == 1
+    assert float(m_adj.iloc[0]["effect"]) == pytest.approx(float(m_hl["effect"]) - 3.0, abs=1e-9)
+    # and the file holds exactly format_value of those values (M12-04 PR 9)
+    assert adj.iloc[0]["effect"] == format_value(float(m_adj.iloc[0]["effect"]))
+    assert hl["effect"] == format_value(float(m_hl["effect"]))
 
 
 def test_attack_4_dosage_is_in_the_plasmid_hl(runs: dict[str, Path]) -> None:
     """With ``plasmid_copy_log2 = log2(20)`` (covariate-only detection, same seed) the plasmid HL
     and its CI move by exactly log2(20) and nothing else changes; no plasmid p-value."""
+    from gippa.io.tsv import format_value
+
     a, b = _read(runs["plain"]), _read(runs["copy20"])
     assert list(a["region_id"]) == list(b["region_id"])
     is_hl = (a["region_type"] == "plasmid") & (a["stat"] == "hl_shift")
+    # the shift on the full-precision tables the writer received (the TSV is %.6g)
+    ma = _TABLES[runs["plain"]].reset_index(drop=True)
+    mb = _TABLES[runs["copy20"]].reset_index(drop=True)
+    assert list(ma["region_id"]) == list(a["region_id"])
+    m_hl = is_hl.to_numpy()
     for col in ("effect", "ci_low", "ci_high", "hl_shift_log2"):
-        np.testing.assert_allclose(b.loc[is_hl, col].astype(float).to_numpy(),
-                                   a.loc[is_hl, col].astype(float).to_numpy() + COPY_20,
+        np.testing.assert_allclose(mb.loc[m_hl, col].astype(float).to_numpy(),
+                                   ma.loc[m_hl, col].astype(float).to_numpy() + COPY_20,
                                    rtol=0.0, atol=1e-9)  # fmt: skip
+        # and each file holds exactly format_value of those values (M12-04 PR 9)
+        for f, m in ((a, ma), (b, mb)):
+            assert list(f.loc[is_hl, col]) == [format_value(float(v)) for v in m.loc[m_hl, col]]
     pl_oe = (a["region_type"] == "plasmid") & ~is_hl
     hl_cols = ["hl_shift_log2"]
     pd.testing.assert_frame_equal(a[pl_oe].drop(columns=hl_cols), b[pl_oe].drop(columns=hl_cols))
     chrom = a["region_type"] != "plasmid"
     pd.testing.assert_frame_equal(a[chrom], b[chrom])
+    # "nothing else changes" at full precision too: the files hold %.6g cells (M12-04 PR 9)
+    m_oe, m_chrom = pl_oe.to_numpy(), chrom.to_numpy()
+    pd.testing.assert_frame_equal(ma[m_oe].drop(columns=hl_cols), mb[m_oe].drop(columns=hl_cols),
+                                  check_exact=True)  # fmt: skip
+    pd.testing.assert_frame_equal(ma[m_chrom], mb[m_chrom], check_exact=True)
 
 
 @pytest.mark.parametrize("name", ["plain", "depth", "copy20", "no_plasmid"])
@@ -242,6 +284,9 @@ def test_row_order(runs: dict[str, Path], name: str) -> None:
 
 def test_example_9_byte_identical(runs: dict[str, Path]) -> None:
     assert runs["plain"].read_bytes() == runs["again"].read_bytes()
+    # and identical at full precision: the file holds %.6g cells (M12-04 PR 9)
+    pd.testing.assert_frame_equal(_TABLES[runs["plain"]], _TABLES[runs["again"]],
+                                  check_exact=True)  # fmt: skip
 
 
 def test_m4_17_rows_unchanged_by_the_plasmid(runs: dict[str, Path]) -> None:
@@ -253,17 +298,37 @@ def test_m4_17_rows_unchanged_by_the_plasmid(runs: dict[str, Path]) -> None:
     ka = a[a["region_type"] != "plasmid"].reset_index(drop=True)
     kb = b.reset_index(drop=True)
     pd.testing.assert_frame_equal(ka, kb)
+    # and identical at full precision: the files hold %.6g cells (M12-04 PR 9)
+    ma = _TABLES[runs["plain"]]
+    mb = _TABLES[runs["no_plasmid"]]
+    assert (ma["region_type"] == "plasmid").any()
+    assert not (mb["region_type"] == "plasmid").any()
+    mka = ma[ma["region_type"] != "plasmid"].reset_index(drop=True)
+    pd.testing.assert_frame_equal(mka, mb.reset_index(drop=True), check_exact=True)
 
 
 def test_step_inputs_left_untouched(tmp_path: Path) -> None:
     """The step only reads its inputs: running it twice in the same work directory gives the
     same table."""
+    import gippa.steps.context_stats as cs
+
     out = _build(tmp_path / "w")
     first = out.read_bytes()
-    from gippa.steps.context_stats import run_context_stats
+    first_table = _TABLES[out]
+    seen: list[pd.DataFrame] = []
+    real = cs.write_regions_stats
 
-    run_context_stats(tmp_path / "w", _cfg(), None)
+    def keep(path: Path, df: pd.DataFrame) -> None:
+        seen.append(df.copy())
+        real(path, df)
+
+    with pytest.MonkeyPatch.context() as mp:
+        mp.setattr(cs, "write_regions_stats", keep)
+        cs.run_context_stats(tmp_path / "w", _cfg(), None)
     assert out.read_bytes() == first
+    # and the same table at full precision: the file holds %.6g cells (M12-04 PR 9)
+    assert len(seen) == 1
+    pd.testing.assert_frame_equal(seen[0], first_table, check_exact=True)
 
 
 # --------------------------------------------------------------------------- decisions 18, 21, 22
@@ -440,6 +505,7 @@ def test_registry_path_carries_stratum0_classes(prepared: Path, tmp_path: Path) 
     QC rows (decision 2: value k/n, ``n`` = n, overall and per class) reach the summary."""
     import layers_chain as lc
 
+    from gippa.io.tsv import format_value
     from gippa.io.work_tables import OPTIONAL_KEYS, default_paths
 
     work = _copy(prepared, tmp_path)
@@ -459,11 +525,11 @@ def test_registry_path_carries_stratum0_classes(prepared: Path, tmp_path: Path) 
     rows = qc[qc["metric"] == STRATUM0_METRIC]
     overall = rows[(rows["group_type"] == "run") & (rows["group"] == "all")]
     assert len(overall) == 1
-    assert float(overall["value"].iloc[0]) == pytest.approx(36 / 310, rel=1e-9)
+    assert overall["value"].iloc[0] == format_value(36 / 310)  # %.6g cell (M12-04 PR 9)
     assert int(overall["n"].iloc[0]) == 310
     per = rows[rows["group_type"] == "length_class"].set_index("group")
     assert set(per.index) == set(part["length_class"])
-    assert float(per.loc["7", "value"]) == pytest.approx(0.22, rel=1e-9)
+    assert per.loc["7", "value"] == format_value(0.22)
     assert int(per.loc["7", "n"]) == 100
 
 
