@@ -59,6 +59,7 @@ UNITLESS: tuple[str, ...] = (
     "counts", "count", "checks", "genes", "peptides", "placements", "density", "fraction",
     "rate", "category", "score bin", "tus", "moran's i", "candidates",
     "max |s_w| over windows",  # V18 (c): the standardised scan statistic (M9-21 N2)
+    "promoter score",  # V15 (b): a classifier score in [0, 1] (M12-04 PR 11b)
 )  # fmt: skip
 MIN_PT = 6.0  # index decision 31, lead decision 2
 WIDTHS_IN = (style.SINGLE_IN, style.DOUBLE_IN)

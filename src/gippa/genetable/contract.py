@@ -155,7 +155,7 @@ TABLES: Mapping[str, tuple[Column, ...]] = {
     ),
     "abundance": (_s("protein_id"), Column("raw_id", "str", optional=True), _f("value", True)),
     "peptide_hits": (
-        _s("peptide"), _i("peptide_len"), _s("source", True), _f("best_q_input", True),
+        _s("peptide"), _i("peptide_len_aa"), _s("source", True), _f("best_q_input", True),
         _f("pep_input", True), _f("score_input", True), _s("contig"), _i("start"), _i("end"),
         _s("strand", enum=STRAND), _i("frame", True), _b("crosses_origin"),
         _s("route", enum=("exact", "tolerant")), _i("n_diff", True), _l("diff_types"),

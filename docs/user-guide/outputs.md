@@ -153,3 +153,36 @@ origin has `end` greater than the replicon length, `crosses_origin = true` and t
 - skipped steps and `modules_off`.
 
 `gippa compare` uses the genome SHA-256 recorded here to check that runs share a genome.
+
+## Changes in 1.1
+
+**GIPPA 1.1 changes some table columns.** This is a one-time exception to the rule that column
+changes wait for a major version. Scripts that select columns by name keep working, except for
+the renamed columns below. Old names are not kept as aliases. `gippa report` and `gippa compare`
+still read output folders written by 1.0: they rename the old columns on read.
+
+### Renamed columns
+
+| Table | 1.0 name | 1.1 name | Why |
+|---|---|---|---|
+| `tables/novel_orfs.tsv` | `ostir_tir` | `tir_ostir` | same name as in `genes.tsv` and `determinants_features.tsv` |
+| `tables/determinants_features.tsv` | `mw` | `mw_da` | unit in the name, same as `genes.tsv` |
+| `tables/determinants_features.tsv` | `promotech_max` | `promoter_score` | the same value as `genes.tsv` › `promoter_score` |
+| `tables/determinants_features.tsv` | `promotech_tu` | `promoter_score_tu` | the same value as `genes.tsv` › `promoter_score_tu` |
+| `mapping/peptide_hits.tsv` | `peptide_len` | `peptide_len_aa` | unit in the name |
+| `tables/pairs.tsv` | `class` | `pair_class` | one name in `pairs.tsv` and `operon_flags.tsv` |
+| `tables/operon_flags.tsv` | `uniop_class` | `pair_class` | as above; the class does not come from UniOp alone (distance-model fallback, sandwich decoys) |
+| `tables/pairs.tsv` | `promoter_between` | `promoter_score_between` | it is a score; `operon_flags.tsv` › `promoter_between_yes` is the yes/no call |
+| `tables/pairs.tsv` | `terminator_between` | `terminator_score_between` | same reason |
+| `tables/operon_flags.tsv` | `flag` | `flags` | every table's flag column is `flags` |
+
+Values that name a feature change the same way: in `tables/determinants_model.tsv` ›
+`feature_or_block`, `promotech_max` → `promoter_score`, `promotech_tu` → `promoter_score_tu`
+and `mw` → `mw_da`. The same holds for the `feature` column of
+`plots/support/determinants_pd.tsv` and `determinants_shap.tsv`.
+
+`pairs.tsv` and `operon_flags.tsv` now both have `pair_class` and `flags`, so a join of the two
+on `pair_id` needs suffixes (for example `suffixes=("_pair", "_flag")` in pandas).
+
+Unchanged on purpose: `operon_flags.tsv` › `promoter_between_yes` and `terminator_between_yes`
+(yes/no calls) and `pairs.tsv` › `tx_rate_between`.

@@ -18,14 +18,12 @@ statistics. `ribosomal_protein` is the C2 column when the gene table carries it,
 
 | Feature | Source |
 |---|---|
-| `promotech_max`, `promotech_tu` | gene table `promoter_score`, `promoter_score_tu` |
 | `n_promoters_tu_to_gene` | C6 `n_promoter_windows_tu` (windows ≥ `promotech_yes`, lead decision 1) |
-| `mw` | gene table `mw_da` |
 | `replichore_position` | M5-09 `context/gene_context.parquet` (NA without it or without an oriC) |
 | `in_prophage`, `in_bgc` | C8 `region_genes` with C7 `region_type` `prophage` / `bgc`; NA without C7/C8 |
 | `dist_to_tu_start_bp` | computed: bp from the TU's first start codon to this gene's, in the direction of transcription, modulo the length on circular replicons; NA for a gene in no TU |
 | `nterm_residue` | computed from C2 `aa` (the Met rule below) |
-| every other feature | the gene-table column of the same name |
+| every other feature | the gene-table column of the same name (since 1.1 this includes `promoter_score`, `promoter_score_tu` and `mw_da`, named `promotech_max`, `promotech_tu` and `mw` in 1.0) |
 
 **The Met rule (decision 19).** `nterm_residue` is residue 2 when residue 1 is M and residue 2 ∈
 {A, C, G, P, S, T, V} (methionine aminopeptidase removes the initiator Met before small residues),

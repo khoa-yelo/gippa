@@ -31,7 +31,7 @@ NOVEL_ORFS_TYPES: dict[str, Kind] = {
     "orf_id": "str", "class": "str", "contig": "str", "strand": "str", "frame": "int",
     "start_longest": "int", "start_best_ostir": "int", "end": "int", "length_aa_longest": "int",
     "length_aa_best": "int", "start_codon_best": "str", "n_peptides": "int", "peptides": "str",
-    "best_peptide_q": "float", "ostir_tir": "float", "promoter_score": "float",
+    "best_peptide_q": "float", "tir_ostir": "float", "promoter_score": "float",
     "promoter_supported": "bool", "terminator_downstream": "bool", "terminator_conf": "float",
     "terminator_distance_nt": "int", "rbs_supported": "bool", "class_fdr": "str",
     "called": "bool", "rank": "int", "overlapping_gene": "str", "flags": "str",
@@ -41,7 +41,7 @@ POSITION_COLUMNS = ("start_longest", "start_best_ostir", "end")
 PATCH_PRODUCT = "hypothetical protein (GIPPA novel ORF)"
 NEW_ORF_CLASSES = frozenset({"intergenic", "cds_outframe", "antisense"})
 # Second-round and evidence columns copied from ``scored`` when present (NA otherwise).
-_SCORED = ("ostir_tir", "promoter_score", "promoter_supported", "terminator_downstream",
+_SCORED = ("tir_ostir", "promoter_score", "promoter_supported", "terminator_downstream",
            "terminator_conf", "terminator_distance_nt", "rbs_supported", "rank")  # fmt: skip
 _GFF_ATTRS = ("rank", "n_peptides")
 _ADR12 = ("promoter_supported", "terminator_downstream", "terminator_conf",

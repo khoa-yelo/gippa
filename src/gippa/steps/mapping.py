@@ -563,7 +563,7 @@ def _peptide_rows(
     rows = tgt[tgt["n_diff"].to_numpy() == best.to_numpy()].copy().reset_index(drop=True)
     q = queries.set_index("peptide")
     p = rows["peptide"]
-    rows["peptide_len"] = p.str.len()
+    rows["peptide_len_aa"] = p.str.len()
     rows["source"] = p.map(acc["source"])
     rows["placement_q"] = p.map(acc["placement_q"])
     rows["flags"] = p.map(acc["flags"])

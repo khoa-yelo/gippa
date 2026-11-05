@@ -26,7 +26,7 @@ univariate	in_bgc	spearman_rho	-0.00458214	-0.139302	0.108224	244	0	ci_unestimat
 univariate	in_prophage	spearman_rho	0.0244364	-0.0488487	0.107659	244	0	ci_unestimated
 univariate	length_aa	spearman_rho	-0.00733647	-0.125609	0.099207	244	0	ci_unestimated
 univariate	mrna_dg	spearman_rho	0.0331557	-0.0870215	0.147406	194	0	ci_unestimated
-univariate	mw	spearman_rho	-0.00745862	-0.120917	0.118459	244	0	ci_unestimated
+univariate	mw_da	spearman_rho	-0.00745862	-0.120917	0.118459	244	0	ci_unestimated
 univariate	n_promoters_tu_to_gene	spearman_rho	-0.0991559	-0.254312	0.0152879	244	0	ci_unestimated
 univariate	nterm_residue_A	spearman_rho	-0.00912636	-0.136711	0.0867127	244	0	ci_unestimated
 univariate	nterm_residue_C	spearman_rho	0.0751372	0.0647912	0.147679	244	0	ci_unestimated
@@ -49,8 +49,8 @@ univariate	nterm_residue_V	spearman_rho	0.103416	-0.0166448	0.221286	244	0	ci_un
 univariate	nterm_residue_W	spearman_rho	NA	NA	NA	244	0	unestimated;ci_unestimated
 univariate	nterm_residue_Y	spearman_rho	NA	NA	NA	244	0	unestimated;ci_unestimated
 univariate	pi	spearman_rho	0.0294776	-0.0846381	0.159981	244	0	ci_unestimated
-univariate	promotech_max	spearman_rho	0.0939694	-0.104668	0.268512	98	0	ci_unestimated
-univariate	promotech_tu	spearman_rho	0.0190121	-0.141637	0.15552	178	0	ci_unestimated
+univariate	promoter_score	spearman_rho	0.0939694	-0.104668	0.268512	98	0	ci_unestimated
+univariate	promoter_score_tu	spearman_rho	0.0190121	-0.141637	0.15552	178	0	ci_unestimated
 univariate	rare_codons_2_10	spearman_rho	0.0243312	-0.107868	0.145016	244	0	ci_unestimated
 univariate	replichore_position	spearman_rho	0.312624	0.138158	0.486549	241	0	ci_unestimated
 univariate	replicon_type_chromosome	spearman_rho	-0.0182161	-0.119172	0.0549494	244	0	ci_unestimated
@@ -79,7 +79,7 @@ univariate	in_bgc	auroc	0.354351	0.222678	0.465705	257	0	ci_unestimated
 univariate	in_prophage	auroc	0.279477	0.12671	0.407821	257	0	ci_unestimated
 univariate	length_aa	auroc	0.610971	0.492945	0.718717	257	0	ci_unestimated
 univariate	mrna_dg	auroc	0.431271	0.222647	0.610677	203	0	ci_unestimated
-univariate	mw	auroc	0.600883	0.492525	0.720866	257	0	ci_unestimated
+univariate	mw_da	auroc	0.600883	0.492525	0.720866	257	0	ci_unestimated
 univariate	n_promoters_tu_to_gene	auroc	0.826293	0.740511	0.893857	257	0	ci_unestimated
 univariate	nterm_residue_A	auroc	0.498424	0.401073	0.546787	257	0	ci_unestimated
 univariate	nterm_residue_C	auroc	0.502049	0.5	0.506692	257	0	ci_unestimated
@@ -102,8 +102,8 @@ univariate	nterm_residue_V	auroc	0.496375	0.408576	0.546561	257	0	ci_unestimated
 univariate	nterm_residue_W	auroc	0.5	0.5	0.5	257	0	ci_unestimated
 univariate	nterm_residue_Y	auroc	0.5	0.5	0.5	257	0	ci_unestimated
 univariate	pi	auroc	0.425284	0.262656	0.548566	257	0	ci_unestimated
-univariate	promotech_max	auroc	NA	NA	NA	98	0	unestimated;ci_unestimated
-univariate	promotech_tu	auroc	0.342697	0.234737	0.437267	179	0	ci_unestimated
+univariate	promoter_score	auroc	NA	NA	NA	98	0	unestimated;ci_unestimated
+univariate	promoter_score_tu	auroc	0.342697	0.234737	0.437267	179	0	ci_unestimated
 univariate	rare_codons_2_10	auroc	0.581652	0.509296	0.637299	257	0	ci_unestimated
 univariate	replichore_position	auroc	0.642834	0.482661	0.783503	254	0	ci_unestimated
 univariate	replicon_type_chromosome	auroc	0.493852	0.483051	0.5	257	0	ci_unestimated

@@ -18,7 +18,7 @@
     {"name": "n_peptides", "type": "integer", "description": "Distinct peptides (I/L folded) supporting the ORF", "constraints": {"required": true, "minimum": 0}},
     {"name": "peptides", "type": "string", "description": "Supporting peptides, I/L folded (';'-separated list)"},
     {"name": "best_peptide_q", "type": "number", "description": "Lowest q-value of the supporting peptides"},
-    {"name": "ostir_tir", "type": "number", "description": "OSTIR translation initiation rate at start_best_ostir"},
+    {"name": "tir_ostir", "type": "number", "description": "OSTIR translation initiation rate at start_best_ostir"},
     {"name": "promoter_score", "type": "number", "description": "Best Promotech score upstream of the ORF (second round, M7-08)"},
     {"name": "promoter_supported", "type": "boolean", "description": "A promoter supports the ORF (ADR-0012)"},
     {"name": "terminator_downstream", "type": "boolean", "description": "A terminator lies downstream of the stop codon (ADR-0012)"},
