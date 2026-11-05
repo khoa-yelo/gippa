@@ -10,13 +10,14 @@ ALT support rows over a small peptide alphabet that includes I/L spellings.
 * I/L spelling of the reference peptides never changes a result (rule 3).
 * Row order of any input never changes a result.
 * Raising ``q_max`` never lowers a class's ``n`` (rule 1 only adds pairs).
-* ``annotate_sites`` gives each row exactly its class's rate (or ``unestimated``) and changes no
-  other column.
+* ``annotate_sites`` gives each row exactly its class's rate (or NaN: unestimated, M12-04 PR 11c)
+  and changes no other column.
 """
 
 from __future__ import annotations
 
 import importlib
+import math
 from types import ModuleType
 from typing import Any
 
@@ -24,7 +25,6 @@ import pandas as pd
 from hypothesis import HealthCheck, given, settings
 from hypothesis import strategies as st
 
-UNEST = "unestimated"
 PEPTIDES = ("AAISAAK", "AALSAAK", "CCCWCCK", "GGNPEPK", "NNPEPK", "DDDSDDK", "EELEEK")
 RUNS = ("r1", "r2")
 SIDS = ("s1", "s2", "s3", "s4", "s5", None)
@@ -183,6 +183,6 @@ def test_annotate_sites_gives_each_row_its_class_rate(rows: Any, table: Any) -> 
         e = min(e, n)
         got_r, got_n = out["class_error_rate"].iloc[i], out["class_error_n"].iloc[i]
         if n == 0:
-            assert got_r == UNEST and pd.isna(got_n)
+            assert isinstance(got_r, float) and math.isnan(got_r) and pd.isna(got_n)
         else:
-            assert got_r != UNEST and abs(float(got_r) - e / n) < 1e-12 and int(got_n) == n
+            assert not math.isnan(got_r) and abs(float(got_r) - e / n) < 1e-12 and int(got_n) == n

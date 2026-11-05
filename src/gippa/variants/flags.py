@@ -39,9 +39,11 @@ M705_FLAGS: tuple[str, ...] = (
     "mass_equivalent", "snv", "multi_nt", "strain_difference", "database_derived",
     "start_codon", "stop_codon",
 )  # fmt: skip
-#: §9.4 order (rule 7); ``putative_start`` (M12-04 PR 10) follows ``database_derived``
+#: §9.4 order (rule 7); ``putative_start`` (M12-04 PR 10) follows ``database_derived``;
+#: ``class_error_unestimated`` marks an NA class error (M12-04 PR 11c)
 FLAG_ORDER: tuple[str, ...] = (
     *M705_FLAGS[:5], "putative_start", *M705_FLAGS[5:], "vcf_unrepresentable",
+    "class_error_unestimated",
 )  # fmt: skip
 
 _StartKey = tuple[str, str, int]  # (contig, strand, wrapped first codon)

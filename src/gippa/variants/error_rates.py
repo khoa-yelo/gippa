@@ -4,19 +4,18 @@
 A de novo row pairs with a confident (``q_value <= q_max``) target reference row of the same
 ``(run, spectrum_id)``; it is an observation of every class ``(alt_type, mass_equivalent)`` of
 the ALT sites its peptide supports, and an error when the two peptides differ after I/L folding.
-The rate of a class is ``errors / n``; a class without observations is ``unestimated``. Pure.
+The rate of a class is ``errors / n``; a class without observations is unestimated (NaN). Pure.
 """
 
 from __future__ import annotations
 
+import math
 from collections.abc import Iterable, Sequence
 from dataclasses import dataclass
-from typing import Any
 
 import pandas as pd
 
 __all__ = [
-    "UNESTIMATED",
     "ClassRate",
     "alt_support",
     "annotate_sites",
@@ -25,7 +24,6 @@ __all__ = [
     "site_class",
 ]
 
-UNESTIMATED = "unestimated"
 _KEY = ["run", "spectrum_id"]
 _CLASS = ["alt_type", "mass_equivalent"]
 
@@ -111,14 +109,14 @@ def class_rates(obs: pd.DataFrame) -> list[ClassRate]:
 
 
 def annotate_sites(sites: pd.DataFrame, rates: Sequence[ClassRate]) -> pd.DataFrame:
-    """A copy of ``sites`` with ``class_error_rate`` (float or ``unestimated``) and
+    """A copy of ``sites`` with ``class_error_rate`` (float, NaN when unestimated) and
     ``class_error_n`` (Int64, NA when unestimated) of each row's class."""
     known = {(r.alt_type, bool(r.mass_equivalent)): r for r in rates if r.n > 0}
     flags = sites["flags"] if "flags" in sites.columns else [()] * len(sites)
     hits = [known.get(site_class(t, f)) for t, f in zip(sites["alt_type"], flags, strict=True)]
     out = sites.copy()
-    rate: list[Any] = [UNESTIMATED if h is None else h.rate for h in hits]
-    out["class_error_rate"] = pd.Series(rate, index=out.index, dtype=object)
+    rate = [math.nan if h is None or h.rate is None else float(h.rate) for h in hits]
+    out["class_error_rate"] = pd.Series(rate, index=out.index, dtype="float64")
     n = pd.array([pd.NA if h is None else h.n for h in hits], dtype="Int64")
     out["class_error_n"] = pd.Series(n, index=out.index)
     return out

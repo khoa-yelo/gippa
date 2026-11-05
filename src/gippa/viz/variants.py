@@ -21,8 +21,8 @@ circular replicon the codon is also tried one replicon length further (origin-cr
 placements). ``alt_type`` block / frameshift sites list a peptide unaligned with ``NOTE``.
 Panel (b) residue positions are protein positions, so ``-`` strand and origin-crossing genes need
 no special case. Figure text writes residue ``J`` as "I/L"; the plotted data keeps ``J``. When the
-title says "class error unestimated", the site lines do not repeat it. Pure: tables come from the
-``RunView``.
+title says the class error is not estimated, the site lines do not repeat it. Pure: tables come
+from the ``RunView``.
 """
 
 from __future__ import annotations
@@ -41,6 +41,7 @@ from matplotlib.transforms import offset_copy
 from gippa.variants.flags import FLAG_ORDER
 from gippa.viz import base, style
 from gippa.viz.support import VARIANT_FLANK_AA, class_error_value, top_alt_sites
+from gippa.viz.words import plain
 
 if TYPE_CHECKING:
     from gippa.config import GippaConfig
@@ -55,20 +56,25 @@ CALLS = ("ALT", "mixed")
 CONFIDENCES = ("high", "candidate")
 NO_FLAG, ALL = "no flag", "all"
 #: flags drawn in the colour of another: ``putative_start`` shares ``start_codon``'s (both are
-#: start-codon artefacts; Okabe-Ito has 8 colours besides grey for 9 flags)
+#: start-codon artefacts; Okabe-Ito has 8 colours besides grey for the 9 bar flags)
 SHARED_COLOUR: Mapping[str, str] = {"putative_start": "start_codon"}
+#: flags of the bars: an NA class error (``class_error_unestimated``) is never a bar
+_BAR_FLAGS = tuple(f for f in FLAG_ORDER if f != "class_error_unestimated")
 #: §9.4 flag -> Okabe-Ito colour, assigned in flag order (grey is kept for "no flag")
 _OWN = dict(
-    zip([f for f in FLAG_ORDER if f not in SHARED_COLOUR],
+    zip([f for f in _BAR_FLAGS if f not in SHARED_COLOUR],
         [c for k, c in style.OKABE_ITO.items() if k != "grey"], strict=True)
 )  # fmt: skip
-FLAG_COLOUR: Mapping[str, str] = {f: _OWN[SHARED_COLOUR.get(f, f)] for f in FLAG_ORDER}
+FLAG_COLOUR: Mapping[str, str] = {f: _OWN[SHARED_COLOUR.get(f, f)] for f in _BAR_FLAGS}
 NO_FLAG_COLOUR = style.OKABE_ITO["grey"]
 ALT_COLOUR = style.OKABE_ITO["vermillion"]
 EN_DASH = "\N{EN DASH}"
 #: panel (b) draws the first 15 top sites (P-17); the support data keeps ``MAX_TOP_SITES``
 SHOWN_SITES = 15
-UNESTIMATED = "class error unestimated"
+CE_FLAG = "class_error_unestimated"  # its rate is NA (M12-04 PR 11c)
+#: the words of an NA class error, in the title and the site lines; stated once when the title
+#: holds it for every site (P-17)
+UNESTIMATED = plain(CE_FLAG)
 NOTE = "length-changing: shown unaligned"
 UNALIGNED = frozenset({"block", "frameshift"})
 EMPTY = "No ALT site supported by peptides"
@@ -96,7 +102,8 @@ def _na(value: object) -> bool:
 
 
 def _flags(value: object) -> list[str]:
-    return [] if _na(value) else [f for f in str(value).split(";") if f]
+    """The site flags drawn in panel (a); an NA class error is in the title, not a bar."""
+    return [] if _na(value) else [f for f in str(value).split(";") if f and f != CE_FLAG]
 
 
 def _flag_rank(flag: str) -> tuple[int, str]:
@@ -217,14 +224,14 @@ def title(variants: pd.DataFrame) -> str:
     h, c = int((alt["confidence"] == "high").sum()), int((alt["confidence"] == "candidate").sum())
     rates = [r for r in (class_error_value(v) for v in alt["class_error_rate"]) if r is not None]
     lo, hi = (style.fmt_num(min(rates)), style.fmt_num(max(rates))) if rates else ("", "")
-    rng = "unestimated" if not rates else lo if lo == hi else f"{lo}{EN_DASH}{hi}"
+    error = UNESTIMATED if not rates else f"class error {lo if lo == hi else f'{lo}{EN_DASH}{hi}'}"
     if _has_one(variants):
-        rng += DEGENERATE_MARK
+        error += DEGENERATE_MARK
     pooled = f", {POOLED}" if rates else ""
     top = ""
     if len(alt) > SHOWN_SITES:
         top = f" (top {SHOWN_SITES} of {len(alt)}; all in tables/variants.tsv)"
-    return f"{h} high-confidence and {c} candidate ALT sites{top} (class error {rng}{pooled})"
+    return f"{h} high-confidence and {c} candidate ALT sites{top} ({error}{pooled})"
 
 
 def residues(aa: str) -> str:
@@ -296,8 +303,8 @@ def _header(r: Mapping[str, object]) -> str:
         return "NA" if _na(v) else str(v)
 
     rate = class_error_value(r["class_error_rate"])
-    if rate is None:
-        error = f"class error {cell('class_error_rate')}"
+    if rate is None:  # NA (M12-04 PR 11c): the flag's plain words
+        error = UNESTIMATED
     else:
         mark = DEGENERATE_MARK if rate == 1 else ""
         n = r.get("class_error_n")
@@ -325,7 +332,7 @@ def _best(cov: Mapping[str, int]) -> str:
 def _draw_b(ax: Axes, rows: Sequence[Mapping[str, object]], peps: Sequence[Mapping[str, int]],
             windows: Mapping[str, tuple[int, str]], footnote: bool = False,
             shared_error: bool = False) -> None:  # fmt: skip
-    """``shared_error``: the title already says "class error unestimated" for every site shown,
+    """``shared_error``: the title already states :data:`UNESTIMATED` for every site shown,
     so the site lines leave it out (stated once)."""
     ax.set_axis_off()
     ax.set_title("(b) peptides at the top ALT sites", loc="left")

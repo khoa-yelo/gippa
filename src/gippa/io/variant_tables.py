@@ -7,6 +7,7 @@ closed. Only the §9.3 columns are written, by name, so internal pileup columns 
 
 from __future__ import annotations
 
+import math
 from collections.abc import Sequence
 from pathlib import Path
 
@@ -14,7 +15,7 @@ import pandas as pd
 
 from gippa.io.tsv import read_tsv, write_tsv
 from gippa.variants.pileup import PILEUP_COLUMNS
-from gippa.variants.vcf_records import UNESTIMATED, VARIANTS_COLUMNS
+from gippa.variants.vcf_records import VARIANTS_COLUMNS
 
 __all__ = ["read_variants", "write_pileup", "write_variants"]
 
@@ -44,12 +45,6 @@ def write_variants(path: Path, sites: pd.DataFrame) -> None:
 _RESIDUES = ("ref_aa", "alt_aa")
 
 
-def _rate(v: str | None) -> object:
-    if v is None:
-        return pd.NA
-    return v if v == UNESTIMATED else float(v)
-
-
 def read_variants(path: Path) -> pd.DataFrame:
     """Read ``variants.tsv`` back into the frame :func:`write_variants` takes (its inverse)."""
     header, rows = read_tsv(path)
@@ -61,7 +56,8 @@ def read_variants(path: Path) -> pd.DataFrame:
     df["codon_start"] -= 1
     for col in _NULLABLE_INT:
         df[col] = pd.array([pd.NA if v is None else int(v) for v in df[col]], dtype="Int64")
-    df["class_error_rate"] = [_rate(v) for v in df["class_error_rate"]]
+    rates = [math.nan if v is None else float(v) for v in df["class_error_rate"]]
+    df["class_error_rate"] = pd.Series(rates, index=df.index, dtype="float64")
     df["flags"] = [() if v is None else tuple(v.split(";")) for v in df["flags"]]
     for col in ("gene", "alt_codon_vcf"):
         df[col] = [pd.NA if v is None else v for v in df[col]]

@@ -6,9 +6,10 @@ contract reader, so 0-based half-open) → M7-01 ``align_hits`` → M7-02 ``elig
 ``sites`` → M7-03 ``vcf_records`` → ``pileup`` (always gzip), ``variants`` and ``variants_vcf``.
 Without ``hits_tolerant`` frameshift rows are left out with the WARNING run flag
 ``layer_missing:hits_tolerant``. With the optional C17 ``peptide_spectra`` (M7-10) every row
-carries its class error rate (``gippa.variants.error_rates``), else ``unestimated``; the rates never
-change a call. ``reference_peptides`` is declared only (preflight pairs it into C17). One pass,
-no randomness. The VCF sample is ``cfg.sample_name``, which ``gippa run`` resolves; an unresolved
+carries its class error rate (``gippa.variants.error_rates``), else NA (flag
+``class_error_unestimated``); the rates never change a call. ``reference_peptides`` is declared
+only (preflight pairs it into C17). One pass, no randomness. The VCF sample is
+``cfg.sample_name``, which ``gippa run`` resolves; an unresolved
 ``auto`` fails the step (``write_vcf``). M7-14: the work Parquet ``variants_qc`` holds the §7.5.1
 ``id_mixups`` count (one row: ``metric``, ``value``, ``n``), which ``context_stats`` writes into
 ``detection_summary.tsv``. M7-18: when the pileup skipped any op on a B, J, O, U, X or Z
@@ -98,10 +99,10 @@ def run_variants(
 ) -> tuple[pd.DataFrame, pd.DataFrame, list[VcfRecord]]:
     """Rule 2's chain: the pileup (with its ``attrs``), the ``variants.tsv`` frame and the VCF
     records. ``peptide_hits`` is 0-based half-open with ``;``-joined ``diff_types``. Each site
-    carries its M7-05 flags and its M7-10 class error rate from the C17 ``spectra`` (none:
-    ``unestimated``); neither changes a call or count. ``putative_start`` rows (an unannotated
-    start read as M, ``gippa.variants.starts``) are capped at ``candidate``; no other flag
-    changes confidence. Pure."""
+    carries its M7-05 flags and its M7-10 class error rate from the C17 ``spectra`` (none: NA,
+    flag ``class_error_unestimated``); neither changes a call or count. ``putative_start`` rows
+    (an unannotated start read as M, ``gippa.variants.starts``) are capped at ``candidate``; no
+    other flag changes confidence. Pure."""
     pile, table, records, _ = run_variants_qc(peptide_hits, hits_tolerant, peptides, gm, genome,
                                               cfg, spectra)  # fmt: skip
     return pile, table, records

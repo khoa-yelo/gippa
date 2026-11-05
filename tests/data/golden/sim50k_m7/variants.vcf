@@ -11,7 +11,7 @@
 ##INFO=<ID=NT_CHANGES,Number=A,Type=Integer,Description="Nucleotide changes of the minimal-change ALT codon(s)">
 ##INFO=<ID=ALT_TYPE,Number=A,Type=String,Description="ALT type: substitution, swap or block">
 ##INFO=<ID=FLAGS,Number=.,Type=String,Description="Variant flags of the alleles, deduplicated, in GIPPA §9.4 order">
-##INFO=<ID=CLASS_ERR,Number=A,Type=String,Description="Class-specific error rate of each allele, or unestimated">
+##INFO=<ID=CLASS_ERR,Number=A,Type=Float,Description="Class-specific error rate of each allele; . when not estimated">
 ##FORMAT=<ID=GT,Number=1,Type=String,Description="Haploid genotype: the best-supported ALT allele; . for mixed or tie">
 ##FORMAT=<ID=AD,Number=R,Type=Integer,Description="Distinct peptides supporting REF, then each ALT allele">
 ##FORMAT=<ID=DP,Number=1,Type=Integer,Description="Distinct eligible peptides covering the codon">

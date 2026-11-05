@@ -27,6 +27,7 @@ from __future__ import annotations
 
 import copy
 import dataclasses
+import math
 import random
 from pathlib import Path
 from typing import Any
@@ -129,7 +130,7 @@ def test_example1_tsv_row(tmp_path: Path) -> None:
     assert row["peptides"] == "ALEKRDSPHW;SPHWFNQ"
     assert row["best_peptide_q"] == "0.001"
     assert row["tir_ostir"] == "1234.5"
-    assert row["class_fdr"] == "unestimated"
+    assert row["class_fdr"] is None  # NA: unestimated (M12-04 PR 11c)
     assert row["called"] == "true"
     assert row["overlapping_gene"] is None
     assert row["flags"] == "class_fdr_unestimated"
@@ -359,15 +360,16 @@ def test_scored_values_reach_tsv_and_gff3(tmp_path: Path) -> None:
     assert a["rank"] == "1"
 
 
-def test_class_fdr_is_unestimated_literal_or_float(tmp_path: Path) -> None:
+def test_class_fdr_is_na_or_float(tmp_path: Path) -> None:
+    """M12-04 PR 11c: an unestimated class FDR is NA (written ``NA``), not the word."""
     case = two_contigs()
     orfs = orfs_of(case)
     ids = [o.orf_id for o in orfs]
-    t = table(case, orfs, scored(orfs, class_fdr={ids[0]: 0.05, ids[1]: "unestimated",
+    t = table(case, orfs, scored(orfs, class_fdr={ids[0]: 0.05, ids[1]: math.nan,
                                                    ids[2]: 1e-7}))  # fmt: skip
     novel_io().write_novel_orfs(tmp_path / "novel_orfs.tsv", t)
     got = {r["orf_id"]: r["class_fdr"] for r in tsv_rows(tmp_path / "novel_orfs.tsv")}
-    assert got == {ids[0]: "0.05", ids[1]: "unestimated", ids[2]: "1e-07"}
+    assert got == {ids[0]: "0.05", ids[1]: None, ids[2]: "1e-07"}
 
 
 # ---------------------------------------------------------------- rule 4: order

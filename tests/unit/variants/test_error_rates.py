@@ -27,12 +27,13 @@ Interface pinned here (test-author reading of the spec; see the report to the le
 * ``class_rates(obs)`` returns one ``ClassRate`` per class present in ``obs`` (order free); any
   extra entry it returns has ``n == 0`` and ``rate is None``.
 * ``annotate_sites(sites, rates)`` returns a copy of ``sites`` (input untouched, same rows in
-  the same order, every other column unchanged) with ``class_error_rate`` (the float rate, or the
-  string ``unestimated``) and ``class_error_n`` (integer, NA when unestimated). A site's class is
-  ``(alt_type, "mass_equivalent" in flags)`` with ``flags`` the M7-05 tuple column; frameshift
-  rows are class ``(frameshift, False)`` (rule 4). A class absent from ``rates`` or with ``n == 0``
-  is ``unestimated``. This is the ``sites`` column convention ``vcf_records`` already reads
-  (M7-03), so example 6 goes through the merged ``vcf_records`` unchanged.
+  the same order, every other column unchanged) with ``class_error_rate`` (the float rate, NaN
+  when unestimated; M12-04 PR 11c) and ``class_error_n`` (integer, NA when unestimated). A
+  site's class is ``(alt_type, "mass_equivalent" in flags)`` with ``flags`` the M7-05 tuple
+  column; frameshift rows are class ``(frameshift, False)`` (rule 4). A class absent from
+  ``rates`` or with ``n == 0`` is unestimated. This is the ``sites`` column convention
+  ``vcf_records`` already reads (M7-03), so example 6 goes through the merged ``vcf_records``
+  unchanged.
 """
 
 from __future__ import annotations
@@ -51,7 +52,7 @@ import pytest
 from helpers.variant_tables_fixture import GP, body_lines, info_dict, peptides_at, records, sub
 from helpers.variant_tables_fixture import write as write_vcf_file
 
-UNEST = "unestimated"
+UNEST = "NA"  # the written cell of an unestimated rate (M12-04 PR 11c)
 SUB_F = ("substitution", False)
 SUB_T = ("substitution", True)
 BLOCK_T = ("block", True)
@@ -172,7 +173,8 @@ def assert_rate(df: pd.DataFrame, vid: str, want: float, n: int) -> None:
 
 
 def assert_unestimated(df: pd.DataFrame, vid: str) -> None:
-    assert cell(df, vid, "class_error_rate") == UNEST, vid
+    got = cell(df, vid, "class_error_rate")
+    assert not isinstance(got, str) and math.isnan(float(got)), vid
     assert is_na(cell(df, vid, "class_error_n")), vid
 
 
@@ -324,7 +326,7 @@ def test_example6_vcf_class_err_is_0_2(tmp_path: Path) -> None:
     from helpers.variant_tables_fixture import GENOME, REPS, vr
 
     recs, table = vr().vcf_records(out, pile, GENOME, REPS)
-    assert table["class_error_rate"].tolist() == ["0.2"]
+    assert table["class_error_rate"].tolist() == [0.2]
     assert table["class_error_n"].tolist() == [10]
     write_vcf_file(tmp_path / "v.vcf", recs)
     info = info_dict(body_lines(tmp_path / "v.vcf")[0][7])
@@ -520,7 +522,7 @@ def test_annotate_sites_on_an_empty_frame() -> None:
 
 def test_rates_written_by_the_merged_writer(tmp_path: Path) -> None:
     """``annotate_sites`` output -> M7-03 ``vcf_records`` -> ``write_variants``: a rate is written
-    ``%.6g``, an unestimated row ``unestimated`` with ``class_error_n`` ``NA``."""
+    ``%.6g``, an unestimated row ``NA`` with ``class_error_n`` ``NA``."""
     from helpers.variant_tables_fixture import GENOME, REPS, vr
 
     from gippa.io.variant_tables import write_variants

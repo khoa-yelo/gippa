@@ -13,6 +13,7 @@
 - `start_codon`
 - `stop_codon`
 - `vcf_unrepresentable`
+- `class_error_unestimated`
 
 ## `novel_orfs`
 
