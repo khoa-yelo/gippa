@@ -792,16 +792,44 @@ on the result.**
 
 The same K run on main gives R-09's report size (PR 13).
 
-**Rule (when needed).**
-- **Which sites.** An ALT site gets the new flag **`putative_start`** (Variants vocabulary) and
-  `confidence = candidate`, never `high`, when all of these hold:
-  - `alt_aa = M`;
-  - the reference codon is a start codon of the run's genetic code other than ATG;
-  - every supporting ALT peptide has the ALT residue as its first residue;
-  - the site is not at an annotated start. Those are M11-20's, which are credited and not ALT.
-- **id_mixups.** `putative_start` joins `variants.qc.EXEMPT_FLAGS`.
-- **Q7** records the other options: reusing `start_codon` (a reinterpreted token), or routing
-  these sites to novel-ORF evidence.
+**Rule (statistician sign-off with conditions, 2026-11-05; supersedes the first draft).**
+AC 10.0 on main: out-of-gene rows remain (high 9, candidate 117; gene aa 1: 0), so the rule applies.
+Evidence: K job 1933797 (variants task 1934116; report re-run 1934834; the driver ended FAILED
+after the variants step; manifest commit cae1a731, variants code identical to main).
+
+- **Which rows.** An ALT row gets the flag **`putative_start`** (Variants vocabulary) and
+  `confidence = candidate`, never `high`, iff all hold:
+  1. `alt_type = substitution` and `alt_aa = M`;
+  2. `ref_codon` ∈ `annotation.start_codons` minus ATG (the run's configured set, checked against
+     `translation_table`, as M11-20 uses it; never a hard-coded list or the NCBI start string);
+  3. the codon is not the first codon of an annotated CDS/sORF (those carry `start_codon`);
+  4. every alignment at this codon of every ALT peptide of the row has its substitution at peptide
+     position 0. "At this codon": same contig and strand, `codons[0] mod L` on circular replicons.
+     Positions are in peptide (transcription) order;
+  5. the site has no gene, or the reference residue of the preceding codon in transcription order
+     is not K/R (trypsin guard). A site with no preceding codon on a linear contig counts as not K/R.
+- The rule applies whatever the `call`. `n_ref`, `n_alt`, `call` and the class error rates do not
+  change; VCF `CONF` equals the TSV value.
+- **id_mixups.** `putative_start` is **not** added to `variants.qc.EXEMPT_FLAGS` (stays
+  `{start_codon, stop_codon}`): a same-strain database peptide cannot initiate away from an
+  annotated start, so such a row is a mix-up worth counting.
+- **Q7** records the rejected options: reusing `start_codon`; excluding these rows; routing them to
+  novel-ORF evidence (backlog, after its own chance-mass review).
+- **Statistical evidence (C3–C7).**
+  - The lead re-scopes `tests/property/test_variant_flags_props.py` and
+    `test_flags_adr49_props.py`: M7-05 flags still never change confidence. On the chain, rows
+    equal the unflagged chain except `putative_start` rows, where only high→candidate differs.
+    The cap never promotes and never changes counts.
+  - `class_error_rate` and `class_error_n` are identical per row with the cap on and off.
+  - gippasim scenario `alt_start_initiation`, and attack `test_attack_putative_start.py` with
+    mutants 1–7. Both are as in the statistician's report; thresholds are in
+    `local/handoff/pr10_statistician.md`.
+  - The variants calsuite fast tier runs on Slurm before and after. G2, A6a–c and the
+    reference-proteome records must be identical. G1 changes are explained by capped rows only:
+    pooled |ΔF1| ≤ 0.002, 0 capped truth sites, and G1 stays a strict xfail.
+- **Docs.** `docs/methods/variants.md` gets a "Putative starts" note. The `flags.py` and
+  `run_variants` docstrings no longer say flags never change confidence. `putative_start` joins
+  §9.4 Variants and `FLAG_TEXT`.
 
 **Rendering.**
 - V12 (b) writes residue J as "I/L" in figure text ("F→I/L"). The table keeps `J`, as its schema
@@ -813,7 +841,7 @@ The same K run on main gives R-09's report size (PR 13).
 
 **Examples.**
 - K V12 (b) before: 2160 × 3735 px, 30 lines each ending "class error unestimated", "F→J" and
-  "M→J". After: 15 lines, "F→I/L", and the title "… (class error unestimated; top 15 of 70
+  "M→J". After: 15 lines, "F→I/L", and the title "… (class error unestimated; top 15 of 55
   high)".
 - K VAR_107 (`U00096.3:1114548 (−)`, no gene, `TTG L→M`, high) before. After, if the site
   survives on main: `confidence candidate`, flags `snv;strain_difference;database_derived;putative_start`.
