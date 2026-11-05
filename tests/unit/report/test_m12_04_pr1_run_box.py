@@ -23,7 +23,7 @@ from pathlib import Path
 from typing import Any
 
 import pytest
-from helpers.report_fixtures import Node, Page, local_refs
+from helpers.report_fixtures import Node, Page, expected_section_ids, local_refs
 from helpers.viz_out_tree import write_schema_table
 from unit.report.test_m12_04_pr1_fixtures import (
     FIXTURES,
@@ -305,10 +305,17 @@ def test_ac_1_7_one_toc_link_per_section_in_order(name: str, tmp_path: Path) -> 
 
 
 def test_ac_1_7_toc_keys_are_the_section_ids(tmp_path: Path) -> None:
-    from gippa.report.build import SECTIONS
-
+    """M12-04 PR 2: the rendered section ids in order, then ``not-applicable`` when any section is
+    listed as not applicable."""
     page = fixture_p(tmp_path).page()
-    assert [_key(s) for s in page.sections()] == [s.id for s in SECTIONS]
+    want = [_key_of(sid) for sid in expected_section_ids(page)]
+    assert [_key(s) for s in page.sections()] == want
+    hrefs = [a.attrs.get("href") for a in _toc_links(page)]
+    assert hrefs == [f"#sec-{k}" for k in want], hrefs
+
+
+def _key_of(sid: str) -> str:
+    return sid[len("sec-") :] if sid.startswith("sec-") else sid
 
 
 @pytest.mark.parametrize("name", ["P", "R", "D"])
@@ -360,11 +367,14 @@ def test_toc_counts_novel_orfs(tmp_path: Path) -> None:
 
 
 def test_toc_absent_table_has_no_count(tmp_path: Path) -> None:
-    """R has no variants.tsv: "Variants" without "(0)"."""
-    by = {a.attrs.get("href"): text(a) for a in _toc_links(fixture_r(tmp_path).page())}
-    assert "Variants" in by["#sec-variants"], by
-    assert not re.search(r"\(\d+\)", by["#sec-variants"]), by
-    for key in ("summary", "methods", "provenance"):
+    """R has no variants.tsv: Variants is not applicable (M12-04 PR 2), so the TOC has no
+    "Variants (0)" entry, only the uncounted "Not applicable" link at the end."""
+    links = _toc_links(fixture_r(tmp_path).page())
+    by = {a.attrs.get("href"): text(a) for a in links}
+    assert "#sec-variants" not in by, by
+    assert not [t for t in by.values() if t.startswith("Variants")], by
+    assert links[-1].attrs.get("href") == "#sec-not-applicable", by
+    for key in ("summary", "methods", "provenance", "not-applicable"):
         assert not re.search(r"\(\d+\)", by[f"#sec-{key}"]), by
 
 

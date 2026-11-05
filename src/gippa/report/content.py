@@ -1,10 +1,11 @@
 # ruff: noqa: RUF001  (the report's wording is Unicode)
 """Report content beyond the M9-02 previews (M9-16; GIPPA_SPEC.md §10.3 sections 11-13): the
 mandatory caveats and small tables of each section, the sensitivity tables by family, the
-provenance block and the methods snippets.
+provenance block and the methods snippets; the figure captions and the glossary (M12-04 PR 2).
 
 Pure apart from the reads a ``RunView`` does and the package-data snippets: a view in, template
-data out. Every sentence below that an ADR or the spec mandates is quoted from it.
+data out. A caveat that an ADR or the spec mandates keeps its wording, with the internal
+reference replaced by a link to the docs-site methods page (``methods_url``).
 """
 
 from __future__ import annotations
@@ -26,26 +27,40 @@ from gippa.data import calibration
 from gippa.io.run_view import RunView
 from gippa.io.tsv import format_value
 from gippa.model.genetic_code import codon_table, table_name
+from gippa.viz.style import fmt_num
+from gippa.viz.words import plain
 
 #: GIPPA_SPEC.md §7.4, verbatim
 SIGMA70 = (
     "Promotech and Promoter Calculator see σ70 promoters only, and TerminatorNet and TransTermHP "
     "see intrinsic terminators only. A missing call therefore never proves a missing element."
 )
+#: the docs-site methods pages the report links (Q12): a link, never a load
+METHODS_BASE = "https://khoa-yelo.github.io/gippa/methods/"
+
+
+def methods_url(topic: str) -> str:
+    """The absolute docs-site URL of the methods page ``docs/methods/<topic>.md``."""
+    return f"{METHODS_BASE}{topic}/"
+
+
+#: ADR-0032, ADR-0033, ADR-0034 (the references are the link to the determinants methods page)
 DETERMINANTS = (
-    "The univariate Spearman ρ and AUROC CIs (TU-block bootstrap) are uncalibrated (ADR-0032).",
+    "The univariate Spearman ρ and AUROC CIs (TU-block bootstrap) are uncalibrated.",
     "The elastic-net ΔR² is the primary block attribution; LightGBM ΔR² and SHAP shares are "
-    "secondary, nonlinear checks (ADR-0033).",
+    "secondary, nonlinear checks.",
     "The permutation null p is uncalibrated: it is valid only for exchangeable TUs and is not a "
-    "discovery claim (ADR-0034).",
+    "discovery claim.",
 )
+#: ADR-0026, ADR-0027
 GSEA = (
-    "GSEA results are conditional on detection, with no p_detect adjustment (ADR-0026).",
-    "NES is shown without an interval (ADR-0027).",
+    "GSEA results are conditional on detection, with no adjustment for detection probability.",
+    "NES is shown without an interval.",
 )
+#: ADR-0025
 GSEA_CLUSTER = (
-    "P-values are valid under TU exchangeability, and there is no level claim for sets flagged "
-    "genomic_cluster (ADR-0025)."
+    "P-values are valid under TU exchangeability, and there is no level claim for sets whose "
+    "genes cluster along the genome."
 )
 #: docs/methods/islands.md, "Validity domain (ADR-0021 Amendment 1)"
 ISLANDS = "The FWER is claimed for a dependence regime, not for a replicon size."
@@ -69,15 +84,25 @@ MORAN_TU_ERROR = (
     "short lags when TUs are split; rejection at α = 0.05 was 0.67 in simulation with UniOP's "
     "K-12 error rates"
 )
+#: the row clause of an autocorrelation caveat (review r1 L1)
+ROWS_CLAUSE = "(these rows carry the flag ‘{}’ in the table)"
 DISTANCE_MODEL = "distance_model"
 NOT_WRITTEN = "run_manifest.json not written by this GIPPA version."
 NOT_RECORDED = "not recorded"
-_DIAG_HEADER = ["replicon", "ℓ̂ (l_hat)", "ℓ′ (block_len)", "Î₁ (lag-1 Moran's I)", "block rule"]
+MORAN_LABEL = "lag-1 Moran's I of the detrended TU scores (used to choose the block length)"
+_DIAG_HEADER = ["replicon", "ℓ̂ (l_hat)", "ℓ′ (block_len)", MORAN_LABEL, "block rule"]
 _BIN_COLUMNS = ("bin", "lower_bp", "upper_bp", "N_NO", "N_cv", "N_sw")
+#: the decoy counts by their plain names (behaviour 2)
+_BIN_HEADER = ["bin", "lower_bp", "upper_bp", "non-operon pairs", "convergent pairs",
+               "sandwich pairs"]  # fmt: skip
+#: the Genome context note of a run with the mobile module off (lead decision 1)
+MOBILE_OFF = "Mobile elements: prophage and plasmid regions not searched (the mobile module was "\
+    "not run)."  # fmt: skip
 
 
-def _p(text: str) -> dict[str, Any]:
-    return {"text": text}
+def _p(text: str, topic: str | None = None, cls: str = "caveat") -> dict[str, Any]:
+    """A paragraph; ``topic`` adds a link to its docs-site methods page."""
+    return {"text": text, "cls": cls, "link": None if topic is None else methods_url(topic)}
 
 
 def _bound(v: Any) -> str:
@@ -165,9 +190,9 @@ def _function(view: RunView, doc: Mapping[str, Any] | None) -> list[dict[str, An
     flags = view.run_flags()
     gsea = _safe(view, "enrichment_gsea") if view.has("enrichment_gsea") else None
     if view.has("enrichment_gsea"):
-        out += [_p(t) for t in GSEA]
+        out += [_p(t, "function-gsea") for t in GSEA]
         if gsea is not None and gsea["flags"].astype(str).str.contains("genomic_cluster").any():
-            out.append(_p(GSEA_CLUSTER))
+            out.append(_p(GSEA_CLUSTER, "function-gsea"))
     no_kegg = "layer_missing:kegg" in flags
     cats = _safe(view, "category_summary") if view.has("category_summary") else None
     if not view.has("category_summary"):
@@ -176,8 +201,8 @@ def _function(view: RunView, doc: Mapping[str, Any] | None) -> list[dict[str, An
         f"{c} {format_value(v)}"
         for c, v in cats.drop_duplicates("collection")[["collection", "coverage"]].itertuples(False)
     )  # fmt: skip
-    out.append(_p(f"Annotation coverage leans toward well-studied genes (§7.7.1); coverage per "
-                  f"collection: {cov or NOT_RECORDED}."))  # fmt: skip
+    out.append(_p(f"Annotation coverage leans toward well-studied genes; coverage per "
+                  f"collection: {cov or NOT_RECORDED}.", "function"))  # fmt: skip
     if "bakta_db_light" in flags:
         out.append(_p("Annotation used the Bakta light DB, which assigns fewer functions than "
                       "the full DB."))  # fmt: skip
@@ -193,16 +218,17 @@ def _diagnostics(view: RunView) -> list[dict[str, Any]]:
     if not view.has("island_diagnostics"):
         if not view.has("islands"):
             return []
-        return [_p("island_diagnostics.parquet: not produced in this run, so ℓ̂, ℓ′ and Î₁ per "
-                   "replicon are not shown.")]  # fmt: skip
+        return [_p("island_diagnostics.parquet: not produced in this run, so the block lengths "
+                   "and the lag-1 Moran's I per replicon are not shown.")]  # fmt: skip
     diag = _safe(view, "island_diagnostics")
     if diag is None:
         return [_p("island_diagnostics.parquet: could not be read.")]
     rows = [[str(r["contig"]), render_l_hat(r["l_hat"], str(r["block_rule"])),
-             format_value(r["block_len"]), format_value(r["morans_i_lag1"]), str(r["block_rule"])]
+             format_value(r["block_len"]), fmt_num(r["morans_i_lag1"]), str(r["block_rule"])]
             for r in diag.to_dict("records")]  # fmt: skip
     return [{"key": "island_diagnostics", "header": _DIAG_HEADER, "rows": rows,
-             "caption": "Island diagnostics per replicon (ADR-0021 Amendment 1)"}]  # fmt: skip
+             "caption": "Island diagnostics per replicon",
+             "link": methods_url("islands")}]  # fmt: skip
 
 
 def _missed(view: RunView) -> list[dict[str, Any]]:
@@ -217,8 +243,8 @@ def _missed(view: RunView) -> list[dict[str, Any]]:
     rows = [[(_bound if c.endswith("_bp") else format_value)(b.get(c)) for c in _BIN_COLUMNS]
             for b in bins]  # fmt: skip
     caption = f"Missed-operon decoy counts per distance bin (π₀ = {format_value(data.get('pi0'))})"
-    return [{"key": "missed_operons_bins", "header": list(_BIN_COLUMNS), "rows": rows,
-             "caption": caption}]  # fmt: skip
+    return [{"key": "missed_operons_bins", "header": list(_BIN_HEADER), "rows": rows,
+             "caption": caption, "link": methods_url("operons")}]  # fmt: skip
 
 
 def _num(value: Any) -> str:
@@ -261,18 +287,23 @@ def extras(view: RunView, doc: Mapping[str, Any] | None) -> dict[str, list[dict[
         out["summary"] = [sentence]
         out["methods"] = [sentence]
     if view.has("pairs") or view.has("operon_flags"):
-        out["operons"] = [_p(SIGMA70), *_missed(view)]
+        out["operons"] = [_p(SIGMA70, "operons"), *_missed(view)]
         if distance and view.has("pairs"):
-            text = "Discordance tests (both_detected_t, flagged tu_source_distance_model) are"
-            out["operons"].append(_p(f"{text} {DISCORDANCE_DISTANCE}."))
-    if view.has("determinants_model"):
-        out["determinants"] = [_p(t) for t in (*gippa.determinants.CAVEATS, *DETERMINANTS)]
+            text = "Discordance tests of pairs with both genes detected are"
+            out["operons"].append(_p(f"{text} {DISCORDANCE_DISTANCE}.", "operons"))
+    if model_fitted(_safe(view, "determinants_model") if view.has("determinants_model") else None):
+        out["determinants"] = [_p(t) for t in gippa.determinants.CAVEATS]
+        out["determinants"] += [_p(t, "determinants") for t in DETERMINANTS]
     out["function"] = _function(view, doc)
-    ctx = [_p(f"{ISLANDS} See the islands methods note.")] if view.has("islands") else []
+    ctx = [_p(ISLANDS, "islands")] if view.has("islands") else []
     if _tu_block_morans(view):
-        ctx.append(_p(f"{MORAN_TU_ERROR} (rows flagged tu_block_tu_error)."))
+        rows = ROWS_CLAUSE.format(plain("tu_block_tu_error"))
+        ctx.append(_p(f"{MORAN_TU_ERROR} {rows}.", "autocorrelation"))
         if distance:
-            ctx.append(_p(f"{MORAN_DISTANCE} (rows flagged tu_source_distance_model)."))
+            rows = ROWS_CLAUSE.format(plain("tu_source_distance_model"))
+            ctx.append(_p(f"{MORAN_DISTANCE} {rows}.", "autocorrelation"))
+    if "mobile" in view.modules_off():
+        ctx.append(_p(MOBILE_OFF, cls="note"))
     out["genome-context"] = ctx + _diagnostics(view)
     return out
 
@@ -286,12 +317,20 @@ def sensitivity_groups(frame: pd.DataFrame) -> list[tuple[str, list[list[str]]]]
         for col in frame.columns:
             v = rec[col]
             if col == "jaccard":
-                both0 = rec["n_primary"] == 0 and rec["n_variant"] == 0
+                both0 = _is_zero(rec.get("n_primary")) and _is_zero(rec.get("n_variant"))
                 missing = v is None or v is pd.NA or (isinstance(v, float) and math.isnan(v))
                 v = "no flagged set in either run" if both0 else "NA" if missing else f"{v:.2f}"
             cells.append(format_value(v))
         groups.setdefault(str(rec["family"]), []).append(cells)
     return list(groups.items())
+
+
+def _is_zero(value: Any) -> bool:
+    """Whether ``value`` is a number equal to 0 (``None``, NA and text are not)."""
+    try:
+        return float(value) == 0.0
+    except (TypeError, ValueError):
+        return False
 
 
 def _tools(doc: Mapping[str, Any]) -> list[list[str]]:
@@ -384,3 +423,108 @@ def snippets() -> list[tuple[str, Markup]]:
     found = [f for f in files.iterdir() if f.name.endswith(".html")]
     return [(f.name[: -len(".html")], Markup(f.read_text(encoding="utf-8")))
             for f in sorted(found, key=lambda f: f.name)]  # fmt: skip
+
+
+def model_fitted(model: pd.DataFrame | None) -> bool:
+    """Whether ``determinants_model`` has a finite ``cv_r2_mean`` (any model): the Determinants
+    caveats print only then (behaviour 4)."""
+    if model is None or not {"metric", "value"} <= set(model.columns):
+        return False
+    vals = pd.to_numeric(model.loc[model["metric"] == "cv_r2_mean", "value"], errors="coerce")
+    return bool(vals.map(lambda v: math.isfinite(float(v))).any())
+
+
+#: plot ID -> its caption: the GIPPA_SPEC.md §10.2 Question, then how to read the figure (R-04)
+CAPTIONS: Mapping[str, str] = {
+    "V01": "Where in the genome is the proteome? From the outside in, the rings show features, "
+    "genes on each strand coloured by detection status, abundance, peptide density, "
+    "transcription units with promoters and terminators, abundance islands, GC skew and the "
+    "variant and novel-ORF sites.",
+    "V02": "Is abundance clustered along the chromosome? Each point is a detected gene's log2 "
+    "abundance at its position; the line is a LOESS trend; shaded bands are abundance islands.",
+    "V03": "What happens at this prophage, BGC, island, flagged operon or novel ORF? Arrows are "
+    "the genes of the window coloured by log2 abundance, with the mapped peptides stacked above "
+    "them and promoters, terminators and regions marked along the track.",
+    "V05": "Where did my sequences go? Bands follow the distinct input peptides or proteins from "
+    "their input class through the matching route to the outcome, with widths proportional to "
+    "the number of sequences.",
+    "V06": "Can I trust tolerant hits and de novo peptides? Panel (a) counts target and decoy "
+    "matches by peptide length and number of differences, panel (b) shows the estimated FDR per "
+    "number of differences against the dashed acceptance level, and panel (c), when present, "
+    "shows de novo precision per score bin.",
+    "V07": "Which regions and categories are detected less than detectability predicts? Each "
+    "row is a group's observed minus expected number of detected genes with its confidence "
+    "interval; rows left of zero are detected less often than predicted.",
+    "V08": "Which functions dominate abundance? Each column is a COG category, showing the log2 "
+    "abundances of its measured genes as points or a violin with the median, or its detected "
+    "fraction when the run has no abundance.",
+    "V10": "Is there structure beyond operons? Panel (a) shows Moran's I and panel (b) the "
+    "join-count statistic at each lag along the replicon, against shaded null envelopes; filled "
+    "markers are significant under the TU-block null.",
+    "V11": "Do operon partners look alike, and which other neighbours do too? Panel (a) compares "
+    "the abundance differences of adjacent gene pairs by pair class, panel (b) plots the local "
+    "FDR against that difference, and panel (c) plots upstream against downstream abundance with "
+    "flagged pairs outlined.",
+    "V12": "Where do peptides support ALT residues? Panel (a) counts variant sites by call and "
+    "confidence, and panel (b) aligns the covering peptide of each top site to the reference "
+    "with the ALT residue highlighted.",
+    "V13": "Which new genes or upstream extensions are supported? Panel (a) counts the "
+    "candidates of each class by call status, and panel (b) draws the top called candidates in "
+    "their genomic neighbourhood.",
+    "V14": "Which functions are high or low? Panel (a) shows the GSEA running sums of the top "
+    "sets, panel (b) plots each set's normalised enrichment score against −log10 q, and panel "
+    "(c) shows detection over-representation as observed over expected.",
+    "V15": "What explains abundance? Panel (a) shows how much the cross-validated R² drops when "
+    "each feature block is left out, panel (b) the partial dependence of key features, panel (c) "
+    "the SHAP values of the top features, and panel (d) observed against predicted abundance.",
+    "V16": "How do search strategies differ? Panel (a) counts the genes detected by each "
+    "combination of runs, and panel (b) shows the abundance correlation and the shared log2 "
+    "abundances of each pair of runs.",
+    "V17": "Are the inputs sane? Panels show the preflight summary, contig lengths, peptide "
+    "lengths, abundances and missing values per feature.",
+    "V18": "Are the tests calibrated on this dataset? Panel (a) compares predicted with observed "
+    "detection, panel (b) shows the p-value histogram of each test family, which a calibrated "
+    "test keeps flat away from zero, and panel (c) places each observed statistic in its null "
+    "distribution.",
+}
+
+#: plot ID -> the stem of its index instance and that instance's caption (review r1 L2)
+INDEX_STEMS: Mapping[str, str] = {"V03": "V03_locus", "V13": "V13_novel_orfs_locus"}
+INDEX_CAPTIONS: Mapping[str, str] = {
+    "V03": "This index lists every selected locus in display order, with its kind and the error "
+    "estimate of its test family, and marks the loci not drawn as locus views.",
+    "V13": "This index lists the top called candidates drawn as locus views, by rank.",
+}
+
+
+def question(pid: str) -> str:
+    """The GIPPA_SPEC.md §10.2 Question that opens ``CAPTIONS[pid]``."""
+    return CAPTIONS[pid].split("? ", 1)[0] + "?"
+
+
+def caption(pid: str, stem: str) -> str:
+    """The caption of instance ``stem`` of plot ``pid``: the index instance has its own (the
+    Question, then what the index lists), any other the plot's ``CAPTIONS`` entry."""
+    if INDEX_STEMS.get(pid) == stem:
+        return f"{question(pid)} {INDEX_CAPTIONS[pid]}"
+    return CAPTIONS.get(pid, stem)
+
+
+#: the Methods glossary (behaviour 2): term -> plain definition
+GLOSSARY: tuple[tuple[str, str], ...] = (
+    ("FDR", "False discovery rate: the expected share of false findings among the findings "
+     "reported."),
+    ("FWER", "Family-wise error rate: the probability of at least one false finding in a whole "
+     "family of tests."),
+    ("q-value", "The smallest FDR at which a finding would be reported."),
+    ("local FDR (lfdr)", "The probability that one particular finding is false, given its "
+     "value."),
+    ("O − E", "Observed minus expected: how many more (or fewer) genes were detected than the "
+     "detectability model predicts."),
+    ("π₀", "The estimated share of tested items with no true effect."),
+    ("block length (ℓ′)", "The number of consecutive transcription units resampled together in "
+     "the block bootstrap, chosen from the estimated correlation length ℓ̂ as min(20, 2ℓ̂ + 1, "
+     "number of TUs), counted per replicon."),
+    ("BB join count", "The number of neighbouring gene pairs where both genes are detected, "
+     "compared with its value under random placement."),
+)  # fmt: skip

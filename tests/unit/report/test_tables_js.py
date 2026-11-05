@@ -32,7 +32,7 @@ from types import ModuleType
 import pytest
 from helpers.interactive_fixtures import page_of, register_twin, run_steps, swap_twins
 from helpers.report_fixtures import register_fake, run_out, swap_registry, table_rows
-from helpers.viz_out_tree import write_schema_table
+from helpers.viz_out_tree import gene_row, write_schema_table
 from hypothesis import given
 from hypothesis import strategies as st
 
@@ -242,28 +242,36 @@ def test_tables_js_is_inlined_without_interactive(
 
 
 def test_every_embedded_table_has_one_filter_box(fake_registry: ModuleType, tmp_path: Path) -> None:
+    """Every embedded table (>= 1 row; M12-04 PR 2 hides 0-row ones) has one filter box."""
     out = run_out(tmp_path, islands=25)
-    write_schema_table(out / "tables" / "sensitivity.tsv", "sensitivity")
+    rows = [gene_row(locus_tag=f"g{i}", detected=True, detection_status="detected")
+            for i in range(3)]  # fmt: skip
+    write_schema_table(out / "tables" / "genes.tsv", "genes", rows)
     page = page_of(run_steps(tmp_path, out=out))
-    keys = [t.attrs["data-table"] for t in page.root.by_tag("table") if "data-table" in t.attrs]
-    assert {"islands", "sensitivity"} <= set(keys)
-    for key in keys:
+    tables = [t for t in page.root.by_tag("table") if "data-table" in t.attrs]
+    keys = [t.attrs["data-table"] for t in tables]
+    assert {"islands", "genes_tsv"} <= set(keys), keys
+    for table in tables:
+        key = table.attrs["data-table"]
+        assert table_rows(table)[1], f"{key}: a 0-row table is embedded"
         boxes = [n for n in page.root.by_tag("input") if n.attrs.get("data-filter") == key]
         assert len(boxes) == 1, (key, len(boxes))
         assert boxes[0].attrs.get("type", "text") in ("text", "search"), boxes[0].attrs
 
 
-def test_zero_row_table_is_header_only_with_a_filter_box(
+def test_zero_row_table_is_hidden_with_no_filter_box(
     fake_registry: ModuleType, tmp_path: Path
 ) -> None:
+    """M12-04 PR 2 (AC 2.6): a header-only table is not embedded; "none" plus the full-table link,
+    and no filter box for it."""
     out = run_out(tmp_path)
     write_schema_table(out / "tables" / "sensitivity.tsv", "sensitivity")
     page = page_of(run_steps(tmp_path, out=out))
-    table = page.table("sensitivity")
-    assert table is not None
-    header, body = table_rows(table)
-    assert header and body == []
-    assert [n for n in page.root.by_tag("input") if n.attrs.get("data-filter") == "sensitivity"]
+    assert page.table("sensitivity") is None
+    assert not [n for n in page.root.by_tag("input") if n.attrs.get("data-filter") == "sensitivity"]
+    section = page.section("sensitivity")
+    assert "none" in " ".join(section.text().split())
+    assert "../tables/sensitivity.tsv" in [a.attrs.get("href") for a in section.by_tag("a")]
 
 
 def test_tables_still_embed_at_most_20_rows(fake_registry: ModuleType, tmp_path: Path) -> None:
