@@ -76,10 +76,20 @@ COG_SUPER_COLOUR: Mapping[str, str] = MappingProxyType(
 )
 #: neutral greys drawn as chart furniture (gene-arrow edges, label envelopes, ring backgrounds)
 NEUTRAL_GREY: Mapping[str, str] = MappingProxyType(
-    {"edge": "#333333", "envelope": "#CCCCCC", "sector": "#DDDDDD", "ring": "#F4F4F4"}
+    {
+        "edge": "#333333",
+        "envelope": "#CCCCCC",
+        "sector": "#DDDDDD",
+        "ring": "#F4F4F4",
+        "no_category": "#E0E0E0",  # V08 genes without a COG letter, hatched (M12-04 P-19)
+    }
 )
 CONTINUOUS: str = "viridis"
 LOCUS_ABUNDANCE: str = "cividis"
+#: an undetected gene arrow in the V03/V13 locus views (M12-04 P-01): the patch keywords
+LOCUS_UNDETECTED: Mapping[str, str] = MappingProxyType(
+    {"facecolor": "white", "edgecolor": "#BBBBBB", "hatch": "////"}
+)
 
 #: the category cycle: Okabe-Ito order without black and grey
 _CYCLE = [v for k, v in OKABE_ITO.items() if k not in ("black", "grey")]
@@ -261,6 +271,12 @@ def fmt_q(q: object) -> str:
     return "< 0.001" if v < 0.001 else _sig_text(float(v), 2)
 
 
+def q_equals(q: object, name: str = "q") -> str:
+    """``name`` and ``fmt_q(q)`` joined for prose: ``"q = 0.43"``, ``"q < 0.001"``."""
+    text = fmt_q(q)
+    return f"{name} {text}" if text.startswith("<") else f"{name} = {text}"
+
+
 def fmt_pct(n: int, d: int) -> str:
     """``n / d`` as a whole percent (``"12 %"``); ``d == 0`` -> ``"NA"``; a partial share never
     rounds to 0 % or 100 %."""
@@ -285,3 +301,26 @@ def abundance_label(atype: object, scale: object) -> str | None:
     if _is_na(scale) or not str(scale).strip():
         return f"log2 {name}"
     return f"log2 {name} ({str(scale).strip()})"
+
+
+#: the plain-abundance axis text when the run's measure is unknown
+ABUNDANCE_FALLBACK = "log2 abundance"
+
+
+def run_abundance_label(genes: pd.DataFrame | None) -> str | None:
+    """``abundance_label`` of a run: the first ``abundance_type`` of ``genes.tsv`` that is not
+    ``none``/NA, with the scale of the first gene of that type that has one; ``None`` when no
+    gene carries a measure (or the columns are absent)."""
+    if genes is None or "abundance_type" not in genes:
+        return None
+    types = genes["abundance_type"]
+    keep = types.notna() & (types.astype(str).str.strip().str.lower() != "none")
+    if not keep.any():
+        return None
+    atype = types[keep].iloc[0]
+    scale: object = None
+    if "abundance_scale" in genes:
+        found = genes.loc[keep & (types == atype), "abundance_scale"].dropna()
+        found = found[found.astype(str).str.strip() != ""]
+        scale = None if found.empty else found.iloc[0]
+    return abundance_label(atype, scale)

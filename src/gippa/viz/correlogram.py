@@ -93,11 +93,11 @@ def contig_order(data: pd.DataFrame, fasta: Sequence[str]) -> list[str]:
     return [c for c in fasta if c in present] + sorted(present - set(fasta))
 
 
-def _lag1(data: pd.DataFrame, contig: str) -> pd.Series | None:
+def _lag1(data: pd.DataFrame, contig: str, null: str = "tu_block") -> pd.Series | None:
     hit = data[
         (data["contig"] == contig)
         & (data["statistic"] == "morans_i")
-        & (data["null_model"] == "tu_block")
+        & (data["null_model"] == null)
         & (data["lag"] == 1)
     ]
     if not len(hit):
@@ -109,14 +109,18 @@ def _lag1(data: pd.DataFrame, contig: str) -> pd.Series | None:
 
 def title(data: pd.DataFrame, order: Sequence[str]) -> str:
     """The lag-1 Moran's I of the first contig with a finite TU-block row against that row's
-    envelope and q (lead decision 4)."""
-    for contig in order:
-        row = _lag1(data, contig)
-        if row is None:
-            continue
-        v, lo, hi, q = (float(row[c]) for c in ("value", "null_lo", "null_hi", "q_value"))
-        word = "above" if v > hi else "below" if v < lo else "within"
-        return f"Lag-1 Moran's I {base.sig(v)}: {word} the TU-block envelope (q = {base.sig(q)})"
+    envelope and q, naming the null (lead decision 4; M12-04 P-04); an old run without TU-block
+    rows falls back to the gene-label row and names that null."""
+    for null in NULLS[::-1]:
+        for contig in order:
+            row = _lag1(data, contig, null)
+            if row is None:
+                continue
+            v, lo, hi, q = (float(row[c]) for c in ("value", "null_lo", "null_hi", "q_value"))
+            word = "above" if v > hi else "below" if v < lo else "within"
+            name = NULL_LABEL[null]
+            return (f"Lag-1 Moran's I {style.fmt_num(v)}: {word} the {name} envelope "
+                    f"({style.q_equals(q)}, {name} null)")  # fmt: skip
     return NOT_ESTIMABLE
 
 

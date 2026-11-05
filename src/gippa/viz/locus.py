@@ -24,7 +24,7 @@ import numpy as np
 import pandas as pd
 from matplotlib.axes import Axes
 from matplotlib.cm import ScalarMappable
-from matplotlib.colors import Normalize, to_rgba
+from matplotlib.colors import Normalize, to_hex, to_rgba
 from matplotlib.figure import Figure
 from matplotlib.patches import Patch, Polygon
 from matplotlib.ticker import FuncFormatter, MaxNLocator
@@ -52,7 +52,9 @@ MAX_TICKS = 5  # labelled position ticks at most (K-12 survey: 7-digit bp labels
 HEIGHT_IN = 2.2
 MAX_LABELS = 12
 GENE_LABEL = "gene_label"  # gid of the gene name texts, thinned by _thin_labels
-UNDETECTED = "#BBBBBB"
+UNDETECTED = "#BBBBBB"  # no measured value (imputed, or detected without abundance)
+DETECTED_PLAIN = style.DETECTION["detected"]  # a detected gene in a run without abundance
+NOT_DETECTED = ("not_detected", "partial_excluded")
 UNESTIMATED = style.DETECTION["unestimated"]
 PROMOTER = style.OKABE_ITO["bluish_green"]
 TERMINATOR = style.OKABE_ITO["vermillion"]
@@ -62,7 +64,8 @@ ORF_TOP = 2.2  # the genes axes' top with a novel ORF band
 ORF_EXTRA_IN = 0.7  # extra figure height for the band and the key
 ORF_KEY = "novel ORF; tick: OSTIR start; purple pileup: its peptides"
 IMPUTED_HATCH = "xxx"
-COLUMNS = ("track", "id", "contig", "start", "end", "strand", "value", "category")
+#: ``fill`` is the gene arrow's face colour (NA on the other tracks; M12-04 P-01)
+COLUMNS = ("track", "id", "contig", "start", "end", "strand", "value", "category", "fill")
 INDEX_COLUMNS = ("rank", "locus_id", "kind", "contig", "start", "end", "error", "rendered")
 EMPTY = "no loci to show"
 _OPTIONAL = ("regions_stats", "islands", "operon_flags", "tus_tsv", "regions_tsv")
@@ -158,7 +161,7 @@ def _region_loci(view: RunView) -> list[Locus]:
         q = _num(r.q_value)
         obs, exp, n = _num(r.observed), _num(r.expected), _num(r.n_eligible)
         label = (f"{r.region_id}: {_pct(obs, n)} detected vs {_pct(exp, n)} expected "
-                 f"(q = {base.sig(q, 3)})")  # fmt: skip
+                 f"({style.q_equals(q)})")  # fmt: skip
         out.append(
             Locus(str(r.region_id), r.region_type, str(r.contig), int(start), int(end), q, label)
         )
@@ -170,7 +173,8 @@ def _island_loci(view: RunView) -> list[Locus]:
     for r in _frame(view, "islands").itertuples(index=False):
         p, mean = _num(r.p_value), _num(r.mean_abundance_log2)
         label = (
-            f"{r.island_id} ({r.direction}): mean log2 {base.sig(mean, 3)}, FWER p {base.sig(p, 3)}"
+            f"{r.island_id} ({r.direction}): mean log2 {style.fmt_num(mean, 3)}, "
+            f"FWER p {style.fmt_q(p)}"
         )
         out.append(Locus(str(r.island_id), "island", str(r.contig), int(r.start), int(r.end), p,
                          label))  # fmt: skip
@@ -196,7 +200,7 @@ def _flag_loci(view: RunView, alpha: float) -> list[Locus]:
             span = tu_span[tu_a]
         else:
             span = _pair_span(view, a, b)
-        clause = f"{f.flags} between {f.gene_a} and {f.gene_b} (q = {base.sig(q, 3)})"
+        clause = f"{f.flags} between {f.gene_a} and {f.gene_b} ({style.q_equals(q)})"
         family = "missed_operon" if str(f.pair_class) == "NO" else "operon_discordance"
         kept.append((q, str(f.pair_id), family, str(a.contig), span, clause))
     # merge within a family only, so a merged locus never takes a minimum across families
@@ -351,29 +355,50 @@ def _draw_orf(ax: Axes, pile: Axes, locus: Locus, orf: OrfMark, hits: list[tuple
     return ["novel_orf", locus.locus_id, locus.contig, s, e, orf.strand, None, None]
 
 
+def _gene_style(g: Any, cmap: Any, norm: Normalize, measured: bool) -> dict[str, Any]:
+    """The patch keywords of one gene arrow: imputed grey and cross-hatched; not detected
+    ``style.LOCUS_UNDETECTED``; a measured value in cividis; detected without abundance in the
+    run ``DETECTED_PLAIN`` (``measured`` is False) or grey; single peptide outlined orange."""
+    log2, status = _num(g.abundance_log2), str(g.detection_status)
+    imputed = bool(g.abundance_imputed) if g.abundance_imputed is not pd.NA else False
+    detected = bool(g.detected) if g.detected is not pd.NA else False
+    unest = status == "single_peptide_unestimated"
+    kw: dict[str, Any] = {"facecolor": UNDETECTED, "edgecolor": "#333333", "linewidth": 0.3,
+                          "hatch": None}  # fmt: skip
+    if imputed:
+        kw["hatch"] = IMPUTED_HATCH
+    elif status in NOT_DETECTED:
+        kw.update(style.LOCUS_UNDETECTED, linewidth=0.5)
+        return kw
+    elif detected and log2 is not None:
+        kw["facecolor"] = cmap(norm(log2))
+    elif not measured:
+        kw["facecolor"] = DETECTED_PLAIN
+    if unest:
+        kw.update(edgecolor=UNESTIMATED, linewidth=0.8)
+    return kw
+
+
 def _draw_genes(ax: Axes, rows: list[tuple[Any, int, int]], scale: tuple[float, float],
-                head: float) -> list[list[object]]:  # fmt: skip
+                head: float, measured: bool = True) -> list[list[object]]:  # fmt: skip
     cmap, norm = matplotlib.colormaps[style.LOCUS_ABUNDANCE], Normalize(*scale, clip=True)
     data: list[list[object]] = []
     step = max(1, math.ceil(len(rows) / MAX_LABELS))
     for i, (g, s, e) in enumerate(sorted(rows, key=lambda t: (t[1], str(t[0].locus_tag)))):
         log2, status = _num(g.abundance_log2), str(g.detection_status)
         imputed = bool(g.abundance_imputed) if g.abundance_imputed is not pd.NA else False
-        detected = bool(g.detected) if g.detected is not pd.NA else False
-        fill: Any = UNDETECTED
-        if detected and not imputed and log2 is not None:
-            fill = cmap(norm(log2))
-        edge = UNESTIMATED if status == "single_peptide_unestimated" else "#333333"
+        kw = _gene_style(g, cmap, norm, measured)
         strand = str(g.strand)
-        ax.add_patch(Polygon(_arrow(s, e, strand, head), closed=True, facecolor=fill,
-                             edgecolor=edge, linewidth=0.8 if edge == UNESTIMATED else 0.3,
-                             hatch=IMPUTED_HATCH if imputed else None))  # fmt: skip
+        ax.add_patch(Polygon(_arrow(s, e, strand, head), closed=True, **kw))
         if i % step == 0:  # ceil(n / step) <= MAX_LABELS
             name = g.gene if isinstance(g.gene, str) and g.gene else str(g.locus_tag)
             ax.text((s + e) / 2, 0.32, name, ha="center", va="bottom", fontsize=6, rotation=30,
                     gid=GENE_LABEL)  # fmt: skip
         value, category = (None, "imputed") if imputed else (log2, status)
-        data.append(["gene", str(g.locus_tag), str(g.contig), s, e, strand, value, category])
+        face = kw["facecolor"]
+        fill = face if isinstance(face, str) else to_hex(face)
+        data.append(["gene", str(g.locus_tag), str(g.contig), s, e, strand, value, category,
+                     fill])  # fmt: skip
     return data
 
 
@@ -478,7 +503,8 @@ def render_locus(
                    zorder=0)  # fmt: skip
         rows.append(["island", str(r.island_id), str(r.contig), s, e, None,
                      _num(r.mean_abundance_log2), str(r.direction)])  # fmt: skip
-    rows += _draw_genes(ax, near("genes_tsv"), scale, 0.015 * width)
+    label = style.run_abundance_label(view.table("genes_tsv"))
+    rows += _draw_genes(ax, near("genes_tsv"), scale, 0.015 * width, label is not None)
     hits = near("peptide_hits")
     if orf is not None:
         rows.append(_draw_orf(ax, pile, locus, orf, hits, 0.015 * width))
@@ -508,30 +534,38 @@ def render_locus(
     pile.set_ylabel("peptides")
     pile.tick_params(labelbottom=False)
     fig.suptitle(title, fontsize=7)
-    _colour_key(fig, [pile, ax], scale)
+    _colour_key(fig, [pile, ax], scale, label)
     if orf is not None:
         _orf_key(pile)
     _thin_labels(fig, ax)
+    rows = [r + [None] * (len(COLUMNS) - len(r)) for r in rows]
     data = pd.DataFrame(rows, columns=list(COLUMNS)) if rows else _empty(COLUMNS)
     data = data.astype({"start": "int64", "end": "int64", "value": float})
     return base.Instance(locus.locus_id, fig, data, locus.label, ("start",))
 
 
-def _colour_key(fig: Figure, axes: list[Axes], scale: tuple[float, float]) -> None:
-    """A horizontal cividis colorbar over the run-wide ``scale`` plus the no-colour swatches."""
-    mappable = ScalarMappable(Normalize(*scale), matplotlib.colormaps[style.LOCUS_ABUNDANCE])
-    cbar = fig.colorbar(mappable, ax=axes, location="bottom", shrink=0.5, aspect=30, pad=0.02)
-    cbar.set_label("log2 abundance", fontsize=6)
-    cbar.ax.tick_params(labelsize=6)
-    cbar.dividers.set_cmap(mappable.cmap)  # the (empty) edge lines share the key's scale
-    cbar.dividers.set_norm(mappable.norm)
-    swatches = [
-        Patch(facecolor=UNDETECTED, edgecolor="#333333", lw=0.3, label="undetected"),
-        Patch(facecolor=UNDETECTED, edgecolor="#333333", lw=0.3, hatch=IMPUTED_HATCH,
-              label="imputed"),
-        Patch(facecolor="white", edgecolor=UNESTIMATED, lw=0.8,
-              label="single peptide, unestimated"),
-    ]  # fmt: skip
+def _colour_key(fig: Figure, axes: list[Axes], scale: tuple[float, float],
+                label: str | None) -> None:  # fmt: skip
+    """A horizontal cividis colorbar over the run-wide ``scale`` titled with the run's abundance
+    ``label`` (none without abundance) plus the no-colour swatches."""
+    u = style.LOCUS_UNDETECTED
+    not_detected = Patch(facecolor=u["facecolor"], edgecolor=u["edgecolor"], hatch=u["hatch"],
+                         lw=0.5, label="not detected")  # fmt: skip
+    unestimated = Patch(facecolor="white", edgecolor=UNESTIMATED, lw=0.8,
+                        label="single peptide, unestimated")  # fmt: skip
+    if label is None:
+        detected = Patch(facecolor=DETECTED_PLAIN, edgecolor="#333333", lw=0.3, label="detected")
+        swatches = [detected, not_detected, unestimated]
+    else:
+        mappable = ScalarMappable(Normalize(*scale), matplotlib.colormaps[style.LOCUS_ABUNDANCE])
+        cbar = fig.colorbar(mappable, ax=axes, location="bottom", shrink=0.5, aspect=30, pad=0.02)
+        cbar.set_label(label, fontsize=6)
+        cbar.ax.tick_params(labelsize=6)
+        cbar.dividers.set_cmap(mappable.cmap)  # the (empty) edge lines share the key's scale
+        cbar.dividers.set_norm(mappable.norm)
+        imputed = Patch(facecolor=UNDETECTED, edgecolor="#333333", lw=0.3, hatch=IMPUTED_HATCH,
+                        label="imputed")  # fmt: skip
+        swatches = [not_detected, imputed, unestimated]
     fig.legend(handles=swatches, loc="outside lower center", ncols=3, fontsize=6, frameon=False)
 
 
@@ -563,7 +597,7 @@ def _index(loci: Sequence[Locus], n_rendered: int, cfg: GippaConfig) -> base.Ins
             previous = t
         mark = "" if i < n_rendered else " (not rendered)"
         estimate = ESTIMATE.get(lo.test_family, "q")
-        lines.append((f"{i + 1}. {lo.locus_id} [{lo.kind}] {estimate} {base.sig(lo.error, 3)}"
+        lines.append((f"{i + 1}. {lo.locus_id} [{lo.kind}] {estimate} {style.fmt_q(lo.error)}"
                       f"{mark}", "normal"))  # fmt: skip
     # the caption wraps at the figure edge (one Text item), so it takes two line slots
     slots = [2 if weight == "italic" else 1 for _, weight in lines]

@@ -67,7 +67,7 @@ def _status(row: Any) -> str:
 
 
 def _fmt(v: float | None) -> str:
-    return "unestimated" if v is None else base.sig(v)
+    return "unestimated" if v is None else style.fmt_num(v)
 
 
 def _counts(orfs: pd.DataFrame) -> pd.DataFrame:
@@ -90,7 +90,7 @@ def _bar_label(d: pd.DataFrame) -> str:
     if called.empty:
         return "unestimated" if set(d["status"]) == {"unestimated"} else "none called"
     fdr = called["class_fdr_max_called"].dropna()
-    return f"FDR ≤ {fdr.max():g}" if len(fdr) else "unestimated"
+    return f"FDR ≤ {style.fmt_num(fdr.max())}" if len(fdr) else "unestimated"
 
 
 def _title(data: pd.DataFrame) -> str:
@@ -98,7 +98,7 @@ def _title(data: pd.DataFrame) -> str:
     if not n["called"]:
         return f"No novel ORF called; {n['unestimated']} candidates unestimated"
     fdr = data["class_fdr_max_called"].dropna()
-    bound = f"class FDR ≤ {fdr.max():g}" if len(fdr) else "class FDR unestimated"
+    bound = f"class FDR ≤ {style.fmt_num(fdr.max())}" if len(fdr) else "class FDR unestimated"
     orfs = "ORF" if n["called"] == 1 else "ORFs"
     return f"{n['called']} novel {orfs} called ({bound}), {n['unestimated']} unestimated"
 
@@ -177,7 +177,7 @@ def _view(row: Any, view: RunView, cfg: GippaConfig, scale: tuple[float, float])
     q, fdr = locus._num(row.best_peptide_q), _fdr(row.class_fdr)
     n = _int(row.n_peptides)
     label = (f"{row.orf_id} ({row.cls}): {'NA' if n is None else n} "
-             f"peptides, best q {base.sig(q)}, class FDR {_fmt(fdr)}")  # fmt: skip
+             f"peptides, best q {style.fmt_q(q)}, class FDR {_fmt(fdr)}")  # fmt: skip
     lo = Locus(str(row.orf_id), "novel_orf", str(row.contig), *span, fdr, label)
     peps = frozenset(str(row.peptides).split(";")) if isinstance(row.peptides, str) else frozenset()
     mark = OrfMark(str(row.strand), _tick(row, span, length), peps)

@@ -64,6 +64,11 @@ def alpha(meta: Meta, name: str) -> tuple[float, bool]:
     return (float(got), True) if got is not None else (float(getattr(AlphaConfig(), name)), False)
 
 
+def abundance(meta: Meta, prefix: str = "") -> str:
+    """The run's abundance axis label from ``meta`` (the static plots' wording)."""
+    return prefix + ((meta or {}).get("abundance_label") or style.ABUNDANCE_FALLBACK)
+
+
 def contigs(data: pd.DataFrame, meta: Meta) -> list[str]:
     """The TSV's contigs in FASTA order (``meta``), then in TSV order."""
     reps, present = (meta or {}).get("replicons", {}), dict.fromkeys(map(str, data["contig"]))
@@ -153,7 +158,7 @@ def v02(data: pd.DataFrame, title: str, meta: Meta = None) -> Any:
         for k, dash in (("oric", "solid"), ("ter", "dot")):
             for x in xs(kind[k]):
                 fig.add_vline(x=x, line={"color": MUTED, "dash": dash, "width": 1}, **at)
-        titles(fig, at, f"position ({unit})", "log2 abundance")
+        titles(fig, at, f"position ({unit})", abundance(meta))
     return finish(fig, title, 120 + 230 * len(order), legend={"orientation": "h", "y": -0.15})
 
 
@@ -191,7 +196,8 @@ def v06(data: pd.DataFrame, title: str, meta: Meta = None) -> Any:
     sub = {p: data[data["panel"] == p] for p in "abc"}
     panels = ["a", "b", *(["c"] if len(sub["c"]) else [])]
     names = {"a": "(a) targets vs. decoys", "c": "(c) de novo precision",
-             "b": "(b) stratum FDR" + (f" (dashed: {level:g})" if known else "")}  # fmt: skip
+             "b": "(b) stratum FDR"
+             + (f" (dashed: {style.fmt_alpha(level)})" if known else "")}  # fmt: skip
     fig = make_subplots(rows=1, cols=len(panels), subplot_titles=[names[p] for p in panels],
                         column_widths=[2.6, 1.5, 1.3][: len(panels)])  # fmt: skip
     for metric, colour in (("targets", TARGET), ("decoys", DECOY)):
@@ -267,7 +273,7 @@ def v07(data: pd.DataFrame, title: str) -> Any:
 
 
 @interactive("V08", det.V08_COLUMNS)
-def v08(data: pd.DataFrame, title: str) -> Any:
+def v08(data: pd.DataFrame, title: str, meta: Meta = None) -> Any:
     """Per COG category: a violin with points above 50 measured values, a strip otherwise; the
     detected fractions as bars when nothing is measured."""
     summ, genes = data[data["locus_tag"].isna()], data[data["locus_tag"].notna()]
@@ -279,7 +285,9 @@ def v08(data: pd.DataFrame, title: str) -> Any:
         fig.add_annotation(x=x, y=1.0, yref="paper", yanchor="bottom", showarrow=False, text=count)
         if not measured:
             frac = float(r["n_detected"]) / float(r["n_genes"]) if r["n_genes"] else 0.0
-            fig.add_trace(go.Bar(x=[x], y=[frac], name=letter, marker={"color": colour},
+            pattern = {"shape": "/"} if letter == "none" else {}
+            fig.add_trace(go.Bar(x=[x], y=[frac], name=letter,
+                                 marker={"color": colour, "pattern": pattern},
                                  hovertext=[f"{letter}{DOT}{count} detected"],
                                  hoverinfo="text"))  # fmt: skip
             continue
@@ -298,7 +306,7 @@ def v08(data: pd.DataFrame, title: str) -> Any:
     fig.update_xaxes(title_text="COG category", tickvals=list(range(len(letters))),
                      ticktext=letters, range=[-0.6, len(letters) - 0.4])  # fmt: skip
     if measured:
-        fig.update_yaxes(title_text=det.V08_YLABEL)
+        fig.update_yaxes(title_text=abundance(meta))
     else:
         fig.update_yaxes(title_text="detected fraction", range=[0.0, 1.0])
     return finish(fig, title, 380, showlegend=False)

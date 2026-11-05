@@ -22,7 +22,19 @@ from matplotlib.patches import Patch
 
 from gippa.io.cog_categories import cog_descriptions
 from gippa.viz.base import Instance, Skip, empty_state, plot, plural
-from gippa.viz.style import COG_SUPER, COG_SUPER_COLOUR, REGION, cog_colour, new_figure
+from gippa.viz.style import (
+    ABUNDANCE_FALLBACK,
+    COG_SUPER,
+    COG_SUPER_COLOUR,
+    NEUTRAL_GREY,
+    REGION,
+    cog_colour,
+    fmt_alpha,
+    fmt_num,
+    new_figure,
+    q_equals,
+    run_abundance_label,
+)
 
 if TYPE_CHECKING:
     from gippa.config import GippaConfig
@@ -37,11 +49,14 @@ V08_COLUMNS = (
     "median_log2", "n_genes", "n_detected", "n_imputed",
 )  # fmt: skip
 V07_XLABEL = "observed \N{MINUS SIGN} expected detected genes"
-V08_YLABEL = "log2 abundance"
+V08_YLABEL = ABUNDANCE_FALLBACK  # without a recorded measure; else ``run_abundance_label``
 NO_ABUNDANCE = "No measured abundance; detected fraction per COG category"
 BASIC_BLOCKS = ("replicon", "feature_class", "cog_category")
 BLACK = "#000000"
-NONE_GREY = "#999999"
+NONE_GREY = NEUTRAL_GREY["no_category"]  # genes without a COG letter (M12-04 P-19), hatched
+NONE_HATCH = "////"
+NONE_EDGE = "#999999"
+COUNT_NOTE = "detected / total"
 MAX_STRIP = 50  # a violin above this many measured values (§10.2 V8)
 MIN_HIGHEST = 5  # measured genes a category needs before the title calls its median the highest
 _WRAP = {"single": 50, "double": 105}  # characters per title line at 8 pt
@@ -135,7 +150,7 @@ def _region_rows(
                      None if n is None else int(n), obs, exp, ome,
                      _num(r["ci_low"]), _num(r["ci_high"]), q, flags])  # fmt: skip
         label = None if _na(r["label"]) or not str(r["label"]) else str(r["label"])
-        labels.append(f"q = {q:.2g}" if q is not None else f"{label} (untested)" if label else None)
+        labels.append(q_equals(q) if q is not None else f"{label} (untested)" if label else None)
     return rows, labels
 
 
@@ -152,11 +167,12 @@ def v07_title(data: pd.DataFrame, has_regions: bool, alpha: float) -> str:
             return (
                 f"{best['group']} ({best['region_type']}): {_pct(best['observed'], best['n'])} "
                 f"detected vs {_pct(best['expected'], best['n'])} expected "
-                f"(q = {best['q_value']:.2g})"
+                f"({q_equals(best['q_value'])})"
             )
         le = "\N{LESS-THAN OR EQUAL TO}"
         k = len(tested)
-        return f"No region departs from detectability at q {le} {alpha:g}; {k} regions tested"
+        return (f"No region departs from detectability at q {le} {fmt_alpha(alpha)}; "
+                f"{k} regions tested")  # fmt: skip
     top = None
     for r in recs:
         lo, hi, ome = r["ci_low"], r["ci_high"], r["o_minus_e"]
@@ -167,9 +183,13 @@ def v07_title(data: pd.DataFrame, has_regions: bool, alpha: float) -> str:
     if top is None:
         return "Detection matches detectability in every group with a CI"
     return (
-        f"{top['group']}: O \N{MINUS SIGN} E = {top['o_minus_e']:.1f} "
-        f"(95 % CI {top['ci_low']:.1f} to {top['ci_high']:.1f})"
+        f"{top['group']}: O \N{MINUS SIGN} E = {_e3(top['o_minus_e'])} "
+        f"(95 % CI {_e3(top['ci_low'])} to {_e3(top['ci_high'])})"
     )
+
+
+def _e3(v: object) -> str:
+    return fmt_num(v, 3)
 
 
 def _ci_unestimated(r: Mapping[str, object]) -> bool:
@@ -324,19 +344,19 @@ def v08_title(cats: Sequence[_Cat], flags: frozenset[str]) -> str:
     top = next((c for c in cats if c.values), None)
     if top is None:
         return f"{NO_ABUNDANCE}; {tail}" if no_cog else NO_ABUNDANCE
-    m, n = top.median, len(top.values)
+    m, n = top.median, top.n_detected  # n: the count printed over the column (P-19)
     if top.letter == "none":
-        lead = f"Median abundance {m:.1f} log2 ({plural(n, 'gene')})"
+        lead = f"Median abundance {fmt_num(m, 3)} log2 ({plural(n, 'gene')})"
         return f"{lead}; {tail}" if no_cog else f"{lead} in genes without a COG letter only"
     best = next((c for c in cats if c.letter != "none" and len(c.values) >= MIN_HIGHEST), None)
     if best is None:  # K-12 survey: no "highest" claim on fewer than MIN_HIGHEST genes
         most = max((c for c in cats if c.letter != "none"), key=lambda c: len(c.values))
         return (f"No COG category has {MIN_HIGHEST} or more measured genes (most: "
                 f"{most.letter}, {plural(len(most.values), 'gene')})")  # fmt: skip
-    m, n = best.median, len(best.values)
+    m, n = best.median, best.n_detected
     desc = cog_descriptions().get(best.letter, best.letter)
     return (f"{best.letter} ({desc}) has the highest median abundance among categories "
-            f"with ≥ {MIN_HIGHEST} genes ({m:.1f} log2, "
+            f"with ≥ {MIN_HIGHEST} genes ({fmt_num(m, 3)} log2, "
             f"{plural(n, 'gene')})")  # fmt: skip
 
 
@@ -345,14 +365,23 @@ def _jitter(n: int) -> list[float]:
     return [0.0] if n == 1 else [((i * 0.6180339887) % 1.0 - 0.5) * 0.5 for i in range(n)]
 
 
-def _abundance_figure(cats: Sequence[_Cat], title: str) -> Figure:
+def _none_style(c: _Cat) -> dict[str, object]:
+    """Fill keywords of a category's bar or body: hatched light grey for "none"."""
+    if c.letter == "none":
+        return {"facecolor": NONE_GREY, "edgecolor": NONE_EDGE, "hatch": NONE_HATCH,
+                "linewidth": 0.4}  # fmt: skip
+    return {"color": c.colour}
+
+
+def _abundance_figure(cats: Sequence[_Cat], title: str,
+                      ylabel: str = V08_YLABEL) -> Figure:  # fmt: skip
     fig = _figure("double", 3.0, "V08_cog_abundance", title)
     ax = fig.add_subplot()
     measured = any(c.values for c in cats)
     for x, c in enumerate(cats):
         if not measured:
             frac = c.n_detected / c.n_genes if c.n_genes else 0.0
-            ax.bar([x], [frac], width=0.7, color=c.colour)
+            ax.bar([x], [frac], width=0.7, **_none_style(c))  # type: ignore[arg-type]
             continue
         genes = sorted((g for g in c.genes if g[1] is not None), key=lambda g: g[0])
         vals = [float(v) for _, v, _ in genes if v is not None]
@@ -362,13 +391,16 @@ def _abundance_figure(cats: Sequence[_Cat], title: str) -> Figure:
             bodies: list[PolyCollection] = list(parts["bodies"])  # type: ignore[call-overload]
             for body in bodies:
                 body.set_facecolor(c.colour)
-                body.set_edgecolor(c.colour)
+                body.set_edgecolor(NONE_EDGE if c.letter == "none" else c.colour)
                 body.set_alpha(0.6)
+                if c.letter == "none":
+                    body.set_hatch(NONE_HATCH)
             parts["cmedians"].set_color(BLACK)
         elif vals:
             xs = [x + d for d in _jitter(len(vals))]
-            ax.scatter(xs, vals, s=7, color=c.colour, linewidths=0)
-    labels = [f"{c.n_detected}/{c.n_genes}" for c in cats]
+            edge, lw = (NONE_EDGE, 0.4) if c.letter == "none" else ("face", 0.0)
+            ax.scatter(xs, vals, s=7, color=c.colour, edgecolors=edge, linewidths=lw)
+    labels = [f"{fmt_num(c.n_detected)}/{fmt_num(c.n_genes)}" for c in cats]
     # rotate the n/N labels when they would not fit side by side (6 pt digits ~ 3.6 pt wide)
     slot_pt = 0.8 * fig.get_figwidth() * 72 / max(len(cats), 1)
     turn = 90 if max(len(t) for t in labels) * 3.6 + 2 > slot_pt else 0
@@ -376,18 +408,22 @@ def _abundance_figure(cats: Sequence[_Cat], title: str) -> Figure:
         ax.annotate(text, (x, 1.0), xycoords=("data", "axes fraction"), xytext=(0, 2),
                     textcoords="offset points", ha="center", va="bottom", fontsize=6,
                     rotation=turn)  # fmt: skip
+    ax.annotate(COUNT_NOTE, (1.0, 1.0), xycoords="axes fraction", xytext=(4, 2),
+                textcoords="offset points", ha="left", va="bottom", fontsize=6)  # fmt: skip
     ax.set_xticks(range(len(cats)), labels=[c.letter for c in cats])
     ax.set_xlim(-0.6, len(cats) - 0.4)
     ax.set_xlabel("COG category")
     if measured:
-        ax.set_ylabel(V08_YLABEL)
+        ax.set_ylabel(ylabel)
     else:
         ax.set_ylabel("detected fraction")
         ax.set_ylim(0.0, 1.0)
     sups = list(dict.fromkeys(c.super_category for c in cats))
     handles = [
-        Patch(color=NONE_GREY if s == "none" else COG_SUPER_COLOUR[s], label=s) for s in sups
-    ]
+        Patch(facecolor=NONE_GREY, edgecolor=NONE_EDGE, hatch=NONE_HATCH, lw=0.4, label=s)
+        if s == "none" else Patch(color=COG_SUPER_COLOUR[s], label=s)
+        for s in sups
+    ]  # fmt: skip
     ax.legend(handles=handles, loc="upper left", bbox_to_anchor=(1.0, 1.0), frameon=False,
               fontsize=6)  # fmt: skip
     ax.spines[["top", "right"]].set_visible(False)
@@ -405,5 +441,5 @@ def cog_abundance(view: RunView, cfg: GippaConfig) -> list[Instance] | Skip:
         msg = "No non-partial genes in this run"
         return [empty_state("V08", "cog_abundance", msg, V08_COLUMNS, "double")]
     title = v08_title(cats, view.run_flags())
-    fig = _abundance_figure(cats, title)
+    fig = _abundance_figure(cats, title, run_abundance_label(genes) or V08_YLABEL)
     return [Instance(suffix=None, figure=fig, data=_v08_data(cats), title=title)]

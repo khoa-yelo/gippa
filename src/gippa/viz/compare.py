@@ -47,7 +47,7 @@ _CMAP = colormaps["cividis"]
 
 
 def _g(v: float) -> str:
-    return f"{v:.2g}"
+    return style.fmt_num(v)
 
 
 def _layout(k: int) -> dict[str, float]:
