@@ -180,6 +180,7 @@ nav:
       - adr/ADR-0072-benchmark-baseline-1-0-0.md
       - adr/ADR-0073-r3-nightly-calibration-waiver-1-0-0.md
       - adr/ADR-0074-example-dataset.md
+      - adr/ADR-0075-outputs-revision-1-1.md
   - Developer guide:
       - developer.md
       - release.md
