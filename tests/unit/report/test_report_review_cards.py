@@ -27,8 +27,8 @@ from hypothesis import HealthCheck, given, settings
 from hypothesis import strategies as st
 
 from gippa.io.run_view import RunView
-from gippa.io.tsv import format_value
 from gippa.steps import registry as reg
+from gippa.viz import style
 
 NOVEL_CLASSES = ("nterm_extension", "cterm_extension", "intergenic", "sorf", "antisense")
 
@@ -152,7 +152,7 @@ def test_b1_property_estimate_is_the_called_rows_bound(
     if "unestimated" in called:
         assert "unestimated" in est, (rows, est)
     else:
-        bound = format_value(max(float(f) for f in called))
+        bound = style.fmt_q(max(float(f) for f in called))  # M12-04: card numbers via fmt_q
         assert bound in est and "unestimated" not in est, (rows, est)
 
 

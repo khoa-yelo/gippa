@@ -1,0 +1,83 @@
+// M12-04 PR 12 (O-01), AC 12.1 and 12.2 on a stub run of main.nf with peptides (as
+// main_report.nf.test test 1): the top level of the outdir holds only published names (README.txt,
+// run_manifest.json, resolved_config.yaml and schemas/ are written by `gippa run` after Nextflow,
+// so a bare stub run need not have them); every other task output is under intermediate/; the
+// published files under tables/, mapping/, annotation, plots/, report/ and logs/ are exactly those
+// of the 1.0 stub run (listed below from main@686839e1, before PR 12)
+// (docs/specs/M12-04-outputs-revision.md › PR 12). Hidden entries (.nextflow*) are ignored.
+// ci.yml runs: nf-test test workflow/tests --profile test,stub
+
+nextflow_pipeline {
+
+    name "M12-04 PR 12: OUT/ top level and intermediate/ (stub)"
+    script "../main.nf"
+    options "-stub"
+    tag "m1204_layout"
+
+    test("peptides given: top level is published names only; intermediates under intermediate/") {
+
+        when {
+            params {
+                def a = "${moduleTestDir}/data/annotate"
+                def d = "${moduleTestDir}/data/mapping"
+                def g = "${moduleTestDir}/data/genetable"
+                outdir = "$outputDir"
+                inputs = [genome: "${a}/genome.fa".toString(), replicons: "${a}/replicons.tsv".toString(),
+                          peptides: "${d}/peptides.norm.parquet".toString(),
+                          preflight: "${g}/preflight.json".toString()]
+                modules = ['core']
+                annotation = new groovy.json.JsonSlurper().parse(new File("${a}/annotation.json"))
+                db_dir = "${moduleTestDir}/data/genetable/db".toString()
+            }
+        }
+
+        then {
+            assert workflow.success
+            assert workflow.trace.failed().size() == 0
+            def root = new File("${outputDir}")
+            def allowed = ['README.txt', 'run_manifest.json', 'resolved_config.yaml', 'preflight',
+                           'annotation', 'mapping', 'tables', 'plots', 'report', 'schemas', 'logs',
+                           'intermediate', 'work'] as Set
+            def top = root.listFiles().collect { it.name }.findAll { !it.startsWith('.') } as Set
+            assert (top - allowed).isEmpty() : "AC 12.1: top-level entries outside the published list: ${(top - allowed).sort()}"
+
+            // the moved intermediates (spec example A), at their 1.0 relative paths under intermediate/
+            ['codon.parquet', 'features.parquet', 'genes.coords', 'layers.parquet', 'rrna16s.fa',
+             'sixframe.npz', 'trna_counts.tsv', 'uniop_cds.gff', 'xrefs.parquet',
+             'genetable/genes.parquet', 'genetable/genes_pre.parquet', 'genetable/tu_folds.parquet',
+             'genetable/detection_summary_parts/detectability.parquet',
+             'genetable/detection_summary_parts/tier.parquet',
+             'context/gene_context.parquet', 'context/island_diagnostics.parquet',
+             'novel/novel_class_fdr.parquet', 'windows/windows_000.fa',
+             'novel_windows/windows_000.fa', 'tu_upstream/tu000.fa'].each { f ->
+                assert new File(root, "intermediate/${f}").isFile() : "intermediate/${f} not published"
+                assert !new File(root, f).exists() : "${f} still published at the top level"
+            }
+
+            // AC 12.2: the published result files are those of the 1.0 layout, at the same paths
+            def want = ['annotation', 'logs/steps/placement.events.jsonl',
+                'mapping/mapping_fdr.tsv', 'mapping/mappings.bed', 'mapping/mappings.gff3',
+                'mapping/mappings.probed', 'mapping/peptide_hits.tsv', 'mapping/protein_hits.tsv',
+                'mapping/unmapped.tsv', 'plots/stub.done', 'plots/support/determinants_pd.tsv',
+                'plots/support/determinants_shap.tsv.gz', 'plots/support/null_determinants.tsv',
+                'plots/support/null_islands.tsv', 'plots/support/null_regions.tsv.gz',
+                'report/report.html', 'tables/annotation_patch.gff3', 'tables/autocorrelation.tsv',
+                'tables/detection_summary.tsv', 'tables/determinants_attribution.tsv',
+                'tables/determinants_features.tsv', 'tables/determinants_model.tsv',
+                'tables/genes.tsv', 'tables/islands.tsv', 'tables/novel_orfs.faa',
+                'tables/novel_orfs.gff3', 'tables/novel_orfs.tsv', 'tables/operon_flags.tsv',
+                'tables/operons.tsv', 'tables/pairs.tsv', 'tables/pileup.tsv.gz',
+                'tables/regions_stats.tsv', 'tables/sensitivity.tsv', 'tables/variants.tsv',
+                'tables/variants.vcf']
+            def heads = ['annotation', 'mapping', 'tables', 'plots', 'report', 'logs'] as Set
+            def got = []
+            root.eachFileRecurse { f ->
+                if (f.isFile()) {
+                    def rel = root.toPath().relativize(f.toPath()).toString()
+                    if (rel.tokenize('/')[0] in heads) got << rel
+                }
+            }
+            assert got.sort() == want.sort() : "AC 12.2: published files differ from 1.0: missing ${want - got}, extra ${got - want}"
+        }
+    }
+}

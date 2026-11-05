@@ -67,8 +67,16 @@
  ],
  "sim_empty/report.html": [
   [
+   "div",
+   "this-run"
+  ],
+  [
    "section",
    "summary"
+  ],
+  [
+   "div",
+   "sec-summary"
   ],
   [
    "h2",
@@ -77,6 +85,10 @@
   [
    "section",
    "inputs-qc"
+  ],
+  [
+   "div",
+   "sec-inputs-qc"
   ],
   [
    "h2",
@@ -101,6 +113,10 @@
   [
    "section",
    "mapping"
+  ],
+  [
+   "div",
+   "sec-mapping"
   ],
   [
    "h2",
@@ -133,6 +149,10 @@
   [
    "section",
    "detection"
+  ],
+  [
+   "div",
+   "sec-detection"
   ],
   [
    "h2",
@@ -177,6 +197,10 @@
   [
    "section",
    "genome-context"
+  ],
+  [
+   "div",
+   "sec-genome-context"
   ],
   [
    "h2",
@@ -247,6 +271,10 @@
    "operons"
   ],
   [
+   "div",
+   "sec-operons"
+  ],
+  [
    "h2",
    "Operons"
   ],
@@ -275,6 +303,10 @@
    "variants"
   ],
   [
+   "div",
+   "sec-variants"
+  ],
+  [
    "h2",
    "Variants"
   ],
@@ -293,6 +325,10 @@
   [
    "section",
    "novel-orfs"
+  ],
+  [
+   "div",
+   "sec-novel-orfs"
   ],
   [
    "h2",
@@ -317,6 +353,10 @@
   [
    "section",
    "function"
+  ],
+  [
+   "div",
+   "sec-function"
   ],
   [
    "h2",
@@ -351,6 +391,10 @@
    "determinants"
   ],
   [
+   "div",
+   "sec-determinants"
+  ],
+  [
    "h2",
    "Determinants of abundance"
   ],
@@ -371,6 +415,10 @@
    "sensitivity"
   ],
   [
+   "div",
+   "sec-sensitivity"
+  ],
+  [
    "h2",
    "Sensitivity"
   ],
@@ -383,6 +431,10 @@
    "methods"
   ],
   [
+   "div",
+   "sec-methods"
+  ],
+  [
    "h2",
    "Methods"
   ],
@@ -393,6 +445,10 @@
   [
    "section",
    "provenance"
+  ],
+  [
+   "div",
+   "sec-provenance"
   ],
   [
    "h2",
@@ -471,8 +527,16 @@
  ],
  "sim_plots/report.html": [
   [
+   "div",
+   "this-run"
+  ],
+  [
    "section",
    "summary"
+  ],
+  [
+   "div",
+   "sec-summary"
   ],
   [
    "h2",
@@ -481,6 +545,10 @@
   [
    "section",
    "inputs-qc"
+  ],
+  [
+   "div",
+   "sec-inputs-qc"
   ],
   [
    "h2",
@@ -505,6 +573,10 @@
   [
    "section",
    "mapping"
+  ],
+  [
+   "div",
+   "sec-mapping"
   ],
   [
    "h2",
@@ -545,6 +617,10 @@
   [
    "section",
    "detection"
+  ],
+  [
+   "div",
+   "sec-detection"
   ],
   [
    "h2",
@@ -593,6 +669,10 @@
   [
    "section",
    "genome-context"
+  ],
+  [
+   "div",
+   "sec-genome-context"
   ],
   [
    "h2",
@@ -687,6 +767,10 @@
    "operons"
   ],
   [
+   "div",
+   "sec-operons"
+  ],
+  [
    "h2",
    "Operons"
   ],
@@ -719,6 +803,10 @@
    "variants"
   ],
   [
+   "div",
+   "sec-variants"
+  ],
+  [
    "h2",
    "Variants"
   ],
@@ -737,6 +825,10 @@
   [
    "section",
    "novel-orfs"
+  ],
+  [
+   "div",
+   "sec-novel-orfs"
   ],
   [
    "h2",
@@ -931,6 +1023,10 @@
    "function"
   ],
   [
+   "div",
+   "sec-function"
+  ],
+  [
    "h2",
    "Function"
   ],
@@ -971,6 +1067,10 @@
    "determinants"
   ],
   [
+   "div",
+   "sec-determinants"
+  ],
+  [
    "h2",
    "Determinants of abundance"
   ],
@@ -993,6 +1093,10 @@
   [
    "section",
    "sensitivity"
+  ],
+  [
+   "div",
+   "sec-sensitivity"
   ],
   [
    "h2",
@@ -1023,6 +1127,10 @@
    "methods"
   ],
   [
+   "div",
+   "sec-methods"
+  ],
+  [
    "h2",
    "Methods"
   ],
@@ -1033,6 +1141,10 @@
   [
    "section",
    "provenance"
+  ],
+  [
+   "div",
+   "sec-provenance"
   ],
   [
    "h2",

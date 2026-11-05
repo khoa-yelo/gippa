@@ -2,8 +2,9 @@
 
 Columns ``gippa.context.regions_table.REGIONS_STATS_COLUMNS``; ``start`` converted to 1-based
 (``end`` unchanged: half-open 0-based end = closed 1-based end; origin-crossing regions keep
-``end > length``, §6.5). Floats with round-trip precision (as ``detection_summary.tsv``), ``NA``
-for missing, ``flags`` ``;``-joined (``NA`` when none).
+``end > length``, §6.5). ``number`` columns through ``gippa.io.tsv.format_value`` (``%.6g``,
+``INF``/``-INF``; §6.6, ADR-0006; M12-04 PR 9), integer columns with every digit, ``NA`` for
+missing, ``flags`` ``;``-joined (``NA`` when none).
 """
 
 from __future__ import annotations
@@ -23,13 +24,11 @@ _FLOATS = frozenset({"observed", "expected", "o_minus_e", "o_over_e", "hl_shift_
                      "ci_low", "ci_high", "p_value", "q_value"})  # fmt: skip
 
 
-def _num(v: object) -> object:
+def _num(v: object) -> float | None:
+    """A ``number`` cell as a float (``write_tsv`` formats it ``%.6g``), ``None`` when missing."""
     if v is None or pd.isna(v):
         return None
-    f = float(v)  # type: ignore[arg-type]
-    if math.isinf(f):
-        return f
-    return int(f) if f.is_integer() and abs(f) < 2**53 else repr(f)
+    return float(v)  # type: ignore[arg-type]
 
 
 def _flags(v: object) -> str | None:

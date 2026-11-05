@@ -101,7 +101,9 @@ def results(out: Path) -> dict[str, object]:
         "category_summary",
     ):
         res[f"rows_{name}"] = _rows(out / "tables" / f"{name}.tsv")
-    rp = out / "regions.parquet"
+    rp = out / "intermediate" / "regions.parquet"  # 1.1 layout; 1.0 kept it at the top
+    if not rp.exists():
+        rp = out / "regions.parquet"
     if rp.exists():
         r = pd.read_parquet(rp)
         res["regions"] = r["region_type"].value_counts().to_dict()

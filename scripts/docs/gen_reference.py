@@ -298,6 +298,18 @@ CHANGES_LINK = (
 )
 
 
+#: field property of a column whose value is the same on every row by construction (ADR-0075)
+RUN_LEVEL = "gippa:run_level"
+
+
+def _field_constraints(field: Mapping[str, Any]) -> str:
+    """The Constraints cell: ``run-level`` first when the field carries ``RUN_LEVEL``."""
+    text = _constraints(field.get("constraints") or {})
+    if field.get(RUN_LEVEL) is not True:
+        return text
+    return "run-level" if text == DASH else f"run-level; {text}"
+
+
 def render_tables(schemas_dir: Path, missing: list[str] | None = None) -> str:
     """One section per datapackage resource and per unlisted table schema; ``missing`` collects
     the ``table.field`` names that have no description."""
@@ -318,7 +330,7 @@ def render_tables(schemas_dir: Path, missing: list[str] | None = None) -> str:
                 _text(f.get("type")),
                 _text(f.get("unit")),
                 _text(f.get("description")),
-                _constraints(f.get("constraints") or {}),
+                _field_constraints(f),
             ]
             for f in schema.get("fields", [])
         ]

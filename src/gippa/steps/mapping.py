@@ -43,7 +43,12 @@ from gippa.mapping.initiator import (
     start_frame_cells,
     usable_windows,
 )
-from gippa.mapping.loci import annotate_peptide_hits, annotate_protein_hits
+from gippa.mapping.loci import (
+    FOREIGN_PROTEIN_IDS,
+    annotate_peptide_hits,
+    annotate_protein_hits,
+    has_foreign_protein_ids,
+)
 from gippa.mapping.miniprot import ProteinAlignment, parse_miniprot_gff
 from gippa.mapping.outputs import write_mapping_outputs
 from gippa.mapping.placement_fdr import PREFILTERED_FLAG, best_costs, placement_tables
@@ -547,6 +552,12 @@ def _proteins(ctx: StepContext, gm: GeneModel) -> tuple[pd.DataFrame, pd.DataFra
     state = pd.DataFrame(
         [(r.id, r.sequence, r.id in assigned, r.id in aligned) for r in recs], columns=state_cols
     )
+    if has_foreign_protein_ids(rows, gm):
+        ctx.log.info(
+            "loci: protein IDs are not locus tags of the model (run flag %s)",
+            FOREIGN_PROTEIN_IDS,
+            extra={"event": "loci.run_flag", "data": {"flag": FOREIGN_PROTEIN_IDS}},
+        )
     return annotate_protein_hits(rows, gm), state
 
 

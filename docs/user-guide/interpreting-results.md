@@ -214,11 +214,18 @@ discordance work on abundances and have no p_detect adjustment (see above).
 - fewer than 50 undetected eligible genes;
 - fewer TUs than cross-fitting folds.
 
-`p_detect` is then the overall detection rate for every gene, and every gene carries
-`detectability_constant`. The detection tests still run, but **without any adjustment for
+`p_detect` is then the overall detection rate for every gene, and the run carries
+`detectability_constant` once, in `run_manifest.json` › `flags` (it is not a `genes.tsv` row
+flag; 1.0 put it on every gene). The detection tests still run, but **without any adjustment for
 detectability**, and ORA uses ω = 1. Treat their results as unadjusted comparisons. "No gene
 detected" is only an extreme case of this, where the detection-dependent tests are
 `not_estimable`.
+
+**`foreign_protein_ids` and `cross_strain_protein`.** When a protein list uses IDs that are not
+this genome's locus tags (for example RefSeq `WP_` accessions from a related annotation), the run
+carries `foreign_protein_ids` once, in `run_manifest.json` › `flags`. A gene gets the row flag
+`cross_strain_protein` only when its matched protein is not identical to it (class `near` or
+`divergent`); an identical match under a foreign ID is not flagged per gene.
 
 ## Placement FDR is not search-engine FDR
 

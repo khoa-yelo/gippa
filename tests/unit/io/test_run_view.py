@@ -42,8 +42,13 @@ VAL_RUN = Path("local/runs/val-mvp-2026-10-22/OUT")
 
 
 def test_keys_are_pinned_against_published_files() -> None:
+    """M12-04 PR 12: results under ``tables/`` keep their name; every other step output sits under
+    ``intermediate/`` and its 1.0 top-level path is a fallback."""
     for key, rel in PUBLISHED_FILES.items():
-        assert PATHS[key] == rel, key
+        if rel.split("/", 1)[0] in ("tables", "work"):
+            assert PATHS[key] == rel, key
+        else:
+            assert PATHS[key] == f"intermediate/{rel}", key
 
 
 def test_keys_cover_the_files_published_has_no_entry_for() -> None:

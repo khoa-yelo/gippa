@@ -1,0 +1,102 @@
+// M12-04 PR 12 (O-01), AC 12.5: publishAs (workflow/modules/local/gippa_step/main.nf) maps every
+// task output whose first path component is not a published name (preflight, annotation, mapping,
+// tables, plots, report, schemas, logs) to intermediate/<fn>; published names keep their path; the
+// work/<file>, versions.yml, support-file and step-event rules are unchanged
+// (docs/specs/M12-04-outputs-revision.md › PR 12 "Publish rule").
+// ci.yml runs: nf-test test workflow/tests --profile test,stub
+
+nextflow_function {
+
+    name "M12-04 PR 12: publishAs maps intermediates under intermediate/"
+    script "../modules/local/gippa_step/main.nf"
+    function "publishAs"
+    tag "m1204_layout"
+
+    test("AC 12.5: codon.parquet -> intermediate/codon.parquet") {
+        when { function { """
+            input[0] = 'codon'
+            input[1] = 'codon.parquet'
+            """ } }
+        then {
+            assert function.success
+            assert function.result == 'intermediate/codon.parquet'
+        }
+    }
+
+    test("AC 12.5: genetable/genes.parquet -> intermediate/genetable/genes.parquet") {
+        when { function { """
+            input[0] = 'detectability'
+            input[1] = 'genetable/genes.parquet'
+            """ } }
+        then {
+            assert function.success
+            assert function.result == 'intermediate/genetable/genes.parquet'
+        }
+    }
+
+    test("AC 12.5: tables/genes.tsv -> tables/genes.tsv") {
+        when { function { """
+            input[0] = 'genes_tsv'
+            input[1] = 'tables/genes.tsv'
+            """ } }
+        then {
+            assert function.success
+            assert function.result == 'tables/genes.tsv'
+        }
+    }
+
+    test("a scattered directory (windows/windows_000.fa) -> intermediate/windows/windows_000.fa") {
+        when { function { """
+            input[0] = 'windows'
+            input[1] = 'windows/windows_000.fa'
+            """ } }
+        then {
+            assert function.success
+            assert function.result == 'intermediate/windows/windows_000.fa'
+        }
+    }
+
+    test("a published directory output (mapping) keeps its name") {
+        when { function { """
+            input[0] = 'placement'
+            input[1] = 'mapping'
+            """ } }
+        then {
+            assert function.success
+            assert function.result == 'mapping'
+        }
+    }
+
+    test("unchanged: logs/events.jsonl -> logs/steps/<step>.events.jsonl") {
+        when { function { """
+            input[0] = 'placement'
+            input[1] = 'logs/events.jsonl'
+            """ } }
+        then {
+            assert function.success
+            assert function.result == 'logs/steps/placement.events.jsonl'
+        }
+    }
+
+    test("unchanged: work/variants_qc.parquet is not published") {
+        when { function { """
+            input[0] = 'variants_qc'
+            input[1] = 'work/variants_qc.parquet'
+            """ } }
+        then {
+            assert function.success
+            assert function.result == null
+        }
+    }
+
+    test("unchanged: a support file -> plots/support/<file>") {
+        when { function { """
+            input[0] = 'context_stats'
+            input[1] = 'context_stats_support/support/null_islands.tsv'
+            """ } }
+        then {
+            assert function.success
+            assert function.result == 'plots/support/null_islands.tsv'
+        }
+    }
+}

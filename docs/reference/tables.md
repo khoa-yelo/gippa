@@ -532,7 +532,7 @@ TU-level abundance set enrichment (fgsea) per term with TU-set permutations (GIP
 
 ## `genes`
 
-One row per annotated CDS, sORF or pseudogene: identity, context, regulatory and sequence features, evidence, abundance, function and flags (GIPPA_SPEC.md §9.3).
+One row per annotated CDS, sORF or pseudogene, in the column groups identity, detection, abundance, function, context, features and flags (GIPPA_SPEC.md §9.3).
 
 - Path: —
 - Coordinates: 1-based closed
@@ -554,6 +554,31 @@ One row per annotated CDS, sORF or pseudogene: identity, context, regulatory and
 | `partial` | boolean | — | Gene is partial (not eligible for detection statistics) | — |
 | `crosses_origin` | boolean | — | Gene crosses the origin of a circular replicon | — |
 | `replicon_type` | string | — | Replicon kind | one of `chromosome`, `plasmid`, `unknown` |
+| `detected` | boolean | — | Gene detected in its tier | — |
+| `detection_status` | string | — | Detection status | one of `detected`, `not_detected`, `single_peptide_unestimated`, `partial_excluded` |
+| `detection_tier` | string | — | Run-level: detection tier used for the run (the same on every row) | run-level; one of `decoy_picked`, `mayu`, `two_peptide`, `protein_list` |
+| `gene_q_value` | number | — | Gene-level q-value (NA in tiers without one) | — |
+| `detected_2pep` | boolean | — | At least two accepted distinct peptides | — |
+| `n_peptides_unique` | integer | — | Accepted unique peptides (count) | — |
+| `n_peptides_multi_identical` | integer | — | Accepted peptides shared with identical copies (count) | — |
+| `n_peptides_shared` | integer | — | Placed peptides shared with other genes (count) | — |
+| `n_peptides_tolerant` | integer | — | Accepted peptides placed by the tolerant route (count) | — |
+| `coverage_frac` | number | — | Fraction of the gene covered by accepted peptides | — |
+| `best_peptide_q` | number | — | Smallest q-value of the accepted peptides | — |
+| `p_detect` | number | — | Cross-fitted detection probability from protein covariates | — |
+| `abundance_log2` | number | — | log2 abundance | — |
+| `abundance_raw` | number | — | Abundance before the log2 transform | — |
+| `top3_log2` | number | — | log2 Top3 abundance | — |
+| `abundance_imputed` | boolean | — | Abundance filled by the missing-value policy | — |
+| `abundance_type` | string | — | Run-level: abundance measure (the same on every row) | run-level; one of `ibaq`, `top3`, `maxlfq`, `intensity`, `unknown`, `none` |
+| `abundance_scale` | string | — | Run-level: abundance scale (the same on every row) | run-level; one of `molar`, `relative` |
+| `imputation_policy` | string | — | Run-level: missing-value policy used (the same on every row) | run-level |
+| `cog_id` | string | — | COG ID (smallest when several) | — |
+| `cog_category` | string | — | COG functional category letters | — |
+| `go_terms` | string | — | Semicolon-joined GO terms | — |
+| `kegg_ko` | string | — | Semicolon-joined KEGG orthologs | — |
+| `ec` | string | — | Semicolon-joined EC numbers | — |
+| `annotation_source` | string | — | Run-level: source of the annotation (the same on every row) | run-level; one of `bakta_full`, `bakta_light`, `user` |
 | `tu_id` | string | — | Transcription unit ID | — |
 | `tu_position` | integer | — | Position in the TU (1 = first transcribed) | — |
 | `tu_size` | integer | — | Number of genes in the TU | — |
@@ -587,32 +612,7 @@ One row per annotated CDS, sORF or pseudogene: identity, context, regulatory and
 | `gravy` | number | — | Grand average of hydropathy | — |
 | `tm_segments` | integer | — | Predicted transmembrane segments (count) | — |
 | `n_observable_peptides` | integer | — | In-silico observable peptides (count) | — |
-| `detected` | boolean | — | Gene detected in its tier | — |
-| `detection_tier` | string | — | Detection tier used for the run | one of `decoy_picked`, `mayu`, `two_peptide`, `protein_list` |
-| `detection_status` | string | — | Detection status | one of `detected`, `not_detected`, `single_peptide_unestimated`, `partial_excluded` |
-| `gene_q_value` | number | — | Gene-level q-value (NA in tiers without one) | — |
-| `detected_2pep` | boolean | — | At least two accepted distinct peptides | — |
-| `n_peptides_unique` | integer | — | Accepted unique peptides (count) | — |
-| `n_peptides_multi_identical` | integer | — | Accepted peptides shared with identical copies (count) | — |
-| `n_peptides_shared` | integer | — | Placed peptides shared with other genes (count) | — |
-| `n_peptides_tolerant` | integer | — | Accepted peptides placed by the tolerant route (count) | — |
-| `coverage_frac` | number | — | Fraction of the gene covered by accepted peptides | — |
-| `best_peptide_q` | number | — | Smallest q-value of the accepted peptides | — |
-| `p_detect` | number | — | Cross-fitted detection probability from protein covariates | — |
-| `abundance_raw` | number | — | Abundance before the log2 transform | — |
-| `abundance_log2` | number | — | log2 abundance | — |
-| `abundance_imputed` | boolean | — | Abundance filled by the missing-value policy | — |
-| `imputation_policy` | string | — | Missing-value policy used | — |
-| `abundance_type` | string | — | Abundance measure | one of `ibaq`, `top3`, `maxlfq`, `intensity`, `unknown`, `none` |
-| `abundance_scale` | string | — | Abundance scale | one of `molar`, `relative` |
-| `top3_log2` | number | — | log2 Top3 abundance | — |
-| `cog_id` | string | — | COG ID (smallest when several) | — |
-| `cog_category` | string | — | COG functional category letters | — |
-| `go_terms` | string | — | Semicolon-joined GO terms | — |
-| `kegg_ko` | string | — | Semicolon-joined KEGG orthologs | — |
-| `ec` | string | — | Semicolon-joined EC numbers | — |
-| `annotation_source` | string | — | Source of the annotation | one of `bakta_full`, `bakta_light`, `user` |
-| `flags` | string | — | Semicolon-joined gene flags (GIPPA_SPEC.md §9.4) | pattern `(?:partial|crosses_origin|pseudogene|multi_identical|shared_evidence|two_proteins_one_gene|cross_strain_protein|imputed_abundance|tolerant_evidence|strain_difference|nterm_extension_evidence|cai_reference|top3_lt3|detectability_constant|abundance_not_explained_by_sequence)(?:;(?:partial|crosses_origin|pseudogene|multi_identical|shared_evidence|two_proteins_one_gene|cross_strain_protein|imputed_abundance|tolerant_evidence|strain_difference|nterm_extension_evidence|cai_reference|top3_lt3|detectability_constant|abundance_not_explained_by_sequence))*` |
+| `flags` | string | — | Semicolon-joined gene flags (GIPPA_SPEC.md §9.4) | pattern `(?:partial|crosses_origin|pseudogene|multi_identical|shared_evidence|two_proteins_one_gene|cross_strain_protein|imputed_abundance|tolerant_evidence|strain_difference|nterm_extension_evidence|cai_reference|top3_lt3|abundance_not_explained_by_sequence)(?:;(?:partial|crosses_origin|pseudogene|multi_identical|shared_evidence|two_proteins_one_gene|cross_strain_protein|imputed_abundance|tolerant_evidence|strain_difference|nterm_extension_evidence|cai_reference|top3_lt3|abundance_not_explained_by_sequence))*` |
 
 ## `islands`
 
