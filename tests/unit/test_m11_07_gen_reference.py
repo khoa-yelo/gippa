@@ -384,10 +384,17 @@ def _toy_schemas(root: Path) -> Path:
 
 
 _HEAD = "| Field | Type | Unit | Description | Constraints |\n|---|---|---|---|---|\n"
+#: the link to the 1.0 -> 1.1 migration section (M12-04 PR 11b, spec § 5)
+CHANGES_LINK = (
+    "Columns renamed in 1.1 are listed in "
+    "[Outputs › Changes in 1.1](../user-guide/outputs.md#changes-in-11)."
+)
 TABLES_GOLDEN = (
     f"""# Output tables
 
 {GENERATED}
+
+{CHANGES_LINK}
 
 ## `pileup`
 
