@@ -5,8 +5,10 @@ docs/specs/M4-15-gene-table-assembly.md): adds the M4-13 cross-fitted ``p_detect
 ``tables/genes.tsv`` is written by ``context_stats`` (M5-09 lead decision 3).
 
 Eligible genes are the non-partial ones (§7.3); their ``detected`` value is the M4-12 call. The
-model draws only from the step's own stream ``gippa.rng.for_step("detectability", seed)``. With a
-constant model every eligible gene gets the flag ``detectability_constant``.
+model draws only from the step's own stream ``gippa.rng.for_step("detectability", seed)``. A
+constant model logs the run flag ``detectability_constant`` once (event
+``detectability.run_flag``, collected into ``run_manifest.json`` ``flags``); since 1.1 it is no
+longer a gene flag on the rows (ADR-0075).
 
 The optional output ``tu_folds`` (``genetable/tu_folds.parquet``, M8-06 item 1) persists
 ``DetectabilityResult.fold_of_tu`` for ADR-0035's cross-fitted TU recalibration: ``tu_id``
@@ -23,7 +25,7 @@ import pandas as pd
 import pyarrow as pa  # type: ignore[import-untyped]
 
 from gippa.config import GippaConfig
-from gippa.genetable.assemble import GENES_COLUMNS, gene_flags
+from gippa.genetable.assemble import GENES_COLUMNS
 from gippa.genetable.covariates import COVARIATE_COLUMNS
 from gippa.genetable.detectability import COLUMNS as DIAG_COLUMNS
 from gippa.genetable.detectability import DetectabilityResult, fit_detectability
@@ -31,7 +33,10 @@ from gippa.io.genes_tsv import read_genes_parquet, write_genes_parquet
 from gippa.io.parquet import write_parquet_deterministic
 from gippa.steps.registry import StepContext, run_step, step
 
-__all__ = ["add_p_detect", "fold_rows", "run_detectability"]
+__all__ = ["CONSTANT_FLAG", "add_p_detect", "fold_rows", "run_detectability"]
+
+#: run flag of a constant detectability model (§9.4 Run row since 1.1, ADR-0075)
+CONSTANT_FLAG = "detectability_constant"
 
 _DIAG_TYPES = (pa.string(),) * 4 + (pa.float64(),) * 3
 _FOLD_COLS = [("tu_id", pa.string()), ("fold", pa.int64())]
@@ -50,18 +55,11 @@ def fold_rows(res: DetectabilityResult) -> list[tuple[str, int]]:
 
 
 def add_p_detect(pre: pd.DataFrame, res: DetectabilityResult) -> pd.DataFrame:
-    """``pre`` with ``p_detect`` in its §9.3 place and ``detectability_constant`` when constant."""
+    """``pre`` with ``p_detect`` in its ``GENES_COLUMNS`` place; the row flags are unchanged."""
     out = pre.copy()
     tags = out["locus_tag"].astype(str)
     p = res.p_detect.set_axis(res.p_detect.index.astype(str))
     out["p_detect"] = p.reindex(tags).to_numpy(dtype="float64")
-    if res.constant:
-        out["flags"] = [
-            gene_flags(
-                {"genes_pre": list(f), "detectability": [] if part else ["detectability_constant"]}
-            )
-            for f, part in zip(out["flags"], out["partial"].astype(bool), strict=True)
-        ]
     return out[[c for c in GENES_COLUMNS if c in out.columns]]
 
 
@@ -80,6 +78,12 @@ def detectability(ctx: StepContext) -> None:
     cov = pre[["locus_tag", *COVARIATE_COLUMNS]].astype(dict.fromkeys(COVARIATE_COLUMNS, "float64"))
     tus = pd.Series(pre["tu_id"].to_numpy(), index=idx)
     res = fit_detectability(detected, cov, tus, ctx.cfg.detectability, ctx.rng)
+    if res.constant:
+        ctx.log.warning(
+            "detectability: run flag %s",
+            CONSTANT_FLAG,
+            extra={"event": "detectability.run_flag", "data": {"flag": CONSTANT_FLAG}},
+        )
     write_genes_parquet(ctx.outputs["gene_table"], add_p_detect(pre, res))
     diag = res.diagnostics
     rows = [

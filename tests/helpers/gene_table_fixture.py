@@ -28,12 +28,23 @@ import m4_contract_fixture as mf  # noqa: E402
 
 NAN = math.nan
 
-# §9.3 tables/genes.tsv, in order (identity, context, regulatory/sequence, evidence, abundance,
-# function, flags).
+# tables/genes.tsv, in the groups of docs/specs/M12-04-outputs-revision.md § 5.2 (ADR-0075):
+# identity, detection, abundance, function, context, regulatory/sequence features, flags. An
+# independent copy of the contract, not an import of gippa.genetable.assemble.
 IDENTITY = (
     "locus_tag", "source_id", "gene", "product", "feature_type", "hypothetical", "contig", "start",
     "end", "strand", "length_aa", "partial", "crosses_origin", "replicon_type",
 )  # fmt: skip
+EVIDENCE = (
+    "detected", "detection_status", "detection_tier", "gene_q_value", "detected_2pep",
+    "n_peptides_unique", "n_peptides_multi_identical", "n_peptides_shared", "n_peptides_tolerant",
+    "coverage_frac", "best_peptide_q", "p_detect",
+)  # fmt: skip
+ABUNDANCE = (
+    "abundance_log2", "abundance_raw", "top3_log2", "abundance_imputed", "abundance_type",
+    "abundance_scale", "imputation_policy",
+)  # fmt: skip
+FUNCTION = ("cog_id", "cog_category", "go_terms", "kegg_ko", "ec", "annotation_source")
 CONTEXT = (
     "tu_id", "tu_position", "tu_size", "uniop_p_prev", "uniop_p_next", "region_ids", "island_id",
     "replichore", "replichore_position", "gc_local_dev",
@@ -44,24 +55,14 @@ REGULATORY = (
     "cai", "tai", "enc", "fop", "gc3", "cpb", "at_2_10", "rare_codons_2_10",
     "mw_da", "pi", "gravy", "tm_segments", "n_observable_peptides",
 )  # fmt: skip
-EVIDENCE = (
-    "detected", "detection_tier", "detection_status", "gene_q_value", "detected_2pep",
-    "n_peptides_unique", "n_peptides_multi_identical", "n_peptides_shared", "n_peptides_tolerant",
-    "coverage_frac", "best_peptide_q", "p_detect",
-)  # fmt: skip
-ABUNDANCE = (
-    "abundance_raw", "abundance_log2", "abundance_imputed", "imputation_policy", "abundance_type",
-    "abundance_scale", "top3_log2",
-)  # fmt: skip
-FUNCTION = ("cog_id", "cog_category", "go_terms", "kegg_ko", "ec", "annotation_source")
-GENES_COLUMNS = (*IDENTITY, *CONTEXT, *REGULATORY, *EVIDENCE, *ABUNDANCE, *FUNCTION, "flags")
+GENES_COLUMNS = (*IDENTITY, *EVIDENCE, *ABUNDANCE, *FUNCTION, *CONTEXT, *REGULATORY, "flags")
 
-# §9.4 scope Gene, in vocabulary order.
+# §9.4 scope Gene, in vocabulary order; detectability_constant is a run flag since 1.1 (ADR-0075).
 GENE_FLAGS = (
     "partial", "crosses_origin", "pseudogene", "multi_identical", "shared_evidence",
     "two_proteins_one_gene", "cross_strain_protein", "imputed_abundance", "tolerant_evidence",
     "strain_difference", "nterm_extension_evidence", "cai_reference", "top3_lt3",
-    "detectability_constant", "abundance_not_explained_by_sequence",
+    "abundance_not_explained_by_sequence",
 )  # fmt: skip
 
 LIST_COLUMNS = ("region_ids", "go_terms", "kegg_ko", "ec", "flags")
