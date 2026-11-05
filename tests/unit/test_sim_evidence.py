@@ -295,7 +295,7 @@ def test_placements_at_true_locus(ev1: Any, lay1: Any) -> None:
         assert r["route"] == "exact"
         assert float(r["placement_q"]) == 0.0
         assert r["uniqueness"] == "unique"
-        assert int(r["peptide_len"]) == len(r["peptide"])
+        assert int(r["peptide_len_aa"]) == len(r["peptide"])
         assert r["contig"] == g["contig"] and r["strand"] == g["strand"]
         offs = eo.offsets(str(g["aa"]), str(r["peptide"]))
         want = {eo.span_coords(int(g["start"]), int(g["end"]), str(g["strand"]), a,

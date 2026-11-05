@@ -515,8 +515,9 @@ def test_manifest_schema_rejects_a_bad_table(bad: Any) -> None:
 def test_output_schema_version_minor_bump() -> None:
     from gippa.schemas import OUTPUT_SCHEMA_VERSION
 
-    assert OUTPUT_SCHEMA_VERSION == "1.2"  # 1.1: M11-16; 1.2: flag initiator_m, M11-20
-    assert md.build()["output_schema_version"] == "1.2"
+    # 1.1: M11-16; 1.2: flag initiator_m, M11-20; 1.3: M12-04 PR 11a (ADR-0075)
+    assert OUTPUT_SCHEMA_VERSION == "1.3"
+    assert md.build()["output_schema_version"] == "1.3"
 
 
 # ================================================================ 7 report

@@ -91,7 +91,7 @@ def dataset(draw: st.DrawFn) -> dict[str, Any]:
         peps.append(
             {
                 "peptide": peptide,
-                "peptide_len": len(peptide),
+                "peptide_len_aa": len(peptide),
                 "source": draw(st.sampled_from(["database", "denovo"])),
                 "best_q_input": draw(st.none() | st.floats(0, 0.01)),
                 "pep_input": draw(st.none() | st.floats(0, 1)),
@@ -146,7 +146,7 @@ def dataset(draw: st.DrawFn) -> dict[str, Any]:
 def _pep_df(rows: list[dict[str, Any]]) -> pd.DataFrame:
     cols = [c for c in PEPTIDE_HITS_COLUMNS if c != "crosses_origin"] + ["blocks"]
     df = pd.DataFrame(rows, columns=cols)
-    for c in ("peptide_len", "start", "end", "frame", "n_diff"):
+    for c in ("peptide_len_aa", "start", "end", "frame", "n_diff"):
         df[c] = df[c].astype("int64")
     return df
 

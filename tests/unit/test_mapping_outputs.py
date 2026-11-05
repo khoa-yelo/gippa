@@ -95,7 +95,7 @@ def pep(**kw: Any) -> dict[str, Any]:
         "blocks": None,
     }
     row.update(kw)
-    row.setdefault("peptide_len", len(row["peptide"]))
+    row.setdefault("peptide_len_aa", len(row["peptide"]))
     return row
 
 
@@ -122,7 +122,7 @@ def prot(**kw: Any) -> dict[str, Any]:
 
 def pep_frame(rows: Sequence[Mapping[str, Any]]) -> pd.DataFrame:
     df = pd.DataFrame(list(rows), columns=list(PEP_INPUT_COLUMNS))
-    for c in ("peptide_len", "start", "end", "frame", "n_diff"):
+    for c in ("peptide_len_aa", "start", "end", "frame", "n_diff"):
         df[c] = df[c].astype("int64")
     return df
 
@@ -234,7 +234,7 @@ def attr(f: Any, key: str) -> str | None:
 def test_peptide_hits_columns_pinned() -> None:
     assert PEPTIDE_HITS_COLUMNS == (
         "peptide",
-        "peptide_len",
+        "peptide_len_aa",
         "source",
         "best_q_input",
         "pep_input",
@@ -355,7 +355,7 @@ def test_example_01_exact_hit_tsv_row(tmp_path: Path) -> None:
 def test_example_01_scalar_dtypes_written(tmp_path: Path) -> None:
     out = write(tmp_path, [pep(score_input=55.5, best_q_input=0.001, pep_input=0.01)])
     _, (r,) = raw_tsv(out / "peptide_hits.tsv")
-    assert r["peptide_len"] == "11"
+    assert r["peptide_len_aa"] == "11"
     assert r["source"] == "database"
     assert (r["best_q_input"], r["pep_input"], r["score_input"]) == ("0.001", "0.01", "55.5")
     assert r["length_class"] == "10-11"

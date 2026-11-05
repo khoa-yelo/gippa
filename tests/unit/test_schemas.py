@@ -119,7 +119,7 @@ def test_peptide_hits_schema_enums_and_types() -> None:
     assert "cterm_extension" in _enum("peptide_hits", "locus_class")  # ADR-0013
     assert _enum("peptide_hits", "uniqueness") == {"unique", "multi_identical", "shared"}
     assert _enum("peptide_hits", "strand") >= {"+", "-"}
-    for col in ("peptide_len", "start", "end", "frame", "n_diff"):
+    for col in ("peptide_len_aa", "start", "end", "frame", "n_diff"):
         assert f[col]["type"] == "integer", col
     for col in ("best_q_input", "pep_input", "score_input", "placement_q"):
         assert f[col]["type"] == "number", col
@@ -176,7 +176,7 @@ def _rich_outputs(outdir: Path) -> None:
         pep_rows.append(
             {
                 "peptide": f"PEPTIDE{'K' * (i + 1)}",
-                "peptide_len": 8 + i,
+                "peptide_len_aa": 8 + i,
                 "source": "database" if exact else "denovo",
                 "best_q_input": 0.001 * i if exact else None,
                 "pep_input": 0.01,

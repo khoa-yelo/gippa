@@ -48,7 +48,7 @@ nextflow_workflow {
         then {
             def H = new GroovyShell().evaluate(new File("${moduleTestDir}/lib/annotate_stub.groovy"))
             def REG = new File("${moduleTestDir}/data/mapping/step_registry.json")
-            def PEPTIDE_HITS = "peptide\tpeptide_len\tsource\tbest_q_input\tpep_input\tscore_input\tcontig\tstart\tend\tstrand\tframe\tcrosses_origin\troute\tn_diff\tdiff_types\tplacement_q\tlength_class\tlocus_class\tuniqueness\tgene\tnovel_candidate_id\tflags"
+            def PEPTIDE_HITS = "peptide\tpeptide_len_aa\tsource\tbest_q_input\tpep_input\tscore_input\tcontig\tstart\tend\tstrand\tframe\tcrosses_origin\troute\tn_diff\tdiff_types\tplacement_q\tlength_class\tlocus_class\tuniqueness\tgene\tnovel_candidate_id\tflags"
             def PROTEIN_HITS = "protein_id\tprotein_len_aa\troute\tcontig\tstart\tend\tstrand\trank\tidentity\tquery_coverage\treciprocal_overlap\tclass\tgene\tflags"
             def UNMAPPED = "sequence_id\tsequence\tkind\tlabel\treason\tcontaminant_match"
             def MAPPING_FDR = "length_class\tn_diff\ttargets\tdecoys\tpi_wrong\tfdr_stratum\tn_accepted\tdecoy_type\tsection\tscore_bin\tprecision\tci_low\tci_high\tc_value\tflags"
