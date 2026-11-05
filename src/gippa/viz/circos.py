@@ -7,7 +7,10 @@ cumulative GC skew and the ALT-site / novel-ORF markers; oriC / ter as radial li
 lays out the sectors and ticks; every data track is drawn as its own tagged collection
 (``gid`` = the track's data-TSV enum value) on the polar axes. Data rows are 0-based half-open
 (``start`` written ``+ 1``); circular intervals with ``end > length`` keep that end and are drawn
-as two pieces. A track with more than 20,000 elements is binned (index decision 12).
+as two pieces. A track with more than 20,000 elements is binned (index decision 12); a marker
+track (promoters, terminators, ALT sites, novel ORFs) with more than 500 is drawn as counts per bin
+of a 500-bin grid per replicon (M12-04 P-09). Every drawn ring gets a number at the first sector's
+origin and a line in the figure-level ring key; the abundance ring gets a colour bar.
 """
 
 from __future__ import annotations
@@ -22,10 +25,12 @@ import numpy as np
 import pandas as pd
 from matplotlib.artist import Artist
 from matplotlib.backends.backend_agg import FigureCanvasAgg
+from matplotlib.cm import ScalarMappable
 from matplotlib.collections import LineCollection, PatchCollection
 from matplotlib.colors import Normalize
 from matplotlib.lines import Line2D
 from matplotlib.patches import Patch
+from matplotlib.patheffects import withStroke
 from matplotlib.text import Text
 from matplotlib.textpath import TextPath
 from pycirclize import Circos
@@ -57,13 +62,28 @@ RADII: dict[str, tuple[float, float]] = {
     "gene_plus": (85.0, 90.0),
     "gene_minus": (79.0, 84.0),
     "abundance": (73.0, 78.0),
-    "peptide_density": (63.0, 72.0),
-    "ticks": (56.0, 62.0),
-    "island": (50.0, 55.0),
-    "gc_skew": (38.0, 49.0),
-    "alt_site": (34.0, 34.0),
-    "novel_orf": (30.0, 30.0),
+    "peptide_density": (66.0, 72.0),
+    "tu_start": (60.5, 64.5),
+    "ticks": (55.5, 59.5),  # promoters (outer half) and terminators (inner half)
+    "island": (49.0, 54.0),
+    "gc_skew": (39.0, 47.0),
+    "alt_site": (33.0, 37.0),  # markers at the middle; per-bin counts across the band
+    "novel_orf": (28.0, 32.0),
 }
+#: ring -> (its data-TSV tracks, its plain key label), outer to inner (M12-04 P-09)
+RINGS: tuple[tuple[str, tuple[str, ...], str], ...] = (
+    ("region", ("region",), "regions"),
+    ("gene_plus", ("gene_plus",), "genes (+)"),
+    ("gene_minus", ("gene_minus",), f"genes ({style.MINUS})"),
+    ("abundance", ("abundance",), "abundance"),
+    ("peptide_density", ("peptide_density",), "peptide density"),
+    ("tu_start", ("tu_start",), "TUs"),
+    ("ticks", ("promoter", "terminator"), "promoters and terminators"),
+    ("island", ("island",), "islands"),
+    ("gc_skew", ("gc_skew",), "GC skew"),
+    ("alt_site", ("alt_site",), "ALT sites"),
+    ("novel_orf", ("novel_orf",), "novel ORFs"),
+)
 LABEL_R = (24.0, 18.0, 12.0, 6.0)  # oriC / ter label radii, staggered inwards
 NAME_R, NAME_PT = (106.0, 113.0, 120.0), 7.0  # sector name radii, staggered outwards
 AX_RECT = (0.13, 0.05, 0.56, 0.83)  # the circle's axes, figure fraction
@@ -72,6 +92,10 @@ RING_LAYERS = frozenset(
     {"abundance", "antismash", "genomad", "promoters", "regions", "terminators"}
 )
 MAX_ELEMENTS = 20_000
+#: a marker track with more than this many elements is drawn as counts per bin (M12-04 P-09)
+MARKER_CAP = 500
+MARKER_TRACKS = ("promoter", "terminator", "alt_site", "novel_orf")
+KEY_PT = 6.0  # ring numbers, ring key and colour bar text
 DENSITY_BP = 10_000
 #: peptide-density bars: a neutral grey (§10.1 furniture), not Okabe-Ito grey, which with the
 #: detection colours and the plasmid green would draw the whole COG palette in one figure
@@ -79,9 +103,12 @@ DENSITY_COLOUR = style.NEUTRAL_GREY["envelope"]
 PARTIAL_HATCH = "////"
 WHITE = "#FFFFFF"
 BLACK = style.OKABE_ITO["black"]
-PROMOTER = style.OKABE_ITO["bluish_green"]
-TERMINATOR = style.OKABE_ITO["vermillion"]
-NOVEL = style.OKABE_ITO["reddish_purple"]
+#: marker colours outside ``style.REGION`` and ``style.DETECTION`` (M12-04 AC 7a.3). Okabe-Ito
+#: has only black left (its grey stays out of V1), so promoters and novel ORFs take the dark
+#: end of the style's continuous map: slate blue and dark purple.
+TERMINATOR = BLACK
+PROMOTER = matplotlib.colors.to_hex(matplotlib.colormaps[style.CONTINUOUS](0.25)).upper()
+NOVEL = matplotlib.colors.to_hex(matplotlib.colormaps[style.CONTINUOUS](0.0)).upper()
 Row = tuple[str, str, int, int, object, object, bool]
 Label = tuple[
     float, list[tuple[float, str]], float, str
@@ -117,9 +144,9 @@ def tick_step(length: int) -> int:
     return step
 
 
-def tick_label(x: float, step: int) -> str:
+def tick_label(x: float, step: int, zero: str = "") -> str:
     if x == 0:
-        return ""
+        return zero
     if step >= 1_000_000:
         return f"{x / 1e6:g} Mb"
     return f"{x / 1e3:g} kb" if step >= 1_000 else f"{x:g} bp"
@@ -143,6 +170,44 @@ def _bins(
         for k, ix in zip(keys.tolist(), np.split(order, first[1:])[: len(keys)], strict=True):
             out.append((c, int(edges[k]), int(edges[k + 1]), reduce(vals[ix])))
     return out
+
+
+def _marker_bins(
+    plot: _Plot, track: str, contigs: Sequence[str], pos: np.ndarray
+) -> list[tuple[str, int, int, int]]:
+    """Data rows (``binned``, category ``bin``, value = count) and the non-empty bins
+    ``(contig, start, end, count)`` of markers at 0-based ``pos``: ``base.bin_edges(length,
+    MARKER_CAP)`` per replicon, so each has at most ``MARKER_CAP`` bins."""
+    where = np.asarray(contigs, dtype=object)
+    out = []
+    for c in plot.reps:
+        x = np.asarray(pos, dtype=np.int64)[where == c]
+        if not len(x):
+            continue
+        edges = base.bin_edges(plot.length(c), MARKER_CAP)
+        idx = np.searchsorted(edges, x, side="right") - 1
+        counts = np.bincount(idx, minlength=len(edges) - 1)
+        for k in np.flatnonzero(counts).tolist():
+            s0, e0, n = int(edges[k]), int(edges[k + 1]), int(counts[k])
+            plot.add(track, c, s0, e0, n, "bin", True)
+            out.append((c, s0, e0, n))
+    return out
+
+
+def _count_ticks(
+    canvas: _Canvas,
+    track: str,
+    bins: Sequence[tuple[str, int, int, int]],
+    band: tuple[float, float],
+    colour: str,
+) -> None:
+    """Per-bin counts as radial ticks from ``band[0]``, length to the sector maximum."""
+    lo, hi = band
+    top: dict[str, int] = {}
+    for c, *_, n in bins:
+        top[c] = max(top.get(c, 1), n)
+    segs = [(c, (s0 + e0) / 2, lo, lo + (hi - lo) * n / top[c]) for c, s0, e0, n in bins]
+    canvas.ticks(track, segs, colour)
 
 
 def _median(v: np.ndarray) -> float | None:
@@ -275,20 +340,29 @@ def _fixed(colour: str) -> Callable[[Any], str]:
     return lambda _row: colour
 
 
-def _abundance_colours(values: Sequence[float | None]) -> list[str]:
+def _abundance_norm(values: Sequence[float | None]) -> Normalize | None:
+    """The viridis scale of the abundance ring: the 2nd to 98th percentile of the measured
+    values (one value maps to the middle); ``None`` without a measured value."""
     finite = np.array([v for v in values if v is not None], dtype=float)
     if len(finite) == 0:
-        return [WHITE] * len(values)
+        return None
     lo, hi = (float(x) for x in np.percentile(finite, [2, 98]))
-    norm = Normalize(lo, hi if hi > lo else lo + 1, clip=True)
+    return Normalize(lo, hi, clip=True) if hi > lo else Normalize(lo - 0.5, lo + 0.5, clip=True)
+
+
+def _abundance_colours(values: Sequence[float | None], norm: Normalize | None) -> list[str]:
     cmap = matplotlib.colormaps[style.CONTINUOUS]
-    mid = matplotlib.colors.to_hex(cmap(0.5))
-    hexes = [WHITE if v is None else matplotlib.colors.to_hex(cmap(norm(v))) for v in values]
-    return hexes if hi > lo else [WHITE if v is None else mid for v in values]
+    return [
+        WHITE if v is None or norm is None else matplotlib.colors.to_hex(cmap(norm(v)))
+        for v in values
+    ]
 
 
-def _genes(plot: _Plot, canvas: _Canvas, genes: pd.DataFrame) -> bool:
-    """Gene and abundance tracks; ``True`` when binned."""
+def _genes(
+    plot: _Plot, canvas: _Canvas, genes: pd.DataFrame, abundance: bool
+) -> tuple[bool, Normalize | None]:
+    """Gene tracks, and the abundance track when the run has a measure; whether the genes are
+    binned and the abundance colour scale."""
     genes = plot.known(genes).copy()
     imputed = genes["abundance_imputed"].astype("boolean").fillna(False).astype(bool)
     genes["measured"] = [
@@ -317,11 +391,11 @@ def _genes(plot: _Plot, canvas: _Canvas, genes: pd.DataFrame) -> bool:
             hexc = matplotlib.colors.to_hex(matplotlib.colormaps[style.CONTINUOUS](share))
             arcs.append((canvas.arc(c, s0, e0, r0, r1), hexc))
         canvas.rects(track, arcs, edgecolors="none", linewidths=0)
-    _abundance(plot, canvas, genes, binned)
-    return binned
+    norm = _abundance(plot, canvas, genes, binned) if abundance else None
+    return binned, norm
 
 
-def _abundance(plot: _Plot, canvas: _Canvas, genes: pd.DataFrame, binned: bool) -> None:
+def _abundance(plot: _Plot, canvas: _Canvas, genes: pd.DataFrame, binned: bool) -> Normalize | None:
     r0, r1 = RADII["abundance"]
     cols = (genes[k] for k in ("contig", "start", "end", "measured"))
     cells = (
@@ -329,13 +403,15 @@ def _abundance(plot: _Plot, canvas: _Canvas, genes: pd.DataFrame, binned: bool) 
         if binned
         else [(str(c), int(s), int(e), _num(v)) for c, s, e, v in zip(*cols, strict=True)]
     )
-    colours = _abundance_colours([v for *_, v in cells])
+    norm = _abundance_norm([v for *_, v in cells])
+    colours = _abundance_colours([v for *_, v in cells], norm)
     arcs = []
     for (c, s, e, v), hexc in zip(cells, colours, strict=True):
         plot.add("abundance", c, s, e, v, "bin_median" if binned else "abundance_log2", binned)
         for a, b in pieces(s, e, plot.length(c), plot.circular(c)):
             arcs.append((canvas.arc(c, a, b, r0, r1), hexc))
     canvas.rects("abundance", arcs, edgecolors="none", linewidths=0)
+    return norm
 
 
 def _density(plot: _Plot, canvas: _Canvas, hits: pd.DataFrame) -> None:
@@ -357,7 +433,7 @@ def _density(plot: _Plot, canvas: _Canvas, hits: pd.DataFrame) -> None:
 
 def _ticks(plot: _Plot, canvas: _Canvas, view: RunView) -> None:
     """TU starts and promoter / terminator ticks at the transcription start (modulo the length);
-    per-bin counts above ``MAX_ELEMENTS`` elements."""
+    per-bin counts above ``MAX_ELEMENTS`` TUs or ``MARKER_CAP`` promoters / terminators."""
     r0, r1 = RADII["ticks"]
     mid = (r0 + r1) / 2
     tus = view.table("tus_tsv")
@@ -366,7 +442,7 @@ def _ticks(plot: _Plot, canvas: _Canvas, view: RunView) -> None:
         x = np.where(tus["strand"] == "+", tus["start"].astype(int), tus["end"].astype(int) - 1)
         tus = tus.assign(chrom=tus["contig"], start=x, end=x + 1, score=None, name=tus["tu_id"])
     for frame, track, colour, (lo, hi) in (
-        (tus, "tu_start", BLACK, (r0, r1)),
+        (tus, "tu_start", BLACK, RADII["tu_start"]),
         (view.table("promoters_bed"), "promoter", PROMOTER, (mid, r1)),
         (view.table("terminators_bed"), "terminator", TERMINATOR, (r0, mid)),
     ):
@@ -378,6 +454,10 @@ def _ticks(plot: _Plot, canvas: _Canvas, view: RunView) -> None:
         tss = (np.where(minus, frame["end"].astype(int) - 1, frame["start"].astype(int))) % lengths
         frame = frame.assign(tss=tss, minus=minus)
         segs = []
+        if track != "tu_start" and len(frame) > MARKER_CAP:
+            bins = _marker_bins(plot, track, frame["chrom"].astype(str).tolist(), tss)
+            _count_ticks(canvas, track, bins, (lo, hi), colour)
+            continue
         if len(frame) > MAX_ELEMENTS:  # per-bin counts, bar length to the sector maximum
             bins = _bins(plot, frame.assign(contig=frame["chrom"]), "tss", "tss", len)
             top: dict[str, int] = {}
@@ -445,41 +525,54 @@ def _markers(plot: _Plot, canvas: _Canvas, view: RunView) -> list[str]:
     if variants is not None:
         v = plot.known(variants[variants["call"].isin(["ALT", "mixed"])])
         counts.append(_plural(len(v), "ALT site"))
-        pts: dict[str, list[tuple[str, float]]] = {"high": [], "candidate": []}
-        for r in v.itertuples(index=False):
-            s = int(r.codon_start) - 1
-            plot.add("alt_site", str(r.contig), s, s + 3, None, r.confidence)
-            pts["high" if r.confidence == "high" else "candidate"].append((str(r.contig), s))
-        r0 = RADII["alt_site"][0]
-        canvas.markers("alt_site", pts["high"], r0, marker="^", facecolors=BLACK, edgecolors=BLACK)
-        canvas.markers(
-            "alt_site", pts["candidate"], r0, marker="^", facecolors="none", edgecolors=BLACK
-        )
+        starts = v["codon_start"].astype(int).to_numpy() - 1
+        if len(v) > MARKER_CAP:
+            bins = _marker_bins(plot, "alt_site", v["contig"].astype(str).tolist(), starts)
+            _count_ticks(canvas, "alt_site", bins, RADII["alt_site"], BLACK)
+        else:
+            pts: dict[str, list[tuple[str, float]]] = {"high": [], "candidate": []}
+            for r, s in zip(v.itertuples(index=False), starts.tolist(), strict=True):
+                plot.add("alt_site", str(r.contig), s, s + 3, None, r.confidence)
+                pts["high" if r.confidence == "high" else "candidate"].append((str(r.contig), s))
+            r0 = float(np.mean(RADII["alt_site"]))
+            kw = {"marker": "^", "edgecolors": BLACK}
+            canvas.markers("alt_site", pts["high"], r0, facecolors=BLACK, **kw)
+            canvas.markers("alt_site", pts["candidate"], r0, facecolors="none", **kw)
     orfs = view.table("novel_orfs")
     if orfs is not None:
         o = plot.known(orfs[orfs["called"].astype("boolean").fillna(False).astype(bool)])
         counts.append(_plural(len(o), "novel ORF"))
-        pts_o = []
+        found = []
         for r, kind in zip(o.itertuples(index=False), o["class"], strict=True):
             c, n, end = str(r.contig), plot.length(str(r.contig)), int(r.end)
             # RunView reads the start columns 0-based; back to 1-based (decision 15)
-            starts = [int(v) + 1 for v in (r.start_best_ostir, r.start_longest) if not _na(v)]
-            lo, hi = (starts[0], end) if starts and r.strand == "+" else (end, [*starts, end][0])
+            starts_o = [int(x) + 1 for x in (r.start_best_ostir, r.start_longest) if not _na(x)]
+            lo, hi = (
+                (starts_o[0], end) if starts_o and r.strand == "+" else (end, [*starts_o, end][0])
+            )
             hi += n if hi < lo else 0  # wrapped across the origin (decision 14), 1-based
-            plot.add("novel_orf", c, lo - 1, hi, _num(r.n_peptides), kind)
-            pts_o.append((c, ((lo - 1 + hi) / 2) % n))
-        canvas.markers(
-            "novel_orf",
-            pts_o,
-            RADII["novel_orf"][0],
-            marker="o",
-            facecolors=NOVEL,
-            edgecolors=NOVEL,
-        )
+            found.append((c, lo - 1, hi, _num(r.n_peptides), kind, ((lo - 1 + hi) / 2) % n))
+        if len(found) > MARKER_CAP:
+            at = np.array([math.floor(f[5]) for f in found], dtype=np.int64)
+            bins = _marker_bins(plot, "novel_orf", [f[0] for f in found], at)
+            _count_ticks(canvas, "novel_orf", bins, RADII["novel_orf"], NOVEL)
+        else:
+            for c, s0, e0, value, kind, _ in found:
+                plot.add("novel_orf", c, s0, e0, value, kind)
+            canvas.markers(
+                "novel_orf",
+                [(f[0], f[5]) for f in found],
+                float(np.mean(RADII["novel_orf"])),
+                marker="o",
+                facecolors=NOVEL,
+                edgecolors=NOVEL,
+            )
     return counts
 
 
-def _legend(fig: Any, binned: bool, notes: Sequence[str], rows: Sequence[Row]) -> None:
+def _legend(
+    fig: Any, binned: bool, notes: Sequence[str], rows: Sequence[Row], abundance: bool
+) -> None:
     """The key, with an entry only for a category the figure draws (its data ``rows``)."""
     drawn = {(str(r[0]), str(r[5])) for r in rows}
     tracks = {t for t, _ in drawn}
@@ -509,8 +602,10 @@ def _legend(fig: Any, binned: bool, notes: Sequence[str], rows: Sequence[Row]) -
             ("tu_start", BLACK, "TU start"),
             ("promoter", PROMOTER, "promoter"),
             ("terminator", TERMINATOR, "terminator"),
+            ("alt_site", BLACK, "ALT sites per bin"),
+            ("novel_orf", NOVEL, "novel ORFs per bin"),
         )
-        if t in tracks
+        if t in tracks and ((t, "bin") in drawn) == (t in ("alt_site", "novel_orf"))
     ]
     handles: list[Artist] = [h for h, _ in items]
     handles += [Line2D([], [], color=c) for c, _ in lines]
@@ -518,7 +613,13 @@ def _legend(fig: Any, binned: bool, notes: Sequence[str], rows: Sequence[Row]) -
     for marker, face, edge, lab, shown in (
         ("^", BLACK, BLACK, "ALT site (high)", ("alt_site", "high") in drawn),
         ("^", "none", BLACK, "ALT site (candidate)", ("alt_site", "candidate") in drawn),
-        ("o", NOVEL, NOVEL, "novel ORF", "novel_orf" in tracks),
+        (
+            "o",
+            NOVEL,
+            NOVEL,
+            "novel ORF",
+            ("novel_orf", "bin") not in drawn and "novel_orf" in tracks,
+        ),
     ):
         if not shown:
             continue
@@ -532,9 +633,49 @@ def _legend(fig: Any, binned: bool, notes: Sequence[str], rows: Sequence[Row]) -
         fig.legend(handles, labels, loc="upper left", bbox_to_anchor=(0.70, 0.92), frameon=False,
                    fontsize=6)  # fmt: skip
     key = "gene colour: detected share (viridis)" if binned else "gene colour: detection status"
-    text = [key, "abundance: log2, viridis 2nd-98th pct; white = NA or imputed", *notes]
+    text = [key, *(["abundance: viridis 2nd-98th pct; white = NA or imputed"] * abundance)]
+    if any(t in MARKER_TRACKS and c == "bin" for t, c in drawn):
+        text.append(f"markers: counts per bin where a track has over {MARKER_CAP}")
+    text += notes
     wrapped = [line for t in text for line in textwrap.wrap(t, 46, subsequent_indent="  ")]
     fig.text(0.70, 0.02, "\n".join(wrapped), ha="left", va="bottom", fontsize=6, color="#555555")
+
+
+def _ring_key(
+    fig: Figure, canvas: _Canvas, rows: Sequence[Row], first: str, pt_per_unit: float
+) -> Text:
+    """A number per drawn ring next to the first sector's origin (outer to inner), and the key
+    that names them (``gid`` ``ring_key``) below the legend."""
+    tracks = {str(r[0]) for r in rows}
+    drawn = [(ring, label) for ring, ts, label in RINGS if tracks & set(ts)]
+    origin = canvas.rad(first, 0)
+    halo = [withStroke(linewidth=1.5, foreground=WHITE)]
+    for n, (ring, _) in enumerate(drawn, 1):
+        r = float(np.mean(RADII[ring]))
+        canvas.ax.text(origin - 1.5 / (r * pt_per_unit), r, str(n), ha="right", va="center",
+                       fontsize=KEY_PT, zorder=6, path_effects=halo)  # fmt: skip
+    lines = ["rings, outer to inner", *(f"{n} {lab}" for n, (_, lab) in enumerate(drawn, 1))]
+    return fig.text(0.70, 0.92, "\n".join(lines), ha="left", va="top", fontsize=KEY_PT,
+                    gid="ring_key")  # fmt: skip
+
+
+def _side_panel(fig: Figure, key: Text, norm: Normalize | None, label: str | None) -> None:
+    """Stack the legend, the ring key and the abundance colour bar down the right column."""
+    canvas = FigureCanvasAgg(fig)
+    canvas.draw()  # type: ignore[no-untyped-call]
+    renderer = canvas.get_renderer()  # type: ignore[no-untyped-call]
+    to_fig = fig.transFigure.inverted()
+    y = 0.92
+    for leg in fig.legends:
+        y = min(y, float(leg.get_window_extent(renderer).transformed(to_fig).y0) - 0.015)
+    key.set_y(y)
+    if norm is None or label is None:
+        return
+    y = float(key.get_window_extent(renderer).transformed(to_fig).y0) - 0.025
+    cax = fig.add_axes((0.71, y - 0.012, 0.2, 0.012))
+    bar = fig.colorbar(ScalarMappable(norm, style.CONTINUOUS), cax=cax, orientation="horizontal")
+    bar.set_label(label, fontsize=KEY_PT)
+    cax.tick_params(labelsize=KEY_PT, length=2)
 
 
 @base.plot(
@@ -553,6 +694,7 @@ def circos(view: RunView, cfg: GippaConfig) -> list[base.Instance] | base.Skip:
     assert genes is not None and pre is not None  # guaranteed by ``needs``
     plot = _Plot([r for r in pre["replicons"] if int(r["length"]) > 0])
     one = len(plot.reps) == 1 and plot.circular(next(iter(plot.reps)))
+    ab_label = style.run_abundance_label(genes)
     space = 0 if one else 2
     layout = Circos({c: plot.length(c) for c in plot.reps}, space=space)
     fig = style.new_figure("double", 6.0)
@@ -566,13 +708,18 @@ def circos(view: RunView, cfg: GippaConfig) -> list[base.Instance] | base.Skip:
         plot.add("sector", c, 0, plot.length(c), plot.length(c), str(plot.reps[c].get("topology")))
         track = sector.add_track(RADII["sector"])
         track.axis(fc="#DDDDDD", ec="none")
+        # one circular replicon: "0" at the origin, no end label on top of it (M12-04 AC 7a.4)
         track.xticks_by_interval(
-            step, label_size=6, tick_length=1.5, label_formatter=lambda x: tick_label(x, step)
+            step,
+            label_size=6,
+            tick_length=1.5,
+            show_endlabel=not one,
+            label_formatter=lambda x: tick_label(x, step, "0" if one else ""),
         )
         room = (sector.rad_size + math.radians(space)) * NAME_R[0] / 105 * radius_pt  # rlim 105
         options, orientation = name_options(c, room)
         names.append((float(np.mean(sector.rad_lim)), options, NAME_PT, orientation))
-        for name in ("region", "gene_plus", "gene_minus", "abundance"):
+        for name in ("region", "gene_plus", "gene_minus", "abundance")[: 4 if ab_label else 3]:
             sector.add_track(RADII[name]).axis(fc="#F4F4F4", ec="none")
     ax = fig.add_axes(AX_RECT, projection="polar")
     layout.plotfig(ax=ax)
@@ -605,7 +752,7 @@ def circos(view: RunView, cfg: GippaConfig) -> list[base.Instance] | base.Skip:
     flags = {f.split(":", 1)[1] for f in view.run_flags() if f.startswith("layer_missing:")}
     if missing := sorted(flags & RING_LAYERS):
         plot.notes.append(f"layers missing (their rings absent): {', '.join(missing)}")
-    binned = _genes(plot, canvas, genes)
+    binned, norm = _genes(plot, canvas, genes, ab_label is not None)
     hits = view.table("peptide_hits")
     if hits is None:
         plot.notes.append("peptide density omitted (no peptide_hits.tsv)")
@@ -635,6 +782,9 @@ def circos(view: RunView, cfg: GippaConfig) -> list[base.Instance] | base.Skip:
         parts.append(", ".join(markers))
     title = "; ".join(parts)
     fig.suptitle(title, y=0.98)
-    _legend(fig, binned, plot.notes, plot.rows)
+    _legend(fig, binned, plot.notes, plot.rows, ab_label is not None)
+    if plot.reps:
+        key = _ring_key(fig, canvas, plot.rows, next(iter(plot.reps)), radius_pt / 105)
+        _side_panel(fig, key, norm, ab_label)
     canvas.place_labels(fig)
     return [base.Instance(None, fig, plot.frame(), title, coords=("start",))]
