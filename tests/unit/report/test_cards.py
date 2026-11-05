@@ -23,6 +23,12 @@ Interface pinned here (M9-16 test author, beyond the spec text):
   of those plus the ``unmapped.tsv`` rows of ``kind = protein``; ``peptides_placed`` counts its
   input as the distinct hit peptides plus the ``unmapped.tsv`` rows of ``kind = peptide`` only;
   the card text says "of <input>".
+
+M12-04 PR 1 (docs/specs/M12-04-outputs-revision.md) revises the wording: "<n> of <total> genes
+detected", the tier FDR stated as gene-level ("Mayu gene-level FDR <fdr>, from peptides at q ≤
+<alpha>"), "no FDR estimated" for the two-peptide and protein-list tiers, no per-stratum string
+on the peptide card (AC 1.4), and the R² card label first ("Model R²: ...", "not fitted: ...").
+Numbers are matched through the ``gippa.viz.style`` formatters, tolerant of trailing zeros.
 """
 
 from __future__ import annotations
@@ -49,7 +55,9 @@ from helpers.report_fixtures import Page, cfg, run_out
 from hypothesis import HealthCheck, given, settings
 from hypothesis import strategies as st
 
+from gippa.determinants.models import MIN_ROWS, MIN_TUS
 from gippa.io.run_view import RunView
+from gippa.viz import style
 
 ALL_CARDS = {"genes_detected", "peptides_placed", "proteins_placed", "islands", "operon_flags",
              "alt_calls", "novel_orfs", "model_r2"}  # fmt: skip
@@ -65,6 +73,18 @@ def _part(p: Page, name: str, cls: str) -> str:
     found = p.cards()[name].by_class(cls)
     assert found, f"card {name}: no .{cls}"
     return words(found[0].text())
+
+
+def _num(formatted: str) -> str:
+    """A regex for a ``gippa.viz.style`` formatted number, tolerant of trailing zeros
+    ("0.001", "0.0010") and never matching inside a longer number."""
+    core = formatted.rstrip("0") if "." in formatted else formatted
+    return rf"(?<![\d.]){re.escape(core)}0*(?![\d])"
+
+
+#: an alpha as the cards print it ("q ≤ 0.01"), tolerant of trailing zeros
+def _alpha(a: str) -> str:
+    return rf"q ≤ {_num(a)}"
 
 
 def _full_out(tmp: Path) -> Path:
@@ -91,9 +111,12 @@ def test_example_1_decoy_picked_812_detected(tmp_path: Path) -> None:
     write_genes(out, 812, 40, tier="decoy_picked", n_2pep=700)
     write_tier_fdr(out, {"0.01": 0.0098, "0.05": 0.0411})
     text = _card(page(out), "genes_detected")
-    assert re.search(r"(?<![\d.])812 genes detected\b", text), text
-    assert "picked target–decoy FDR 0.0098 at q ≤ 0.01" in text, text
-    assert "0.0411" not in text, text
+    assert re.search(r"(?<![\d.])812 of 852 genes detected\b", text), text
+    fdr = _num(style.fmt_q(0.0098))
+    assert re.search(rf"picked target–decoy gene-level FDR {fdr} at gene-level {_alpha('0.01')}",
+                     text), text  # fmt: skip
+    assert not re.search(_num(style.fmt_q(0.0411)), text), text
+    assert re.search(r"(?<![\d.])700 with ≥ 2 distinct peptides\b", text), text
 
 
 def test_example_1_tier_fdr_follows_alpha_identification(tmp_path: Path) -> None:
@@ -101,7 +124,9 @@ def test_example_1_tier_fdr_follows_alpha_identification(tmp_path: Path) -> None
     write_genes(out, 812, 40, tier="decoy_picked")
     write_tier_fdr(out, {"0.01": 0.0098, "0.05": 0.0411})
     text = _card(page(out, "stats.alpha.identification=0.05"), "genes_detected")
-    assert "FDR 0.0411 at q ≤ 0.05" in text, text
+    fdr = _num(style.fmt_q(0.0411))
+    assert re.search(rf"gene-level FDR {fdr} at gene-level {_alpha('0.05')}", text), text
+    assert not re.search(_num(style.fmt_q(0.0098)), text), text
 
 
 def test_example_2_two_peptide_tier_unestimated(tmp_path: Path) -> None:
@@ -109,9 +134,10 @@ def test_example_2_two_peptide_tier_unestimated(tmp_path: Path) -> None:
     write_genes(out, 640, 10, tier="two_peptide", n_2pep=640)
     p = page(out)
     text = _card(p, "genes_detected")
-    assert re.search(r"(?<![\d.])640 genes detected\b", text), text
-    assert "two-peptide rule" in text and "FDR unestimated" in text, text
-    assert "unestimated" in _part(p, "genes_detected", "estimate")
+    assert re.search(r"(?<![\d.])640 of 650 genes detected\b", text), text
+    assert "two-peptide rule: no FDR estimated" in text, text
+    assert "no FDR estimated" in _part(p, "genes_detected", "estimate")
+    assert "distinct peptides" not in text, "the two-peptide line is the tier itself (M12-04 PR 1)"
 
 
 def test_two_peptide_card_ignores_any_tier_fdr_row(tmp_path: Path) -> None:
@@ -120,7 +146,8 @@ def test_two_peptide_card_ignores_any_tier_fdr_row(tmp_path: Path) -> None:
     write_genes(out, 640, 10, tier="two_peptide")
     write_tier_fdr(out, {"0.01": 0.0098})
     text = _card(page(out), "genes_detected")
-    assert "0.0098" not in text and "FDR unestimated" in text, text
+    assert not re.search(_num(style.fmt_q(0.0098)), text), text
+    assert "no FDR estimated" in text and "gene-level FDR" not in text, text
 
 
 def test_genes_card_shows_detected_2pep_count_beside(tmp_path: Path) -> None:
@@ -135,7 +162,9 @@ def test_mayu_tier_prints_its_fdr(tmp_path: Path) -> None:
     write_genes(out, 300, 10, tier="mayu")
     write_tier_fdr(out, {"0.01": 0.0123})
     text = _card(page(out), "genes_detected")
-    assert "FDR 0.0123 at q ≤ 0.01" in text and "unestimated" not in text, text
+    fdr = _num(style.fmt_q(0.0123))
+    assert re.search(rf"Mayu gene-level FDR {fdr}, from peptides at {_alpha('0.01')}", text), text
+    assert "unestimated" not in text and "no FDR estimated" not in text, text
 
 
 # ---------------------------------------------------------------- example 3: model R²
@@ -148,7 +177,11 @@ def test_example_3_model_r2(tmp_path: Path) -> None:
     write_det_model(out, rows)
     p = page(out)
     text = _card(p, "model_r2")
-    assert "Model R² 0.21 ± 0.03 (CV); null p 0.001 (uncalibrated)" in text, text
+    r2, sd, null = (_num(style.fmt_num(0.21)), _num(style.fmt_num(0.03)),
+                    _num(style.fmt_q(0.001)))  # fmt: skip
+    assert text.startswith("Model R²:"), text
+    assert re.search(rf"Model R²: {r2} ± {sd} \(CV\); null p {null} \(uncalibrated\)", text), text
+    assert "no predictive power" not in text, "0.21 − 0.03 > 0"
     assert "0.35" not in text and "0.002" not in text, "LightGBM is secondary (ADR-0033)"
 
 
@@ -160,11 +193,16 @@ def test_model_r2_without_null_uncalibrated_drops_the_word(tmp_path: Path) -> No
     assert "(uncalibrated)" not in text, text
 
 
-def test_model_r2_unestimated_when_elastic_net_has_no_value(tmp_path: Path) -> None:
+def test_model_r2_not_fitted_when_elastic_net_has_no_value(tmp_path: Path) -> None:
+    """No R² value: no number, "not fitted" and the minimum sizes (M12-04 PR 1, AC 1.5)."""
     out = run_out(tmp_path)
     write_det_model(out, det_rows("elastic_net", None, None, None, "too_few_rows"))
     p = page(out)
-    assert "unestimated" in _part(p, "model_r2", "estimate"), _card(p, "model_r2")
+    text = _card(p, "model_r2")
+    assert text.startswith("Model R²: not fitted:"), text
+    est = _part(p, "model_r2", "estimate")
+    assert f"≥ {MIN_ROWS} genes" in est and f"≥ {MIN_TUS} TUs" in est, text
+    assert "±" not in text and "NA" not in text and "null p" not in text, text
 
 
 # ---------------------------------------------------------------- mapping
@@ -184,14 +222,24 @@ def test_peptides_and_proteins_placed_of_input(tmp_path: Path) -> None:
     assert re.search(r"\bof 5\b", prot), prot  # 2 distinct proteins + 3 unmapped proteins
 
 
-def test_peptide_card_lists_placement_fdr_per_stratum(tmp_path: Path) -> None:
+def test_peptide_card_has_no_stratum_string(tmp_path: Path) -> None:
+    """M12-04 PR 1 (AC 1.4): the per-stratum FDR string moves off the card; it stays in V06 (the
+    mapping section's plot) and ``mapping_fdr.tsv``. The card keeps the placement threshold."""
     out = run_out(tmp_path)
     write_mapping(out, placed_q=[0.001], unmapped_peptides=0, proteins=["P1"],
                   unmapped_proteins=0, strata={"7-8": 0.0072, "9-12": 0.0031})  # fmt: skip
-    text = _card(page(out), "peptides_placed")
-    assert "0.0072" in text and "0.0031" in text, text
-    assert "0.4321" not in text, "de novo precision rows are not placement strata"
-    assert "0.01" in text, text
+    p = page(out)
+    text = _card(p, "peptides_placed")
+    assert re.search(r"(?<![\d.])1 of 1 peptides placed\b", text), text
+    assert re.search(rf"placement {_alpha('0.01')}", _part(p, "peptides_placed", "estimate"))
+    assert "stratum" not in text and "not q-values" not in text, text
+    for v in (0.0072, 0.0031, 0.4321):
+        assert not re.search(_num(style.fmt_q(v)), text) and str(v) not in text, (v, text)
+    assert len(text) <= 160, text
+    src = p.cards()["peptides_placed"].attrs.get("data-source", "")
+    assert "mapping_fdr.tsv" not in src, src
+    mapping = p.section("mapping")
+    assert mapping.by_attr("data-plot", "V06"), "the stratum FDR lives in V06"
 
 
 # ---------------------------------------------------------------- islands, operons, novel ORFs
@@ -287,8 +335,9 @@ def test_every_card_names_existing_tables_and_columns(tmp_path: Path) -> None:
         ("genes_detected", {"tables/genes.tsv:detected", "tables/genes.tsv:detection_tier",
                             "tables/genes.tsv:detected_2pep",
                             "tables/detection_summary.tsv:value"}),
-        ("peptides_placed", {"mapping/peptide_hits.tsv:placement_q",
-                             "mapping/mapping_fdr.tsv:fdr_stratum"}),
+        ("peptides_placed", {"mapping/peptide_hits.tsv:peptide",
+                             "mapping/peptide_hits.tsv:placement_q",
+                             "mapping/unmapped.tsv:kind"}),
         ("islands", {"tables/islands.tsv:p_value"}),
         ("operon_flags", {"tables/operon_flags.tsv:q_value"}),
         ("alt_calls", {"tables/variants.tsv:confidence", "tables/variants.tsv:class_error_rate"}),
