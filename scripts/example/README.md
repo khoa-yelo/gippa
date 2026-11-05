@@ -13,8 +13,28 @@ The subset does not recompute them.
 | Script | Purpose |
 |---|---|
 | `build_example.py` | writes `$GIPPA_ROOT/example/<name>/`: genome, routes A to D, `SELECTION.json`, `bundles/*.tar.gz` |
+| `../slurm/build_example.sbatch` | the release build: builds twice at one commit, compares the two sha256s, then runs `--check` |
 | `../slurm/example_run.sbatch` | converts one route, then runs one `gippa run` on the local executor in its allocation (`farmshare_local,apptainer`) |
 | `summarize_runs.py` | prints wall time, per-process trace times and result counts for each run |
+
+## Building and checking the bundle
+
+- `build_example.py` refuses a checkout with uncommitted changes. `--allow-dirty` builds anyway
+  and records the commit as `<sha>-dirty` in `bundle.json` and `PROVENANCE.md`.
+- The tree is built in a staging dir. It replaces the old tree only once the archive is written.
+  An archive that exists with another sha256 is kept unless `--force`. The archive is left
+  read-only (0444).
+- `--check [--bundles-tsv TSV]` rebuilds in a temporary dir and compares the archive's sha256 and
+  size with the version's row of `validation/example/bundles.tsv`. It writes nothing to `--out`
+  or `--bundle-out`. Pass the same `--expected DIR` as the release build: `expected/` is part of
+  the archive.
+- **Toolchain dependence.** Byte-identical rebuilds hold for one commit *and* one toolchain.
+  `A_diann/report.parquet` is written by pyarrow (zstd), so another pyarrow version can change
+  its bytes. The gzip streams (`genome/*.fna.gz` and the archive) come from Python's `zlib`, so
+  another zlib build can change them too. Run `--check` with the locked environment
+  (`uv.lock`) on FarmShare, as the release build did. A mismatch after a toolchain change is not
+  a data change: compare `SELECTION.json` and `CHECKSUMS.sha256` before rebuilding the pin.
+- The Slurm job ID stays out of the bundle; `bundles.tsv` records it (`build_job`).
 
 ## Recommended configuration (measured 2026-11-03)
 
