@@ -291,9 +291,9 @@ def _constraints(constraints: Mapping[str, Any]) -> str:
     return "; ".join(parts) or DASH
 
 
-#: First line of the tables page: where the 1.1 column renames are listed (ADR-0075).
+#: First line of the tables page: where the 1.1 column renames and retypes are listed (ADR-0075).
 CHANGES_LINK = (
-    "Columns renamed in 1.1 are listed in "
+    "Columns renamed or retyped in 1.1 are listed in "
     "[Outputs › Changes in 1.1](../user-guide/outputs.md#changes-in-11)."  # noqa: RUF001 (the docs breadcrumb)
 )
 

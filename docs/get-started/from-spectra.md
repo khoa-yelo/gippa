@@ -167,8 +167,8 @@ with the same `--search-db same`.
 
 - **FDR.** GIPPA estimates FDR for novel ORFs per ORF class, from decoy rows whose protein IDs are
   the `GIPPAORF_…` IDs of this database. Keep `--report-decoys`. Without such decoys, the run warns
-  `novel_orfs.decoys_not_makedb`, the class FDR is `unestimated`, and only the at-least-2-peptides
-  rule applies. A class with fewer than about 1/alpha candidates (100 at alpha 0.01) cannot be
+  `novel_orfs.decoys_not_makedb`, `class_fdr` is NA (flag `class_fdr_unestimated`), and only the
+  at-least-2-peptides rule applies. A class with fewer than about 1/alpha candidates (100 at alpha 0.01) cannot be
   called at all (warning `novel_orfs.class_q_floor_above_alpha`).
 - **Search space.** The database is many times larger, as the SIM100K example shows. A larger
   search space makes DIA-NN's FDR threshold stricter, so fewer peptides of annotated genes pass.

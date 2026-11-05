@@ -22,8 +22,8 @@ The regime is chosen per ORF from the source of its peptides, database first.
   (non-`denovo`) peptide.
 - `denovo_subgroup`: otherwise, when the ORF has a de novo peptide.
 - `unestimated`: everything else, for example decoys from a Bakta-protein search
-  (`rev_<locus_tag>`). The pass-1 rule (≥ 2 distinct peptides) applies, and
-  `class_fdr = unestimated`.
+  (`rev_<locus_tag>`). The pass-1 rule (≥ 2 distinct peptides) applies, and `class_fdr` is NA
+  (flag `class_fdr_unestimated`).
 
 Database and de novo q-values are never pooled into one list. Their decoys answer different
 questions (a search-engine competition and a genome placement), so a pooled list would have no
@@ -141,8 +141,8 @@ and α is `stats.alpha.novel_orfs` everywhere.
 - Numeric `class_fdr` = q: `called = class rule ∧ q ≤ α`. q is compared as the unformatted float.
   The TSV shows `%.6g`, and q is never parsed back from the cell. There is no peptide minimum
   (§7.6.4), but the `cds_outframe` and `antisense` class rules still require 2 peptides.
-- `class_fdr = unestimated`: `called = class rule ∧ n_peptides ≥ min_peptides_without_decoys`
-  (§7.6.4 "Neither"), with the flag `class_fdr_unestimated`.
+- `class_fdr` NA (flag `class_fdr_unestimated`): `called = class rule ∧ n_peptides ≥
+  min_peptides_without_decoys` (§7.6.4 "Neither").
 - `lost_pick` (Q1): the class is estimated, but the ORF's own decoy beat it or tied it. The cell is
   **1** and the ORF is never called.
   - Why it must not fall back to the ≥ 2-peptide rule: losing the pick is the competition's
@@ -291,7 +291,7 @@ makedb` six-frame database, or by independent evidence.
 
 A `cterm_extension` ORF is called when some peptide interval strictly contains the gene's
 annotated terminal stop codon and extends past it on the 3′ side (`spans_annotated_stop`); its
-label is `readthrough_candidate`. The class is untagged, so its class FDR is `unestimated` and the
+label is `readthrough_candidate`. The class is untagged, so its `class_fdr` is NA (flag `class_fdr_unestimated`) and the
 call needs ≥ 2 distinct peptides (M7-11 decision 2). A window that ends on the stop codon
 classifies as `cds_inframe` and is no extension evidence; it shows up as a `stop_codon` ALT site
 instead. A called row is written to `annotation_patch.gff3` as the gene from its start to the

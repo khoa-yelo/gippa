@@ -24,7 +24,8 @@ Implements `gippa.variants.error_rates` (GIPPA_SPEC.md §7.5.4, §8.1 row "ALT c
 - **Rate.** Per class, `class_error_rate = errors / n` and `class_error_n = n`, pooled over all
   sites of the class and written on every ALT row of the class (and VCF `CLASS_ERR`). A class
   with `n = 0`, a run without `--reference-peptides`, reference rows without `spectrum_id`
-  (warning `no_spectrum_pairing`) or a database-only input give `unestimated`. A class with
+  (warning `no_spectrum_pairing`) or a database-only input give a `class_error_rate` of NA (flag
+  `class_error_unestimated`). A class with
   observations but no error has rate 0 with its `n`.
 
 ### Estimand

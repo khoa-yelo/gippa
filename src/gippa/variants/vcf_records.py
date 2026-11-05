@@ -55,7 +55,7 @@ INFO_FIELDS: tuple[VcfHeaderField, ...] = (
     _F("NT_CHANGES", "A", "Integer", "Nucleotide changes of the minimal-change ALT codon(s)"),
     _F("ALT_TYPE", "A", "String", "ALT type: substitution, swap or block"),
     _F("FLAGS", ".", "String", "Variant flags of the alleles, deduplicated, in GIPPA §9.4 order"),
-    _F("CLASS_ERR", "A", "String", "Class-specific error rate of each allele, or unestimated"),
+    _F("CLASS_ERR", "A", "Float", "Class-specific error rate of each allele; . when not estimated"),
 )
 FORMAT_FIELDS: tuple[VcfHeaderField, ...] = (
     _F("GT", "1", "String", "Haploid genotype: the best-supported ALT allele; . for mixed or tie"),
@@ -109,13 +109,17 @@ def _ordered(items: Iterable[str]) -> tuple[str, ...]:
 
 
 def _class_err(v: object) -> float:
-    """The ``class_error_rate`` cell as a float; NaN (NA) when missing or not a number."""
+    """The ``class_error_rate`` cell as a float; NaN (NA) when missing.
+
+    Raises:
+        ValueError: the cell is neither a number nor NA (e.g. the word ``unestimated``).
+    """
     if _na(v):
         return math.nan
     try:
         return float(v)  # type: ignore[arg-type]
-    except ValueError:
-        return math.nan
+    except (TypeError, ValueError):
+        raise ValueError(f"class_error_rate {v!r} is neither a number nor NA") from None
 
 
 def _with_unestimated(flags: tuple[str, ...], rate: float) -> tuple[str, ...]:

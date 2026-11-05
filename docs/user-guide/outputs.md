@@ -216,9 +216,10 @@ their 1.1 order. Columns whose value is the same on every row are marked "run-le
 | `tables/variants.tsv` | `class_error_rate` | number or the word `unestimated` | number; `NA` when unestimated, and the row has the flag `class_error_unestimated` |
 | `tables/novel_orfs.tsv` | `class_fdr` | number or the word `unestimated` | number; `NA` when unestimated, and the row has the flag `class_fdr_unestimated` |
 
-A rate of exactly 0 or 1 stays a number. In `variants.vcf`, the `CLASS_ERR` value of an
-unestimated allele is `.`. Output folders written by 1.0 still read: an `unestimated` cell reads
-as `NA` and the row gets the flag.
+A rate of exactly 0 or 1 stays a number. In `variants.vcf`, the `CLASS_ERR` INFO field is now
+`Type=Float` (it was `String`), with `.` when not estimated. A record with an unestimated allele
+carries `class_error_unestimated` in the VCF `FLAGS` field. Output folders written by 1.0 still
+read: an `unestimated` cell reads as `NA` and the row gets the flag.
 
 ### Flag changes
 
