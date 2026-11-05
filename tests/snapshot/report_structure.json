@@ -312,7 +312,27 @@
   ],
   [
    "h3",
-   "islands"
+   "Detection tier: two peptides"
+  ],
+  [
+   "h3",
+   "Placement FDR"
+  ],
+  [
+   "h3",
+   "Islands"
+  ],
+  [
+   "h3",
+   "Variants"
+  ],
+  [
+   "h3",
+   "Novel ORFs"
+  ],
+  [
+   "h3",
+   "Function enrichment"
   ],
   [
    "section",
@@ -1016,7 +1036,43 @@
   ],
   [
    "h3",
-   "islands"
+   "Detection tier: two peptides"
+  ],
+  [
+   "h3",
+   "Placement FDR"
+  ],
+  [
+   "h3",
+   "De novo precision"
+  ],
+  [
+   "h3",
+   "Abundance"
+  ],
+  [
+   "h3",
+   "Operons"
+  ],
+  [
+   "h3",
+   "Islands"
+  ],
+  [
+   "h3",
+   "Variants"
+  ],
+  [
+   "h3",
+   "Novel ORFs"
+  ],
+  [
+   "h3",
+   "Function enrichment"
+  ],
+  [
+   "h3",
+   "Determinants"
   ],
   [
    "section",
