@@ -181,13 +181,15 @@ def write_report(
     return page
 
 
-def rerender_report(outdir: Path, cfg: GippaConfig) -> Path:
+def rerender_report(outdir: Path, cfg: GippaConfig, redact: bool = False) -> Path:
     """``OUT/report/report.html`` from ``OUT/`` and the existing ``OUT/plots`` (no plot is drawn);
     atomic replace through ``report/.report.html.tmp``; returns the path. Shared by the
-    ``gippa run`` tail (after ``run_manifest.json``) and ``gippa report`` (M9-16b)."""
+    ``gippa run`` tail (after ``run_manifest.json``) and ``gippa report`` (M9-16b); ``redact``
+    rewrites the provenance command line (``gippa report --redact``, M12-04 PR 13)."""
     load_plot_modules()
     plots_dir = outdir / "plots" if (outdir / "plots").is_dir() else None
-    html = _report_html(RunView.from_outdir(outdir).with_modules(cfg.modules), plots_dir, cfg)
+    view = RunView.from_outdir(outdir).with_modules(cfg.modules)
+    html = _report_html(view, plots_dir, cfg, redact)
     report_dir = outdir / "report"
     report_dir.mkdir(parents=True, exist_ok=True)
     page, tmp = report_dir / "report.html", report_dir / ".report.html.tmp"
@@ -201,14 +203,16 @@ def rerender_report(outdir: Path, cfg: GippaConfig) -> Path:
     return page
 
 
-def _report_html(view: RunView, plots_dir: Path | None, cfg: GippaConfig) -> str:
+def _report_html(
+    view: RunView, plots_dir: Path | None, cfg: GippaConfig, redact: bool = False
+) -> str:
     from gippa.report.build import build_report
 
     files: Mapping[str, PlotFiles] = {} if plots_dir is None else read_plot_files(plots_dir)
     live = None
     if plots_dir is not None and cfg.report.interactive:
         live = twins(plots_dir, files, twin_meta(view, cfg))
-    return build_report(view, files, skipped_plots(view), cfg, live)
+    return build_report(view, files, skipped_plots(view), cfg, live, redact=redact)
 
 
 def _check_size(page: Path, log: logging.Logger) -> None:

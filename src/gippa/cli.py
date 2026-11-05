@@ -1565,6 +1565,11 @@ def _manifest_config(out: Path) -> Mapping[str, Any] | None:
 @click.option("--no-interactive", is_flag=True, help="Static report only.")
 @click.option("--plots", help="Comma-separated plot IDs (V01,V02,...).")
 @click.option("--strict", is_flag=True, help="Exit 3 when the report exceeds its size budget.")
+@click.option(
+    "--redact",
+    is_flag=True,
+    help="Shareable report: local paths and the profile in the command line are replaced.",
+)
 @shared_options
 def report(
     config_file: Path | None,
@@ -1574,6 +1579,7 @@ def report(
     no_interactive: bool,
     plots: str | None,
     strict: bool,
+    redact: bool,
     **_: Any,
 ) -> None:
     """Rebuild plots and report from existing tables."""
@@ -1605,7 +1611,8 @@ def report(
         click.echo(f"gippa report: {exc}", err=True)
         sys.exit(ExitCode.STEP_FAILED)
     try:
-        page = P.rerender_report(out, cfg)
+        # the plain call keeps its two-argument form (test doubles of rerender_report)
+        page = P.rerender_report(out, cfg, redact=True) if redact else P.rerender_report(out, cfg)
     except Exception as exc:  # unreadable tables are notes; anything else is exit 4 (B5)
         click.echo(f"gippa report: {type(exc).__name__}: {exc}", err=True)
         sys.exit(ExitCode.STEP_FAILED)

@@ -536,7 +536,11 @@
   ],
   [
    "h3",
-   "detection_summary.tsv (first 20 rows; full table)"
+   "Genes detected by q threshold"
+  ],
+  [
+   "h3",
+   "Detectability: observed over expected (O/E) by group"
   ],
   [
    "section",
