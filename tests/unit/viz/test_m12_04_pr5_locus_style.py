@@ -44,6 +44,7 @@ from hypothesis import strategies as st
 from gippa.config import GippaConfig, resolve_config
 from gippa.io.plot_files import write_instance
 from gippa.io.run_view import RunView
+from gippa.io.tsv import read_tsv
 from gippa.viz import style
 from gippa.viz.base import Instance
 from gippa.viz.locus import render_locus, select_loci
@@ -177,8 +178,10 @@ def test_the_data_tsv_writes_the_fill_column(tmp_path: Path, cfg: GippaConfig) -
              vl.gene("P", "chr1", 13_101, 14_000, status="partial_excluded")]  # fmt: skip
     inst = _render(_region_out(tmp_path / "run", genes), cfg)
     write_instance(inst, "V03", "locus", tmp_path / "plots", ["svg"], 100)
-    tsv = pd.read_csv(tmp_path / "plots" / "data" / "V03_locus_prophage_1.tsv", sep="\t",
-                      comment="#", dtype=str, keep_default_na=False)  # fmt: skip
+    # the project's own TSV reader: plot data TSVs carry no comment lines and hex fills
+    # start with "#", so a comment-stripping reader would cut them
+    header, rows = read_tsv(tmp_path / "plots" / "data" / "V03_locus_prophage_1.tsv")
+    tsv = pd.DataFrame(rows, columns=header).fillna("")
     assert "fill" in tsv.columns, list(tsv.columns)
     by_tag = dict(zip(tsv.loc[tsv["track"] == "gene", "id"],
                       tsv.loc[tsv["track"] == "gene", "fill"], strict=True))  # fmt: skip
