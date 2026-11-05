@@ -120,7 +120,7 @@ def hit_row(
     """One C11 ``peptide_hits`` row (contract columns of gippa.genetable.contract)."""
     return {
         "peptide": peptide,
-        "peptide_len": len(peptide),
+        "peptide_len_aa": len(peptide),
         "source": "database",
         "best_q_input": 0.001,
         "pep_input": 0.01,
@@ -149,7 +149,7 @@ HIT_COLUMNS: tuple[str, ...] = tuple(hit_row("A", "c", 0, 3, "+", "intergenic", 
 
 def hits_frame(rows: Iterable[Mapping[str, Any]]) -> pd.DataFrame:
     df = pd.DataFrame(list(rows), columns=list(HIT_COLUMNS))
-    return df.astype({"start": "int64", "end": "int64", "peptide_len": "int64"})
+    return df.astype({"start": "int64", "end": "int64", "peptide_len_aa": "int64"})
 
 
 def peptides_frame(

@@ -88,7 +88,7 @@ def codon2() -> int:
 
 def _hit(pep: str, contig: str, start: int, end: int, strand: str, dt: str) -> dict[str, Any]:
     return {
-        "peptide": pep, "peptide_len": len(pep), "source": "denovo", "contig": contig,
+        "peptide": pep, "peptide_len_aa": len(pep), "source": "denovo", "contig": contig,
         "start": start, "end": end, "strand": strand, "n_diff": 1, "diff_types": dt,
         "placement_q": 0.0, "uniqueness": "unique",
     }  # fmt: skip

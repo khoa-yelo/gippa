@@ -77,8 +77,8 @@ def _both(p: Any) -> Any:
 def _small_counts(s: Any) -> tuple[int, int, int, int]:
     """(NO below c, NO total, decoys below c, decoys total); c = the decoy 10 % |Delta| quantile."""
     p = _both(s.pairs)
-    no = p[(p["class"] == "NO").to_numpy() & ~_b(p["true_operon"])]
-    dec = p[p["class"].isin(["CV", "SW"]).to_numpy()]
+    no = p[(p["pair_class"] == "NO").to_numpy() & ~_b(p["true_operon"])]
+    dec = p[p["pair_class"].isin(["CV", "SW"]).to_numpy()]
     d_no, d_dec = np.abs(_delta(s, no)), np.abs(_delta(s, dec))
     c = float(np.quantile(d_dec, 0.10))
     return int((d_no < c).sum()), len(d_no), int((d_dec < c).sum()), len(d_dec)
@@ -120,7 +120,7 @@ def _tail(name: str, args: tuple[Any, ...], R: int) -> tuple[int, int, float]:
         loc, scale, df = (float(t[c].iloc[0]) for c in ("loc", "scale", "df"))
         tail = float(2 * stats.t.sf(2.0, df))
         p = _both(s.pairs)
-        op = p[(p["class"] == "OP").to_numpy() & _b(p["true_operon"])]
+        op = p[(p["pair_class"] == "OP").to_numpy() & _b(p["true_operon"])]
         d = _delta(s, op)
         k += int((np.abs(d - loc) > 2.0 * scale).sum())
         n += len(d)

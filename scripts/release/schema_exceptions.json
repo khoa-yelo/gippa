@@ -1,0 +1,22 @@
+{
+  "v1.0.0": {
+    "adr": "ADR-0075",
+    "renamed": {
+      "novel_orfs": {"ostir_tir": "tir_ostir"},
+      "determinants_features": {
+        "mw": "mw_da",
+        "promotech_max": "promoter_score",
+        "promotech_tu": "promoter_score_tu"
+      },
+      "peptide_hits": {"peptide_len": "peptide_len_aa"},
+      "pairs": {
+        "class": "pair_class",
+        "promoter_between": "promoter_score_between",
+        "terminator_between": "terminator_score_between"
+      },
+      "operon_flags": {"uniop_class": "pair_class", "flag": "flags"}
+    },
+    "retyped": {},
+    "reordered": ["genes"]
+  }
+}

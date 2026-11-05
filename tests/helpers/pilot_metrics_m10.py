@@ -181,7 +181,7 @@ def gene_row(g: Any, *, status: str, regions: Mapping[str, set[str]]) -> dict[st
 def hit_row(pep: str, g: Any, *, route: str = "exact", cls: str = "cds_inframe") -> dict[str, Any]:
     iv = g.interval
     return {
-        "peptide": pep, "peptide_len": len(pep), "source": "database", "best_q_input": 0.001,
+        "peptide": pep, "peptide_len_aa": len(pep), "source": "database", "best_q_input": 0.001,
         "contig": iv.contig, "start": iv.start + 1, "end": iv.start + 3 * len(pep),
         "strand": iv.strand, "frame": 0, "crosses_origin": False, "route": route,
         "n_diff": 0 if route == "exact" else 1, "placement_q": 0.0, "length_class": "7-40",

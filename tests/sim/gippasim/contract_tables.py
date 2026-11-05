@@ -225,7 +225,7 @@ def write_contract_tables(layout: Layout, work_dir: Path) -> None:
 #: tables): (column, logical dtype) in file order.
 OPERON_TRUTH_TYPES: Mapping[str, tuple[tuple[str, str], ...]] = {
     "pairs": (
-        ("pair_id", "str"), ("class", "str"), ("gene_a", "str"), ("gene_b", "str"),
+        ("pair_id", "str"), ("pair_class", "str"), ("gene_a", "str"), ("gene_b", "str"),
         ("true_operon", "bool"), ("promoter_between_true", "bool"),
         ("terminator_between_true", "bool"),
     ),

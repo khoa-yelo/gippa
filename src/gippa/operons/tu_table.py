@@ -42,7 +42,7 @@ def operons_table(
         for a, b, d in zip(pairs["gene_a"], pairs["gene_b"], pairs["delta_log2"], strict=True)
         if pd.notna(d)
     }
-    op = flagged.loc[flagged["uniop_class"] == "OP"]
+    op = flagged.loc[flagged["pair_class"] == "OP"]
     flag_pairs = list(zip(op["gene_a"].astype(str), op["gene_b"].astype(str), strict=True))
     recs = []
     for t in tus.itertuples(index=False):

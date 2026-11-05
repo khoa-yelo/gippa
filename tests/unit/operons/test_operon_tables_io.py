@@ -108,21 +108,21 @@ def pairs_frame() -> pd.DataFrame:
     """Three merged-pair rows, out of ``PAIR_<n>`` order, with the internal ``which`` column."""
     nan = math.nan
     rows: list[dict[str, Any]] = [
-        {"pair_id": "PAIR_10", "class": "SW", "gene_a": "G9", "gene_b": "G11", "strand": "-",
-         "intergenic_bp": 412, "uniop_p": nan, "promoter_between": 0.25,
-         "tx_rate_between": nan, "terminator_between": 0.0, "detected_a": True,
+        {"pair_id": "PAIR_10", "pair_class": "SW", "gene_a": "G9", "gene_b": "G11", "strand": "-",
+         "intergenic_bp": 412, "uniop_p": nan, "promoter_score_between": 0.25,
+         "tx_rate_between": nan, "terminator_score_between": 0.0, "detected_a": True,
          "detected_b": False, "p_detect_a": 0.75, "p_detect_b": 0.125,
          "abundance_log2_a": 11.5, "abundance_log2_b": nan, "delta_log2": nan, "test": "none",
          "flags": []},
-        {"pair_id": "PAIR_2", "class": "OP", "gene_a": "G2", "gene_b": "G3", "strand": "+",
-         "intergenic_bp": -4, "uniop_p": 0.9731234, "promoter_between": 0.1,
-         "tx_rate_between": 123.456789, "terminator_between": 0.82, "detected_a": True,
+        {"pair_id": "PAIR_2", "pair_class": "OP", "gene_a": "G2", "gene_b": "G3", "strand": "+",
+         "intergenic_bp": -4, "uniop_p": 0.9731234, "promoter_score_between": 0.1,
+         "tx_rate_between": 123.456789, "terminator_score_between": 0.82, "detected_a": True,
          "detected_b": True, "p_detect_a": 0.5, "p_detect_b": 0.6, "abundance_log2_a": 10.0,
          "abundance_log2_b": 12.25, "delta_log2": 2.25, "test": "both_detected_t",
          "flags": ["rna_between", "ci_unestimated"]},
-        {"pair_id": "PAIR_1", "class": "CV", "gene_a": "G1", "gene_b": "G2", "strand": ".",
-         "intergenic_bp": 0, "uniop_p": nan, "promoter_between": nan, "tx_rate_between": nan,
-         "terminator_between": nan, "detected_a": False, "detected_b": True,
+        {"pair_id": "PAIR_1", "pair_class": "CV", "gene_a": "G1", "gene_b": "G2", "strand": ".",
+         "intergenic_bp": 0, "uniop_p": nan, "promoter_score_between": nan, "tx_rate_between": nan,
+         "terminator_score_between": nan, "detected_a": False, "detected_b": True,
          "p_detect_a": nan, "p_detect_b": 0.5, "abundance_log2_a": nan,
          "abundance_log2_b": 10.0, "delta_log2": nan, "test": "none",
          "flags": ["layer_missing:terminators"]},
@@ -164,11 +164,11 @@ def flags_frame() -> pd.DataFrame:
             "pair_id": ["PAIR_12", "PAIR_3"],
             "gene_a": ["G12", "G3"],
             "gene_b": ["G13", "G4"],
-            "uniop_class": ["NO", "OP"],
+            "pair_class": ["NO", "OP"],
             "promoter_between_yes": [False, True],
             "terminator_between_yes": [True, False],
             "abundance_pattern": ["coabundant", "downstream_higher"],
-            "flag": ["coabundant_despite_terminator", "internal_promoter_supported"],
+            "flags": ["coabundant_despite_terminator", "internal_promoter_supported"],
             "q_value": [math.nan, 0.04],
             "lfdr": [math.nan, 0.2],
             "evidence_note": ["terminator 0.91 between", "promoter 0.80 between"],
@@ -222,7 +222,7 @@ def test_pairs_cells_follow_the_tsv_conventions(tmp_path: Path) -> None:
     sw = got["PAIR_10"]
     for col in ("uniop_p", "tx_rate_between", "abundance_log2_b", "delta_log2", "ci_low", "lfdr"):
         assert sw[col] == "NA", col
-    assert sw["terminator_between"] == "0"
+    assert sw["terminator_score_between"] == "0"
 
 
 def test_pairs_writer_does_not_modify_its_input(tmp_path: Path) -> None:
@@ -321,7 +321,7 @@ def test_operon_flags_header_order_and_cells(tmp_path: Path) -> None:
     assert rows[0]["terminator_between_yes"] == "false"
     assert rows[0]["q_value"] == "0.04" and rows[1]["q_value"] == "NA"
     assert rows[1]["lfdr"] == "NA"
-    assert rows[1]["flag"] == "coabundant_despite_terminator"
+    assert rows[1]["flags"] == "coabundant_despite_terminator"
 
 
 def test_operon_flags_empty_frame_is_header_only_and_valid(tmp_path: Path) -> None:
@@ -350,12 +350,12 @@ def test_schema_fields_and_coordinates(stem: str, cols: tuple[str, ...]) -> None
 
 
 def test_schema_class_and_test_enums_are_the_9_3_ones() -> None:
-    assert set(_field("pairs", "class")["constraints"]["enum"]) == SPEC_CLASS
+    assert set(_field("pairs", "pair_class")["constraints"]["enum"]) == SPEC_CLASS
     assert set(_field("pairs", "test")["constraints"]["enum"]) == SPEC_TEST
 
 
 def test_schema_flag_enum_is_the_9_3_one() -> None:
-    enum = _field("operon_flags", "flag")["constraints"]["enum"]
+    enum = _field("operon_flags", "flags")["constraints"]["enum"]
     assert set(enum) == SPEC_FLAG
     assert set(FLAGS) == SPEC_FLAG  # the M6-07 code and §9.3 agree
 
@@ -462,11 +462,11 @@ def test_property_flag_rows_sorted_by_pair_number(
             "pair_id": [f"PAIR_{k}" for k in shuffled],
             "gene_a": [f"A{k}" for k in shuffled],
             "gene_b": [f"B{k}" for k in shuffled],
-            "uniop_class": ["OP"] * n,
+            "pair_class": ["OP"] * n,
             "promoter_between_yes": [True] * n,
             "terminator_between_yes": [False] * n,
             "abundance_pattern": ["downstream_higher"] * n,
-            "flag": ["internal_promoter_supported"] * n,
+            "flags": ["internal_promoter_supported"] * n,
             "q_value": [math.nan] * n,
             "lfdr": [math.nan] * n,
             "evidence_note": ["promoter between"] * n,

@@ -37,7 +37,7 @@ __all__ = [
 
 PEPTIDE_HITS_COLUMNS: tuple[str, ...] = (
     "peptide",
-    "peptide_len",
+    "peptide_len_aa",
     "source",
     "best_q_input",
     "pep_input",
@@ -84,7 +84,7 @@ PROBED_UNIQUENESS = {
     "shared": "not-unique[conflict]",
 }
 _INT_COLUMNS = frozenset(
-    {"peptide_len", "start", "end", "frame", "n_diff", "protein_len_aa", "rank"}
+    {"peptide_len_aa", "start", "end", "frame", "n_diff", "protein_len_aa", "rank"}
     | {"targets", "decoys", "n_accepted", "score_bin"}
 )
 _LEADING_INT = re.compile(r"\d+")

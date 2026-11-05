@@ -571,8 +571,8 @@ def test_block_with_no_columns_has_no_delta_row(small: dict[str, Any]) -> None:
     """Degenerate row "a block with every column dropped (layer missing)": model_matrix drops the
     layer's columns, so the block is absent from ``blocks`` and gets no ΔR²."""
     s = small
-    X = s["X"].drop(columns=["promotech_max"])
-    blocks = {c: b for c, b in s["blocks"].items() if c != "promotech_max"}
+    X = s["X"].drop(columns=["promoter_score"])
+    blocks = {c: b for c, b in s["blocks"].items() if c != "promoter_score"}
     cv = _cv(X, s["y"], s["tu"], blocks, s["cfg"])
     tbl = mod().model_rows_table(cv, _uni_empty())
     for m in d.MODELS:

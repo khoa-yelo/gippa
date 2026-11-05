@@ -141,7 +141,7 @@ def hit_row(
     assigning = gene is not None
     return {
         "peptide": peptide,
-        "peptide_len": len(peptide),
+        "peptide_len_aa": len(peptide),
         "source": "database",
         "best_q_input": 0.001,
         "pep_input": 0.01,

@@ -7,7 +7,7 @@ Tables go through ``helpers.viz_out_tree.write_schema_table`` (schema header; ab
 ``null_uncalibrated``; M8-10). The M9-17 support files are written from the contract in
 ``helpers.support_analysis_data`` (not from M9-17 code) to ``plots/support/<name>.tsv``:
 ``determinants_shap`` (model rows x the top features, ``feature`` an encoded model column) and
-``determinants_pd`` (``cai, tai, tir_ostir, promotech_max`` order, 21 ascending grid values on
+``determinants_pd`` (``cai, tai, tir_ostir, promoter_score`` order, 21 ascending grid values on
 the feature's own scale, ``pd_low <= pd_mean <= pd_high``; LightGBM only). Nothing here touches
 ``$GIPPA_DB_DIR`` or the network.
 """
@@ -27,8 +27,8 @@ BLOCKS = ("transcription", "translation", "codon", "protein", "context")
 UNEXPLAINED = "abundance_not_explained_by_sequence"
 #: 22 encoded model columns, by decreasing SHAP scale (the first 20 are the top 20)
 SHAP_FEATURES: tuple[str, ...] = (
-    "tir_ostir", "cai", "promotech_max", "mrna_dg", "tai", "gc3", "length_aa", "sd_dg",
-    "tx_rate_max_tu", "enc", "pi", "gravy", "start_codon_ATG", "fop", "tu_position", "mw",
+    "tir_ostir", "cai", "promoter_score", "mrna_dg", "tai", "gc3", "length_aa", "sd_dg",
+    "tx_rate_max_tu", "enc", "pi", "gravy", "start_codon_ATG", "fop", "tu_position", "mw_da",
     "replichore_position", "gc_local_dev", "cpb", "spacer_bp", "at_2_10", "in_prophage",
 )  # fmt: skip
 N_MODEL = 120
@@ -180,13 +180,13 @@ def feature_rows(
             "cai": round(float(rng.uniform(0.2, 0.9)), 4),
             "tai": round(float(rng.uniform(0.1, 0.6)), 4),
             "tir_ostir": round(float(rng.lognormal(6.0, 1.0)), 2),
-            "promotech_max": round(float(rng.uniform(0.0, 1.0)), 4),
+            "promoter_score": round(float(rng.uniform(0.0, 1.0)), 4),
             "replicon_type": "chromosome",
         })  # fmt: skip
     for tag in RIBOSOMAL:
         rows.append({"locus_tag": tag, "tu_id": "TU_RP", "detected": True, "abundance_log2": 25.0,
                      "abundance_imputed": False, "ribosomal_protein": True, "cai": 0.95,
-                     "tai": 0.5, "tir_ostir": 2000.0, "promotech_max": 0.9,
+                     "tai": 0.5, "tir_ostir": 2000.0, "promoter_score": 0.9,
                      "replicon_type": "chromosome"})  # fmt: skip
     for k in range(extra_non_model):
         rows.append({"locus_tag": f"N_{k:04d}", "tu_id": f"TUN{k:04d}", "detected": False,
@@ -218,7 +218,7 @@ def shap_frame(
 def pd_frame(features: Sequence[str] = sa.PD_FEATURES) -> pd.DataFrame:
     """``determinants_pd``: 21 ascending grid values per feature on its own scale."""
     ranges = {"cai": (0.2, 0.9), "tai": (0.1, 0.6), "tir_ostir": (50.0, 5000.0),
-              "promotech_max": (0.0, 1.0)}  # fmt: skip
+              "promoter_score": (0.0, 1.0)}  # fmt: skip
     rows = []
     for k, f in enumerate(features):
         lo, hi = ranges[f]
@@ -297,7 +297,7 @@ def many_features(n: int) -> list[dict[str, object]]:
     return [
         {"locus_tag": f"G_{i:06d}", "tu_id": f"TU{i // 3:06d}", "detected": True,
          "abundance_log2": 20.0, "abundance_imputed": False, "ribosomal_protein": False,
-         "cai": 0.5, "tai": 0.3, "tir_ostir": 400.0, "promotech_max": 0.5,
+         "cai": 0.5, "tai": 0.3, "tir_ostir": 400.0, "promoter_score": 0.5,
          "replicon_type": "chromosome"}
         for i in range(n)
     ]  # fmt: skip

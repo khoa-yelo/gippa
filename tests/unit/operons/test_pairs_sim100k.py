@@ -49,17 +49,17 @@ def pairs(chain: Chain) -> pd.DataFrame:
 def test_op_pairs_reproduce_tu_membership(chain: Chain, pairs: pd.DataFrame) -> None:
     tus = chain.frame("tus")
     want = {(a, b) for genes in tus["genes"] for a, b in itertools.pairwise(genes)}
-    op = pairs[pairs["class"] == "OP"]
+    op = pairs[pairs["pair_class"] == "OP"]
     assert set(zip(op["gene_a"], op["gene_b"], strict=True)) == want
     assert len(want) > 0
 
 
 def test_every_gene_pair_once_and_evidence_present(chain: Chain, pairs: pd.DataFrame) -> None:
-    adj = pairs[pairs["class"] != "SW"]
+    adj = pairs[pairs["pair_class"] != "SW"]
     keys = [frozenset(k) for k in zip(adj["gene_a"], adj["gene_b"], strict=True)]
     assert len(keys) == len(set(keys))
     assert pairs["pair_id"].is_unique
-    tx_ok = pairs["class"].isin(["OP", "NO", "SW"])
-    for col in ("promoter_between", "tx_rate_between", "terminator_between"):
+    tx_ok = pairs["pair_class"].isin(["OP", "NO", "SW"])
+    for col in ("promoter_score_between", "tx_rate_between", "terminator_score_between"):
         assert pairs.loc[~tx_ok, col].isna().all()
         assert pairs.loc[tx_ok, col].notna().any(), col

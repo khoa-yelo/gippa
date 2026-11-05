@@ -36,7 +36,7 @@ def test_three_gene_ring_keeps_its_sandwich(layout: tuple, a: str, b: str, d: in
     gs = genes_of(layout)
     probs = {(x, y): 0.6 for x, y in (("A", "B"), ("B", "C"), ("C", "A"))}
     df = frame(gs, RING, probs)
-    sw = df[df["class"] == "SW"]
+    sw = df[df["pair_class"] == "SW"]
     assert len(sw) == 1 and row(df, a, b, "SW")["intergenic_bp"] == d
 
 
@@ -84,7 +84,7 @@ def test_promoter_window_far_upstream_of_down_is_not_its_window() -> None:
     w = pd.DataFrame({"contig": "c1", "strand": "+", "end3p": [500, 900], "score": [0.9, 0.3]})
     assert promoter_between(gs[0], gs[1], w, LINE["c1"]) == 0.3
     df = frame(gs, LINE, {("U", "D"): 0.6}, ev=evidence(w))
-    assert row(df, "U", "D")["promoter_between"] == 0.3
+    assert row(df, "U", "D")["promoter_score_between"] == 0.3
 
 
 @pytest.mark.parametrize("minus", [False, True])
@@ -100,7 +100,7 @@ def test_terminator_in_the_upstream_slack_counts(minus: bool) -> None:
     term = Terminator(iv, 0.7, "TerminatorNet")
     probs = {(gs[0].locus_tag, gs[1].locus_tag): 0.6}
     df = frame(gs, LINE, probs, ev=evidence(terminators=[term]))
-    assert row(df, "U", "D")["terminator_between"] == 0.7
+    assert row(df, "U", "D")["terminator_score_between"] == 0.7
 
 
 @pytest.mark.parametrize("strand", ["+", "-"])
@@ -113,4 +113,4 @@ def test_terminator_prefilter_across_the_origin(strand: str, start: int, end: in
     term = Terminator(Interval("c1", start, end, strand), 0.7, "TerminatorNet")
     df = frame(gs, RING, {("B", "A"): 0.6}, ev=evidence(terminators=[term]))
     up, down = ("B", "A") if strand == "+" else ("A", "B")
-    assert row(df, up, down)["terminator_between"] == 0.7
+    assert row(df, up, down)["terminator_score_between"] == 0.7

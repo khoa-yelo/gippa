@@ -232,7 +232,7 @@ def test_example_1_best_ostir_start_set_where_a_start_exists(
     run1: tuple[Any, Path, Path],
 ) -> None:
     """The simulator's ``rbs_novel`` layer scores every start codon, so every ORF with a start
-    gets ``start_best_ostir`` and ``ostir_tir``: the layer value at that start, at least the
+    gets ``start_best_ostir`` and ``tir_ostir``: the layer value at that start, at least the
     value at the longest start."""
     sim, out, _ = run1
     rows = nf.tsv_dicts(out / "tables" / "novel_orfs.tsv")
@@ -242,12 +242,12 @@ def test_example_1_best_ostir_start_set_where_a_start_exists(
     assert with_start
     for r in rows:
         if r["start_longest"] is None:
-            assert r["start_best_ostir"] is None and r["ostir_tir"] is None, r["orf_id"]
+            assert r["start_best_ostir"] is None and r["tir_ostir"] is None, r["orf_id"]
             continue
         assert r["start_best_ostir"] is not None, r["orf_id"]
-        assert r["ostir_tir"] is not None, r["orf_id"]
+        assert r["tir_ostir"] is not None, r["orf_id"]
         best = layer[(r["contig"], r["strand"], r["start_best_ostir"])]
-        assert float(r["ostir_tir"]) == pytest.approx(best), r["orf_id"]
+        assert float(r["tir_ostir"]) == pytest.approx(best), r["orf_id"]
         assert best >= layer[(r["contig"], r["strand"], r["start_longest"])], r["orf_id"]
         assert "ostir_missing" not in (r["flags"] or "").split(";"), r["orf_id"]
 
@@ -544,9 +544,9 @@ def _check_rule4(table: pd.DataFrame, want: dict[str, Any]) -> None:
     by = {r["orf_id"]: r for r in table.to_dict("records")}
     for oid, (pos, tir) in want["best"].items():
         assert by[oid]["start_best_ostir"] == pos, oid
-        assert by[oid]["ostir_tir"] == pytest.approx(tir), oid
+        assert by[oid]["tir_ostir"] == pytest.approx(tir), oid
     r = by[want["none"]]
-    assert pd.isna(r["start_best_ostir"]) and pd.isna(r["ostir_tir"])
+    assert pd.isna(r["start_best_ostir"]) and pd.isna(r["tir_ostir"])
     assert "ostir_missing" in str(r["flags"]).split(";")
     for oid, s in want["promoter"].items():
         assert by[oid]["promoter_score"] == pytest.approx(s), oid
@@ -645,7 +645,7 @@ def test_rule_4_missing_optional_layers_give_na_and_run_flags(
         o = nf.run("novel_orfs", _parquet_cfg(sim), ins, tmp_path / "o")
     t = read_novel_orfs(o["novel_orfs"])
     assert sorted(t["orf_id"]) == sorted(x.orf_id for x in orfs1)
-    for col in ("start_best_ostir", "ostir_tir", "promoter_score", "terminator_downstream",
+    for col in ("start_best_ostir", "tir_ostir", "promoter_score", "terminator_downstream",
                 "terminator_conf", "terminator_distance_nt"):  # fmt: skip
         assert t[col].isna().all(), col
     with_start = {x.orf_id for x in orfs1 if x.starts}

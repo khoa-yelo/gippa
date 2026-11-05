@@ -18,6 +18,8 @@ decision 3); ``support`` looks in each, directly or under ``support/``, after ``
 
 TSVs that have a Frictionless schema (``gippa/schemas/tables/<stem>.schema.json``) are read with
 its types and its ``missingValues``; a schema column missing from the file raises ``ValueError``.
+A 1.0 tree reads with the 1.1 names: ``gippa.io.migration`` renames its header before the schema
+check and its feature values (``determinants_model``, ``determinants_pd``, ``determinants_shap``).
 List columns stay ``;``-joined strings (M9-01 lead decision 2).
 
 Coordinates: ``table`` returns 0-based half-open coordinates for every key (§6.5, PR #191 B1).
@@ -41,6 +43,7 @@ import yaml
 
 from gippa.config.model import Module
 from gippa.io._open import open_text
+from gippa.io.migration import migrate_columns, migrate_values
 from gippa.io.tsv import read_tsv
 from gippa.runner.local import PUBLISHED, PUBLISHED_FILES, out_path
 
@@ -135,8 +138,10 @@ def _typed(
 
 
 def read_schema_tsv(path: Path, table: str, schema: Mapping[str, Any]) -> pd.DataFrame:
-    """A TSV typed by its Frictionless ``schema``; schema columns first, in schema order."""
+    """A TSV typed by its Frictionless ``schema``; schema columns first, in schema order. A 1.0
+    header is migrated to the 1.1 names first (``gippa.io.migration``, ADR-0075)."""
     header, rows = read_tsv(path)
+    header = migrate_columns(table, header)
     fields = {f["name"]: str(f.get("type", "string")) for f in schema["fields"]}
     for name in fields:
         if name not in header:
@@ -284,6 +289,7 @@ class RunView:
         stem = Path(rel).name.split(".")[0]
         schema = _schema(stem)
         frame = _read_plain_tsv(path) if schema is None else read_schema_tsv(path, stem, schema)
+        frame = migrate_values(stem, frame)
         return _to_zero_based(frame, ONE_BASED_STARTS.get(key, ()))
 
     def preflight(self) -> Mapping[str, Any] | None:
@@ -325,7 +331,7 @@ class RunView:
             for suffix in (".tsv", ".tsv.gz"):
                 path = base / f"{name}{suffix}"
                 if path.is_file():
-                    return _read_plain_tsv(path)
+                    return migrate_values(name, _read_plain_tsv(path))
         return None
 
     def _event_files(self) -> list[Path]:

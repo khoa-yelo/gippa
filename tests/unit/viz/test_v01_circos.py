@@ -133,7 +133,7 @@ def gene(
 def pep(contig: str, start: int, end: int | None = None) -> dict[str, object]:
     return {
         "peptide": "PEPTIDEK",
-        "peptide_len": 8,
+        "peptide_len_aa": 8,
         "source": "database",
         "contig": contig,
         "start": start,

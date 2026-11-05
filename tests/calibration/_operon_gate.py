@@ -83,9 +83,9 @@ def reclass(pairs: pd.DataFrame, threshold: float) -> pd.DataFrame:
         return SimpleNamespace(locus_tag=str(tag), interval=SimpleNamespace(strand=str(strand)))
 
     out = pairs.copy()
-    same = out["class"].isin(["OP", "NO"]).to_numpy()
+    same = out["pair_class"].isin(["OP", "NO"]).to_numpy()
     sub = out.loc[same]
-    out.loc[same, "class"] = [
+    out.loc[same, "pair_class"] = [
         classify(gene(a, st), gene(b, st), float(u), threshold)
         for a, b, st, u in zip(sub["gene_a"], sub["gene_b"], sub["strand"], sub["uniop_p"],
                                strict=True)
@@ -102,7 +102,7 @@ def simulate(cfgs: Cfgs, seed: int) -> Any:
     s = sc.simulate_operons(cfgs, int(seed))
     pairs = reclass(s.pairs, uniop_threshold())
     planted = set(s.truth["missed_operons"]["pair_id"].astype(str))
-    cls = pairs.loc[pairs["pair_id"].astype(str).isin(planted), "class"]
+    cls = pairs.loc[pairs["pair_id"].astype(str).isin(planted), "pair_class"]
     if not (cls == "NO").all():
         raise ValueError(f"planted missed operons re-classed {sorted(set(cls))} at the UniOP "
                          f"threshold {uniop_threshold()}")  # fmt: skip
@@ -306,7 +306,7 @@ def discordance_run(
     rows = res.rows.merge(ap[["pair_id", "abundance_log2_a", "abundance_log2_b"]], on="pair_id")
     t = rows["test"].to_numpy() == "both_detected_t"
     m = rows["test"].to_numpy() == "one_detected_pmiss"
-    op = p[p["class"] == "OP"]
+    op = p[p["pair_class"] == "OP"]
     one = op["detected_a"].astype(bool).to_numpy() ^ op["detected_b"].astype(bool).to_numpy()
     ab = (rows["abundance_log2_a"].astype(float) + rows["abundance_log2_b"].astype(float)) / 2
     return DiscRun(

@@ -222,7 +222,7 @@ def step_replicate(arm: str, i: int) -> StepRep:
     diffs = [0.0]
     step_pm = dict(zip(pm_rows["pair_id"].astype(str), pm_rows["p_value"].astype(float),
                        strict=True))  # fmt: skip
-    op = pairs[pairs["class"] == "OP"]
+    op = pairs[pairs["pair_class"] == "OP"]
     if p_miss is not None and ratios.size:
         for row in op.itertuples(index=False):
             for down in (True, False):  # u = gene_b downstream (v = gene_a), or u = gene_a

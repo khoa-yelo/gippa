@@ -15,7 +15,7 @@ include { stepIn; kv; pick } from './annotate'
 // (gippa.mapping.outputs, gippa.mapping.protein_assign); real runs declare the directory itself.
 def lociSpec() {
     def h = [
-        peptide_hits: 'peptide peptide_len source best_q_input pep_input score_input contig start end strand frame crosses_origin route n_diff diff_types placement_q length_class locus_class uniqueness gene novel_candidate_id flags',
+        peptide_hits: 'peptide peptide_len_aa source best_q_input pep_input score_input contig start end strand frame crosses_origin route n_diff diff_types placement_q length_class locus_class uniqueness gene novel_candidate_id flags',
         protein_hits: 'protein_id protein_len_aa route contig start end strand rank identity query_coverage reciprocal_overlap class gene flags',
         unmapped: 'sequence_id sequence kind label reason contaminant_match',
         mapping_fdr: 'length_class n_diff targets decoys pi_wrong fdr_stratum n_accepted decoy_type section score_bin precision ci_low ci_high c_value flags']

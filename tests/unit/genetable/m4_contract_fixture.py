@@ -40,7 +40,7 @@ PROMOTER_COLUMNS: tuple[str, ...] = (
 _LAYER_VALUE_COLUMNS = tuple(c for c in LAYER_COLUMNS[7:] if c not in ("start_codon", "flags"))
 
 PEPTIDE_HITS_COLUMNS: tuple[str, ...] = (
-    "peptide", "peptide_len", "source", "best_q_input", "pep_input", "score_input", "contig",
+    "peptide", "peptide_len_aa", "source", "best_q_input", "pep_input", "score_input", "contig",
     "start", "end", "strand", "frame", "crosses_origin", "route", "n_diff", "diff_types",
     "placement_q", "length_class", "locus_class", "uniqueness", "gene", "novel_candidate_id",
     "flags",
@@ -386,7 +386,7 @@ def build_frames(n_genes: int = 20, tu_sizes: Sequence[int] = (1, 2, 3)) -> dict
 
 
 PEPTIDE_HITS_TYPES = {
-    "peptide_len": "int64", "best_q_input": "float64", "pep_input": "float64",
+    "peptide_len_aa": "int64", "best_q_input": "float64", "pep_input": "float64",
     "score_input": "float64", "start": "int64", "end": "int64", "frame": "int64",
     "crosses_origin": bool, "n_diff": "int64", "placement_q": "float64",
 }  # fmt: skip
@@ -401,7 +401,7 @@ def _hit(
 ) -> dict[str, Any]:
     return {
         "peptide": peptide,
-        "peptide_len": len(peptide),
+        "peptide_len_aa": len(peptide),
         "source": "database",
         "best_q_input": 0.001,
         "pep_input": 0.01,

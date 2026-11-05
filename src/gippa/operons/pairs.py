@@ -35,8 +35,9 @@ TEST_COLUMNS: tuple[str, ...] = (
 )  # fmt: skip
 #: §9.3 ``pairs.tsv`` columns, in table order
 PAIR_COLUMNS: tuple[str, ...] = (
-    "pair_id", "class", "gene_a", "gene_b", "strand", "intergenic_bp", "uniop_p",
-    "promoter_between", "tx_rate_between", "terminator_between", "detected_a", "detected_b",
+    "pair_id", "pair_class", "gene_a", "gene_b", "strand", "intergenic_bp", "uniop_p",
+    "promoter_score_between", "tx_rate_between", "terminator_score_between", "detected_a",
+    "detected_b",
     "p_detect_a", "p_detect_b", "abundance_log2_a", "abundance_log2_b", "delta_log2", "test",
     *TEST_COLUMNS, "flags",
 )  # fmt: skip
@@ -253,10 +254,10 @@ def pair_frame(
         rows.append({
             "_contig": order[a.interval.contig], "_start_a": a.interval.start,
             "_start_b": b.interval.start, "_rank": _CLASS_RANK[cls],
-            "class": cls, "gene_a": a.locus_tag, "gene_b": b.locus_tag,
+            "pair_class": cls, "gene_a": a.locus_tag, "gene_b": b.locus_tag,
             "strand": a.interval.strand if oriented else ".", "intergenic_bp": d,
-            "uniop_p": p, "promoter_between": prom, "tx_rate_between": tx,
-            "terminator_between": term,
+            "uniop_p": p, "promoter_score_between": prom, "tx_rate_between": tx,
+            "terminator_score_between": term,
             "flags": [RNA_BETWEEN] if look.rna_between(gaps, rep) else [],
         })  # fmt: skip
 

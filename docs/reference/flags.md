@@ -135,6 +135,16 @@ No fixed vocabulary in the schema.
 
 No fixed vocabulary in the schema.
 
+## `operon_flags`
+
+- `internal_promoter_supported`
+- `internal_terminator_supported`
+- `unexplained_discordance`
+- `conflict_terminator_in_operon`
+- `novel_operon_candidate`
+- `coabundant_despite_terminator`
+- `other`
+
 ## `pairs`
 
 - `rna_between`

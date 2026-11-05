@@ -100,7 +100,7 @@ def _flag_lookup(flags: pd.DataFrame | None) -> dict[str, tuple[str, float]]:
     if flags is None:
         return out
     for pid, flag, q in zip(
-        flags["pair_id"], flags["flag"], _floats(flags["q_value"]), strict=True
+        flags["pair_id"], flags["flags"], _floats(flags["q_value"]), strict=True
     ):
         out.setdefault(str(pid), (str(flag), float(q)))
     return out
@@ -117,7 +117,7 @@ def _by_class(rows: Sequence[list[object]]) -> list[list[object]]:
 
 def _measured(pairs: pd.DataFrame) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     """``(class, |Δ|, kept)``: kept = finite ``delta_log2`` and not ``abundance_imputed``."""
-    cls = pairs["class"].astype(str).to_numpy()
+    cls = pairs["pair_class"].astype(str).to_numpy()
     absd = np.abs(_floats(pairs["delta_log2"]))
     return cls, absd, _kept(pairs) & np.isfinite(absd)
 

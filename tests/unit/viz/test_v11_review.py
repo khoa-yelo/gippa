@@ -191,7 +191,7 @@ def test_b2_property_adding_imputed_pairs_changes_neither_a_nor_c(
     got_c = set(_by_pair(_rows(inst, "c"))) if len(_rows(inst, "c")) else set()
     assert got_c == want_ids
     for cls in ("OP", "NO"):
-        assert _counts(inst)[cls] == sum(1 for p in kept if p["class"] == cls)
+        assert _counts(inst)[cls] == sum(1 for p in kept if p["pair_class"] == cls)
     if want is not None:
         for cls in ("OP", "NO"):
             got = [_num(d) for d in _bin_rows(inst, cls)["density"]]

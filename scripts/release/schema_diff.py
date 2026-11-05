@@ -16,6 +16,14 @@ major of both ``__version__`` (``src/gippa/__init__.py``) and ``output_schema_ve
 (minor, or major). A shallow clone is a problem (``fetch tags: ...``),
 checked first; no reachable ``v*`` tag raises ``NoPreviousRelease``. Exit codes of the command
 line: 0 compatible or no previous release, 1 a problem.
+
+Exceptions (ADR-0075; M12-04 PR 11b): ``scripts/release/schema_exceptions.json``, read from the
+working tree (it is written after the tag it excuses), maps a tag to ``{"adr": "<ADR id>",
+"renamed": {"<table>": {"<old>": "<new>"}}, "retyped": {...}, "reordered": [...]}``. A removed
+column needs no major bump when it is listed in ``renamed`` of the tag compared against, its new
+name exists in the same table of the working tree, and ``docs/adr/<adr>-*.md`` exists. The new
+name is still an added column. ``retyped`` and ``reordered`` are documentation; the check reads
+names only. A missing exception file means no exceptions.
 """
 
 from __future__ import annotations
@@ -32,6 +40,8 @@ TABLES = "src/gippa/schemas/tables"
 MANIFEST = "src/gippa/schemas/run_manifest.schema.json"
 DATAPACKAGE = "src/gippa/schemas/datapackage.json"
 INIT = "src/gippa/__init__.py"
+EXCEPTIONS = "scripts/release/schema_exceptions.json"
+ADR_DIR = "docs/adr"
 FETCH_TAGS = "fetch tags: actions/checkout with fetch-depth: 0 and fetch-tags: true"
 
 _VERSION = re.compile(r"""^__version__\s*=\s*["']([^"']+)["']""", re.MULTILINE)
@@ -126,13 +136,42 @@ def diff(
     return removed, added
 
 
+def excused(
+    root: Path, tag: str, removed: list[tuple[str, str]], now: Mapping[str, list[str]]
+) -> set[tuple[str, str]]:
+    """The ``removed`` ``(table, column)`` pairs that the working tree's exception file excuses
+    for ``tag`` (see the module docstring); empty without a file, an entry or its ADR."""
+    path = root / EXCEPTIONS
+    if not path.is_file():
+        return set()
+    doc = json.loads(path.read_text(encoding="utf-8"))
+    entry = doc.get(tag) if isinstance(doc, dict) else None
+    if not isinstance(entry, dict):
+        return set()
+    adr, renamed = entry.get("adr"), entry.get("renamed")
+    if not isinstance(adr, str) or not adr or not isinstance(renamed, dict):
+        return set()
+    if not list((root / ADR_DIR).glob(f"{adr}-*.md")):
+        return set()
+    out = set()
+    for table, column in removed:
+        names = renamed.get(table)
+        new = names.get(column) if isinstance(names, dict) else None
+        if isinstance(new, str) and new in now.get(table, []):
+            out.add((table, column))
+    return out
+
+
 def check(root: Path) -> list[str]:
     """The problems of ``root``'s working tree against the newest reachable ``v*`` tag."""
     if _git(root, "rev-parse", "--is-shallow-repository").stdout.strip() == "true":
         return [f"shallow clone, the previous release cannot be read; {FETCH_TAGS}"]
     tag = previous_tag(root)
     before, now = _Tree(root, tag), _Tree(root, None)
-    removed, added = diff(before.schema(), now.schema())
+    current = now.schema()
+    removed, added = diff(before.schema(), current)
+    allowed = excused(root, tag, removed, current)
+    removed = [r for r in removed if r not in allowed]
     problems = []
     old_pkg, new_pkg = before.package_version(), now.package_version()
     old_out, new_out = before.output_schema_version(), now.output_schema_version()

@@ -31,12 +31,12 @@ IDENTITY_COLUMNS: tuple[str, ...] = (
 #: block -> features of the TSV, §7.8.1 order
 FEATURE_BLOCKS: Mapping[str, tuple[str, ...]] = {
     "transcription": (
-        "promotech_max", "promotech_tu", "tx_rate_max_tu", "tx_rate_sum_tu",
+        "promoter_score", "promoter_score_tu", "tx_rate_max_tu", "tx_rate_sum_tu",
         "n_promoters_tu_to_gene", "tu_position", "dist_to_tu_start_bp",
     ),
     "translation": ("tir_ostir", "sd_dg", "spacer_bp", "start_codon", "mrna_dg"),
     "codon": ("cai", "tai", "enc", "fop", "gc3", "cpb", "at_2_10", "rare_codons_2_10"),
-    "protein": ("length_aa", "mw", "pi", "gravy", "nterm_residue", "tm_segments"),
+    "protein": ("length_aa", "mw_da", "pi", "gravy", "nterm_residue", "tm_segments"),
     "context": ("replicon_type", "replichore_position", "in_prophage", "in_bgc", "gc_local_dev"),
 }  # fmt: skip
 #: the TSV columns: identity columns, then the 31 features in §7.8.1 order
@@ -66,12 +66,12 @@ BLOCKS: Mapping[str, tuple[str, ...]] = {
 #: feature (or identity column) -> gene-table column it is copied from (spec step 2)
 GENE_TABLE_SOURCES: Mapping[str, str] = {
     "tu_id": "tu_id", "detected": "detected", "abundance_log2": "abundance_log2",
-    "abundance_imputed": "abundance_imputed", "promotech_max": "promoter_score",
-    "promotech_tu": "promoter_score_tu", "tx_rate_max_tu": "tx_rate_max_tu",
+    "abundance_imputed": "abundance_imputed", "promoter_score": "promoter_score",
+    "promoter_score_tu": "promoter_score_tu", "tx_rate_max_tu": "tx_rate_max_tu",
     "tx_rate_sum_tu": "tx_rate_sum_tu", "tu_position": "tu_position", "tir_ostir": "tir_ostir",
     "sd_dg": "sd_dg", "spacer_bp": "spacer_bp", "start_codon": "start_codon",
     "mrna_dg": "mrna_dg", **{c: c for c in FEATURE_BLOCKS["codon"]}, "length_aa": "length_aa",
-    "mw": "mw_da", "pi": "pi", "gravy": "gravy", "tm_segments": "tm_segments",
+    "mw_da": "mw_da", "pi": "pi", "gravy": "gravy", "tm_segments": "tm_segments",
     "replicon_type": "replicon_type", "gc_local_dev": "gc_local_dev",
 }  # fmt: skip
 

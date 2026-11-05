@@ -424,7 +424,7 @@ def test_partial_gene_one_detected_pair_is_not_tested(fixed_fit: Any) -> None:
 def test_no_class_one_detected_pair_is_not_scored(fixed_fit: Any) -> None:
     fit_part = chain(list(EX6_RATIOS) * 5)
     no = chain([0.5], base=17.0, contig="c2", prefix="N", undetected=[1], uniop_p=0.05)
-    assert (no[0]["class"] == "NO").all()
+    assert (no[0]["pair_class"] == "NO").all()
     spy = Spy()
     res = run(*cat(fit_part, no), spy)
     assert not res.rows["pair_id"].isin(no[0]["pair_id"]).any()

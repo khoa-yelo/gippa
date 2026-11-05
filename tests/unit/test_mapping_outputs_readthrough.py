@@ -69,7 +69,7 @@ def hit(
         "n_diff": n_diff,
         "diff_types": None if route == "exact" else diff_types,
         "blocks": blocks,
-        "peptide_len": len(peptide),
+        "peptide_len_aa": len(peptide),
         "source": "denovo",
         "placement_q": 0.001,
         "flags": flags,

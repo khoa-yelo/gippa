@@ -51,8 +51,8 @@ PATTERNS: tuple[str, ...] = (
 )  # fmt: skip
 #: §9.3 ``operon_flags.tsv`` columns, in table order
 FLAG_COLUMNS: tuple[str, ...] = (
-    "pair_id", "gene_a", "gene_b", "uniop_class", "promoter_between_yes",
-    "terminator_between_yes", "abundance_pattern", "flag", "q_value", "lfdr", "evidence_note",
+    "pair_id", "gene_a", "gene_b", "pair_class", "promoter_between_yes",
+    "terminator_between_yes", "abundance_pattern", "flags", "q_value", "lfdr", "evidence_note",
 )  # fmt: skip
 LAYER_MISSING = "layer_missing:"
 #: ADR-0061 decision 1: rows whose calibration does not hold with distance-model TUs
@@ -93,8 +93,9 @@ def evidence_yes(pairs: pd.DataFrame, cfg: GippaConfig) -> pd.DataFrame:
     bad = _has(pairs, UNESTIMATED)
     out = {}
     for name, col, layer, cut in (
-        ("promoter_between_yes", "promoter_between", "promoters", ann.promoters.promotech_yes),
-        ("terminator_between_yes", "terminator_between", "terminators",
+        ("promoter_between_yes", "promoter_score_between", "promoters",
+         ann.promoters.promotech_yes),
+        ("terminator_between_yes", "terminator_score_between", "terminators",
          ann.terminators.terminatornet_yes),
     ):  # fmt: skip
         v = pd.to_numeric(pairs[col], errors="coerce").to_numpy(dtype=float)
@@ -108,7 +109,7 @@ def abundance_pattern(pairs: pd.DataFrame, alpha: float) -> pd.Series:
     q = pd.to_numeric(pairs["q_value"], errors="coerce").to_numpy(dtype=float)
     d = pd.to_numeric(pairs["delta_log2"], errors="coerce").to_numpy(dtype=float)
     det_a, det_b = _bool(pairs["detected_a"]), _bool(pairs["detected_b"])
-    cls = pairs["class"].to_numpy(dtype=object)
+    cls = pairs["pair_class"].to_numpy(dtype=object)
     sig, tested = q <= alpha, ~np.isnan(q) & ~_has(pairs, UNESTIMATED)
     op, both = (cls == "OP") & tested, det_a & det_b
     lo = op & sig & ((both & (d < 0)) | (det_a & ~det_b))
@@ -132,7 +133,10 @@ def _note(r: pd.Series, pattern: str) -> str:
     """A short sentence naming the evidence used; never asserts absence (§7.4.5 caveat)."""
     fl = _flags(r["flags"])
     parts = []
-    for layer, col in (("promoter", "promoter_between"), ("terminator", "terminator_between")):
+    for layer, col in (
+        ("promoter", "promoter_score_between"),
+        ("terminator", "terminator_score_between"),
+    ):
         v = float(r[col]) if pd.notna(r[col]) else math.nan
         if LAYER_MISSING + layer + "s" in fl:
             parts.append(f"{layer} layer missing")
@@ -161,7 +165,7 @@ def flag_pairs(pairs: pd.DataFrame, cfg: GippaConfig) -> pd.DataFrame:
     flag = [
         flag_for(c, bool(p), bool(t), s)
         for c, p, t, s in zip(
-            pairs["class"], ev["promoter_between_yes"], ev["terminator_between_yes"], pat,
+            pairs["pair_class"], ev["promoter_between_yes"], ev["terminator_between_yes"], pat,
             strict=True,
         )
     ]  # fmt: skip
@@ -172,11 +176,11 @@ def flag_pairs(pairs: pd.DataFrame, cfg: GippaConfig) -> pd.DataFrame:
             "pair_id": sel["pair_id"].astype(object),
             "gene_a": sel["gene_a"].astype(object),
             "gene_b": sel["gene_b"].astype(object),
-            "uniop_class": sel["class"].astype(object),
+            "pair_class": sel["pair_class"].astype(object),
             "promoter_between_yes": ev.loc[keep, "promoter_between_yes"].astype(bool),
             "terminator_between_yes": ev.loc[keep, "terminator_between_yes"].astype(bool),
             "abundance_pattern": pat[keep].astype(object),
-            "flag": pd.Series([f for f in flag if f is not None], index=sel.index, dtype=object),
+            "flags": pd.Series([f for f in flag if f is not None], index=sel.index, dtype=object),
             "q_value": pd.to_numeric(sel["q_value"], errors="coerce").astype(float),
             "lfdr": pd.to_numeric(sel["lfdr"], errors="coerce").astype(float),
             "evidence_note": pd.Series(
@@ -215,7 +219,7 @@ def merge_tests(
         out.loc[hit, col] = pd.array(vals, dtype="Int64") if col == "n_perm" else vals
     extra = {str(k): _flags(v) for k, v in rows["flags"].items()}
     imputed = _per_gene(genes, IMPUTED, out["gene_a"]) | _per_gene(genes, IMPUTED, out["gene_b"])
-    op_no = out["class"].isin(["OP", "NO"]).to_numpy()
+    op_no = out["pair_class"].isin(["OP", "NO"]).to_numpy()
     merged = []
     for pid, f, imp, on in zip(out["pair_id"], out["flags"], imputed, op_no, strict=True):
         fl = [*_flags(f), *extra.get(str(pid), [])]

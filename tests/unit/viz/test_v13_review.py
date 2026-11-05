@@ -86,7 +86,7 @@ def orf(
         "n_peptides": 2,
         "peptides": peptides,
         "best_peptide_q": 0.0001,
-        "ostir_tir": 1000.0,
+        "tir_ostir": 1000.0,
         "promoter_score": 0.9,
         "promoter_supported": True,
         "terminator_downstream": True,

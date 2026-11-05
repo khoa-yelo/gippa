@@ -35,7 +35,7 @@ def block(
     d = np.asarray(list(deltas), dtype=np.float64)
     n = d.size
     out = pd.DataFrame({c: [np.nan] * n for c in PAIR_COLS})
-    out["class"] = cls
+    out["pair_class"] = cls
     out["strand"] = "." if cls in ("CV", "DV") else "+"
     out["intergenic_bp"] = np.full(n, BP[bin_], dtype=np.int64)
     out["uniop_p"] = 0.1 if cls == "NO" else (0.9 if cls == "OP" else np.nan)
@@ -118,7 +118,7 @@ def null_frame(rng: np.random.Generator, n: int = 2000, planted: int = 0) -> pd.
         b = rng.choice((1, 2), size=n)
         parts += [block(cls, delta[b == k], k) for k in (1, 2)]
     df = pd.concat(parts, ignore_index=True)
-    is_no = df["class"].to_numpy() == "NO"
+    is_no = df["pair_class"].to_numpy() == "NO"
     flag = is_no & df["delta_log2"].isin(d[:planted]).to_numpy()
     out = stack(df)
     out.attrs["planted"] = set(out.loc[flag, "pair_id"])

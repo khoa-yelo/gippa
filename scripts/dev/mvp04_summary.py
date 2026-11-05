@@ -562,7 +562,7 @@ def gate14(outdir: Path, inputs: Path) -> dict[str, Any]:
     outdir, inputs = Path(outdir), Path(inputs)
     pairs = _read(outdir / "tables" / "pairs.tsv")
     operons = _read(outdir / "tables" / "operons.tsv")
-    n_op = sum(1 for r in pairs if r.get("class") == "OP")
+    n_op = sum(1 for r in pairs if r.get("pair_class") == "OP")
     tests_run = any(r.get("test", "none") != "none" for r in pairs)
     too_few = any("too_few_op_pairs" in _ids(r.get("flags")) for r in pairs)
     recovery: float | str | None = "not available"

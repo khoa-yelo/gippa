@@ -25,9 +25,9 @@ from click.testing import CliRunner, Result
 from helpers.report_fixtures import parse, register_fake, run_out, swap_registry
 from helpers.viz_out_tree import write_schema_table
 
-_PAIR = {"gene_a": "g1", "gene_b": "g2", "uniop_class": "OP", "promoter_between_yes": False,
+_PAIR = {"gene_a": "g1", "gene_b": "g2", "pair_class": "OP", "promoter_between_yes": False,
          "terminator_between_yes": True, "abundance_pattern": "discordant",
-         "flag": "internal_terminator_supported", "lfdr": 0.5, "evidence_note": "x"}  # fmt: skip
+         "flags": "internal_terminator_supported", "lfdr": 0.5, "evidence_note": "x"}  # fmt: skip
 
 
 @pytest.fixture(autouse=True)

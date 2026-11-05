@@ -36,7 +36,7 @@ def _cfg(relation: str = "same") -> GippaConfig:
 def _hit(pep: str, diff_types: str | None) -> dict[str, Any]:
     n = 0 if diff_types is None else len(diff_types.split(";"))
     return {
-        "peptide": pep, "peptide_len": len(pep), "source": "denovo", "contig": "c1",
+        "peptide": pep, "peptide_len_aa": len(pep), "source": "denovo", "contig": "c1",
         "start": 0, "end": 36, "strand": "+", "n_diff": n,
         "diff_types": pd.NA if diff_types is None else diff_types,
         "placement_q": 0.0, "uniqueness": "unique",

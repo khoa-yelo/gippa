@@ -146,11 +146,11 @@ def test_example_1_intergenic_passes_with_rbs_support() -> None:
 
 
 def test_example_2_intergenic_tir_below_threshold_fails() -> None:
-    assert _ce(row(ostir_tir=300.0)) == (False, [])
+    assert _ce(row(tir_ostir=300.0)) == (False, [])
 
 
 def test_rbs_threshold_is_inclusive() -> None:
-    assert _ce(row(ostir_tir=THRESHOLD_30)) == (True, ["rbs_supported"])
+    assert _ce(row(tir_ostir=THRESHOLD_30)) == (True, ["rbs_supported"])
 
 
 def test_example_3_intergenic_of_9_codons_fails() -> None:
@@ -164,26 +164,26 @@ def test_min_codons_is_read_from_config() -> None:
 
 
 def test_intergenic_needs_a_start_codon() -> None:
-    r = row(start_longest=None, start_best_ostir=None, start_codon_best=None, ostir_tir=None)
+    r = row(start_longest=None, start_best_ostir=None, start_codon_best=None, tir_ostir=None)
     assert _ce(r)[0] is False
 
 
 def test_example_4_class_rule_ignores_peptide_count() -> None:
     """Example 4 fails on rule 8, not on the class rule (rule 9 composes them)."""
-    assert _ce(row(n_peptides=1, ostir_tir=5000.0)) == (True, ["rbs_supported"])
+    assert _ce(row(n_peptides=1, tir_ostir=5000.0)) == (True, ["rbs_supported"])
 
 
 def test_ostir_missing_at_chosen_start_fails_rbs_classes() -> None:
     """Degenerate row "OSTIR missing at the chosen start": ``rbs_supported`` NA -> not called."""
-    r = row(start_best_ostir=None, ostir_tir=None, start_codon_best="ATG", length_aa_best=26)
+    r = row(start_best_ostir=None, tir_ostir=None, start_codon_best="ATG", length_aa_best=26)
     assert _ce(r) == (False, [])
-    n = row(**{"class": "nterm_extension"}, start_best_ostir=None, ostir_tir=None,
+    n = row(**{"class": "nterm_extension"}, start_best_ostir=None, tir_ostir=None,
             start_upstream_nt=51, overlapping_gene="G")  # fmt: skip
     assert _ce(n) == (False, [])
 
 
 def test_example_5_cds_outframe_two_peptides_no_ostir_passes() -> None:
-    r = row(**{"class": "cds_outframe"}, start_best_ostir=None, ostir_tir=None,
+    r = row(**{"class": "cds_outframe"}, start_best_ostir=None, tir_ostir=None,
             overlapping_gene="G")  # fmt: skip
     assert _ce(r) == (True, [])
     assert _ce(r, rbs_min=None) == (True, [])  # no RBS rule -> no rbs_threshold_unestimated
@@ -200,22 +200,22 @@ def test_two_distinct_peptides_rule_is_fixed_at_two(cls: str) -> None:
 
 
 def test_example_6_antisense_one_peptide_fails() -> None:
-    assert _ce(row(**{"class": "antisense"}, n_peptides=1, ostir_tir=None))[0] is False
+    assert _ce(row(**{"class": "antisense"}, n_peptides=1, tir_ostir=None))[0] is False
 
 
 def test_example_7_nterm_extension_upstream_ttg_passes() -> None:
     r = row(**{"class": "nterm_extension"}, start_longest=249, start_best_ostir=249,
-            start_codon_best="TTG", ostir_tir=800.0, start_upstream_nt=51, overlapping_gene="G",
+            start_codon_best="TTG", tir_ostir=800.0, start_upstream_nt=51, overlapping_gene="G",
             length_aa_best=216, length_aa_longest=216)  # fmt: skip
     assert _ce(r) == (True, ["rbs_supported"])
-    assert _ce({**r, "ostir_tir": 300.0}) == (False, [])
+    assert _ce({**r, "tir_ostir": 300.0}) == (False, [])
 
 
 @pytest.mark.parametrize("upstream", [0, -9, None])
 def test_nterm_extension_without_an_upstream_start_fails(upstream: int | None) -> None:
     """Degenerate row: ``start_longest`` is the annotated start itself (0), downstream of it, or
     absent."""
-    r = row(**{"class": "nterm_extension"}, ostir_tir=5000.0, start_upstream_nt=upstream,
+    r = row(**{"class": "nterm_extension"}, tir_ostir=5000.0, start_upstream_nt=upstream,
             overlapping_gene="G")  # fmt: skip
     if upstream is None:
         r.update(start_longest=None, start_best_ostir=None, start_codon_best=None)
@@ -224,21 +224,21 @@ def test_nterm_extension_without_an_upstream_start_fails(upstream: int | None) -
 
 @pytest.mark.parametrize("cls", ["nterm_extension", "intergenic"])
 def test_example_10_threshold_unestimated_flags_rbs_classes(cls: str) -> None:
-    r = row(**{"class": cls}, start_upstream_nt=51, overlapping_gene="G", ostir_tir=5000.0)
+    r = row(**{"class": cls}, start_upstream_nt=51, overlapping_gene="G", tir_ostir=5000.0)
     assert _ce(r, rbs_min=None) == (False, ["rbs_threshold_unestimated"])
 
 
 @pytest.mark.parametrize("cls", ["cds_outframe", "antisense", "pseudogene", "sorf"])
 def test_rbs_supported_label_on_any_class(cls: str) -> None:
     """Rule 3: ``rbs_supported`` is set for every ORF whose chosen start passes."""
-    assert "rbs_supported" in _ce(row(**{"class": cls}, ostir_tir=5000.0))[1]
-    assert "rbs_supported" not in _ce(row(**{"class": cls}, ostir_tir=10.0))[1]
+    assert "rbs_supported" in _ce(row(**{"class": cls}, tir_ostir=5000.0))[1]
+    assert "rbs_supported" not in _ce(row(**{"class": cls}, tir_ostir=10.0))[1]
 
 
 @pytest.mark.parametrize("cls", ["pseudogene", "sorf"])
 def test_pseudogene_and_sorf_have_no_extra_rule(cls: str) -> None:
     r = row(**{"class": cls}, n_peptides=1, start_longest=None, start_best_ostir=None,
-            start_codon_best=None, ostir_tir=None, length_aa_best=3,
+            start_codon_best=None, tir_ostir=None, length_aa_best=3,
             overlapping_gene="P")  # fmt: skip
     assert _ce(r) == (True, [])
     assert _ce(r, rbs_min=None) == (True, [])
@@ -247,7 +247,7 @@ def test_pseudogene_and_sorf_have_no_extra_rule(cls: str) -> None:
 def test_cterm_extension_passes_only_when_a_peptide_spans_the_stop() -> None:
     """M7-16 rule 12 (replaces decision 4's ``ok = False``): a peptide spanning the annotated stop
     passes the class rule, labelled ``readthrough_candidate``; without one it does not pass."""
-    r = row(**{"class": "cterm_extension"}, n_peptides=3, ostir_tir=9000.0, overlapping_gene="G")
+    r = row(**{"class": "cterm_extension"}, n_peptides=3, tir_ostir=9000.0, overlapping_gene="G")
     ok, labels = _ce({**r, "spans_annotated_stop": True})
     assert ok is True and "readthrough_candidate" in labels
     ok, labels = _ce({**r, "spans_annotated_stop": False})
@@ -255,7 +255,7 @@ def test_cterm_extension_passes_only_when_a_peptide_spans_the_stop() -> None:
 
 
 def test_class_evidence_labels_in_flag_order() -> None:
-    r = row(**{"class": "cterm_extension"}, ostir_tir=9000.0, spans_annotated_stop=True)
+    r = row(**{"class": "cterm_extension"}, tir_ostir=9000.0, spans_annotated_stop=True)
     labels = _ce(r)[1]
     assert labels == sorted(labels, key=FLAG_ORDER.index)
     assert labels == ["rbs_supported", "readthrough_candidate"]
@@ -531,7 +531,7 @@ def test_rule_8_minimum_from_config() -> None:
 
 def test_example_5_cds_outframe_called_without_ostir() -> None:
     r = ex1_table(case=ex1_case("cds_outframe"), best={}, tir={}, gt=GT15)
-    assert is_na(r["ostir_tir"]) and is_na(r["rbs_supported"])
+    assert is_na(r["tir_ostir"]) and is_na(r["rbs_supported"])
     assert r["called"] == True  # noqa: E712
     assert "rbs_threshold_unestimated" not in flags_of(r)
 
@@ -633,7 +633,7 @@ def test_cterm_extension_called_when_a_peptide_spans_the_stop() -> None:
 
 def _rk(**kw: Any) -> dict[str, Any]:
     base = {"orf_id": "NOVEL_c1_1_p", "n_peptides": 2, "best_peptide_q": 0.001,
-            "start_codon_best": "ATG", "ostir_tir": 500.0, "promoter_score": 0.5,
+            "start_codon_best": "ATG", "tir_ostir": 500.0, "promoter_score": 0.5,
             "terminator_conf": 0.5, "length_aa_best": 50, "called": True}  # fmt: skip
     return row(**{**base, **kw})
 
@@ -665,8 +665,8 @@ def test_example_12_full_tie_lower_orf_id_first() -> None:
         ("start_codon_best", "GTG", "TTG"),
         ("start_codon_best", "TTG", "CTG"),
         ("start_codon_best", "CTG", None),
-        ("ostir_tir", 900.0, 800.0),
-        ("ostir_tir", 1.0, None),
+        ("tir_ostir", 900.0, 800.0),
+        ("tir_ostir", 1.0, None),
         ("promoter_score", 0.9, 0.8),
         ("promoter_score", 0.0, None),
         ("terminator_conf", 0.9, 0.8),
@@ -683,8 +683,8 @@ def test_each_rank_key_in_isolation(key: str, better: Any, worse: Any) -> None:
 
 
 def test_nan_counts_as_na_in_rank_key() -> None:
-    w = _rk(orf_id="NOVEL_c1_1_p", ostir_tir=float("nan"))
-    b = _rk(orf_id="NOVEL_c1_2_p", ostir_tir=0.0)
+    w = _rk(orf_id="NOVEL_c1_1_p", tir_ostir=float("nan"))
+    b = _rk(orf_id="NOVEL_c1_2_p", tir_ostir=0.0)
     assert _order([w, b]) == ["NOVEL_c1_2_p", "NOVEL_c1_1_p"]
     w = _rk(orf_id="NOVEL_c1_1_p", promoter_score=pd.NA)
     b = _rk(orf_id="NOVEL_c1_2_p", promoter_score=0.0)
@@ -696,7 +696,7 @@ def test_key_priority_terminator_after_promoter_before_length() -> None:
     b = _rk(orf_id="B", promoter_score=0.8, terminator_conf=0.9, length_aa_best=90)
     c = _rk(orf_id="C", promoter_score=0.8, terminator_conf=0.8, length_aa_best=99)
     assert _order([c, b, a]) == ["A", "B", "C"]
-    d = _rk(orf_id="D", ostir_tir=501.0, promoter_score=0.0)
+    d = _rk(orf_id="D", tir_ostir=501.0, promoter_score=0.0)
     assert _order([a, d]) == ["D", "A"]
 
 

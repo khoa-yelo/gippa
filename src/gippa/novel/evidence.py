@@ -74,7 +74,7 @@ def class_evidence(
     ``spans_annotated_stop``. Rule 8 (the peptide minimum) is not part of it."""
     cls = str(row["class"])
     labels: set[str] = set()
-    rbs = bool(rbs_supported(row.get("ostir_tir"), rbs_min))
+    rbs = bool(rbs_supported(row.get("tir_ostir"), rbs_min))
     if rbs:
         labels.add("rbs_supported")
     if cls in RBS_CLASSES and rbs_min is None:
@@ -224,7 +224,7 @@ def rank_key(row: Mapping[str, object]) -> tuple[object, ...]:
         _desc(row["n_peptides"]),
         _asc(row.get("best_peptide_q")),
         codon,
-        _desc(row.get("ostir_tir")),
+        _desc(row.get("tir_ostir")),
         _desc(row.get("promoter_score")),
         _desc(row.get("terminator_conf")),
         _desc(row.get("length_aa_best")),
@@ -351,7 +351,7 @@ def apply_evidence(
                 flags.add("junction_unknown")
             else:
                 flags |= junction_labels(j, intervals, genome[o.contig], rep)
-        r["rbs_supported"] = rbs_supported(r["ostir_tir"], rbs_min)
+        r["rbs_supported"] = rbs_supported(r["tir_ostir"], rbs_min)
         dn, db = (denovo_support or {}).get(o.orf_id, (False, False))
         if denovo_only_unsupported(o.cls, dn, db, r["rbs_supported"]):
             flags.add("denovo_only_unsupported")
