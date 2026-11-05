@@ -73,6 +73,12 @@ def _coverage_unknown(text: str) -> bool:
     return re.search(r"[Cc]overage[^.]{0,60}" + NOT_RECORDED, text) is not None
 
 
+def _paragraphs(page: Page) -> str:
+    """The text of the Function section's ``<p>`` elements (notes, caveats, notices): no figure
+    title, caption or twin JSON."""
+    return " ".join(words(n.text()) for n in function_section(page).by_tag("p"))
+
+
 # ---------------------------------------------------------------- AC 8.1
 
 
@@ -164,21 +170,23 @@ def test_ac_8_2_coverage_from_the_event_when_category_summary_is_header_only(
 
 
 def test_ac_8_2_event_comes_before_category_summary(tmp_path: Path) -> None:
-    run = function_run(tmp_path, collections=partial(), category={"cog": 0.3, "kegg": 0.2},
-                       n_cog=60)  # fmt: skip
-    text = section_text(report(run, tmp_path)[0])
+    """The event's coverage wins over a stale ``category_summary`` (values that occur nowhere
+    else in the section: the fixture's abundances sit near 20.3 log2)."""
+    run = function_run(tmp_path, collections=partial(),
+                       category={"cog": 0.137, "kegg": 0.0813}, n_cog=60)  # fmt: skip
+    text = _paragraphs(report(run, tmp_path)[0])
     assert "COG 72 %" in text, text
-    for stale in ("0.3", "30 %", "0.2", "20 %"):
+    for stale in ("0.137", "14 %", "0.0813", "8 %"):
         assert stale not in text, (stale, text)
 
 
 def test_ac_8_2_category_summary_when_the_event_is_missing(tmp_path: Path) -> None:
     """Old run, no event: the category summary's coverage is shown, never "not recorded"."""
-    run = function_run(tmp_path, collections=None, category={"cog": 0.3}, n_cog=60)
+    run = function_run(tmp_path, collections=None, category={"cog": 0.137}, n_cog=60)
     page, _, _ = report(run, tmp_path)
-    text = section_text(page)
+    text = _paragraphs(page)
     assert not _coverage_unknown(text), text
-    assert "0.3" in text or "30 %" in text, text
+    assert "0.137" in text or "14 %" in text, text
     assert not _f01(page)
 
 
