@@ -51,7 +51,7 @@ def window(a: int, b: int, strand: str = "+") -> tuple[int, int]:
 def _hit(pep: str, s: int, e: int, strand: str = "+", n_diff: int = 1) -> dict[str, Any]:
     return {
         "peptide": pep,
-        "peptide_len": len(pep),
+        "peptide_len_aa": len(pep),
         "source": "denovo",
         "contig": "c1",
         "start": s,

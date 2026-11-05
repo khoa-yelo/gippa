@@ -207,7 +207,7 @@ def hit(peptide: str, contig: str, start: int, end: int, strand: str = "+") -> d
     """One ``mapping/peptide_hits.tsv`` placement (1-based closed)."""
     return {
         "peptide": peptide,
-        "peptide_len": len(peptide),
+        "peptide_len_aa": len(peptide),
         "source": "database",
         "contig": contig,
         "start": start,

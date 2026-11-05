@@ -430,7 +430,7 @@ def _variants(letter: str, alt: str, n_diff: int, table: int) -> tuple[Any, Any,
     genome, gm = _world(letter)
     pep = "WQLNEFK" + alt + "VPAGHTL"
     hits = pd.DataFrame([{
-        "peptide": pep, "peptide_len": len(pep), "source": "denovo", "contig": "c1",
+        "peptide": pep, "peptide_len_aa": len(pep), "source": "denovo", "contig": "c1",
         "start": 33, "end": 78, "strand": "+", "n_diff": n_diff,
         "diff_types": "substitution" if n_diff else pd.NA, "placement_q": 0.0,
         "uniqueness": "unique",

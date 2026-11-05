@@ -52,7 +52,7 @@ SEQ_C3 = "A" * C3_START + "".join(CODON[a] for a in C3_PROT) + "A" * 30
 
 def _hit(pep: str, contig: str, start: int, end: int, strand: str) -> dict[str, Any]:
     return {
-        "peptide": pep, "peptide_len": len(pep), "source": "denovo", "contig": contig,
+        "peptide": pep, "peptide_len_aa": len(pep), "source": "denovo", "contig": contig,
         "start": start, "end": end, "strand": strand, "n_diff": 1,
         "diff_types": "substitution", "placement_q": 0.0, "uniqueness": "unique",
     }  # fmt: skip

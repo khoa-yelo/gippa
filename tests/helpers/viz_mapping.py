@@ -20,7 +20,7 @@ STRATA = (0, 1, 2)
 def peptide_hit(peptide: str, start: int = 101, route: str = "exact", **kw: object) -> dict:
     row: dict[str, object] = {
         "peptide": peptide,
-        "peptide_len": len(peptide),
+        "peptide_len_aa": len(peptide),
         "source": "database",
         "contig": "chr1",
         "start": start,

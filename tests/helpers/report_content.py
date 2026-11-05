@@ -158,7 +158,7 @@ def write_mapping(
     """Peptide hits (one per q in ``placed_q``), protein hits, unmapped rows of both kinds and the
     ``mapping_fdr`` placement strata (``length_class -> fdr_stratum``) plus one de novo row."""
     m = out / "mapping"
-    hits = [{"peptide": f"PEPTIDE{i}K", "peptide_len": 9, "contig": "chr1", "start": 101 + 3 * i,
+    hits = [{"peptide": f"PEPTIDE{i}K", "peptide_len_aa": 9, "contig": "chr1", "start": 101 + 3 * i,
              "end": 128 + 3 * i, "strand": "+", "placement_q": q, "length_class": "9-12"}
             for i, q in enumerate(placed_q)]  # fmt: skip
     write_schema_table(m / "peptide_hits.tsv", "peptide_hits", hits)

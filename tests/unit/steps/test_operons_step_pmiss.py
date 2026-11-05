@@ -133,7 +133,7 @@ def write_peptide_hits(
             elif rng.random() >= expit(-0.5 + 1.2 * (a - 12.0) - 0.03 * (len(s) - 15)):
                 continue
             cell = {
-                "peptide": s, "peptide_len": len(s), "source": None, "best_q_input": 0.001,
+                "peptide": s, "peptide_len_aa": len(s), "source": None, "best_q_input": 0.001,
                 "pep_input": None, "score_input": None, "contig": r.contig,
                 "start": int(r.start) + 1, "end": int(r.end), "strand": r.strand, "frame": None,
                 "crosses_origin": False, "route": "exact", "n_diff": 0, "diff_types": None,

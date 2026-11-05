@@ -390,7 +390,7 @@ def _run(genome: dict[str, str], gm: Any, pep: str, start: int, n_diff: int, tab
     from gippa.steps.variants import run_variants
 
     hits = pd.DataFrame([{
-        "peptide": pep, "peptide_len": len(pep), "source": "denovo", "contig": "c1",
+        "peptide": pep, "peptide_len_aa": len(pep), "source": "denovo", "contig": "c1",
         "start": start, "end": start + 3 * len(pep), "strand": "+", "n_diff": n_diff,
         "diff_types": "substitution" if n_diff else pd.NA, "placement_q": 0.0,
         "uniqueness": "unique",

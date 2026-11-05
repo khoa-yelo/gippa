@@ -161,7 +161,7 @@ EXAMPLE4_GENES = [
 def _peptide_hit(peptide: str, start: int, **kw: object) -> dict[str, object]:
     row: dict[str, object] = {
         "peptide": peptide,
-        "peptide_len": len(peptide),
+        "peptide_len_aa": len(peptide),
         "source": "database",
         "contig": "chr1",
         "start": start,

@@ -141,7 +141,7 @@ def _run_sites(alt: str, stop: str) -> pd.DataFrame:
         [
             {
                 "peptide": pep,
-                "peptide_len": len(pep),
+                "peptide_len_aa": len(pep),
                 "source": "denovo",
                 "contig": "c1",
                 "start": s,
