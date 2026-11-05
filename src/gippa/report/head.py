@@ -9,7 +9,6 @@ from __future__ import annotations
 
 import math
 from collections.abc import Mapping, Sequence
-from decimal import Decimal
 from typing import Any
 
 import pandas as pd
@@ -19,30 +18,8 @@ from gippa.config import GippaConfig
 from gippa.io.plot_files import PlotFiles, svg_title
 from gippa.io.run_view import RunView
 from gippa.viz import style
-from gippa.viz.words import TIER_TEXT
-
-# ---------------------------------------------------------------- PR 0 shims
-# Local stand-ins for helpers PR 0 is adding (``fmt_alpha``, ``fmt_count``, ``TIER_NAME``); each
-# swap to the ``gippa.viz`` import is one line here.
-
-
-def fmt_alpha(x: float) -> str:
-    """A threshold as an exact decimal: 0.01 -> "0.01"."""
-    return format(Decimal(repr(float(x))).normalize(), "f")
-
-
-def fmt_count(x: object) -> str:
-    """A count (an integer-valued float included): 158.0 -> "158"."""
-    return style.fmt_num(int(x))  # type: ignore[call-overload]
-
-
-#: detection tier -> plain name (no underscore), the prefix of the ``TIER_TEXT`` sentence
-TIER_NAME: Mapping[str, str] = {
-    "decoy_picked": "decoy-picked",
-    "mayu": "Mayu",
-    "two_peptide": "two-peptide",
-    "protein_list": "protein list",
-}
+from gippa.viz.style import fmt_alpha, fmt_count
+from gippa.viz.words import TIER_NAME, TIER_TEXT
 
 # ---------------------------------------------------------------- inputs
 

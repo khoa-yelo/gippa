@@ -222,7 +222,9 @@ def _not_fitted(view: RunView, genes: pd.DataFrame | None) -> str:
     need = f"needs ≥ {MIN_ROWS} genes with abundance in ≥ {MIN_TUS} TUs"
     if counts is None:
         return need
-    return f"{need} (this run: {head.fmt_count(counts[0])} genes, {head.fmt_count(counts[1])} TUs)"
+    return (
+        f"{need} (this run: {style.fmt_count(counts[0])} genes, {style.fmt_count(counts[1])} TUs)"
+    )
 
 
 def cards(view: RunView, cfg: GippaConfig) -> tuple[list[dict[str, Any]], list[str]]:
@@ -254,7 +256,7 @@ def cards(view: RunView, cfg: GippaConfig) -> tuple[list[dict[str, Any]], list[s
         return 0 if unmapped is None else int((unmapped["kind"] == kind).sum())
 
     roles = head.input_roles(view)
-    count = head.fmt_count
+    count = style.fmt_count
 
     def genes(t: pd.DataFrame) -> None:
         tiers = sorted({str(x) for x in t["detection_tier"].dropna()})
@@ -267,7 +269,7 @@ def cards(view: RunView, cfg: GippaConfig) -> tuple[list[dict[str, Any]], list[s
                                                            a.identification)  # fmt: skip
         if fdr is not None:
             sources += src("detection_summary", "value")
-            est = _TIER_FDR[str(tier)].format(fdr=fdr, q=head.fmt_alpha(a.identification))
+            est = _TIER_FDR[str(tier)].format(fdr=fdr, q=style.fmt_alpha(a.identification))
         extra = {}
         if tier in _TWO_PEP_LINE:
             extra["detail"] = f"{count(_count(t, 'detected_2pep'))} with ≥ 2 distinct peptides"
@@ -281,7 +283,7 @@ def cards(view: RunView, cfg: GippaConfig) -> tuple[list[dict[str, Any]], list[s
         sources = src("peptide_hits", "peptide", "placement_q") + src("unmapped", "kind")
         add("peptides_placed", f"of {count(n_in)} peptides placed",
             count(placed["peptide"].nunique()),
-            f"placement q ≤ {head.fmt_alpha(a.placement)}", sources)  # fmt: skip
+            f"placement q ≤ {style.fmt_alpha(a.placement)}", sources)  # fmt: skip
 
     def proteins(hits: pd.DataFrame) -> None:
         n = hits["protein_id"].nunique()
