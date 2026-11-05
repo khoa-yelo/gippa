@@ -76,12 +76,16 @@ DELTA_FOOT = ("Feature blocks are correlated; ΔR² is the loss in CV R² when a
               "(intervals uncalibrated: CV repeats share data).")  # fmt: skip
 NULL_CAL = " (uncalibrated: valid only for exchangeable transcription units)"
 NO_POWER = "no predictive power"
+#: the end of a gated title; the twin reads the gate from it (it sees only the data and title)
+GATED_SUFFIX = f": {NO_POWER}"
+NO_ABUNDANCE = ("Nothing to show: this run has no abundance values, so the determinants model "
+                "was not fitted.")  # fmt: skip
 BANNER = "The model does not predict abundance in this run; feature effects are not shown."
 A_HEADER = "(a) block ΔR² (t-interval over CV repeats, uncalibrated)"
 D_HEADER = "(d) observed vs. LightGBM out-of-fold"
 HEX_BAR, HEX_PROXY = "genes per bin (log count)", "model genes (binned)"
 MINUS = "\u2212"
-LEGEND_GAP_PT = 26.0  # (d) legend: points below the axes, clear of the x label
+LEGEND_GAP_PT = 6.0  # (d) legend: points below the x label
 
 
 def _na(v: object) -> bool:
@@ -183,7 +187,7 @@ def title(model: pd.DataFrame, n_tus: tuple[int, str] | None = None) -> str:
     if n_tus is not None:
         return f"Too few genes for the determinants model ({n_tus[0]} rows, {n_tus[1]} TUs)"
     if no_predictive_power(model):
-        return f"Elastic net CV R² {cv_text(model)}: {NO_POWER}"
+        return f"Elastic net CV R² {cv_text(model)}{GATED_SUFFIX}"
     head = f"Elastic net CV R² {cv_text(model)}; "
     d = model[(model["model"] == "elastic_net") & (model["metric"] == "delta_r2")]
     best: tuple[float, str, float, float] | None = None
@@ -444,7 +448,9 @@ def _panel_d(ax: Axes, d: pd.DataFrame, r2: str, lab: str = style.ABUNDANCE_FALL
     handles, _ = ax.get_legend_handles_labels()
     fig_ = ax.get_figure(root=True)
     assert fig_ is not None
-    below = -LEGEND_GAP_PT / (ax.get_position().height * fig_.get_figheight() * 72.0)
+    renderer = fig_._get_renderer()  # type: ignore[attr-defined]  # lays out ticks and x label
+    y0 = ax.xaxis.get_tightbbox(renderer).y0 - LEGEND_GAP_PT * fig_.dpi / 72.0  # type: ignore[union-attr]
+    below = float(ax.transAxes.inverted().transform((0.0, y0))[1])
     ax.legend(handles=[*proxy, *handles], frameon=False, fontsize=6, loc="upper left",
               bbox_to_anchor=(0.0, below), borderaxespad=0.0)  # fmt: skip
     _title(ax, D_HEADER, pad=14)  # above the R² line
@@ -468,7 +474,7 @@ def footnotes(model: pd.DataFrame) -> list[str]:
     "determinants",
     needs=("determinants_model",),
     optional=("determinants_attribution", "determinants_features", "genes_tsv"),
-    layers=("abundance",),
+    # no ``layers``: a run without abundance gets V15's empty state, not a skip (PR 7b review)
 )
 def determinants(view: RunView, cfg: GippaConfig) -> list[base.Instance] | base.Skip:
     """V15: block ΔR², partial dependence, SHAP beeswarm and observed vs. predicted; only (a) and
@@ -476,11 +482,11 @@ def determinants(view: RunView, cfg: GippaConfig) -> list[base.Instance] | base.
     model = view.table("determinants_model")
     assert model is not None  # guaranteed by ``needs``
     att, features = view.table("determinants_attribution"), view.table("determinants_features")
+    if "layer_missing:abundance" in view.run_flags() or (not model.empty and not fitted(model)):
+        return [base.empty_state("V15", "determinants", NO_ABUNDANCE, COLUMNS, "double")]
     if model.empty or too_few(model):  # no model, or NA predictions only: no panel has data
         text = title(model, counts(features, att))
         return [base.empty_state("V15", "determinants", text, COLUMNS, "double")]
-    if not fitted(model):  # univariate rows only (no abundance): nothing to draw
-        return base.Skip("input_absent:determinants_model")
     text, gated = title(model), no_predictive_power(model)
     pdf, shap = view.support("determinants_pd"), view.support("determinants_shap")
     rows = rows_a(model)

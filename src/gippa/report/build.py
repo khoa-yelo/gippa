@@ -39,6 +39,7 @@ from gippa.io.run_view import PATHS, RunView
 from gippa.io.tsv import format_value
 from gippa.report import content, detection, head
 from gippa.viz import style
+from gippa.viz.determinants import no_predictive_power
 from gippa.viz.words import plain
 
 TOP_ROWS = 20
@@ -469,7 +470,7 @@ def cards(view: RunView, cfg: GippaConfig) -> tuple[list[dict[str, Any]], list[s
 
     def model(t: pd.DataFrame) -> None:
         """ADR-0033: the elastic-net whole-model rows only; ADR-0034: "(uncalibrated)"; label
-        first, "no predictive power" when the mean or mean minus SD is ≤ 0 (M12-04 PR 1)."""
+        first, "no predictive power" by V15's gate (M12-04 PR 1, PR 7b)."""
         en = t[(t["model"] == "elastic_net") & (t["feature_or_block"] == "all")]
         (r2, _), (sd, _) = _metric(en, "cv_r2_mean"), _metric(en, "cv_r2_sd")
         p, flags = _metric(en, "null_p")
@@ -480,7 +481,7 @@ def cards(view: RunView, cfg: GippaConfig) -> tuple[list[dict[str, Any]], list[s
                 prefix="Model R²:")  # fmt: skip
             return
         value = style.fmt_num(r2) if sd is None else head.mean_sd(r2, sd)
-        no_power = r2 <= 0 or (sd is not None and r2 - sd <= 0)
+        no_power = no_predictive_power(t)  # the V15 gate (one rule for the card and the plot)
         label = f"(CV), {NO_POWER}" if no_power else "(CV)"
         unc = " (uncalibrated)" if "null_uncalibrated" in flags else ""
         est = None if p is None else f"null p {style.fmt_q(p)}{unc}"
