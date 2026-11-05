@@ -87,7 +87,12 @@ def tier_topics(topics: Iterable[str]) -> set[str]:
 
 @pytest.fixture
 def p_run(tmp_path: Path) -> Run:
-    return with_steps(build("P", tmp_path), STEPS_A)
+    """P as an A-like run: its pair and novel ORF tables exist (header-only), so the Operons and
+    Novel ORFs sections apply and their notes can show (review 1, M1)."""
+    run = with_steps(build("P", tmp_path), STEPS_A)
+    for key in ("pairs", "novel_orfs"):
+        write_schema_table(run.out / "tables" / f"{key}.tsv", key, [])
+    return run
 
 
 @pytest.fixture
