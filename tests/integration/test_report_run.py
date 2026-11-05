@@ -8,8 +8,9 @@ itself, every pass-1 plot by M9-13) must either render or be noted as not run in
 
 * example 1: ``--executor local`` writes ``plots/`` (with ``data/`` for every rendered plot) and
   ``report/report.html``; exit 0;
-* examples 6 and 7 on that report: 13 sections in order, no external URL, every relative link
-  resolves;
+* examples 6 and 7 on that report: the applicable sections in order, then the not-applicable
+  list (M12-04 PR 2); nothing external loaded and no external link but the docs-site methods
+  pages; every relative link resolves;
 * example 3: ``gippa report OUT`` twice gives identical ``plots/data/*.tsv`` and ``report.html``;
 * example 2: ``--executor nextflow --profile farmshare_local`` gives byte-identical
   ``plots/data/*.tsv`` (beside the existing executor-equality tests).
@@ -18,19 +19,24 @@ itself, every pass-1 plot by M9-13) must either render or be noted as not run in
 from __future__ import annotations
 
 import dataclasses
-import re
 import shutil
 from pathlib import Path
 from typing import Any
 
 import pytest
 from click.testing import CliRunner
-from helpers.report_fixtures import SECTION_IDS, parse
+from helpers.report_fixtures import (
+    DOCS_METHODS,
+    SECTION_IDS,
+    expected_section_ids,
+    external_refs,
+    parse,
+    section_or_reason,
+)
 
 pytestmark = [pytest.mark.slow]
 
 SEED = 7
-EXTERNAL = re.compile(r"^\s*(https?:|//|file:)", re.I)
 
 
 @pytest.fixture(scope="module")
@@ -96,18 +102,24 @@ def test_example_1_plots_and_report_published(local: Path) -> None:
         if svgs:
             assert (local / "plots" / "data" / f"{svgs[0].stem}.tsv").is_file(), pid
         elif page.root.by_attr("data-plot", pid):
-            assert "not run" in page.slot(pid).text(), (pid, spec.name)
+            assert "not shown" in page.slot(pid).text(), (pid, spec.name)
 
 
 def test_example_6_thirteen_sections(local: Path) -> None:
     page = parse((local / "report" / "report.html").read_text(encoding="utf-8"))
-    assert [s.attrs.get("id") for s in page.sections()] == list(SECTION_IDS)
+    assert [s.attrs.get("id") for s in page.sections()] == expected_section_ids(page)
+    for sid in SECTION_IDS:  # rendered, or listed as not applicable with a reason
+        assert section_or_reason(page, sid), sid
+    # --modules core: the function module did not run
+    assert section_or_reason(page, "function") == "the function module was not run"
 
 
 def test_example_7_offline_and_links_resolve(local: Path) -> None:
     page = parse((local / "report" / "report.html").read_text(encoding="utf-8"))
+    assert not external_refs(page), external_refs(page)
     for url in page.links():
-        assert not EXTERNAL.match(url), url
+        if DOCS_METHODS.match(url):
+            continue
         if not url.startswith(("#", "data:")):  # inlined images (V13 colorbar; M9-13: allowed)
             assert (local / "report" / url).resolve().is_file(), url
     assert "../tables/islands.tsv" in page.links()

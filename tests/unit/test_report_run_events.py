@@ -128,7 +128,7 @@ def test_b6_layer_missing_skip_fires_in_gippa_run_local(
     assert not [n for n in left if n.startswith("V11_")], left
     assert _skips(out).get("V11") == FLAG, _skips(out)
     text = _slot(out, "V11")
-    assert "not run" in text and "fakelayer" in text, text
+    assert "V11: not shown: the fakelayer layer was not computed" in text, text
 
 
 def test_b6_gippa_run_and_gippa_report_agree_on_the_layer_missing_skip(

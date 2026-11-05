@@ -60,12 +60,19 @@ def test_renamed_section_id_fails_the_snapshot(tmp_path: Path) -> None:
 
 @pytest.mark.parametrize("fixture", sf.FIXTURES)
 def test_stored_report_sections_are_the_13_fixed_ids(fixture: str) -> None:
-    """Index decision 21: the report's sections have fixed IDs, in order."""
+    """Index decision 21: the report's sections have fixed IDs, in order; M12-04 PR 2: a section
+    that does not apply is left out and ``sec-not-applicable`` comes last."""
     from gippa.report.build import SECTIONS
 
     stored = _stored()[f"{fixture}/report.html"]
-    assert [i for t, i in stored if t == "section"] == [s.id for s in SECTIONS]
+    ids = [i for t, i in stored if t == "section"]
     assert len(SECTIONS) == 13
+    rendered = [i for i in ids if i != "sec-not-applicable"]
+    assert rendered == [s.id for s in SECTIONS if s.id in rendered], ids
+    if len(rendered) < len(SECTIONS):
+        assert ids[-1] == "sec-not-applicable", ids
+    if "sec-not-applicable" in ids:
+        assert ids.index("sec-not-applicable") == len(ids) - 1, ids
 
 
 @pytest.mark.parametrize("fixture", sf.FIXTURES)
@@ -91,7 +98,8 @@ def test_rich_report_inlines_a_figure_for_every_plot_but_v16() -> None:
             current = None
     from gippa.report.build import SECTIONS
 
-    assert sorted(slots) == sorted(p for s in SECTIONS for p in s.plots)
+    rendered = {i for t, i in stored if t == "section"}  # M12-04 PR 2: applicable sections
+    assert sorted(slots) == sorted(p for s in SECTIONS if s.id in rendered for p in s.plots)
     assert "V16" not in slots
     assert {p: n for p, n in slots.items() if n == 0} == {}
 
@@ -102,7 +110,9 @@ _HTML = """<html><body><h1>t</h1>
 <section id="a"><h2>Alpha  one</h2>
 <div class="plot" data-plot="V01"><figure><div id="plotly-V01" class="twin"></div>
 <svg id="x"><g id="inner"><svg id="nested"></svg></g><text>no</text></svg>
-<figcaption class="links">V01_circos <a href="#">SVG</a></figcaption></figure></div>
+<figcaption class="links" data-stem="V01_circos">Where in the genome is the proteome? Rings show
+genes. <a href="#">SVG</a></figcaption></figure>
+<figure><figcaption>V16_compare <a href="#">SVG</a></figcaption></figure></div>
 <h3 id="h">ignored text</h3><div class="table-wrap"></div></section></body></html>"""
 
 
@@ -113,6 +123,7 @@ def test_structure_extractor_on_a_small_page() -> None:
         ["div", "plot:V01"],
         ["div", "plotly-V01"],
         ["svg", "x"],
-        ["figure", "V01_circos"],
+        ["figure", "V01_circos"],  # data-stem, not the caption's first word (M12-04 PR 2)
+        ["figure", "V16_compare"],  # no data-stem (compare.html): the first word
         ["h3", "h"],
     ]
