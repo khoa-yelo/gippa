@@ -195,7 +195,10 @@ class Build:
 
 
 def _run(root: Path, argv: list[str]) -> tuple[int, str]:
-    """``build_example.main(argv)`` with ``GIPPA_ROOT=root``: (exit code, stdout + stderr)."""
+    """``build_example.main(argv)`` with ``GIPPA_ROOT=root``: (exit code, stdout + stderr).
+    ``--allow-dirty`` keeps these tests independent of the checkout's state (H1 of the #546
+    review; the dirty-tree rule is pinned in test_m12_01_example_build_review.py)."""
+    argv = [*argv, "--allow-dirty"]
     mod = _load_script()
     out = io.StringIO()
     with (
