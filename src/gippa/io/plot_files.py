@@ -6,7 +6,9 @@ carries a date or a software version is dropped, so two renders of one instance 
 byte-identical on one platform (``svg.hashsalt`` is fixed here, whether or not
 ``gippa.viz.style.apply`` ran). matplotlib hashes full-precision floats into SVG clip-path, marker
 and hatch ids, so ``stable_svg_ids`` renumbers them and 1-ulp layout noise cannot change the
-bytes. An SVG carries the finding title as its ``<title>`` (M9-15). The figures are
+bytes. An SVG carries the finding title as its ``<title>`` (M9-15); an empty-state instance
+(``Instance.empty``) also carries ``data-empty="true"`` on its ``<svg>`` root (M12-04 PR 1), so
+the report can tell it from a drawn plot. The figures are
 ``matplotlib.figure.Figure`` objects that pyplot never manages, so nothing needs closing. The
 ``Instance.coords`` columns are written ``+ 1`` (1-based closed data TSVs, §6.5).
 ``read_plot_files`` reads them back for the report (M9-02).
@@ -44,6 +46,9 @@ _HASHED_ID = re.compile(rb'id="([pmh][0-9a-f]{10})"')
 _HASHED_USE = re.compile(rb'(id="|url\(#|href="#)([pmh][0-9a-f]{10})(?=[")])')
 _ANY_ID = re.compile(rb'\bid="([^"]*)"')
 _ID_STEM = {b"p": b"clip", b"m": b"marker", b"h": b"hatch"}
+#: the ``<svg>`` root attribute that marks an empty-state instance
+EMPTY_ATTR = 'data-empty="true"'
+_SVG_ROOT = re.compile(r"<svg\b([^>]*)>")
 
 
 def stem(pid: str, name: str, suffix: str | None) -> str:
@@ -95,7 +100,10 @@ def write_instance(
             if fmt == "svg":
                 buf = io.BytesIO()
                 inst.figure.savefig(buf, format=fmt, dpi=dpi, metadata=meta)
-                path.write_bytes(stable_svg_ids(buf.getvalue()))
+                svg = stable_svg_ids(buf.getvalue())
+                if inst.empty:
+                    svg = svg.replace(b"<svg ", f"<svg {EMPTY_ATTR} ".encode(), 1)
+                path.write_bytes(svg)
             else:
                 inst.figure.savefig(path, format=fmt, dpi=dpi, metadata=meta)
             written.append(path)
@@ -146,6 +154,12 @@ def svg_title(svg: str) -> str | None:
     return None if m is None else html.unescape(m.group(1))
 
 
+def svg_empty(svg: str) -> bool:
+    """Whether ``svg`` is an empty-state instance (``data-empty="true"`` on its root)."""
+    m = _SVG_ROOT.search(svg)
+    return m is not None and EMPTY_ATTR in m.group(1)
+
+
 #: image formats in the order the report links them
 IMAGE_FORMATS = ("svg", "png", "pdf")
 _PLOT_FILE = re.compile(r"^(V\d{2})_.+$")
@@ -159,6 +173,8 @@ class InstanceFiles:
     svg: str | None  # the SVG text, when the SVG exists
     images: tuple[str, ...]
     data: str | None
+    #: an empty-state instance (``data-empty="true"`` on the SVG root): nothing was drawn
+    empty: bool = False
 
 
 @dataclass(frozen=True)
@@ -183,11 +199,13 @@ def read_plot_files(plots_dir: Path) -> dict[str, PlotFiles]:
     for name in sorted(stems):
         by = stems[name]
         svg = by.get("svg")
+        text = (plots_dir / svg[0]).read_text(encoding="utf-8") if svg else None
         inst = InstanceFiles(
             stem=name,
-            svg=(plots_dir / svg[0]).read_text(encoding="utf-8") if svg else None,
+            svg=text,
             images=tuple(by[f][0] for f in IMAGE_FORMATS if f in by),
             data=by["tsv"][0] if "tsv" in by else None,
+            empty=text is not None and svg_empty(text),
         )
         out.setdefault(name[:3], []).append(inst)
     return {pid: PlotFiles(pid, tuple(insts)) for pid, insts in sorted(out.items())}

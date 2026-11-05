@@ -15,10 +15,12 @@ from helpers.report_fixtures import Page, cfg, parse, run_out
 from helpers.viz_out_tree import write_schema_table
 
 from gippa.io.run_view import RunView
+from gippa.viz import style
 
 FLAG = "denovo_only_unsupported"
-SUFFIX = ("; {k} of {m} calls de novo-only without database or RBS support (exact de novo errors"
-          " are not covered by the class FDR)")  # fmt: skip
+#: M12-04 PR 1 review r1 (M6): shorter suffix, numbers through ``fmt_q``
+SUFFIX = "; {k} of {m} de novo-only, no database or RBS support"
+FDR_006 = f"class FDR ≤ {style.fmt_q(0.006)}"
 
 
 def _page(out: Path) -> Page:
@@ -52,7 +54,7 @@ EX13 = [
 def test_example_13_card_suffix(tmp_path: Path) -> None:
     out = run_out(tmp_path)
     _novel(out, EX13)
-    assert _estimate(_page(out)) == "class FDR ≤ 0.006" + SUFFIX.format(k=2, m=4)
+    assert _estimate(_page(out)) == FDR_006 + SUFFIX.format(k=2, m=4)
 
 
 def test_suffix_follows_unestimated(tmp_path: Path) -> None:
@@ -69,4 +71,4 @@ def test_no_flagged_call_card_unchanged(tmp_path: Path) -> None:
     out = run_out(tmp_path)
     rows = [r if r[0] != "N1" and r[0] != "N3" else (*r[:4], "rbs_supported") for r in EX13]
     _novel(out, rows)
-    assert _estimate(_page(out)) == "class FDR ≤ 0.006"
+    assert _estimate(_page(out)) == FDR_006
