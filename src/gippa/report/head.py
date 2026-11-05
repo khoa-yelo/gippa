@@ -36,8 +36,8 @@ TOC_COUNTS: Mapping[str, str] = {
 
 
 #: what reading a present but malformed table raises (``ValueError`` covers decoding, parquet
-#: and schema errors; ``KeyError`` a missing column)
-READ_ERRORS = (OSError, ValueError, KeyError)
+#: and schema errors; ``KeyError`` a missing column; ``EOFError`` a truncated ``.gz``)
+READ_ERRORS = (OSError, ValueError, KeyError, EOFError)
 
 
 def _safe_table(view: RunView, key: str) -> pd.DataFrame | None:
