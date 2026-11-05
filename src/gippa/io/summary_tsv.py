@@ -1,8 +1,9 @@
 """Writer for ``detection_summary.tsv`` and its Parquet parts (GIPPA_SPEC.md §9.3; M4-16).
 
-Long format with the columns of ``gippa.context.summary.SUMMARY_COLUMNS``. Floats are written with
-round-trip precision (shortest ``repr``; integral values as integers) so values and CIs read back
-exactly; missing values are ``NA``; ``flags`` is ``;``-joined (empty when none).
+Long format with the columns of ``gippa.context.summary.SUMMARY_COLUMNS``. ``value``, ``ci_low``
+and ``ci_high`` are written through ``gippa.io.tsv.format_value`` (``%.6g``, ``INF``/``-INF``,
+GIPPA_SPEC.md §6.6, ADR-0006; M12-04 PR 9); ``n`` keeps every digit; missing values are ``NA``;
+``flags`` is ``;``-joined (empty when none).
 
 ``write_summary_part`` writes one section's rows (the ``tier`` rows of M4-12, M4-20 lead
 decision 3) as a byte-reproducible Parquet file that ``context_stats`` reads back and hands to
@@ -11,7 +12,6 @@ decision 3) as a byte-reproducible Parquet file that ``context_stats`` reads bac
 
 from __future__ import annotations
 
-import math
 from pathlib import Path
 
 import pandas as pd
@@ -30,13 +30,11 @@ SUMMARY_PART_TYPES: tuple[tuple[str, pa.DataType], ...] = tuple(
 )  # fmt: skip
 
 
-def _num(v: object) -> object:
+def _num(v: object) -> float | None:
+    """A ``number`` cell as a float (``write_tsv`` formats it ``%.6g``), ``None`` when missing."""
     if v is None or pd.isna(v):
         return None
-    f = float(v)  # type: ignore[arg-type]
-    if math.isinf(f):
-        return f
-    return int(f) if f.is_integer() and abs(f) < 2**53 else repr(f)
+    return float(v)  # type: ignore[arg-type]
 
 
 def write_detection_summary(path: Path, df: pd.DataFrame) -> None:

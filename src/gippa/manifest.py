@@ -41,6 +41,8 @@ RUN_FLAGS: frozenset[str] = frozenset({
     "no_eligible_genes", "p_detect_clipped", "null_degenerate", "tu_recal_reduced",
     # beyond §9.4, accepted by Khoa (ADR-0041)
     "input_prefiltered", "cai_reference_missing", "no_detection_limit_model", "uncalibrated:",
+    # M12-04 PR 9 (ADR-0075)
+    "foreign_protein_ids",
 })  # fmt: skip
 #: Run-scope tokens awaiting a Khoa decision; empty since ADR-0041 (MVP-03 "Needs Khoa" 1).
 RUN_FLAGS_PENDING: frozenset[str] = frozenset()
