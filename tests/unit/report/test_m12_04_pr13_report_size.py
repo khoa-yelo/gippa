@@ -49,6 +49,7 @@ def _out(tmp: Path, locus_bytes: int) -> Path:
     write_schema_table(out / "tables" / "novel_orfs.tsv", "novel_orfs", [])
     plots = out / "plots"
     plots.mkdir()
+    (out / "report").mkdir(exist_ok=True)  # where report.html lives: relative srcs resolve from it
     for stem in LOCUS:
         (plots / f"{stem}.svg").write_text(_svg(stem, locus_bytes), encoding="utf-8")
     for stem in (MAIN_V13, V17):
