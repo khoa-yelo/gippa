@@ -91,12 +91,13 @@ def _row(panel: str, **cells: object) -> list[object]:
 
 def _f2(v: float) -> str:
     """Two decimals with a Unicode minus (decision 5, S2), but at least two significant digits
-    (``base.sig``) below 0.1 so a small non-zero value never reads 0.00; NaN reads
-    "unestimated"."""
+    (``style.fmt_num``) below 0.1 so a small non-zero value never reads 0.00; zero (either sign)
+    is ``fmt_num``'s zero, never a signed zero; NaN reads "unestimated"."""
     if math.isnan(v):
         return "unestimated"
-    out = f"{v:.2f}" if v == 0 or abs(v) >= 0.1 else style.fmt_num(v)
-    return out.replace("-", MINUS)
+    if v == 0 or abs(v) < 0.1:
+        return style.fmt_num(0.0 if v == 0 else v)
+    return f"{v:.2f}".replace("-", MINUS)
 
 
 # ---------------------------------------------------------------- data

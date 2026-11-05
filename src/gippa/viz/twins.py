@@ -279,10 +279,20 @@ def v08(data: pd.DataFrame, title: str, meta: Meta = None) -> Any:
     summ, genes = data[data["locus_tag"].isna()], data[data["locus_tag"].notna()]
     measured = bool(np.isfinite(floats(genes["abundance_log2"])).any())
     fig, letters = go.Figure(), [str(c) for c in summ["category"]]
+    every = floats(genes["abundance_log2"])
+    every = every[np.isfinite(every)]
+    fig.add_annotation(x=1.0, y=1.0, xref="paper", yref="paper", xanchor="left",
+                       yanchor="bottom", showarrow=False, text=det.COUNT_NOTE)  # fmt: skip
     for x, (letter, r) in enumerate(zip(letters, summ.to_dict("records"), strict=True)):
         colour = det.NONE_GREY if letter == "none" else style.cog_colour(letter)
         count = f"{fmt(r['n_detected'])}/{fmt(r['n_genes'])}"
         fig.add_annotation(x=x, y=1.0, yref="paper", yanchor="bottom", showarrow=False, text=count)
+        if measured and letter == "none":  # a violin or strip has no pattern: a hatched backdrop
+            lo, hi = float(every.min()), float(every.max())
+            lo, hi = (lo, hi) if hi > lo else (lo - 0.5, hi + 0.5)
+            hatch = {"shape": "/", "fgcolor": colour}
+            fig.add_trace(go.Bar(x=[x], y=[hi - lo], base=[lo], width=[0.8], hoverinfo="skip",
+                                 marker={"color": "rgba(0,0,0,0)", "pattern": hatch}))  # fmt: skip
         if not measured:
             frac = float(r["n_detected"]) / float(r["n_genes"]) if r["n_genes"] else 0.0
             pattern = {"shape": "/"} if letter == "none" else {}

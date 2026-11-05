@@ -24,7 +24,7 @@ from matplotlib.artist import Artist
 from matplotlib.axes import Axes
 
 from gippa.stats.smooth import loess_detrend, loess_span_points
-from gippa.viz import base, style
+from gippa.viz import base, correlogram, style
 
 if TYPE_CHECKING:
     from gippa.config import GippaConfig
@@ -188,27 +188,22 @@ def data_frame(rows: Sequence[Mapping[str, Any]]) -> pd.DataFrame:
     return frame.astype(dict.fromkeys(_INT_COLUMNS, "Int64"))
 
 
-def _lag1_clause(view: RunView, order: Sequence[str]) -> str:
-    """The title clause "; lag-1 Moran's I <I> (q = <q>, TU-block null)" from the TU-block row
-    of the first FASTA contig with a finite q, else (old runs) the gene-label row, naming that
-    null (M12-04 P-04); "" otherwise."""
+def _lag1_clause(view: RunView) -> str:
+    """The title clause "; lag-1 Moran's I <I> (q = <q>, <null> null)" from the row V10 titles
+    too (``correlogram.lag1_moran``; M12-04 PR 5 review 1, M1); "" when none is usable."""
     ac = view.table("autocorrelation")
     if ac is None or not len(ac):
         return ""
-    for null, name in (("tu_block", "TU-block"), ("gene_label", "gene-label")):
-        sel = ac[
-            (ac["statistic"].astype(str) == "morans_i")
-            & (ac["null_model"].astype(str) == null)
-            & (pd.to_numeric(ac["lag"]) == 1)
-        ]
-        for contig in [*order, *sorted(set(sel["contig"].astype(str)) - set(order))]:
-            hit = sel[sel["contig"].astype(str) == contig]
-            for v, q in zip(pd.to_numeric(hit["value"]), pd.to_numeric(hit["q_value"]),
-                            strict=True):  # fmt: skip
-                if pd.notna(q) and pd.notna(v):
-                    return (f"; lag-1 Moran's I {style.fmt_num(v)} "
-                            f"({style.q_equals(q)}, {name} null)")  # fmt: skip
-    return ""
+    data = correlogram.drawn(correlogram.data_frame(ac, 0.0))
+    fasta = [str(r["id"]) for r in (view.preflight() or {}).get("replicons", [])]
+    found = correlogram.lag1_moran(data, correlogram.contig_order(data, fasta))
+    if found is None:
+        return ""
+    null, row = found
+    return (
+        f"; lag-1 Moran's I {style.fmt_num(float(row['value']))} "
+        f"({style.q_equals(float(row['q_value']))}, {correlogram.NULL_LABEL[null]} null)"
+    )
 
 
 def title(rows: Sequence[Mapping[str, Any]], alpha: float, clause: str) -> str:
@@ -246,7 +241,7 @@ def _panel(ax: Axes, rep: Replicon, rows: Sequence[Mapping[str, Any]], frac: flo
                 markeredgewidth=0, label="detected (measured)", zorder=2)  # fmt: skip
     if kind["trend"]:
         ax.plot(_xs(kind["trend"], scale), [t["value"] for t in kind["trend"]],
-                color="#000000", linewidth=1.0, label=f"trend (LOESS, span {frac:g})",
+                color="#000000", linewidth=1.0, label=f"trend (LOESS, span {style.fmt_num(frac)})",
                 zorder=3)  # fmt: skip
     for status in sorted({str(r["category"]) for r in kind["rug"]}):
         xs = _xs([r for r in kind["rug"] if r["category"] == status], scale)
@@ -284,7 +279,7 @@ def abundance_landscape(view: RunView, cfg: GippaConfig) -> list[base.Instance] 
             rows += _island_rows(rep, islands, alpha)
         per[rep.contig] = rows + _landmark_rows(rep, landmarks)
     every = [r for rows in per.values() for r in rows]
-    text = title(every, alpha, _lag1_clause(view, [r.contig for r in reps]) if measured else "")
+    text = title(every, alpha, _lag1_clause(view) if measured else "")
     foot = _FOOT_IN + _LEGEND_IN + _NOTE_IN
     height = _HEAD_IN + foot + _ROW_IN * len(reps)
     fig = style.new_figure("double", height)

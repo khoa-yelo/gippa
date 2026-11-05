@@ -113,7 +113,7 @@ def title(counts: Mapping[Flow, int]) -> str:
         if total == 0:
             continue
         n_placed = sum(n for (c, _, o), n in counts.items() if c == cls and o == "placed")
-        parts.append(f"{base.title_pct(n_placed, total)} of {total} {noun}")
+        parts.append(f"{base.title_pct(n_placed, total)} of {style.fmt_count(total)} {noun}")
     text = "; ".join(parts)
     head, sep, rest = text.partition(";")
     return f"{head} placed in the genome{sep}{rest}"
