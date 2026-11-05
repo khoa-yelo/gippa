@@ -676,6 +676,12 @@ def _str_eq(df: pd.DataFrame, col: str, value: str) -> np.ndarray:
     return out
 
 
+def _na(df: pd.DataFrame, col: str) -> np.ndarray:
+    """NA cells of a numeric column; a 1.0 table's ``unestimated`` word also counts (M12-04 11c)."""
+    out: np.ndarray = pd.to_numeric(df[col], errors="coerce").isna().to_numpy(dtype=bool)
+    return out
+
+
 def _called(df: pd.DataFrame) -> np.ndarray:
     out: np.ndarray = df["called"].fillna(False).astype(bool).to_numpy(dtype=bool)
     return out
@@ -683,9 +689,10 @@ def _called(df: pd.DataFrame) -> np.ndarray:
 
 def novel_summary(novel_orfs: pd.DataFrame) -> dict[str, Any]:
     """Metric 6 per arm: ``novel_orfs.tsv`` rows by class x bucket (``called``; ``unestimated``:
-    not called and ``class_fdr = unestimated``; ``not_called``: the rest) and the totals."""
+    not called and ``class_fdr`` NA, which 1.0 tables wrote as ``unestimated``; ``not_called``:
+    the rest) and the totals."""
     called = _called(novel_orfs)
-    unest = ~called & _str_eq(novel_orfs, "class_fdr", "unestimated")
+    unest = ~called & _na(novel_orfs, "class_fdr")
     bucket = np.where(called, "called", np.where(unest, "unestimated", "not_called"))
     cls = novel_orfs["class"].astype(str).to_numpy()
     by = {c: {b: int(((cls == c) & (bucket == b)).sum()) for b in BUCKETS} for c in NOVEL_CLASSES}
@@ -695,7 +702,7 @@ def novel_summary(novel_orfs: pd.DataFrame) -> dict[str, Any]:
 
 def variant_summary(variants: pd.DataFrame) -> dict[str, Any]:
     """Metric 6 per arm: ``call = ALT`` rows by ``alt_type`` x ``confidence``, the ``mixed``
-    count and ``class_error`` (rows with a numeric ``class_error_rate`` vs ``unestimated``)."""
+    count and ``class_error`` (rows with a numeric ``class_error_rate`` vs NA, ``unestimated``)."""
     alt = _str_eq(variants, "call", "ALT")
     t = variants["alt_type"].astype(str).to_numpy()
     c = variants["confidence"].astype(str).to_numpy()
@@ -706,8 +713,7 @@ def variant_summary(variants: pd.DataFrame) -> dict[str, Any]:
                 for a in ALT_TYPES},
         "mixed": int(_str_eq(variants, "call", "mixed").sum()),
         "class_error": {"numeric": int(numeric.sum()),
-                        "unestimated": int(_str_eq(variants, "class_error_rate", "unestimated")
-                                           .sum())},
+                        "unestimated": int(_na(variants, "class_error_rate").sum())},
     }  # fmt: skip
 
 

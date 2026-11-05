@@ -13,6 +13,7 @@ it as the resource ``novel_orfs`` at ``tables/novel_orfs.tsv``.
 from __future__ import annotations
 
 import json
+import math
 import re
 import shutil
 from pathlib import Path
@@ -110,8 +111,10 @@ def test_schema_types_and_enums() -> None:
         assert f[col]["type"] == "boolean", col
     for col in ("start_longest", "start_best_ostir", "end"):
         assert f[col]["constraints"]["minimum"] == 1, col
-    for col in ("orf_id", "class", "contig", "strand", "end", "n_peptides", "class_fdr", "called"):
+    for col in ("orf_id", "class", "contig", "strand", "end", "n_peptides", "called"):
         assert f[col]["constraints"]["required"] is True, col
+    # M12-04 PR 11c: class_fdr is a number and NA when unestimated, so not required
+    assert f["class_fdr"].get("constraints", {}).get("required") is not True
     assert re.fullmatch(f["orf_id"]["constraints"]["pattern"], "NOVEL_c1_43_p")
     assert re.fullmatch(f["orf_id"]["constraints"]["pattern"], "NOVEL_my.contig-2_878_m")
     assert not re.fullmatch(f["orf_id"]["constraints"]["pattern"], "NOVEL_c1_43_x")
@@ -124,14 +127,13 @@ def test_minus_strand_convention_is_described() -> None:
         assert "transcription" in f[col]["description"].lower(), col
 
 
-def test_class_fdr_is_a_string_float_or_unestimated() -> None:
+def test_class_fdr_is_a_number() -> None:
+    """M12-04 PR 11c: a number (NA when unestimated, flag ``class_fdr_unestimated``), not the
+    old string with the word ``unestimated``."""
     c = _fields()["class_fdr"]
-    assert c["type"] == "string"
-    pat = c["constraints"]["pattern"]
-    for ok in ("unestimated", "0.05", "1e-07", "0", "1", "0.0123457"):
-        assert re.fullmatch(pat, ok), ok
-    for bad in ("foo", "NaN-ish", "unestimated;0.1"):
-        assert not re.fullmatch(pat, bad), bad
+    assert c["type"] == "number"
+    assert c["constraints"]["minimum"] == 0
+    assert "pattern" not in c["constraints"]
 
 
 def test_flags_vocabulary_through_the_schema() -> None:
@@ -206,8 +208,10 @@ def test_header_only_table_validates(tmp_path: Path) -> None:
 
 
 @pytest.mark.parametrize(
-    ("col", "bad"), [("class", "cds_inframe"), ("class_fdr", "lots"), ("flags", "bogus")]
-)
+    ("col", "bad"),
+    [("class", "cds_inframe"), ("class_fdr", "lots"), ("class_fdr", "unestimated"),
+     ("flags", "bogus")],
+)  # fmt: skip
 def test_schema_rejects_bad_cells(tmp_path: Path, col: str, bad: str) -> None:
     path = _write(tmp_path, ex1())
     lines = path.read_text(encoding="utf-8").splitlines()
@@ -250,7 +254,7 @@ _maybe = st.one_of(st.none(), st.floats(0, 1e4, allow_nan=False, width=32))
     psup=st.one_of(st.none(), st.booleans()),
     tdist=st.one_of(st.none(), st.integers(-200, 500)),
     rank=st.one_of(st.none(), st.integers(1, 50)),
-    fdr=st.one_of(st.just("unestimated"), st.floats(0, 1, allow_nan=False)),
+    fdr=st.one_of(st.just(math.nan), st.floats(0, 1, allow_nan=False)),  # NaN: unestimated
     called=st.booleans(),
 )
 def test_round_trip_property(

@@ -2,7 +2,8 @@
 §10.3 "Wording", R4; review B1, B2, B5 and the lead decisions of that round).
 
 * B1: the novel-ORF card's FDR is over CALLED rows only, the max ``class_fdr`` among them; any
-  called row ``unestimated`` makes the card ``unestimated``; uncalled ORFs never affect it.
+  called row NA (unestimated) makes the card say so in plain words (M12-04 PR 11c); uncalled
+  ORFs never affect it.
 * B2: the operon card counts rows with ``q ≤ alpha`` and says so: "flagged at q ≤ alpha
   (discordant or co-abundant)", never "flagged operon pairs ... FDR-controlled"; a concordant
   ``conflict_terminator_in_operon`` row (q > alpha by definition, §7.4.5) is not counted.
@@ -40,8 +41,11 @@ from hypothesis import strategies as st
 from gippa.io.run_view import RunView
 from gippa.steps import registry as reg
 from gippa.viz import style
+from gippa.viz.words import plain
 
 NOVEL_CLASSES = ("nterm_extension", "cterm_extension", "intergenic", "sorf", "antisense")
+#: the card text of an NA class FDR (M12-04 PR 11c: NA plus the flag, in plain words)
+NOT_EST = plain("class_fdr_unestimated")
 
 
 # no surrogates: a lone "\ud800" cannot be UTF-8 encoded into the corrupt table
@@ -78,22 +82,25 @@ def _part(page: Page, name: str, cls: str) -> str:
 # ---------------------------------------------------------------- B1 novel-ORF card
 
 
-def _novel(out: Path, rows: list[tuple[str, str, bool, str]]) -> None:
-    body = [{"orf_id": i, "class": c, "called": k, "class_fdr": f} for i, c, k, f in rows]
+def _novel(out: Path, rows: list[tuple[str, str, bool, str | None]]) -> None:
+    """A ``class_fdr`` of ``None`` is NA and the row carries ``class_fdr_unestimated``."""
+    body = [{"orf_id": i, "class": c, "called": k, "class_fdr": f,
+             "flags": "class_fdr_unestimated" if f is None else None}
+            for i, c, k, f in rows]  # fmt: skip
     write_schema_table(out / "tables" / "novel_orfs.tsv", "novel_orfs", body)
 
 
 def test_b1_uncalled_orf_in_another_class_does_not_lend_its_fdr(tmp_path: Path) -> None:
-    """The reviewer's probe: two called ORFs with class FDR ``unestimated`` and one uncalled ORF
-    of another class with class FDR 0.02 -> ``unestimated``, never "class FDR ≤ 0.02"."""
+    """The reviewer's probe: two called ORFs with class FDR NA (unestimated) and one uncalled ORF
+    of another class with class FDR 0.02 -> not estimated, never "class FDR ≤ 0.02"."""
     out = run_out(tmp_path)
-    _novel(out, [("N1", "intergenic", True, "unestimated"),
-                 ("N2", "intergenic", True, "unestimated"),
+    _novel(out, [("N1", "intergenic", True, None),
+                 ("N2", "intergenic", True, None),
                  ("N3", "nterm_extension", False, "0.02")])  # fmt: skip
     page = _page(out)
     assert re.search(r"\b2\b", _part(page, "novel_orfs", "value"))
     est = _part(page, "novel_orfs", "estimate")
-    assert "unestimated" in est, est
+    assert NOT_EST in est, est
     assert "0.02" not in _card(page, "novel_orfs"), _card(page, "novel_orfs")
 
 
@@ -107,30 +114,30 @@ def test_b1_max_class_fdr_over_called_rows_only(tmp_path: Path) -> None:
     assert re.search(r"\b2\b", _part(page, "novel_orfs", "value"))
     est = _part(page, "novel_orfs", "estimate")
     assert "0.08" in est, est
-    assert "0.5" not in est and "unestimated" not in est, est
+    assert "0.5" not in est and NOT_EST not in est, est
 
 
 def test_b1_uncalled_unestimated_class_does_not_make_the_card_unestimated(tmp_path: Path) -> None:
     out = run_out(tmp_path)
     _novel(out, [("N1", "intergenic", True, "0.03"),
-                 ("N2", "sorf", False, "unestimated")])  # fmt: skip
+                 ("N2", "sorf", False, None)])  # fmt: skip
     est = _part(_page(out), "novel_orfs", "estimate")
-    assert "0.03" in est and "unestimated" not in est, est
+    assert "0.03" in est and NOT_EST not in est, est
 
 
 def test_b1_one_called_unestimated_row_makes_the_card_unestimated(tmp_path: Path) -> None:
     out = run_out(tmp_path)
     _novel(out, [("N1", "intergenic", True, "0.03"),
-                 ("N2", "sorf", True, "unestimated")])  # fmt: skip
+                 ("N2", "sorf", True, None)])  # fmt: skip
     est = _part(_page(out), "novel_orfs", "estimate")
-    assert "unestimated" in est, est
+    assert NOT_EST in est, est
 
 
-_FDRS = st.sampled_from(["unestimated", "0.01", "0.02", "0.05", "0.125", "0.3"])
+_FDRS = st.sampled_from([None, "0.01", "0.02", "0.05", "0.125", "0.3"])
 
 
 @st.composite
-def _novel_rows(draw: st.DrawFn) -> list[tuple[str, str, bool, str]]:
+def _novel_rows(draw: st.DrawFn) -> list[tuple[str, str, bool, str | None]]:
     """Rows of a novel_orfs table; one class FDR per class (as the step writes it); ≥ 1 called."""
     fdr = {c: draw(_FDRS) for c in NOVEL_CLASSES}
     n = draw(st.integers(1, 8))
@@ -147,9 +154,9 @@ def _novel_rows(draw: st.DrawFn) -> list[tuple[str, str, bool, str]]:
 @settings(max_examples=40, deadline=None, suppress_health_check=[HealthCheck.too_slow])
 @given(rows=_novel_rows())
 def test_b1_property_estimate_is_the_called_rows_bound(
-    rows: list[tuple[str, str, bool, str]],
+    rows: list[tuple[str, str, bool, str | None]],
 ) -> None:
-    """For any table with ≥ 1 called ORF: ``unestimated`` iff some called row is; else the max
+    """For any table with ≥ 1 called ORF: not estimated iff some called row is NA; else the max
     class FDR over called rows; dropping every uncalled row changes nothing on the card."""
     called = [f for _, _, k, f in rows if k]
     with tempfile.TemporaryDirectory() as d:
@@ -160,11 +167,11 @@ def test_b1_property_estimate_is_the_called_rows_bound(
         est = _part(_page(out_full), "novel_orfs", "estimate")
         assert est == _part(_page(out_only), "novel_orfs", "estimate"), rows
         assert _part(_page(out_full), "novel_orfs", "value") == str(len(called))
-    if "unestimated" in called:
-        assert "unestimated" in est, (rows, est)
+    if None in called:
+        assert NOT_EST in est, (rows, est)
     else:
-        bound = style.fmt_q(max(float(f) for f in called))  # M12-04: card numbers via fmt_q
-        assert bound in est and "unestimated" not in est, (rows, est)
+        bound = style.fmt_q(max(float(f) for f in called if f is not None))  # via fmt_q (M12-04)
+        assert bound in est and NOT_EST not in est, (rows, est)
 
 
 # ---------------------------------------------------------------- B2 operon card

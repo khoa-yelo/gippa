@@ -11,6 +11,8 @@ each is reversible):
 
 * ``novel_summary(df) -> {"n_rows", "by_class": {class: {called, unestimated, not_called}},
   "totals": {called, unestimated, not_called}}``; every class of the schema enum is present.
+  ``unestimated`` counts uncalled rows whose ``class_fdr`` is NA (M12-04 PR 11c: NA plus
+  ``class_fdr_unestimated`` replaces the word); ``class_error.unestimated`` counts NA rates.
 * ``variant_summary(df) -> {"alt": {alt_type: {high, candidate}}, "mixed",
   "class_error": {"numeric", "unestimated"}}``; ``alt`` counts ``call = ALT`` rows only, every
   type x confidence present; ``class_error`` counts every row of the table (ALT and mixed).
@@ -146,10 +148,10 @@ def _ex9_10(M: Any, tmp: Path, **kw: Any) -> dict[str, Any]:
 def test_novel_summary_buckets_by_class(M: Any, tmp_path: Path) -> None:
     rows = [
         orf(C1, "+", 100, "intergenic", called=True, class_fdr="0.01"),
-        orf(C1, "+", 400, "intergenic", called=True, class_fdr="unestimated"),  # called wins
-        orf(C1, "+", 700, "intergenic", called=False, class_fdr="unestimated"),
+        orf(C1, "+", 400, "intergenic", called=True, class_fdr=None),  # called wins
+        orf(C1, "+", 700, "intergenic", called=False, class_fdr=None),
         orf(C1, "-", 900, "sorf", called=False, class_fdr="0.2"),
-        orf(C1, "-", 1200, "antisense", called=False, class_fdr="unestimated"),
+        orf(C1, "-", 1200, "antisense", called=False, class_fdr=None),
         orf(C2, "+", 50, "nterm_extension", called=True, class_fdr="0.03"),
     ]
     out = fn(M, "novel_summary")(frame("novel_orfs", rows, tmp_path))
@@ -243,10 +245,10 @@ def test_metric6_without_a3_is_a3_not_run(M: Any, tmp_path: Path) -> None:
 
 
 def test_a3_numeric_class_error_rate_warns(M: Any, tmp_path: Path) -> None:
-    """§7.5.4: A3 has no spectrum pairing, so every ALT row should be ``unestimated``."""
+    """§7.5.4: A3 has no spectrum pairing, so every ALT row should be unestimated (NA)."""
     n2, n3 = example9_novel()
     v2, v3 = example10_variants()
-    v3[1]["class_error_rate"] = "0.05"
+    v3[1].update(class_error_rate="0.05", flags=None)  # estimated: no class_error_unestimated
     out = _metric6(
         M,
         tmp_path,
@@ -335,7 +337,7 @@ def test_duplicate_orf_key_in_one_arm_counted_once(M: Any, tmp_path: Path) -> No
 
 def test_any_row_set_includes_uncalled_rows(M: Any, tmp_path: Path) -> None:
     n2, n3 = example9_novel()
-    n2.append(orf(C2, "+", 3011, "intergenic", called=False, class_fdr="unestimated"))
+    n2.append(orf(C2, "+", 3011, "intergenic", called=False, class_fdr=None))
     v2, v3 = example10_variants()
     out = _metric6(
         M,
@@ -503,7 +505,7 @@ def test_overlap_set_identities(M: Any, tmp_path: Path, a: set[Any], b: set[Any]
         st.tuples(
             st.sampled_from(NOVEL_CLASSES),
             st.booleans(),
-            st.sampled_from(["unestimated", "0.01", "0.5"]),
+            st.sampled_from([None, "0.01", "0.5"]),  # None: NA, unestimated
         ),
         max_size=15,
     )
@@ -519,6 +521,8 @@ def test_novel_summary_buckets_partition_rows(M: Any, tmp_path: Path, rows: list
     for b in BUCKETS:
         assert out["totals"][b] == sum(v[b] for v in out["by_class"].values())
     assert out["totals"]["called"] == sum(k for _, k, _ in rows)
+    # M12-04 PR 11c: the unestimated bucket is the uncalled rows with an NA class FDR
+    assert out["totals"]["unestimated"] == sum(1 for _, k, f in rows if not k and f is None)
 
 
 # ------------------------------------------------------------------ hypothesis 4: definition 7

@@ -209,6 +209,18 @@ regulatory and sequence features → flags. For example `detected` moved from co
 `abundance_log2` from 61 to 27. The [tables reference](../reference/tables.md) lists the columns in
 their 1.1 order. Columns whose value is the same on every row are marked "run-level" there.
 
+### Type changes
+
+| Table | Column | 1.0 | 1.1 |
+|---|---|---|---|
+| `tables/variants.tsv` | `class_error_rate` | number or the word `unestimated` | number; `NA` when unestimated, and the row has the flag `class_error_unestimated` |
+| `tables/novel_orfs.tsv` | `class_fdr` | number or the word `unestimated` | number; `NA` when unestimated, and the row has the flag `class_fdr_unestimated` |
+
+A rate of exactly 0 or 1 stays a number. In `variants.vcf`, the `CLASS_ERR` INFO field is now
+`Type=Float` (it was `String`), with `.` when not estimated. A record with an unestimated allele
+carries `class_error_unestimated` in the VCF `FLAGS` field. Output folders written by 1.0 still
+read: an `unestimated` cell reads as `NA` and the row gets the flag.
+
 ### Flag changes
 
 | Flag | 1.0 | 1.1 |
@@ -216,6 +228,7 @@ their 1.1 order. Columns whose value is the same on every row are marked "run-le
 | `detectability_constant` | on every row of `genes.tsv` | once in `run_manifest.json` › `flags` (and the `detection_summary.tsv` overall row, as before) |
 | `cross_strain_protein` | on every protein hit whose ID is not a locus tag of the genome | only when such a hit is also not identical (`class` near or divergent) |
 | `foreign_protein_ids` | – | new run flag: the protein IDs come from a related annotation |
+| `class_error_unestimated` | – | new (`variants.tsv`): the row's `class_error_rate` is `NA` |
 
 ### Output folder
 

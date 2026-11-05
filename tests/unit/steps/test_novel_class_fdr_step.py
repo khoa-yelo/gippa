@@ -269,7 +269,8 @@ def test_side_table_columns_dtypes_and_row_order(
     tsv = _tsv(o)
     assert list(side["orf_id"]) == [r["orf_id"] for r in tsv]
     assert list(side["class"]) == [r["class"] for r in tsv]
-    assert list(side["class_fdr"]) == [r["class_fdr"] for r in tsv]
+    # the TSV text, null for NA (M12-04 PR 11c lead decision 3)
+    assert [_na(v) for v in side["class_fdr"]] == [r["class_fdr"] for r in tsv]
     assert [bool(x) for x in side["called"]] == [r["called"] == "true" for r in tsv]
 
 
@@ -291,7 +292,7 @@ def test_example_5_rev_locus_decoys_are_not_makedb(
     side = _side(c)
     assert set(side["regime"]) == {"unestimated"}
     assert set(side["reason"]) == {"decoys_not_makedb"}
-    assert set(side["class_fdr"]) == {"unestimated"}
+    assert side["class_fdr"].isna().all()  # NA: unestimated (M12-04 PR 11c)
     ev = _events(rc, MAKEDB_EVENT)
     assert len(ev) == 1 and ev[0].levelno == logging.WARNING
     assert dict(ev[0].data) == {"n_decoy_rows": n_dec}  # type: ignore[attr-defined]
@@ -403,7 +404,7 @@ def test_decisions_7_8_9_through_the_step(
     n0, n1 = side[role["n0"].orf_id], side[role["n1"].orf_id]  # decision 7
     assert (n0["fdr_class"], n0["reason"]) == ("nterm_extension", None)
     assert math.isfinite(n0["q"])
-    assert (n1["reason"], n1["class_fdr"]) == ("no_makedb_pair", "unestimated")
+    assert (n1["reason"], n1["class_fdr"]) == ("no_makedb_pair", None)  # NA (M12-04 PR 11c)
     assert "class_fdr_unestimated" in _flags(tsv[role["n1"].orf_id])
     for oid in set(side) - role["done"]:
         assert side[oid]["reason"] == "untagged_class", oid
@@ -618,7 +619,7 @@ def test_denovo_inputs_missing_warns_layer_missing(
     for x in anti:
         r = side[x.orf_id]
         assert (r["regime"], r["reason"], r["class_fdr"]) == (
-            "denovo_subgroup", "denovo_inputs_missing", "unestimated")  # fmt: skip
+            "denovo_subgroup", "denovo_inputs_missing", None)  # fmt: skip
     lm = [
         r
         for r in _events(rec, "novel_orfs.layer_missing")
@@ -637,7 +638,7 @@ def test_denovo_peptides_without_target_e_are_no_target_hit(
     o, _ = _run("novel_orfs", cfg1, _dn_ins(run1, cfg1, files), tmp_path / "o")
     side = _rows(o)
     assert side[a0.orf_id]["reason"] == "no_target_hit"
-    assert side[a0.orf_id]["class_fdr"] == "unestimated"
+    assert side[a0.orf_id]["class_fdr"] is None  # NA (M12-04 PR 11c)
     assert side[a1.orf_id]["reason"] is None
 
 
@@ -823,7 +824,7 @@ def test_b2_picked_n_targets_excludes_no_target_score(
     for oid, cls in ((ig.orf_id, "cds_outframe"), (a1.orf_id, "antisense")):
         r = side[oid]
         assert (r["regime"], r["fdr_class"], r["reason"], r["class_fdr"]) == (
-            "picked_decoy", cls, "no_target_score", "unestimated"), r  # fmt: skip
+            "picked_decoy", cls, "no_target_score", None), r  # fmt: skip
     a0 = side[role["a0"].orf_id]
     assert a0["reason"] == "lost_pick"
     evs = {(e.data["regime"], e.data["class"]): e.data for e in _events(rec, CLASS_EVENT)}  # type: ignore[attr-defined]

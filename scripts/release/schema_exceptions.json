@@ -16,7 +16,10 @@
       },
       "operon_flags": {"uniop_class": "pair_class", "flag": "flags"}
     },
-    "retyped": {},
+    "retyped": {
+      "variants": {"class_error_rate": "string (number or 'unestimated') -> number (NA + flag class_error_unestimated)"},
+      "novel_orfs": {"class_fdr": "string (number or 'unestimated') -> number (NA + flag class_fdr_unestimated)"}
+    },
     "reordered": ["genes"]
   }
 }
