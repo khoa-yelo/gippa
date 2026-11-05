@@ -571,12 +571,26 @@ def test_island_colours_and_hatches(tmp_path: Path, cfg: GippaConfig) -> None:
         assert style.ISLAND[direction][0].upper() in e.colours()
 
 
+def _track_colours(fig: Figure, track: str) -> set[str]:
+    els = elements(fig, track)
+    assert els, track
+    return set().union(*(e.colours() for e in els))
+
+
+#: colours a marker track must not use (M12-04 AC 7a.3): region arcs and detection status
+TAKEN = {c.upper() for c in (*style.REGION.values(), *style.DETECTION.values())}
+
+
 def test_tick_colours(tmp_path: Path, cfg: GippaConfig) -> None:
+    """M12-04 AC 7a.3: terminators black; promoter and terminator outside the region and
+    detection palettes and distinct; TU starts distinct from promoters (their colour is open)."""
     fig = render(full_run(tmp_path), cfg).figure
-    for track, colour in (("tu_start", BLACK), ("promoter", "#009E73"), ("terminator", "#D55E00")):
-        els = elements(fig, track)
-        assert els, track
-        assert all(colour in e.colours() for e in els), track
+    tu, prom, term = (_track_colours(fig, t) for t in ("tu_start", "promoter", "terminator"))
+    assert term == {BLACK}, term
+    assert len(prom) == 1, prom
+    assert not (prom | term) & TAKEN, sorted((prom | term) & TAKEN)
+    assert prom != term
+    assert not tu & prom, (tu, prom)
 
 
 def test_marker_styles(tmp_path: Path, cfg: GippaConfig) -> None:
@@ -589,7 +603,10 @@ def test_marker_styles(tmp_path: Path, cfg: GippaConfig) -> None:
     assert len(hollow) == 1 and BLACK in hollow[0].colours()
     orfs = elements(fig, "novel_orf")
     assert len(orfs) == 2
-    assert all("#CC79A7" in e.colours() for e in orfs)
+    novel_c = _track_colours(fig, "novel_orf")
+    assert len(novel_c) == 1, novel_c
+    assert not novel_c & TAKEN, novel_c  # M12-04 AC 7a.3
+    assert not novel_c & (_track_colours(fig, "promoter") | _track_colours(fig, "terminator"))
 
 
 def test_abundance_viridis_2nd_to_98th_percentile_na_and_imputed_white(

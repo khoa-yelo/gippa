@@ -98,6 +98,8 @@ RINGS = [
     "region", "gene_plus", "gene_minus", "abundance", "peptide_density", "tu_start",
     "promoter_terminator", "island", "gc_skew", "alt_site", "novel_orf",
 ]  # fmt: skip
+#: track and ring ids that are not plain words ("abundance" is both an id and the key label)
+INTERNAL = (set(RING_OF) | set(RINGS)) - {"abundance"}
 EXAMPLE_KEY = [
     (1, "genes (+)"),
     (2, "genes (−)"),
@@ -393,7 +395,7 @@ def test_key_labels_are_plain_words(fixture: str, request: pytest.FixtureRequest
     inst, _ = request.getfixturevalue(fixture)
     for _, label in key_entries(inst.figure):
         assert "_" not in label, label
-        assert label not in RING_OF, label
+        assert label not in INTERNAL, label  # a track or ring id other than a plain word
 
 
 # --- colour bar -----------------------------------------------------------------------------
