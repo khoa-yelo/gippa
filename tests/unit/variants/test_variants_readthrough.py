@@ -31,6 +31,8 @@ from gippa.steps.variants import run_variants
 from gippa.variants.vcf_records import minimal_alt_codon
 
 BODY, FLANK = "MSDKPLTEAGRWQLNEFK", "VPAGHTLDMRK"
+#: no paired reference rows here: every class error is NA and flagged (M12-04 PR 11c)
+CE = "class_error_unestimated"
 N = 3 * (len(BODY) + 1 + len(FLANK) + 1)  # 93
 
 
@@ -103,8 +105,8 @@ def only_site(table: pd.DataFrame) -> dict[str, Any]:
 @pytest.mark.parametrize(
     ("relation", "flags"),
     [
-        ("same", {"snv", "stop_codon"}),
-        ("related", {"snv", "strain_difference", "stop_codon"}),
+        ("same", {"snv", "stop_codon", CE}),
+        ("related", {"snv", "strain_difference", "stop_codon", CE}),
     ],
 )
 def test_example_1_ref_stop_alt_w(relation: str, flags: set[str]) -> None:
@@ -129,7 +131,11 @@ def test_example_12_window_ending_on_the_stop() -> None:
     assert (s, e) == (27, 57)
     _pile, table, records = run([_hit("GRWQLNEFKW", s, e)])
     r = only_site(table)
-    assert (int(r["codon_start"]), r["alt_aa"], set(r["flags"])) == (54, "W", {"snv", "stop_codon"})
+    assert (int(r["codon_start"]), r["alt_aa"], set(r["flags"])) == (
+        54,
+        "W",
+        {"snv", "stop_codon", CE},
+    )
     assert [(x.pos0, x.ref, x.alts) for x in records] == [(54, "TGA", ("TGG",))]
 
 
@@ -142,7 +148,7 @@ def test_minus_strand_stop_is_the_lowest_codon() -> None:
         "TGA",
         "W",
     )
-    assert set(r["flags"]) == {"snv", "stop_codon"}
+    assert set(r["flags"]) == {"snv", "stop_codon", CE}
     (rec,) = records
     assert (rec.pos0, rec.ref, rec.alts) == (36, rc("TGA"), (rc("TGG"),))
 
@@ -167,7 +173,7 @@ def test_standard_alt_over_each_stop_codon(stop: str, alt: str, cls: str) -> Non
     _pile, table, records = run([ex1(alt)], stop=stop)
     r = only_site(table)
     assert (r["ref_codon"], r["ref_aa"], r["alt_aa"], r["call"]) == (stop, "*", alt, "ALT")
-    assert set(r["flags"]) == {cls, "stop_codon"}
+    assert set(r["flags"]) == {cls, "stop_codon", CE}
     want, n = minimal_alt_codon(stop, alt)
     assert int(r["nt_changes"]) == n
     (rec,) = records
@@ -188,7 +194,7 @@ def test_u_over_tga_and_o_over_tag_are_unrepresentable_alts(
         "ALT",
         "candidate",
     )
-    assert set(r["flags"]) == {"stop_codon", "vcf_unrepresentable"}
+    assert set(r["flags"]) == {"stop_codon", "vcf_unrepresentable", CE}
     assert records == []
 
 
@@ -281,5 +287,5 @@ def test_example_19_strain_stop_loss_shape() -> None:
     )
     r = only_site(table)
     assert (r["alt_aa"], r["confidence"]) == ("Y", "candidate")
-    assert set(r["flags"]) == {"snv", "strain_difference", "stop_codon"}
+    assert set(r["flags"]) == {"snv", "strain_difference", "stop_codon", CE}
     assert [(x.pos0, x.ref, x.alts) for x in records] == [(54, "TAA", ("TAC",))]

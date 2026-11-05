@@ -13,8 +13,9 @@ Interface reading (test author; see the report to the lead):
   ``gippa.io.vcf.VcfRecord``\\ s (any order); ``table`` holds one row per ``sites`` row, same
   ``variant_id``\\ s in the same order, with ``nt_changes``, ``alt_codon_vcf`` and ``flags``.
 * M7-05 flags reach ``vcf_records`` as a ``flags`` column of tuples on ``sites``; a missing
-  column means no flags. A ``class_error_rate`` column (float or ``unestimated``) feeds
-  ``CLASS_ERR``; a missing column means ``unestimated``.
+  column means no flags. A ``class_error_rate`` column (float, NA when unestimated) feeds
+  ``CLASS_ERR``; a missing column means NA, written ``.``, and the row's ``flags`` gain
+  ``class_error_unestimated`` (M12-04 PR 11c).
 * A two-codon event (swap, 2<->2 block) gets ``POS`` = the lowest 1-based coordinate of its two
   codons (on ``-`` the site's ``codon_start`` is the peptide-order first codon, the higher one),
   ``AA_REF`` = the two REF residues and ``AA_ALT`` = the two ALT residues.
@@ -172,12 +173,12 @@ def test_example1_appendix_b7_record(tmp_path: Path) -> None:
     assert line == [
         "chr", "1001", ".", "GCT", "TCT", ".", "PASS",
         "GENE=NISS_00012;AA_POS=45;AA_REF=A;AA_ALT=S;CALL=ALT;CONF=high;NT_CHANGES=1;"
-        "ALT_TYPE=substitution;FLAGS=mass_equivalent|snv;CLASS_ERR=unestimated",
+        "ALT_TYPE=substitution;FLAGS=mass_equivalent|snv|class_error_unestimated;CLASS_ERR=.",
         "GT:AD:DP", "1:0,3:3",
     ]  # fmt: skip
     (row,) = site_row(table, "chr", 1000, "+")
     assert (int(row["nt_changes"]), row["alt_codon_vcf"]) == (1, "TCT")
-    assert flag_set(row["flags"]) == {"mass_equivalent", "snv"}
+    assert flag_set(row["flags"]) == {"mass_equivalent", "snv", "class_error_unestimated"}
 
 
 def test_example4_minus_strand_codon_conversion(tmp_path: Path) -> None:
@@ -219,7 +220,7 @@ def test_example6_multiallelic(tmp_path: Path) -> None:
     info = info_dict(line[7])
     assert info["AA_ALT"] == "D,E" and info["CONF"] == "high,candidate"
     assert info["NT_CHANGES"] == "1,2" and info["ALT_TYPE"] == "substitution,substitution"
-    assert info["CLASS_ERR"] == "unestimated,unestimated" and info["CALL"] == "ALT"
+    assert info["CLASS_ERR"] == ".,." and info["CALL"] == "ALT"
     assert line[4] == "GAT,GAA" and line[9] == "1:0,2,1:3"
     by_alt = {r["alt_aa"]: r for r in site_row(table, "chr", 1018, "+")}
     assert (by_alt["D"]["alt_codon_vcf"], int(by_alt["D"]["nt_changes"])) == ("GAT", 1)
@@ -321,7 +322,7 @@ def test_example10_origin_crossing_codon_flagged_not_written(codon: int) -> None
 def test_origin_crossing_keeps_m7_05_flags() -> None:
     _recs, table, _, _ = records(_c2_sub(999), {"flags": [("snv",)]})
     (row,) = site_row(table, "c2", 999, "+")
-    assert flag_set(row["flags"]) == {"snv", "vcf_unrepresentable"}
+    assert flag_set(row["flags"]) == {"snv", "vcf_unrepresentable", "class_error_unestimated"}
 
 
 def test_codon_ending_at_the_contig_end_is_representable(tmp_path: Path) -> None:
@@ -408,7 +409,8 @@ def test_gene_and_aa_pos_omitted_off_gene(tmp_path: Path) -> None:
 
 
 def test_flags_omitted_when_no_allele_has_one(tmp_path: Path) -> None:
-    for extra in (None, {"flags": [()]}):
+    rate = {"class_error_rate": [0.01]}  # an NA rate would add class_error_unestimated
+    for extra in (rate, {"flags": [()], **rate}):
         recs, *_ = records(peptides_at(GP, 44, sub(GP, 44, "S"), 1), extra)
         write(tmp_path / "v.vcf", recs)
         assert "FLAGS" not in info_dict(body_lines(tmp_path / "v.vcf")[0][7])
@@ -516,7 +518,7 @@ def test_example11_pysam_round_trip(tmp_path: Path, capfd: pytest.CaptureFixture
     assert w.ref == "TCTGAT" and w.alts == ("GATAGT",) and w.info["NT_CHANGES"] == (4,)
     assert ("c2", 1000, 3) not in by_pos and ("c2", 998, 3) in by_pos
     assert all(list(x.filter) == ["PASS"] for x in got)
-    assert all(x.info["CLASS_ERR"] == tuple("unestimated" for _ in x.alts) for x in got)
+    assert all(x.info["CLASS_ERR"] == tuple("." for _ in x.alts) for x in got)  # NA (PR 11c)
     text = path.read_text(encoding="utf-8")
     assert text.startswith("##fileformat=VCFv4.3\n")
     assert f"##source=gippa-{VERSION}\n" in text and f"##reference=sha256:{SHA}\n" in text

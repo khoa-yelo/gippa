@@ -235,8 +235,8 @@ def test_write_variants_b7_row(tmp_path: Path) -> None:
     (row,) = _lines(path)[1:]
     assert row == [
         "VAR_1", "chr", "1001", "+", "NISS_00012", "45", "GCT", "A", "S", "substitution",
-        "ALT", "high", "0", "3", "1", "TCT", "unestimated", "NA", "denovo",
-        "mass_equivalent;snv",
+        "ALT", "high", "0", "3", "1", "TCT", "NA", "NA", "denovo",
+        "mass_equivalent;snv;class_error_unestimated",
     ]  # fmt: skip
 
 
@@ -257,7 +257,8 @@ def test_write_variants_minus_and_origin_rows(tmp_path: Path) -> None:
     assert b12["alt_codon_vcf"] == "NA"
     (sw,) = [r for r in rows if r["alt_type"] == "swap"]
     assert (sw["alt_codon_vcf"], sw["nt_changes"]) == ("GATAGT", "4")
-    assert {r["class_error_rate"] for r in rows} == {"unestimated"}
+    assert {r["class_error_rate"] for r in rows} == {"NA"}  # unestimated (M12-04 PR 11c)
+    assert all("class_error_unestimated" in r["flags"].split(";") for r in rows)
     assert {r["class_error_n"] for r in rows} == {"NA"}
 
 
