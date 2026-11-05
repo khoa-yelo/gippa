@@ -374,3 +374,18 @@ def test_property_nothing_local_survives(
         assert PurePosixPath(path).name in got
     assert not [p for p in profile if p in got], got
     assert "<profile>" in got
+
+
+@pytest.mark.parametrize(
+    "args",
+    [
+        ["--set=db.url=https://host/x/y.fa"],
+        ["--set", "k=[s3://bucket/key,https://h/p]"],
+        ["--set", "k='ftp://h/a/b'"],
+        ["https://host/x"],
+    ],
+)
+def test_urls_stay_unchanged(args: list[str]) -> None:
+    """Lead decision (review r1): a ``scheme://`` URL is not a local path; nothing in it is
+    rewritten."""
+    assert redact(args) == redact([]) + " " + " ".join(args)
