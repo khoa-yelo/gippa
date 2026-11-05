@@ -40,7 +40,8 @@ Interface assumed (test-author, PR 7a; the spec leaves these open):
   start (as in M9 decision 19); the fixtures place ALT codons and novel ORFs wholly inside one
   bin so any position rule gives the same bin. At most 500 rows: one row per marker, as in 1.0.
 - **End tick.** On a single circular replicon, the 0 tick reads ``"0"`` and the end label that
-  equals the length (``"200 kb"`` on 200 kb) is not drawn; a linear replicon keeps its end label.
+  equals the length rounded to the tick unit (``"200 kb"`` on 200 kb) is not drawn; a linear
+  replicon keeps its end label (review round 1: ``test_m12_04_pr7a_review1.py``).
 """
 
 from __future__ import annotations
@@ -597,18 +598,19 @@ def test_terminator_key_entry_is_black(full_inst: tuple[Instance, pd.DataFrame])
 
 
 def test_ac7a4_round_circular_length_is_not_labelled_at_angle_0(
-    a_inst: tuple[Instance, pd.DataFrame],
+    a_inst: tuple[Instance, pd.DataFrame], tmp_path: Path, cfg: GippaConfig
 ) -> None:
     inst, _ = a_inst
     shown = texts(inst.figure)
     assert "200 kb" not in shown, "the end label equals the length and sits on the 0 tick"
     ax = polar(inst.figure)
+    origin = calibrate(tmp_path, cfg, A_REP, "chr1").theta(0)  # a gap may move it off 0 rad
     at0 = [
         t.get_text()
         for t in ax.texts
         if t.get_visible()
         and t.get_text().strip()
-        and angle(float(t.get_position()[0]), 0.0) < 1e-3
+        and angle(float(t.get_position()[0]), origin) < 1e-3
     ]
     lengths = [t for t in at0 if UNIT.match(t.strip())]
     assert lengths == [], at0
