@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import math
 import re
-from collections.abc import Collection, Mapping
+from collections.abc import Collection, Mapping, Sequence
 from importlib import resources
 from pathlib import PurePosixPath
 from typing import Any
@@ -344,11 +344,12 @@ def _tools(doc: Mapping[str, Any]) -> list[list[str]]:
 _SHORT_PATH = re.compile(r"-[A-Za-z]/")
 
 
-def _local_path(arg: str, outdir: str) -> str:
+def _local_path(arg: str, outdir: str, redact: bool = False) -> str:
     """``arg`` without an absolute local path (M9-02 behaviour 6, §6.6; #323 B1): a path under
-    the run's ``outdir`` as ``OUT/<relative>``, any other absolute path as its file name. The
-    path may be the whole token, follow its last ``=``, be an item of a comma list, or be
-    attached to a short option (``-o/x``); relative parts are unchanged."""
+    the run's ``outdir`` as ``OUT/<relative>``, any other absolute path as its file name (with
+    ``redact``: ``<outdir>/<relative>`` and ``<input>/<file name>``, M12-04 PR 13). The path may
+    be the whole token, follow its last ``=``, be an item of a comma list, or be attached to a
+    short option (``-o/x``); relative parts are unchanged."""
     if arg.startswith("/"):
         head, value = "", arg
     elif _SHORT_PATH.match(arg):
@@ -356,22 +357,69 @@ def _local_path(arg: str, outdir: str) -> str:
     else:
         cut = arg.rfind("=") + 1
         head, value = arg[:cut], arg[cut:]
-    return head + ",".join(_shown_path(item, outdir) for item in value.split(","))
+    return head + ",".join(_shown_path(item, outdir, redact) for item in value.split(","))
 
 
-def _shown_path(value: str, outdir: str) -> str:
-    """One path item: ``OUT/<relative>`` under ``outdir``, else the file name if absolute."""
+def _shown_path(value: str, outdir: str, redact: bool = False) -> str:
+    """One path item: ``OUT/<relative>`` under ``outdir``, else the file name if absolute;
+    with ``redact`` ``<outdir>/<relative>`` and ``<input>/<file name>``."""
     if not value.startswith("/"):
         return value
     path, out = PurePosixPath(value), PurePosixPath(outdir) if outdir.startswith("/") else None
     if out is not None and (path == out or out in path.parents):
-        return str(PurePosixPath("OUT", path.relative_to(out)))
+        return str(PurePosixPath("<outdir>" if redact else "OUT", path.relative_to(out)))
+    if redact:
+        return str(PurePosixPath("<input>", path.name))
     return path.name or value
 
 
-def _command_line(doc: Mapping[str, Any]) -> str:
-    """The manifest's ``command_line`` joined by single spaces, absolute paths made local."""
+#: a URL (left unchanged) or a path: a ``/`` at the start or after ``=``, ``,``, ``[``, ``{``,
+#: whitespace, a quote or ``:``, running to the next ``,``, ``]``, ``}``, quote or whitespace
+_STOP = r",\]}'\"\s"
+_URL = rf"[A-Za-z][A-Za-z0-9+.\-]*://[^{_STOP}]*"
+_ARG_PATH = re.compile(rf"(?P<url>{_URL})|(?:^|(?<=[=,\[{{\s'\":]))/[^{_STOP}]*")
+#: the same in prose (an unreadable-table note): also after ``(``, also ending at ``)``
+_NOTE_PATH = re.compile(rf"(?P<url>{_URL})|(?:^|(?<=[=,\[{{(\s'\":]))/[^{_STOP})]*")
+
+
+def _redact_paths(text: str, outdir: str, pattern: re.Pattern[str] = _ARG_PATH) -> str:
+    """``text`` with every path of ``pattern`` redacted (``_shown_path``); URLs unchanged."""
+    return pattern.sub(lambda m: m[0] if m["url"] else _shown_path(m[0], outdir, True), text)
+
+
+def redact_note(text: str, outdir: str) -> str:
+    """An unreadable-table note for ``gippa report --redact``: its absolute paths rewritten as
+    in ``redact_command_line`` (a path may also follow ``(`` and end at ``)``)."""
+    return _redact_paths(text, outdir, _NOTE_PATH)
+
+
+def redact_command_line(args: Sequence[str], outdir: str) -> str:
+    """``args`` joined by single spaces for a shareable report (``gippa report --redact``,
+    R-09): every absolute path as ``<input>/<file name>``, a path under ``outdir`` as
+    ``<outdir>/<relative>`` (``<outdir>`` itself), the ``--profile`` value as ``<profile>``
+    (next token or after ``--profile=``); relative arguments and URLs are unchanged. A path
+    starts a token, follows ``=`` (``--set=k=/a=b/c`` is the path ``/a=b/c``), ``,``, ``[``,
+    ``{``, a space, a quote or ``:``, or is attached to a short option (``-o/x``); it runs to
+    the next ``,``, ``]``, ``}``, quote or whitespace (review r1 M1)."""
+    shown, prev = [], ""
+    for arg in map(str, args):
+        if prev == "--profile":
+            shown.append("<profile>")
+        elif arg.startswith("--profile="):
+            shown.append("--profile=<profile>")
+        else:
+            cut = 2 if _SHORT_PATH.match(arg) else 0
+            shown.append(arg[:cut] + _redact_paths(arg[cut:], outdir))
+        prev = arg
+    return " ".join(shown)
+
+
+def _command_line(doc: Mapping[str, Any], redact: bool = False) -> str:
+    """The manifest's ``command_line`` joined by single spaces, absolute paths made local
+    (``redact``: ``redact_command_line``)."""
     outdir = str(doc.get("outdir") or "")
+    if redact:
+        return redact_command_line([str(a) for a in doc.get("command_line") or []], outdir)
     return " ".join(_local_path(str(a), outdir) for a in doc.get("command_line") or [])
 
 
@@ -380,9 +428,12 @@ def licence_notes(doc: Mapping[str, Any] | None) -> list[str]:
     return [str(n) for n in _list((doc or {}).get("licence_notes")) if isinstance(n, str)]
 
 
-def provenance(view: RunView, doc: Mapping[str, Any] | None, note: str | None) -> dict[str, Any]:
+def provenance(
+    view: RunView, doc: Mapping[str, Any] | None, note: str | None, redact: bool = False
+) -> dict[str, Any]:
     """Provenance (M9-16 behaviour 6; lead decisions 1, 7, 8): from ``run_manifest.json`` when it
-    is readable, else the pass-1 subset (preflight SHA-256s) with a note."""
+    is readable, else the pass-1 subset (preflight SHA-256s) with a note; ``redact`` rewrites
+    the command line only (M12-04 PR 13)."""
     rows = doc.get("inputs") if doc is not None else (view.preflight() or {}).get("inputs")
     inputs = [[str(i.get("file", "")).replace("\\", "/").rsplit("/", 1)[-1],
                str(i.get("role", "")), str(i.get("sha256", ""))]
@@ -405,7 +456,7 @@ def provenance(view: RunView, doc: Mapping[str, Any] | None, note: str | None) -
     lines = [
         ("GIPPA version", str(doc.get("gippa_version", NOT_RECORDED))),
         ("commit", f"{doc.get('git_commit') or NOT_RECORDED}{dirty}"),
-        ("command line", _command_line(doc) or NOT_RECORDED),
+        ("command line", _command_line(doc, redact) or NOT_RECORDED),
         ("seed", str(seeds.get("master")) if isinstance(seeds, Mapping) else NOT_RECORDED),
         ("KEGG retrieval date", kegg_line),
         ("GO release", ", ".join(go) or NOT_RECORDED),
