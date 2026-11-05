@@ -10,6 +10,21 @@ conditional Poisson-binomial (ADR-0029). The `ora` suite and attack 2 are M8-15'
 implemented**. The **method is not yet approved as a calibrated test**: the mean-odds Wallenius
 null fails the §8.4 ORA null and attack 2 (see "Calibration evidence"). See Sign-off.
 
+## Report text
+
+The block below is copied into the run report's Methods section by `scripts/dev/sync_report_snippets.py` (plain paragraphs and lists only).
+
+<!-- report:begin -->
+Detection enrichment asks whether a function category (GO, KEGG, COG) holds more or
+fewer detected transcription units (TUs) than expected. A TU is detected when any of its genes is,
+and its detection probability comes from the detectability model. The p-value is exact under the
+law of detected TUs in the category given the run's total, with Benjamini-Hochberg q per
+collection and direction; for GO over-representation, TUs of significant child terms are removed
+from their parents first. The effect is detected minus expected TUs. These p-values are not
+calibrated and are not discovery claims. The category summary compares detected and expected
+genes, with a TU-block bootstrap interval.
+<!-- report:end -->
+
 ## Wallenius ORA
 
 ### Quantities

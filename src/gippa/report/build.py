@@ -507,7 +507,7 @@ def build_report(
         toc=head.toc(view, entries), not_applicable=[(n, r) for _, n, r in absent],
         not_applicable_heading=NOT_APPLICABLE, glossary=content.GLOSSARY,
         provenance=content.provenance(view, doc, note), extras=content.extras(view, doc),
-        warnings=content.summary_warnings(view), snippets=content.snippets(),
+        warnings=content.summary_warnings(view), snippets=content.methods_snippets(view, doc),
         code_note=content.genetic_code_note(table),
         code_methods=content.genetic_code_methods(table),
         licence_notes=content.licence_notes(doc),

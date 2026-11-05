@@ -2,6 +2,20 @@
 
 Module 8 track R (GIPPA_SPEC.md §7.8). Issues M8-07 onward; this note grows with each.
 
+## Report text
+
+The block below is copied into the run report's Methods section by `scripts/dev/sync_report_snippets.py` (plain paragraphs and lists only).
+
+<!-- report:begin -->
+The determinants model asks how much of the variation in log2 abundance the
+gene's features explain, in blocks: transcription, translation, codon use, protein and genomic
+context. An elastic net and LightGBM are fitted with cross-validation over transcription units.
+The elastic net's drop in R² when a block is removed is the primary attribution; SHAP values
+describe the LightGBM fit only. Permuting whole transcription units gives a p-value for the model
+R², which is uncalibrated and not a discovery claim. Genes whose abundance lies more than two SD
+from the prediction are flagged. With fewer than 100 genes, no model is fitted.
+<!-- report:end -->
+
 ## Features
 
 Issue M8-07, module `gippa.determinants.features` (pure). `feature_frame` builds

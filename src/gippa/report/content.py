@@ -416,13 +416,94 @@ def provenance(view: RunView, doc: Mapping[str, Any] | None, note: str | None) -
     return {**base, "lines": lines, "tools": _tools(doc), "databases": dbs}
 
 
-def snippets() -> list[tuple[str, Markup]]:
-    """``(topic, html)`` of every methods snippet (package data, generated from
-    ``docs/methods`` by scripts/dev/sync_report_snippets.py), by topic."""
-    files = resources.files("gippa.report").joinpath("snippets")
-    found = [f for f in files.iterdir() if f.name.endswith(".html")]
-    return [(f.name[: -len(".html")], Markup(f.read_text(encoding="utf-8")))
-            for f in sorted(found, key=lambda f: f.name)]  # fmt: skip
+#: methods topic -> (its heading, the steps whose run shows it, the tables that show it when the
+#: manifest lists no steps); the report shows them in this order, after the run's tier (R-07)
+METHOD_TOPICS: Mapping[str, tuple[str, tuple[str, ...], tuple[str, ...]]] = {
+    "placement-fdr": ("Placement FDR", ("placement",), ("mapping_fdr",)),
+    "denovo-precision": ("De novo precision", ("placement",), ("mapping_fdr",)),
+    "abundance": ("Abundance", ("gene_table",), ("genes_tsv",)),
+    "operons": ("Operons", ("operon_pairs", "operons"), ("pairs", "operons", "operon_flags")),
+    "islands": ("Islands", ("context_stats",), ("islands",)),
+    "variants": ("Variants", ("variants",), ("variants",)),
+    "novel-orfs": ("Novel ORFs", ("novel_orfs",), ("novel_orfs",)),
+    "function": ("Function enrichment", ("function",),
+                 ("enrichment_detection", "enrichment_gsea", "category_summary")),
+    "determinants": ("Determinants", ("determinants",), ("determinants_model",)),
+}  # fmt: skip
+#: detection tier -> the heading of its methods snippet
+TIER_TITLES: Mapping[str, str] = {
+    "decoy_picked": "Detection tier: picked decoys",
+    "mayu": "Detection tier: MAYU",
+    "two_peptide": "Detection tier: two peptides",
+    "protein_list": "Detection tier: protein list",
+}
+
+
+def _snippet(stem: str) -> Markup | None:
+    """The package-data snippet ``<stem>.html`` (generated from ``docs/methods`` by
+    scripts/dev/sync_report_snippets.py), or ``None``."""
+    path = resources.files("gippa.report").joinpath("snippets", f"{stem}.html")
+    return Markup(path.read_text(encoding="utf-8")) if path.is_file() else None
+
+
+def _steps_run(doc: Mapping[str, Any] | None) -> frozenset[str] | None:
+    """The steps the manifest lists as run (not failed); ``None`` without a ``steps`` list."""
+    steps = doc.get("steps") if isinstance(doc, Mapping) else None
+    if not isinstance(steps, list):
+        return None
+    return frozenset(str(s.get("name")) for s in steps
+                     if isinstance(s, Mapping) and s.get("status") != "failed")  # fmt: skip
+
+
+def _run_tier(view: RunView, doc: Mapping[str, Any] | None) -> str | None:
+    """The manifest's ``detection_tier``, else the first one ``genes.tsv`` carries."""
+    tier = doc.get("detection_tier") if isinstance(doc, Mapping) else None
+    if tier is None:
+        genes = _safe(view, "genes_tsv")
+        if genes is not None and "detection_tier" in genes.columns:
+            tier = next(iter(genes["detection_tier"].dropna()), None)
+    return None if tier is None else str(tier)
+
+
+def _has_denovo(view: RunView) -> bool:
+    """Whether the run placed de novo peptides (or wrote de novo precision rows)."""
+    hits, fdr = _safe(view, "peptide_hits"), _safe(view, "mapping_fdr")
+    return bool((hits is not None and "source" in hits.columns
+                 and (hits["source"] == "denovo").any())
+                or (fdr is not None and "section" in fdr.columns
+                    and (fdr["section"] == "denovo_precision").any()))  # fmt: skip
+
+
+def _has_abundance(view: RunView) -> bool:
+    genes = _safe(view, "genes_tsv")
+    if genes is None or "abundance_log2" not in genes.columns:
+        return False
+    vals = pd.to_numeric(genes["abundance_log2"], errors="coerce")
+    return bool(vals.map(lambda v: math.isfinite(float(v))).any())
+
+
+def methods_snippets(view: RunView, doc: Mapping[str, Any] | None) -> list[dict[str, Any]]:
+    """The Methods section's snippets (R-07): the run's tier, then each topic of
+    ``METHOD_TOPICS`` whose step ran (the manifest's ``steps``; a run without them: whose table
+    is present). De novo precision also needs de novo peptides and abundance a finite
+    ``abundance_log2``. Each: ``topic`` (the snippet's file stem), ``title``, ``body`` and
+    ``link`` (its methods page)."""
+    ran = _steps_run(doc)
+    tier = _run_tier(view, doc) or ""
+    picked = [(f"detection-tiers.{tier}", TIER_TITLES[tier])] if tier in TIER_TITLES else []
+    checks = {"denovo-precision": _has_denovo, "abundance": _has_abundance}
+    for topic, (title, steps, tables) in METHOD_TOPICS.items():
+        shown = (any(s in ran for s in steps) if ran is not None
+                 else any(view.has(t) for t in tables))  # fmt: skip
+        if shown and checks.get(topic, lambda _v: True)(view):
+            picked.append((topic, title))
+    out = []
+    for stem, title in picked:
+        body = _snippet(stem)
+        if body is not None:
+            topic = stem.split(".", 1)[0]
+            out.append({"topic": stem, "title": title, "body": body, "link": methods_url(topic)})
+    return out
 
 
 def model_fitted(model: pd.DataFrame | None) -> bool:

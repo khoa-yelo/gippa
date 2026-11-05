@@ -7,6 +7,21 @@ Implements `gippa.genetable.abundance` (`peptide_abundance`, `protein_abundance`
 so it has no p-values, no test family (§8.1) and no CI. Uncertainty enters downstream through
 rank-based statistics, TU-block resampling and the `basic`/`full` sensitivity reruns (§8.6).
 
+## Report text
+
+The block below is copied into the run report's Methods section by `scripts/dev/sync_report_snippets.py` (plain paragraphs and lists only).
+
+<!-- report:begin -->
+Gene abundance is the relative molar amount of each gene's protein in this sample,
+known only up to one constant per run: ratios and ranks between genes carry meaning, absolute
+values do not, and runs cannot be compared without normalisation. With peptide intensities, the
+default is iBAQ, the summed intensity of a gene's quantified peptides divided by its number of
+theoretically observable peptides (Top3, the mean of the three largest intensities, is the
+alternative). Otherwise a supplied protein table is used. Values are log2. A detected gene without
+a quantified value is filled with the run median by default; a gene that is never detected is
+never filled.
+<!-- report:end -->
+
 ## What is estimated
 
 The aim is the relative molar amount of each gene's protein in a single sample, known only up to
