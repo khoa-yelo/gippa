@@ -9,6 +9,10 @@ larger outlined markers, one shape per flag. Per the M9-11 lead decisions: ``gen
 upstream gene on both strands (``pairs.tsv`` is in transcription order), pairs flagged
 ``abundance_imputed`` are left out of (a) and (c), and the title's ``k`` counts the
 ``operon_flags.tsv`` rows with ``q ≤ alpha``.
+
+M12-04 PR 4 (P-11): with nothing to draw in any panel the plot is one empty state; the title,
+the (c) title and the legends name only the classes drawn ("OP (same operon)"); OP is drawn
+above NO at alpha 0.6.
 """
 
 from __future__ import annotations
@@ -47,10 +51,14 @@ DENSITY_CLASSES = ("OP", "NO", "CV", "SW")
 CLASS_COLOUR: Mapping[str, str] = MappingProxyType(
     {
         "OP": style.OKABE_ITO["blue"],
-        "NO": style.OKABE_ITO["orange"],
-        "CV": style.OKABE_ITO["bluish_green"],
+        "NO": "#009E73",  # bluish green: not a detection colour (P-11)
+        "CV": style.OKABE_ITO["vermillion"],
         "SW": style.OKABE_ITO["reddish_purple"],
     }
+)
+#: legend words per pair class (P-11)
+CLASS_NAME: Mapping[str, str] = MappingProxyType(
+    {"OP": "same operon", "NO": "non-operon", "CV": "convergent", "SW": "sandwiched"}
 )
 #: the 7 §7.4.5 flags -> marker shapes (panel c)
 FLAG_MARKERS: Mapping[str, str] = MappingProxyType(
@@ -67,6 +75,9 @@ FLAG_MARKERS: Mapping[str, str] = MappingProxyType(
 N_BINS = 30
 GREY = "#555555"
 EMPTY_PAIRS = "No gene pairs in this run"
+#: every panel would be empty (no abundance): one empty state (P-11)
+EMPTY_MEASURED = "No measured operon pairs: partner comparisons need abundance."
+OP_ALPHA = 0.6
 NOTE_B = "lfdr ranks pairs; flags use q"
 THRESHOLD_LABEL = "flag threshold (q)"
 _SMALL, _LARGE = 10.0, 36.0  # panel (c) marker areas (pt²)
@@ -211,10 +222,16 @@ def title(meds: Mapping[str, float], k: int, alpha: float, n: int | None = None)
         flagged = f"{k} of {n} candidate flags at q ≤ {style.fmt_alpha(alpha)}"
     else:
         flagged = f"{k} pairs flagged at q ≤ {style.fmt_alpha(alpha)}"
-    if any(math.isnan(meds.get(c, math.nan)) for c in ("OP", "NO")):
-        return f"{flagged}; too few measured pairs for densities"
-    op, no = style.fmt_num(meds["OP"]), style.fmt_num(meds["NO"])
-    return f"Median |Δ| OP {op} vs NO {no} log2; {flagged}"
+    shown = [c for c in ("OP", "NO") if not math.isnan(meds.get(c, math.nan))]
+    if not shown:
+        return flagged[0].upper() + flagged[1:]
+    parts = " vs ".join(f"{c} {style.fmt_num(meds[c])}" for c in shown)
+    return f"Median |Δ| {parts} log2; {flagged}"
+
+
+def class_label(c: str) -> str:
+    """``"OP (same operon)"``: the class code and its words."""
+    return f"{c} ({CLASS_NAME[c]})" if c in CLASS_NAME else c
 
 
 def _empty(ax: Axes, message: str) -> None:
@@ -231,7 +248,7 @@ def _panel_a(ax: Axes, a: pd.DataFrame, bins: np.ndarray, lab: str) -> None:
     for c in DENSITY_CLASSES:
         dens = _floats(hist.loc[hist["class"] == c, "density"])
         if len(dens):
-            label = f"{c} (n = {counts.get(c, 0)})"
+            label = f"{class_label(c)}, n = {counts.get(c, 0)}"
             ax.stairs(dens, bins, color=CLASS_COLOUR[c], linewidth=1.0, label=label)
     ax.set_xlim(0.0, float(bins[-1]))
     ax.set_xlabel(f"|Δ| partner {lab}")
@@ -269,10 +286,14 @@ def _panel_c(ax: Axes, c: pd.DataFrame, alpha: float, lab: str) -> None:
     if hi <= lo:
         lo, hi = lo - 1.0, hi + 1.0
     ax.plot([lo, hi], [lo, hi], color=style.OKABE_ITO["grey"], linewidth=0.6, linestyle=":")
-    for k in ("OP", "NO"):
+    drawn = [k for k in ("NO", "OP") if (cls == k).any()]
+    for k in drawn:  # OP last and above NO, half transparent (P-11)
         sel = (cls == k) & ~hit
         if sel.any():
-            ax.scatter(x[sel], y[sel], s=_SMALL, c=CLASS_COLOUR[k], linewidths=0, label=k, zorder=2)
+            op = k == "OP"
+            ax.scatter(x[sel], y[sel], s=_SMALL, c=CLASS_COLOUR[k], linewidths=0,
+                       label=class_label(k), zorder=2.5 if op else 2,
+                       alpha=OP_ALPHA if op else None)  # fmt: skip
     for f, marker in FLAG_MARKERS.items():
         sel = hit & (flag == f)
         if sel.any():
@@ -292,14 +313,14 @@ def _panel_c(ax: Axes, c: pd.DataFrame, alpha: float, lab: str) -> None:
     handles, labels = ax.get_legend_handles_labels()
     ax.get_figure(root=True).legend(  # type: ignore[union-attr]
         handles,
-        [f"(c) {t}" for t in labels],
+        labels,
         frameon=False,
         loc="lower center",
         bbox_to_anchor=(0.5, 0.0),
         ncol=min(len(labels), 5),
         fontsize=6,
     )
-    ax.set_title("(c) partners (OP, NO)", loc="left")
+    ax.set_title(f"(c) partners ({', '.join(drawn[::-1])})", loc="left")
 
 
 @base.plot("V11", "operon_pairs", needs=("pairs",), optional=("operon_flags", "genes_tsv"))
@@ -315,6 +336,8 @@ def operon_pairs(view: RunView, cfg: GippaConfig) -> list[base.Instance] | base.
     sub = {p: data[data["panel"] == p] for p in ("a", "b", "c")}
     cls, absd, measured = _measured(pairs)
     bins = edges(absd[measured & np.isin(cls, DENSITY_CLASSES)])
+    if not (sub["a"]["bin"].notna().any() or len(sub["b"]) or len(sub["c"])):
+        return [base.empty_state("V11", "operon_pairs", EMPTY_MEASURED, COLUMNS, "double")]
     k = 0 if flags is None else int((_floats(flags["q_value"]) <= alpha).sum())
     fig = style.new_figure("double", 3.0)
     fig.set_label("V11_operon_pairs")

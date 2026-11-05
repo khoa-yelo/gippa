@@ -44,7 +44,9 @@ STATUS_COLOUR = {
 COUNT_COLUMNS = ("class", "status", "n", "class_fdr_max_called")
 INDEX_COLUMNS = ("rank", "orf_id", "rendered")
 TOP_N = 20
-EMPTY = "No novel ORF candidates in this run"
+#: the empty state (M12-04 PR 4, P-14)
+EMPTY = ("Nothing to show: no novel ORF candidates in this run. Peptides that map outside "
+         "the annotated genes would give candidates.")  # fmt: skip
 _OPTIONAL = ("genes_tsv", "peptide_hits", "promoters_bed", "terminators_bed", "regions_tsv",
              "islands")  # fmt: skip
 

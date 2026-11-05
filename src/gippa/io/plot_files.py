@@ -28,8 +28,8 @@ import matplotlib
 import matplotlib.image
 import numpy as np
 
-from gippa.io.tsv import write_tsv
-from gippa.viz.base import Instance
+from gippa.io.tsv import read_tsv, write_tsv
+from gippa.viz.base import DataTable, Instance
 
 #: per-format ``savefig`` metadata that removes dates and software strings
 METADATA: dict[str, dict[str, Any]] = {
@@ -107,14 +107,19 @@ def write_instance(
             else:
                 inst.figure.savefig(path, format=fmt, dpi=dpi, metadata=meta)
             written.append(path)
-    tsv = plots_dir / "data" / f"{base}.tsv"
+    written.append(write_data(inst, pid, name, plots_dir))
+    return written
+
+
+def write_data(inst: Instance | DataTable, pid: str, name: str, plots_dir: Path) -> Path:
+    """Write ``data/<stem>.tsv`` of an instance or an image-free ``DataTable``; returns it."""
+    tsv = plots_dir / "data" / f"{stem(pid, name, inst.suffix)}.tsv"
     tsv.parent.mkdir(parents=True, exist_ok=True)
     frame = inst.data.copy()
     for col in inst.coords:
         frame[col] = frame[col] + 1
     write_tsv(tsv, [str(c) for c in frame.columns], frame.itertuples(index=False, name=None))
-    written.append(tsv)
-    return written
+    return tsv
 
 
 def read_png(src: Path | BinaryIO) -> np.ndarray:
@@ -175,6 +180,8 @@ class InstanceFiles:
     data: str | None
     #: an empty-state instance (``data-empty="true"`` on the SVG root): nothing was drawn
     empty: bool = False
+    #: a data TSV with no image (``DataTable``): its header and rows, NA as ``None``
+    table: tuple[list[str], list[list[str | None]]] | None = None
 
 
 @dataclass(frozen=True)
@@ -200,12 +207,15 @@ def read_plot_files(plots_dir: Path) -> dict[str, PlotFiles]:
         by = stems[name]
         svg = by.get("svg")
         text = (plots_dir / svg[0]).read_text(encoding="utf-8") if svg else None
+        images = tuple(by[f][0] for f in IMAGE_FORMATS if f in by)
+        data = by["tsv"][0] if "tsv" in by else None
         inst = InstanceFiles(
             stem=name,
             svg=text,
-            images=tuple(by[f][0] for f in IMAGE_FORMATS if f in by),
-            data=by["tsv"][0] if "tsv" in by else None,
+            images=images,
+            data=data,
             empty=text is not None and svg_empty(text),
+            table=read_tsv(plots_dir / data) if data and not images else None,
         )
         out.setdefault(name[:3], []).append(inst)
     return {pid: PlotFiles(pid, tuple(insts)) for pid, insts in sorted(out.items())}

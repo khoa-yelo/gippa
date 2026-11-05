@@ -7,6 +7,11 @@ floor); (b) the per-m ``fdr_stratum`` (``length_class = all``) with a dashed lin
 floor; (c) de novo precision per score bin with its CI, only with ``denovo_precision`` rows.
 Panels (a) and (b) use the ``reverse`` rows, or the ``shuffle`` rows when only those have targets
 (M9-05 lead decision 3). The title is built from the panel (b) rows (index decision 5).
+
+Degenerate states (M12-04 PR 4, P-02/P-03): no tolerant targets and no de novo rows is one empty
+state; no tolerant targets with de novo rows collapses (a) and (b) to one text line; when every
+de novo bin is ``c_assumed``, (c) draws no points (the ``drawn`` data column says so) and states
+the assumed c; NA strata of (b) share one note.
 """
 
 from __future__ import annotations
@@ -36,6 +41,7 @@ COLUMNS = (
     "ci_low",
     "ci_high",
     "flags",
+    "drawn",
 )
 TARGET = style.OKABE_ITO["blue"]
 DECOY = style.OKABE_ITO["vermillion"]
@@ -43,6 +49,10 @@ FOOTNOTE = "c assumed 0.99 (no reference peptides)"
 EMPTY = "no peptide placements"
 #: the whole-figure empty state (``base.empty_state``) when ``mapping_fdr`` has no rows at all
 EMPTY_TITLE = "No peptide placements or de novo precision in this run"
+#: the tolerant route had no targets (P-02): the empty state and the collapsed (a)/(b) line
+NOT_NEEDED = "the tolerant-route FDR is not needed"
+#: panel (c) when every bin is ``c_assumed`` (P-03); ``{c}`` is the assumed value
+ASSUMED = "De novo precision not measured (no reference peptides); assumed c = {c}"
 _FLOOR_A = 0.5  # panel (a) log-axis floor: 0 counts are drawn here
 
 
@@ -82,7 +92,29 @@ def _row(
     hi: object = None,
     flags: object = None,
 ) -> list[object]:
-    return [panel, lc, m, score_bin, metric, *(_py(v) for v in (value, lo, hi, flags))]
+    return [panel, lc, m, score_bin, metric, *(_py(v) for v in (value, lo, hi, flags)), True]
+
+
+def _assumed(flags: object) -> bool:
+    return "c_assumed" in str(_py(flags) or "").split(";")
+
+
+def exact_only(fdr: pd.DataFrame) -> bool:
+    """Placement rows exist but none has tolerant-route targets (P-02)."""
+    rows = fdr[fdr["section"] == "placement"]
+    return (
+        bool(len(rows))
+        and not pd.to_numeric(rows["targets"], errors="coerce").fillna(0).gt(0).any()
+    )
+
+
+def exact_label(hits: pd.DataFrame | None) -> str:
+    """``"All 774 peptides placed by exact match"`` from ``peptide_hits`` (distinct peptides)."""
+    if hits is None or "peptide" not in hits.columns or not len(hits):
+        return "All peptides placed by exact match"
+    n = int(hits["peptide"].dropna().astype(str).nunique())
+    noun = "peptide" if n == 1 else "peptides"
+    return f"All {style.fmt_count(n)} {noun} placed by exact match"
 
 
 def data_frame(fdr: pd.DataFrame, classes: Sequence[str]) -> pd.DataFrame:
@@ -120,7 +152,13 @@ def data_frame(fdr: pd.DataFrame, classes: Sequence[str]) -> pd.DataFrame:
                 r.flags,
             )
         )
-    return pd.DataFrame(rows, columns=list(COLUMNS), dtype=object)
+    data = pd.DataFrame(rows, columns=list(COLUMNS), dtype=object)
+    c = data["panel"] == "c"
+    if c.any() and all(_assumed(f) for f in data.loc[c, "flags"]):
+        data.loc[c, "drawn"] = False  # P-03: nothing measured, the values are kept
+    elif c.any():
+        data.loc[c, "drawn"] = [_py(v) is not None for v in data.loc[c, "value"]]
+    return data
 
 
 def _strata(b: pd.DataFrame) -> list[tuple[int, float, int]]:
@@ -137,9 +175,17 @@ def _join(strata: Sequence[int]) -> str:
     return ", ".join(str(m) for m in strata)
 
 
-def title(data: pd.DataFrame, alpha: float) -> str:
-    """From the panel (b) rows: the strata with FDR ≤ alpha, the accepted count, the NA strata."""
+def title(data: pd.DataFrame, alpha: float, exact: str | None = None) -> str:
+    """From the panel (b) rows: the strata with FDR ≤ alpha, the accepted count, the NA strata.
+
+    ``exact`` (no tolerant targets, P-02) replaces the (b) summary with that line."""
     strata = _strata(data[data["panel"] == "b"])
+    if exact is not None:
+        c = data[data["panel"] == "c"]
+        if len(c) and not c["drawn"].astype(bool).any():
+            return f"{exact}; de novo precision not measured"
+        bins = len(c)
+        return f"{exact}; de novo precision in {base.plural(bins, 'score bin')}"
     if not strata:
         bins = int((data["panel"] == "c").sum())
         tail = f"; de novo precision in {base.plural(bins, 'score bin')}" if bins else ""
@@ -235,20 +281,37 @@ def _panel_b(ax: Axes, b: pd.DataFrame, alpha: float) -> None:
         ax.annotate(
             str(n), (m, y), xytext=(0, 4), textcoords="offset points", ha="center", fontsize=6
         )
-        if math.isnan(f):
-            ax.annotate(
-                "NA (no targets)",
-                (m, y),
-                xytext=(0, 20),
-                textcoords="offset points",
-                ha="center",
-                fontsize=6,
-                color="#555555",
-            )
+    if na:  # one stacked note, not one overlapping label per stratum (P-02)
+        noun = "stratum" if len(na) == 1 else "strata"
+        ax.text(
+            0.02,
+            0.97,
+            f"NA (no targets):\n{noun} {_join(na)}",
+            transform=ax.transAxes,
+            ha="left",
+            va="top",
+            fontsize=6,
+            color="#555555",
+        )
     ax.set_xticks([m for m, _, _ in strata])
     ax.set_xlabel("differences (n_diff)")
     ax.set_ylabel("stratum FDR")
     ax.set_title(f"(b) stratum FDR (dashed: {style.fmt_alpha(alpha)})", loc="left")
+
+
+def _c_value(fdr: pd.DataFrame) -> str:
+    """The assumed c of the de novo rows (``c_value``), 0.99 when not recorded."""
+    rows = fdr[fdr["section"] == "denovo_precision"]
+    values = pd.to_numeric(rows.get("c_value", pd.Series([], dtype=float)), errors="coerce")
+    finite = values.dropna()
+    return base.sig(float(finite.iloc[0]) if len(finite) else 0.99, 3)
+
+
+def _panel_c_assumed(ax: Axes, c_value: str) -> None:
+    ax.set_axis_off()
+    ax.set_title("(c) de novo precision", loc="left")
+    text = ASSUMED.format(c=c_value).replace("; ", ";\n").replace(" (no", "\n(no")
+    ax.text(0.0, 0.6, text, ha="left", va="center", transform=ax.transAxes, color="#555555")
 
 
 def _panel_c(ax: Axes, c: pd.DataFrame) -> bool:
@@ -258,7 +321,7 @@ def _panel_c(ax: Axes, c: pd.DataFrame) -> bool:
     lo = np.array([_num(v) for v in c["ci_low"]])
     hi = np.array([_num(v) for v in c["ci_high"]])
     assumed = np.array(["c_assumed" in str(f).split(";") for f in c["flags"]], dtype=bool)
-    ci = np.isfinite(y) & np.isfinite(lo) & np.isfinite(hi)
+    ci = np.isfinite(y) & np.isfinite(lo) & np.isfinite(hi) & (hi > lo)
     if ci.any():
         ax.errorbar(
             x[ci],
@@ -285,12 +348,12 @@ def _panel_c(ax: Axes, c: pd.DataFrame) -> bool:
     ax.set_ylim(max(0.0, float(vals.min()) - 0.05) if len(vals) else 0.0, 1.01)
     ax.set_xticks([int(v) for v in x if math.isfinite(v)])
     ax.set_xlabel("de novo score bin")
-    ax.set_ylabel("precision (CI)")
+    ax.set_ylabel("precision (CI)" if ci.any() else "precision")
     ax.set_title("(c) de novo precision", loc="left")
     return bool(assumed.any())
 
 
-@base.plot("V06", "mapping_fdr", needs=("mapping_fdr",))
+@base.plot("V06", "mapping_fdr", needs=("mapping_fdr",), optional=("peptide_hits",))
 def mapping_fdr(view: RunView, cfg: GippaConfig) -> list[base.Instance] | base.Skip:
     """V6: placement targets/decoys, stratum FDR against alpha, de novo precision."""
     fdr = view.table("mapping_fdr")
@@ -300,13 +363,25 @@ def mapping_fdr(view: RunView, cfg: GippaConfig) -> list[base.Instance] | base.S
     data = data_frame(fdr, classes)
     if not len(data):
         return [base.empty_state("V06", "mapping_fdr", EMPTY_TITLE, COLUMNS, "double")]
-    panels = [p for p in ("a", "b", "c") if p in set(data["panel"]) or p != "c"]
-    fig = style.new_figure("double", 2.8)
+    exact = exact_label(view.table("peptide_hits")) if exact_only(fdr) else None
+    if exact is not None and not (data["panel"] == "c").any():
+        msg = f"{exact}; {NOT_NEEDED}."
+        return [base.empty_state("V06", "mapping_fdr", msg, COLUMNS, "double")]
+    if exact is not None:  # (a) and (b) are one text line: their rows are kept, not drawn
+        data.loc[data["panel"].isin(["a", "b"]), "drawn"] = False
+    sub = {p: data[data["panel"] == p] for p in ("a", "b", "c")}
+    text_only = exact is not None and not sub["c"]["drawn"].astype(bool).any()
+    fig = style.new_figure("double", 1.6 if text_only else 2.8)
     fig.set_label("V06_mapping_fdr")
+    if exact is not None:  # (a) and (b) collapse to one text line (P-02)
+        panels, ratios = ["ab", "c"], [2.6, 1.6]
+    else:
+        panels = [p for p in ("a", "b", "c") if len(sub[p]) or p != "c"]
+        ratios = [2.6, 1.5, 1.3][: len(panels)]
     grid = fig.add_gridspec(
         1,
         len(panels),
-        width_ratios=[2.6, 1.5, 1.3][: len(panels)],
+        width_ratios=ratios,
         left=0.08,
         right=0.98,
         bottom=0.24,
@@ -314,8 +389,11 @@ def mapping_fdr(view: RunView, cfg: GippaConfig) -> list[base.Instance] | base.S
         wspace=0.35,
     )
     axes = {p: fig.add_subplot(grid[0, i], label=p) for i, p in enumerate(panels)}
-    sub = {p: data[data["panel"] == p] for p in panels}
-    if len(sub["a"]) and len(sub["b"]):
+    if exact is not None:
+        axes["ab"].set_axis_off()
+        line = f"{exact}:\n{NOT_NEEDED}."
+        axes["ab"].text(0.0, 0.6, line, ha="left", va="center", transform=axes["ab"].transAxes)
+    elif len(sub["a"]) and len(sub["b"]):
         _panel_a(axes["a"], sub["a"])
         _panel_b(axes["b"], sub["b"], alpha)
         if (placement_rows(fdr)["decoy_type"] == "shuffle").any():  # lead decision 3 fallback
@@ -325,8 +403,11 @@ def mapping_fdr(view: RunView, cfg: GippaConfig) -> list[base.Instance] | base.S
     else:
         _empty(axes["a"])
         _empty(axes["b"])
-    if "c" in axes and _panel_c(axes["c"], sub["c"]):
-        fig.text(0.98, 0.02, FOOTNOTE, ha="right", va="bottom", fontsize=6, color="#555555")
-    text = title(data, alpha)
+    if "c" in axes:
+        if not sub["c"]["drawn"].astype(bool).any():
+            _panel_c_assumed(axes["c"], _c_value(fdr))
+        elif _panel_c(axes["c"], sub["c"]):
+            fig.text(0.98, 0.02, FOOTNOTE, ha="right", va="bottom", fontsize=6, color="#555555")
+    text = title(data, alpha, exact)
     fig.suptitle(text, y=0.97)
     return [base.Instance(None, fig, data, text)]

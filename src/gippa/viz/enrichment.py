@@ -53,8 +53,11 @@ TWIN_ALPHA = 0.05  # the twin sees only the TSV: its alpha line is at the defaul
 FOOT_GSEA = "GSEA is conditional on detection, with no p_detect adjustment"
 FOOT_COVERAGE = "coverage = share of eligible genes with ≥ 1 term"
 XLABEL_C = "observed / expected detected TUs"
-NO_RESOURCES = "No annotation resources installed (gippa setup --go --kegg --cog)"
-EMPTY = "No GSEA or detection ORA rows in this run"
+#: the empty states (M12-04 PR 4, P-14)
+NO_RESOURCES = ("Nothing to show: no annotation resources are installed. Install them with "
+                "gippa setup --go --kegg --cog and rerun.")  # fmt: skip
+EMPTY = ("Nothing to show: no gene set or detection enrichment results in this run. Function "
+         "terms on more genes would give some.")  # fmt: skip
 NO_ABUNDANCE, NO_SUPPORT = "no abundance input", "running scores not available"
 NO_TESTABLE = "no testable sets"
 OE_UNDEFINED = "O/E undefined (E = 0)"

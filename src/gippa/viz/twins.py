@@ -189,10 +189,13 @@ def v05(data: pd.DataFrame, title: str) -> Any:
 # ---------------------------------------------------------------- V6
 
 
-@interactive("V06", V06_COLUMNS)
+@interactive("V06", tuple(c for c in V06_COLUMNS if c != "drawn"))  # 1.0 TSVs have no drawn
 def v06(data: pd.DataFrame, title: str, meta: Meta = None) -> Any:
-    """(a) targets/decoys on a log axis, (b) stratum FDR with the alpha line, (c) precision."""
+    """(a) targets/decoys on a log axis, (b) stratum FDR with the alpha line, (c) precision; rows
+    the static plot did not draw (``drawn`` false, M12-04 PR 4) are left out."""
     level, known = alpha(meta, "placement")
+    if "drawn" in data.columns:
+        data = data[~data["drawn"].astype(str).str.lower().isin(("false", "0"))]
     sub = {p: data[data["panel"] == p] for p in "abc"}
     panels = ["a", "b", *(["c"] if len(sub["c"]) else [])]
     names = {"a": "(a) targets vs. decoys", "c": "(c) de novo precision",

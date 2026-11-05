@@ -140,11 +140,21 @@ def cv_text(model: pd.DataFrame, name: str = "elastic_net") -> str:
     return f"{_f2(mean)} ± {_f2(sd)}" if not math.isnan(sd) else f"{_f2(mean)} (SD unestimated)"
 
 
+def too_few_title(n: int, tus: str) -> str:
+    """The empty state (M12-04 PR 4, P-14): the model's minimum and this run's counts."""
+    from gippa.determinants.models import MIN_ROWS, MIN_TUS  # lazy: the model stack is heavy
+
+    run_tus = f"{style.fmt_count(int(tus))} TUs" if tus.isdigit() else "TUs not recorded"
+    return (f"Nothing to show: the determinants model needs ≥ {style.fmt_count(MIN_ROWS)} genes "
+            f"with abundance in ≥ {style.fmt_count(MIN_TUS)} TUs (this run: "
+            f"{style.fmt_count(n)} genes, {run_tus}).")  # fmt: skip
+
+
 def title(model: pd.DataFrame, n_tus: tuple[int, str] | None = None) -> str:
     """The finding: the elastic net's CV R² and its largest block ΔR² whose repeat t-interval is
     finite and lies wholly above 0 (decisions 4-6; ties in BLOCKS order)."""
     if n_tus is not None:
-        return f"Too few genes for the determinants model ({n_tus[0]} rows, {n_tus[1]} TUs)"
+        return too_few_title(*n_tus)
     head = f"Elastic net CV R² {cv_text(model)}; "
     d = model[(model["model"] == "elastic_net") & (model["metric"] == "delta_r2")]
     best: tuple[float, str, float, float] | None = None
