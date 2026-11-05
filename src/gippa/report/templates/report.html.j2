@@ -12,12 +12,38 @@
 </head>
 <body>
 <h1>GIPPA report</h1>
-<p>GIPPA {{ version }}. Every number is shown with its error estimate, or marked {{ "unestimated" }}.</p>
+<div id="this-run" class="this-run">
+<p class="box-title"><strong>This run</strong></p>
+<ul class="run-lines">
+{% for line in box.lines %}
+<li>{{ line }}</li>
+{% endfor %}
+</ul>
+<p class="tier">{{ box.tier }}</p>
+{% if box.findings %}
+<p class="findings-title">Key findings:</p>
+<ul class="findings">
+{% for f in box.findings %}
+<li>{{ f }}</li>
+{% endfor %}
+</ul>
+{% endif %}
+<p class="version">{{ box.version }}</p>
+</div>
 {% if demo_banner %}
 <div class="alert" role="note" data-demo="true" style="border-left: 4px solid #1f5f99; background: #eef5fc; padding: 0.6em 1em; margin: 0.5em 0 1em;">{{ demo_banner }}</div>
 {% endif %}
+<p>Every number is shown with its error estimate, or marked {{ "unestimated" }}.</p>
+<nav id="toc" aria-label="Contents">
+<ul>
+{% for t in toc %}
+<li><a href="{{ t.href }}">{{ t.text }}</a></li>
+{% endfor %}
+</ul>
+</nav>
 {% for s in sections %}
 <section id="{{ s.id }}">
+<div id="sec-{{ s.id }}" class="anchor"></div>
 <h2>{{ s.heading }}</h2>
 {% if s.id == "summary" %}
 {% for w in warnings %}
@@ -34,7 +60,9 @@
 <div class="label">{{ c.prefix }}</div>
 {% endif %}
 <div class="value">{{ c.value }}</div>
+{% if c.label %}
 <div class="label">{{ c.label }}</div>
+{% endif %}
 <div class="estimate">{{ c.estimate }}</div>
 {% if c.detail %}
 <div class="detail">{{ c.detail }}</div>

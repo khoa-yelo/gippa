@@ -23,10 +23,12 @@ from markupsafe import Markup
 
 import gippa
 from gippa.config import GippaConfig
+from gippa.determinants.models import MIN_ROWS, MIN_TUS
 from gippa.io.plot_files import PlotFiles
 from gippa.io.run_view import PATHS, RunView
 from gippa.io.tsv import format_value
-from gippa.report import content
+from gippa.report import content, head
+from gippa.viz import style
 
 TOP_ROWS = 20
 UNESTIMATED = "unestimated"
@@ -160,8 +162,8 @@ def _tier_fdr(ds: pd.DataFrame | None, alpha: float) -> str | None:
         return None
     hit = ds[(ds["section"] == "tier") & (ds["group_type"] == "q_threshold")
              & (ds["group"] == format_value(alpha)) & (ds["metric"] == "fdr")]  # fmt: skip
-    vals = hit["value"].dropna()
-    return None if vals.empty else format_value(float(vals.iloc[0]))
+    vals = pd.to_numeric(hit["value"], errors="coerce").dropna()
+    return None if vals.empty else style.fmt_q(float(vals.iloc[0]))
 
 
 def _novel_fdr(novel: pd.DataFrame) -> str | None:
@@ -178,8 +180,18 @@ def _novel_fdr(novel: pd.DataFrame) -> str | None:
     return f"class FDR ≤ {format_value(float(fdrs.max()))}{suffix}"
 
 
-_TIER_FDR = {"decoy_picked": "picked target–decoy FDR", "mayu": "Mayu FDR"}
-TWO_PEPTIDE = "(two-peptide rule; FDR unestimated)"
+#: tier -> the genes card estimate; ``{fdr}`` and ``{q}`` are filled in (M12-04 PR 1)
+_TIER_FDR = {
+    "decoy_picked": "picked target–decoy gene-level FDR {fdr} at gene-level q ≤ {q}",
+    "mayu": "Mayu gene-level FDR {fdr}, from peptides at q ≤ {q}",
+}
+_NO_FDR = {
+    "two_peptide": "two-peptide rule: no FDR estimated",
+    "protein_list": "protein list: no FDR estimated",
+}
+#: tiers where the two-peptide count is a separate statement
+_TWO_PEP_LINE = ("decoy_picked", "mayu")
+NO_POWER = "no predictive power"
 
 
 def _alt_estimate(alt: pd.DataFrame) -> str | None:
@@ -201,15 +213,16 @@ def _metric(en: pd.DataFrame, metric: str) -> tuple[float | None, list[str]]:
     return (None if vals.empty else float(vals.iloc[0])), flags
 
 
-def _strata(fdr: pd.DataFrame | None) -> list[str]:
-    """The descriptive placement rows of ``mapping_fdr``, each with its full key (decoy type,
-    differences, length class); they are not q-values (review B1 on #228, lead decision 15)."""
-    if fdr is None:
-        return []
-    cols = ["decoy_type", "n_diff", "length_class", "fdr_stratum"]
-    rows = fdr[fdr["section"] == "placement"].reindex(columns=cols)
-    return [f"{d} {format_value(n)} diff {lc}: {format_value(v)}"
-            for d, n, lc, v in rows.itertuples(index=False) if not pd.isna(v)]  # fmt: skip
+def _not_fitted(view: RunView, genes: pd.DataFrame | None) -> str:
+    """Why the determinants model was not fitted: no abundance, or the minimum sizes with this
+    run's counts."""
+    counts = head.abundance_counts(genes)
+    if "layer_missing:abundance" in view.run_flags() or (counts is not None and counts[0] == 0):
+        return "no abundance in this run"
+    need = f"needs ≥ {MIN_ROWS} genes with abundance in ≥ {MIN_TUS} TUs"
+    if counts is None:
+        return need
+    return f"{need} (this run: {head.fmt_count(counts[0])} genes, {head.fmt_count(counts[1])} TUs)"
 
 
 def cards(view: RunView, cfg: GippaConfig) -> tuple[list[dict[str, Any]], list[str]]:
@@ -240,40 +253,42 @@ def cards(view: RunView, cfg: GippaConfig) -> tuple[list[dict[str, Any]], list[s
         unmapped = table("unmapped")
         return 0 if unmapped is None else int((unmapped["kind"] == kind).sum())
 
+    roles = head.input_roles(view)
+    count = head.fmt_count
+
     def genes(t: pd.DataFrame) -> None:
         tiers = sorted({str(x) for x in t["detection_tier"].dropna()})
         tier = tiers[0] if len(tiers) == 1 else None
         sources = src("genes_tsv", "detected", "detection_tier", "detected_2pep")
-        n, total = _count(t, "detected"), f"{len(t)} genes"
-        if tier == "two_peptide":  # §7.2: the rule has no FDR (lead decision 6)
-            add("genes_detected", "genes detected", n, TWO_PEPTIDE, sources, detail=total)
-            return
-        fdr = None if tier is None else _tier_fdr(table("detection_summary"), a.identification)
-        est = None
+        label = f"of {count(len(t))} genes detected"
+        n = _count(t, "detected")
+        est = _NO_FDR.get(str(tier))
+        fdr = None if tier not in _TIER_FDR else _tier_fdr(table("detection_summary"),
+                                                           a.identification)  # fmt: skip
         if fdr is not None:
             sources += src("detection_summary", "value")
-            what = _TIER_FDR.get(str(tier), "tier FDR")
-            est = f"({what} {fdr} at q ≤ {format_value(a.identification)})"
-        two = f"{_count(t, 'detected_2pep')} also pass the two-peptide rule; {total}"
-        add("genes_detected", "genes detected", n, est, sources, detail=two)
+            est = _TIER_FDR[str(tier)].format(fdr=fdr, q=head.fmt_alpha(a.identification))
+        extra = {}
+        if tier in _TWO_PEP_LINE:
+            extra["detail"] = f"{count(_count(t, 'detected_2pep'))} with ≥ 2 distinct peptides"
+        add("genes_detected", label, count(n), est, sources, **extra)
 
     def peptides(hits: pd.DataFrame) -> None:
-        placed = hits[pd.to_numeric(hits["placement_q"], errors="coerce") <= a.placement]
         n_in = hits["peptide"].nunique() + n_unmapped("peptide")
-        strata = _strata(table("mapping_fdr"))
-        q = format_value(a.placement)
-        est = f"placement q ≤ {q} per family (0 / ≥ 1 difference, per decoy type)"
-        if strata:
-            est += f"; descriptive stratum FDR (not q-values): {', '.join(strata)}"
+        if (roles is not None and "peptides" not in roles) or n_in == 0:
+            return  # no peptide input: no card, never "0 of 0" (M12-04 PR 1)
+        placed = hits[pd.to_numeric(hits["placement_q"], errors="coerce") <= a.placement]
         sources = src("peptide_hits", "peptide", "placement_q") + src("unmapped", "kind")
-        keys = ("decoy_type", "n_diff", "length_class", "fdr_stratum")
-        sources += src("mapping_fdr", *keys) if strata else []
-        add("peptides_placed", f"peptides placed of {n_in} input", placed["peptide"].nunique(),
-            est, sources)  # fmt: skip
+        add("peptides_placed", f"of {count(n_in)} peptides placed",
+            count(placed["peptide"].nunique()),
+            f"placement q ≤ {head.fmt_alpha(a.placement)}", sources)  # fmt: skip
 
     def proteins(hits: pd.DataFrame) -> None:
         n = hits["protein_id"].nunique()
-        add("proteins_placed", f"proteins placed of {n + n_unmapped('protein')} input", n, None,
+        n_in = n + n_unmapped("protein")
+        if (roles is not None and "proteins" not in roles) or n_in == 0:
+            return
+        add("proteins_placed", f"of {count(n_in)} proteins placed", count(n), None,
             src("protein_hits", "protein_id") + src("unmapped", "kind"))  # fmt: skip
 
     def islands(t: pd.DataFrame) -> None:
@@ -304,16 +319,23 @@ def cards(view: RunView, cfg: GippaConfig) -> tuple[list[dict[str, Any]], list[s
             src("novel_orfs", "called", "class_fdr"))  # fmt: skip
 
     def model(t: pd.DataFrame) -> None:
-        """ADR-0033: the elastic-net whole-model rows only; ADR-0034: "(uncalibrated)"."""
+        """ADR-0033: the elastic-net whole-model rows only; ADR-0034: "(uncalibrated)"; label
+        first, "no predictive power" when the mean or mean minus SD is ≤ 0 (M12-04 PR 1)."""
         en = t[(t["model"] == "elastic_net") & (t["feature_or_block"] == "all")]
         (r2, _), (sd, _) = _metric(en, "cv_r2_mean"), _metric(en, "cv_r2_sd")
         p, flags = _metric(en, "null_p")
-        value = "NA" if r2 is None else f"{format_value(r2)} ± {format_value(sd)}"
+        sources = src("determinants_model", "model", "feature_or_block", "metric", "value",
+                      "flags")  # fmt: skip
+        if r2 is None:
+            add("model_r2", "", "not fitted:", _not_fitted(view, table("genes_tsv")), sources,
+                prefix="Model R²:")  # fmt: skip
+            return
+        value = style.fmt_num(r2) if sd is None else f"{style.fmt_num(r2)} ± {style.fmt_num(sd)}"
+        no_power = r2 <= 0 or (sd is not None and r2 - sd <= 0)
+        label = f"(CV), {NO_POWER};" if no_power else "(CV);"
         unc = " (uncalibrated)" if "null_uncalibrated" in flags else ""
-        est = None if p is None else f"null p {format_value(p)}{unc}"
-        add("model_r2", "(CV);", value, est,
-            src("determinants_model", "model", "feature_or_block", "metric", "value", "flags"),
-            prefix="Model R²")  # fmt: skip
+        est = None if p is None else f"null p {style.fmt_q(p)}{unc}"
+        add("model_r2", label, value, est, sources, prefix="Model R²:")
 
     specs = [("genes_tsv", genes), ("peptide_hits", peptides), ("protein_hits", proteins),
              ("islands", islands), ("operon_flags", operons), ("variants", variants),
@@ -353,6 +375,8 @@ def build_report(
     table = cfg.annotation.translation_table
     return _ENV.get_template("report.html.j2").render(
         sections=sections, cards=summary, notes=notes, version=gippa.__version__,
+        box=head.run_box(view, plots, skipped, cfg),
+        toc=head.toc(view, [(s.id, s.heading) for s in SECTIONS]),
         provenance=content.provenance(view, doc, note), extras=content.extras(view, doc),
         warnings=content.summary_warnings(view), snippets=content.snippets(),
         code_note=content.genetic_code_note(table),
