@@ -149,7 +149,10 @@ def test_scenarios_without_short_gaps_are_byte_identical_to_fd3f3a3(
     the pair table as CSV (floats to 9 significant digits), digests equal at fd3f3a3 and on
     iron-01 and barley-04 (lead decision 20)."""
     s = sim(name, args, 7)
-    assert _digest(s.layout.genes, s.expression.genes, s.pairs) == digest
+    # 1.1 renamed pairs.class -> pair_class (ADR-0075); the pinned digests are of the 1.0 header,
+    # so hash the 1.0 name to keep "same data as fd3f3a3" exact.
+    pairs_1_0 = s.pairs.rename(columns={"pair_class": "class"})
+    assert _digest(s.layout.genes, s.expression.genes, pairs_1_0) == digest
 
 
 @pytest.mark.parametrize(
