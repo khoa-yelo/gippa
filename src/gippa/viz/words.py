@@ -243,7 +243,6 @@ FEATURE_LABEL: Mapping[str, str] = MappingProxyType(
         "at_2_10": "AT content, codons 2–10",
         "rare_codons_2_10": "rare codons, codons 2–10",
         "length_aa": "protein length (aa)",
-        "mw": "molecular weight",
         "mw_da": "molecular weight (Da)",
         "pi": "isoelectric point",
         "gravy": "hydropathy (GRAVY)",

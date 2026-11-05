@@ -689,8 +689,8 @@ Flagged pairs only, with the evidence behind each flag (GIPPA_SPEC.md §9.3, §7
 | `gene_a` | string | — | Upstream gene | required |
 | `gene_b` | string | — | Downstream gene | required |
 | `pair_class` | string | — | Pair class (pairs.tsv pair_class) | required; one of `OP`, `NO`, `CV`, `DV`, `SW` |
-| `promoter_between_yes` | boolean | — | promoter_between at or above the promoter cut-off | required |
-| `terminator_between_yes` | boolean | — | terminator_between at or above the terminator cut-off | required |
+| `promoter_between_yes` | boolean | — | promoter_score_between at or above the promoter cut-off | required |
+| `terminator_between_yes` | boolean | — | terminator_score_between at or above the terminator cut-off | required |
 | `abundance_pattern` | string | — | Abundance pattern of the pair | required; one of `downstream_higher`, `upstream_higher`, `discordant`, `concordant`, `coabundant`, `none` |
 | `flags` | string | — | Operon flag (§7.4.5) | required; one of `internal_promoter_supported`, `internal_terminator_supported`, `unexplained_discordance`, `conflict_terminator_in_operon`, `novel_operon_candidate`, `coabundant_despite_terminator`, `other` |
 | `q_value` | number | — | q-value of the pair's test | minimum 0; maximum 1 |

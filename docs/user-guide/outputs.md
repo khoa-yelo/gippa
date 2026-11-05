@@ -172,7 +172,8 @@ origin has `end` greater than the replicon length, `crosses_origin = true` and t
 
 **GIPPA 1.1 changes some table columns.** This is a one-time exception to the rule that column
 changes wait for a major version. Scripts that select columns by name keep working, except for
-the renamed columns below. Old names are not kept as aliases. `gippa report` and `gippa compare`
+the renamed columns below. Scripts that select columns by position must be updated for
+`genes.tsv`, whose columns are regrouped. Old names are not kept as aliases. `gippa report` and `gippa compare`
 still read output folders written by 1.0: they rename the old columns on read.
 
 ### Renamed columns
@@ -200,3 +201,26 @@ on `pair_id` needs suffixes (for example `suffixes=("_pair", "_flag")` in pandas
 
 Unchanged on purpose: `operon_flags.tsv` › `promoter_between_yes` and `terminator_between_yes`
 (yes/no calls) and `pairs.tsv` › `tx_rate_between`.
+
+### `tables/genes.tsv` column order
+
+The same 73 columns, now in groups: identity → detection → abundance → function → context →
+regulatory and sequence features → flags. For example `detected` moved from column 48 to 15 and
+`abundance_log2` from 61 to 27. The [tables reference](../reference/tables.md) lists the columns in
+their 1.1 order. Columns whose value is the same on every row are marked "run-level" there.
+
+### Flag changes
+
+| Flag | 1.0 | 1.1 |
+|---|---|---|
+| `detectability_constant` | on every row of `genes.tsv` | once in `run_manifest.json` › `flags` (and the `detection_summary.tsv` overall row, as before) |
+| `cross_strain_protein` | on every protein hit whose ID is not a locus tag of the genome | only when such a hit is also not identical (`class` near or divergent) |
+| `foreign_protein_ids` | – | new run flag: the protein IDs come from a related annotation |
+
+### Output folder
+
+Step intermediates that sat at the top of the output folder (`codon.parquet`, `features.parquet`,
+`genetable/`, `context/`, `novel/`, …) are now under `intermediate/`. Published results
+(`tables/`, `mapping/`, `annotation/`, `plots/`, `report/`, `schemas/`, `logs/`, `preflight/`,
+`run_manifest.json`, `resolved_config.yaml`) keep their paths. A new `README.txt` explains each
+folder.
