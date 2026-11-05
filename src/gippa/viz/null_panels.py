@@ -23,6 +23,7 @@ import pandas as pd
 from matplotlib.axes import Axes
 
 from gippa.viz.style import OKABE_ITO, fmt_q, shorten_middle
+from gippa.viz.words import V18_KEY_WORDS, V18_MODEL_NAME, V18_NULL_TITLE
 
 if TYPE_CHECKING:
     from gippa.io.run_view import RunView
@@ -33,14 +34,14 @@ MAX_REPLICONS = 7
 REGION_STAT = "o_minus_e"
 XLABEL = {
     "regions_stats": "test statistic (studentised O \u2212 E)",
-    "islands": "max |S_w| over windows",
+    "islands": "largest window scan\nstatistic (standardised)",
     "determinants_model": "mean CV R\u00b2 (null: permuted response)",
 }
 GRID_TEXT = "step CDF of the percentile grid"
 GENOME = "genome / abs"
 PER_REPLICON = "per-replicon maximum"
 NOT_DRAWN = "n_not_drawn"
-UNCALIBRATED_NOTE = "(uncalibrated, ADR-0034)"
+UNCALIBRATED_NOTE = "(uncalibrated)"
 TOO_FEW = "too_few_rows"
 CONTIG_MAX = 24  # characters of a contig name in a title (middle ellipsis beyond)
 
@@ -220,6 +221,20 @@ def rows(m: Multiple) -> list[dict[str, object]]:
     return [*pts, base | {"metric": "observed", "value": m.observed}, *extra]
 
 
+def title(m: Multiple) -> str:
+    """The plain-words head of a small multiple's title (P-10): no table or column names."""
+    head, _, last = m.family.rpartition(" / ")
+    if m.table == "regions_stats":
+        stat = V18_KEY_WORDS["stat"].get(last, last.replace("_", " "))
+        return V18_NULL_TITLE["regions_stats"].format(region=head, stat=stat)
+    if m.table == "islands":
+        if m.family == GENOME:
+            return V18_NULL_TITLE["islands_genome"]
+        return V18_NULL_TITLE["islands"].format(contig=shorten_middle(head, CONTIG_MAX))
+    model = V18_MODEL_NAME.get(m.family, m.family.replace("_", " "))
+    return V18_NULL_TITLE["determinants_model"].format(model=model)
+
+
 def draw(ax: Axes, m: Multiple) -> None:
     """The histogram (or step CDF) and the observed line of one small multiple."""
     if m.grid is not None:
@@ -233,9 +248,5 @@ def draw(ax: Axes, m: Multiple) -> None:
         ax.set_ylabel("count", fontsize=6)
     if math.isfinite(m.observed):
         ax.axvline(m.observed, color=OKABE_ITO["vermillion"], linewidth=1.0)
-    family = m.family
-    if m.table == "islands" and m.family != GENOME:  # "<contig> / <direction>" (P-10)
-        contig, _, direction = m.family.rpartition(" / ")
-        family = f"{shorten_middle(contig, CONTIG_MAX)} / {direction}"
-    ax.set_title(f"{m.table}\n{family}\n{m.caption}", fontsize=6)
+    ax.set_title(f"{title(m)}\n{m.caption}", fontsize=6)
     ax.set_xlabel(XLABEL[m.table], fontsize=6)

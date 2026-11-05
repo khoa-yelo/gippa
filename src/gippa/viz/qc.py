@@ -21,7 +21,7 @@ from matplotlib.axes import Axes
 
 from gippa.viz.base import Instance, Skip, plot, plural, title_pct
 from gippa.viz.style import DETECTION, OKABE_ITO, REGION, new_figure, shorten_middle
-from gippa.viz.words import NOT_COMPUTED, feature_label
+from gippa.viz.words import NOT_COMPUTED, RAW_ABUNDANCE, feature_label
 
 if TYPE_CHECKING:
     from gippa.config import GippaConfig
@@ -56,11 +56,15 @@ FEATURE_GROUPS: Mapping[str, tuple[str, ...]] = {
     "translation initiation": ("tir_ostir", "sd_dg", "mrna_dg", "spacer_bp", "start_codon"),
 }
 #: run flag -> the panel-(e) columns it leaves uncomputed (the reason is ``NOT_COMPUTED``)
+#: a layer flag comes first: when the layer is off, that is the reason
 FLAG_COLUMNS: Mapping[str, tuple[str, ...]] = {
+    "layer_missing:codon": FEATURE_GROUPS["codon usage"],
+    "layer_missing:ostir": ("tir_ostir",),
+    "layer_missing:promoters": ("promoter_score", "promoter_score_tu"),
+    "layer_missing:terminators": ("terminator_conf_downstream",),
     "layer_missing:tx_rates": ("tx_rate_max_tu", "tx_rate_sum_tu"),
-    "cai_reference_missing": ("cai",),
+    "cai_reference_missing": ("cai", "fop"),
 }
-_RAW_ABUNDANCE = "raw abundance"
 FIG_HEIGHT = 7.6
 CONTIG_MAX = 24  # characters of a panel-(b) contig label (middle ellipsis beyond)
 MAX_WARN_LINES = 10
@@ -252,7 +256,15 @@ def _panel_d(ax: Axes, whole: pd.DataFrame) -> list[Row]:
 
 
 def _reasons(flags: frozenset[str]) -> dict[str, str]:
-    return {c: NOT_COMPUTED[f] for f, cols in FLAG_COLUMNS.items() if f in flags for c in cols}
+    out: dict[str, str] = {}
+    for flag, cols in FLAG_COLUMNS.items():
+        for col in cols if flag in flags else ():
+            out.setdefault(col, NOT_COMPUTED[flag])
+    return out
+
+
+def _name(col: str) -> str:
+    return RAW_ABUNDANCE if col == "abundance_raw" else feature_label(col)
 
 
 def _panel_e(ax: Axes, whole: pd.DataFrame, flags: frozenset[str]) -> list[Row]:
@@ -264,17 +276,19 @@ def _panel_e(ax: Axes, whole: pd.DataFrame, flags: frozenset[str]) -> list[Row]:
         for col in sorted(FEATURE_GROUPS[group]):
             share = float(whole[col].isna().sum()) / n if n else None
             rows.append(("e", group, col, share, n))
-    ys = list(range(len(rows)))
-    widths = [0.0 if r[3] is None else 100 * r[3] for r in rows]
+    # drawn by human name within each group; the data rows stay sorted by column (P-16)
+    drawn = sorted(rows, key=lambda r: (r[1], _name(r[2]).casefold()))
+    ys = list(range(len(drawn)))
+    widths = [0.0 if r[3] is None else 100 * r[3] for r in drawn]
     ax.barh(ys, widths, color=OKABE_ITO["grey"], height=0.7)
-    for i in range(1, len(rows)):  # thin rules between feature groups (the TSV names them)
-        if rows[i][1] != rows[i - 1][1]:
+    for i in range(1, len(drawn)):  # thin rules between feature groups (the TSV names them)
+        if drawn[i][1] != drawn[i - 1][1]:
             ax.axhline(i - 0.5, color="#BBBBBB", linewidth=0.5)
     reasons = _reasons(flags)
-    for y, r in zip(ys, rows, strict=True):  # a 100 %-missing column the run left uncomputed
+    for y, r in zip(ys, drawn, strict=True):  # a 100 %-missing column the run left uncomputed
         if r[3] == 1.0 and r[2] in reasons:
             ax.text(1.0, y, reasons[r[2]], va="center", ha="left", fontsize=6, color="black")
-    names = [_RAW_ABUNDANCE if r[2] == "abundance_raw" else feature_label(r[2]) for r in rows]
+    names = [_name(r[2]) for r in drawn]
     ax.set_yticks(ys, names, fontsize=6)
     ax.invert_yaxis()
     ax.set_xlim(0, 100)
@@ -289,9 +303,10 @@ def _title(n_warn: int, n_err: int, whole: pd.DataFrame | None) -> str:
     if log2.notna().sum() == 0:
         return f"{head}; no abundance input"
     measured = int((log2.notna() & ~whole["abundance_imputed"].fillna(False).astype(bool)).sum())
-    detected = int(whole["detected"].fillna(False).astype(bool).sum()) if "detected" in whole else 0
-    shares = (f"{title_pct(measured, len(whole))} with measured abundance "
-              f"({title_pct(detected, len(whole))} detected)")  # fmt: skip
+    shares = f"{title_pct(measured, len(whole))} with measured abundance"
+    if "detected" in whole:  # a genes table without it states the measured share only
+        detected = int(whole["detected"].fillna(False).astype(bool).sum())
+        shares += f" ({title_pct(detected, len(whole))} detected)"
     return f"{head}, {plural(n_err, 'error')}; {shares}"
 
 

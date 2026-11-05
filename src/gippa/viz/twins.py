@@ -244,18 +244,23 @@ def v06(data: pd.DataFrame, title: str, meta: Meta = None) -> Any:
 
 @interactive("V07", det.V07_BASE_COLUMNS)
 def v07(data: pd.DataFrame, title: str) -> Any:
-    """The O - E forest in drawing order: one trace per row, region rows by region type."""
+    """The O - E forest in drawing order: one trace per row, region rows by region type; in
+    percentage points when the TSV has the ``_pp`` columns (1.1), else in genes (a 1.0 TSV)."""
     fig, labels = go.Figure(), []
+    pp = "o_minus_e_pp" in data.columns
+    x_col, lo_col, hi_col = ("o_minus_e_pp", "ci_low_pp", "ci_high_pp") if pp else (
+        "o_minus_e", "ci_low", "ci_high")  # fmt: skip
     for r in data.to_dict("records"):
         labels.append(f"{r['group']} (n = {fmt(r['n'])})")
         region = r["block"] == "region"
         colour = style.REGION.get(str(r["region_type"]), BLACK) if region else BLACK
-        o, lo, hi, flags = (math.nan if isna(r["o_minus_e"]) else float(r["o_minus_e"]),
-                            r["ci_low"], r["ci_high"], flag_list(r["flags"]))  # fmt: skip
-        has_ci = not (isna(lo) or isna(hi) or lo == hi or "ci_unestimated" in flags)
+        o, lo, hi, flags = (math.nan if isna(r[x_col]) else float(r[x_col]),
+                            r[lo_col], r[hi_col], flag_list(r["flags"]))  # fmt: skip
+        raw_lo, raw_hi = r["ci_low"], r["ci_high"]
+        has_ci = not (isna(lo) or isna(hi) or raw_lo == raw_hi or "ci_unestimated" in flags)
         err = {"array": [float(hi) - o], "arrayminus": [o - float(lo)], "color": colour}
         text = DOT.join((str(r["group"]), f"O \N{MINUS SIGN} E {fmt(r['o_minus_e'])} (95 % "
-                         f"{ci(lo, hi) if has_ci else 'CI unestimated'})",
+                         f"{ci(raw_lo, raw_hi) if has_ci else 'CI unestimated'})",
                          f"q {fmt(r['q_value'])}"))  # fmt: skip
         sym = "circle-open" if "small_region" in flags else "circle"
         fig.add_trace(go.Scatter(x=[o], y=[labels[-1]], mode="markers", hovertext=[text],
@@ -265,7 +270,7 @@ def v07(data: pd.DataFrame, title: str) -> Any:
     fig.add_vline(x=0.0, line={"color": "#777777", "width": 1})
     fig.update_yaxes(type="category", categoryorder="array", categoryarray=labels,
                      autorange="reversed")  # fmt: skip
-    fig.update_xaxes(title_text=det.V07_XLABEL)
+    fig.update_xaxes(title_text=det.V07_XLABEL_PP if pp else det.V07_XLABEL)
     return finish(fig, title, 140 + 22 * len(labels))
 
 

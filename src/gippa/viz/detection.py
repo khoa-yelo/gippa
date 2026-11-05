@@ -37,6 +37,7 @@ from gippa.viz.style import (
     q_equals,
     run_abundance_label,
 )
+from gippa.viz.words import V07_HEADER, V07_KIND, V07_MORE_ROWS
 
 if TYPE_CHECKING:
     from gippa.config import GippaConfig
@@ -54,10 +55,8 @@ V08_COLUMNS = (
 )  # fmt: skip
 V07_XLABEL = "observed \N{MINUS SIGN} expected detected genes"  # the interactive twin (genes)
 V07_XLABEL_PP = "observed \N{MINUS SIGN} expected detected (percentage points)"
-V07_HEADER = {"replicon": "Replicon", "feature_class": "Feature class",
-              "cog_category": "COG category", "region": "Region"}  # fmt: skip
 V07_MAX_ROWS = 40  # drawn rows; the rest (smallest |pp|) are counted in a note (P-08)
-MORE_ROWS = "{k} more rows in the data TSV"
+MORE_ROWS = V07_MORE_ROWS
 COG_NAME_MAX = 40  # characters of a COG row's short name (every first clause fits)
 V08_YLABEL = ABUNDANCE_FALLBACK  # without a recorded measure; else ``run_abundance_label``
 NO_ABUNDANCE = "No measured abundance; detected fraction per COG category"
@@ -164,10 +163,6 @@ def _region_rows(
     return rows, labels
 
 
-def _count(n: int, word: str, many: str) -> str:
-    return f"{n} {word if n == 1 else many}"
-
-
 def v07_title(data: pd.DataFrame, has_regions: bool, alpha: float) -> str:
     """The V7 title from its data TSV (index decision 5; M9-06 lead decisions 1, 2; P-08)."""
     recs = data.to_dict("records")
@@ -184,9 +179,10 @@ def v07_title(data: pd.DataFrame, has_regions: bool, alpha: float) -> str:
                 f"({q_equals(best['q_value'])})"
             )
         le = "\N{LESS-THAN OR EQUAL TO}"
-        n_cls = sum(r["block"] != "region" for r in recs)
-        counts = [_count(len(tested), "region", "regions")]
-        counts += [_count(n_cls, "class", "classes")] if n_cls else []
+        n_of = {b: sum(r["block"] == b for r in recs) for b in BASIC_BLOCKS}
+        n_of["region"] = len(tested)
+        counts = [plural(n_of[b], *V07_KIND[b]) for b in ("region", *BASIC_BLOCKS) if n_of[b]]
+        counts = counts or [plural(0, *V07_KIND["region"])]
         return (f"No group departs from detectability at q {le} {fmt_alpha(alpha)} "
                 f"({', '.join(counts)} tested)")  # fmt: skip
     top = None
@@ -304,7 +300,7 @@ def _forest(data: pd.DataFrame, notes: Sequence[str | None], title: str) -> Figu
                 transform=ax.get_yaxis_transform(), color="#555555")  # fmt: skip
     ax.set_yticks(ys, labels=[_row_label(recs[i]) for i in shown])
     ax.set_ylim(bottom - 0.7, 0.7)
-    ax.set_xlim(*_xlim(recs))
+    ax.set_xlim(*_xlim([recs[i] for i in shown]))  # the drawn rows only
     ax.xaxis.set_major_locator(MaxNLocator(5))
     ax.set_xlabel(V07_XLABEL_PP)
     ax.spines[["top", "right"]].set_visible(False)

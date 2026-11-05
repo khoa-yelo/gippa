@@ -14,7 +14,7 @@ from __future__ import annotations
 
 import math
 import textwrap
-from collections.abc import Mapping, Sequence
+from collections.abc import Sequence
 from fractions import Fraction
 from typing import TYPE_CHECKING
 
@@ -26,6 +26,7 @@ from matplotlib.ticker import MaxNLocator
 from gippa.viz import null_panels
 from gippa.viz.base import Instance, empty_state, plot
 from gippa.viz.style import OKABE_ITO, fmt_num, new_figure
+from gippa.viz.words import V18_ALL_SMALL, V18_FAMILY_NAMES, V18_KEY_WORDS, V18_SMALL_NOTE
 
 if TYPE_CHECKING:
     from gippa.config import GippaConfig
@@ -53,22 +54,12 @@ NO_NULL_TEXT = "null draws not available"
 OUTSIDE_METRIC = "n_outside_0_1"
 #: the one explanatory row of an input-free run (``panel`` NA, ``value`` = the panel texts)
 MESSAGE_METRIC = "empty_state"
-#: a family with fewer p-values is listed in ``SMALL_NOTE``, not drawn (P-10); its rows stay
+#: a family with fewer valid p-values (in [0, 1]) is listed in ``SMALL_NOTE``, not drawn (P-10);
+#: its rows stay in the data TSV
 MIN_TESTS = 10
-SMALL_NOTE = "Not shown (fewer than 10 tests): "
-ALL_SMALL = "Nothing to show: no test family has 10 or more tests in this run."
-_NOTE_WRAP = 80
-#: human names of the family key values (schema enums); any other value: underscores -> spaces
-_NAMES: Mapping[str, Mapping[str, str]] = {
-    "stat": {"o_minus_e": "O \N{MINUS SIGN} E", "hl_shift": "abundance shift"},
-    "statistic": {"morans_i": "Moran's I", "join_count_bb": "Join count",
-                  "oriter_slope": "ori\N{EN DASH}ter slope"},
-    "null_model": {"gene_label": "gene-label", "tu_block": "TU-block"},
-    "test": {"both_detected_t": "both detected", "one_detected_pmiss": "one detected",
-             "missed_operon_decoy": "missed-operon decoy"},
-    "collection": {"cog": "COG", "kegg": "KEGG", "go_bp": "GO BP", "go_mf": "GO MF",
-                   "go_cc": "GO CC", "go_slim": "GO slim"},
-}  # fmt: skip
+SMALL_NOTE = V18_SMALL_NOTE
+ALL_SMALL = V18_ALL_SMALL
+_NOTE_WRAP = 64  # characters per note line: the note keeps a right margin
 _MAX_AREA = 60.0  # pt², the marker area of the largest bin
 _GREY = OKABE_ITO["grey"]
 _TEXT = "#555555"
@@ -141,7 +132,7 @@ def _reliability_rows(det: pd.DataFrame) -> tuple[list[_Row], dict[str, float]]:
 def _draw_reliability(ax: Axes, rows: Sequence[_Row], overall: dict[str, float]) -> None:
     ax.set_xlim(0.0, 1.0)
     ax.set_ylim(0.0, 1.0)
-    ax.set_xlabel("mean predicted p_detect")
+    ax.set_xlabel("mean predicted detection probability")
     ax.set_ylabel("observed detection rate")
     ax.set_title("(a) detectability reliability", fontsize=7, loc="left")
     ax.plot([0.0, 1.0], [0.0, 1.0], linestyle="--", color=_GREY, linewidth=0.8)
@@ -170,26 +161,19 @@ def _message(ax: Axes, text: str) -> None:
 
 
 def family_names(table: str, family: str) -> tuple[str, str]:
-    """(panel title, short name for the note) of a test family, e.g. ``regions_stats`` /
-    ``o_minus_e`` -> ("Region tests (O minus E)", "region O minus E") with a minus sign."""
+    """(panel title, short name for the note) of a test family, from ``V18_FAMILY_NAMES`` over
+    the words of its key values (``V18_KEY_WORDS``)."""
     keys = dict(FAMILIES).get(table, ())
     parts = family.split(" / ")
     vals = [
-        _NAMES.get(k, {}).get(v, v.replace("_", " ")) for k, v in zip(keys, parts, strict=False)
+        V18_KEY_WORDS.get(k, {}).get(v, v.replace("_", " "))
+        for k, v in zip(keys, parts, strict=False)
     ]
-    if table == "regions_stats":
-        return f"Region tests ({vals[0]})", f"region {vals[0]}"
-    if table == "autocorrelation":
-        name = f"{vals[0]}, {vals[1]} null"
+    names = V18_FAMILY_NAMES.get(table)
+    if names is None or len(vals) < len(keys):
+        name = " ".join(vals) or family.replace("_", " ")
         return name, name
-    if table == "pairs":
-        return f"Pair tests ({vals[0]})", f"pair {vals[0]}"
-    if table == "enrichment_detection":
-        return f"Enrichment ({', '.join(vals)})", f"enrichment {' '.join(vals)}"
-    if table == "enrichment_gsea":
-        return f"GSEA ({vals[0]})", f"GSEA {vals[0]}"
-    name = " ".join(vals) or family.replace("_", " ")
-    return name, name
+    return names[0].format(*vals), names[1].format(*vals)
 
 
 _Family = tuple[str, str, list[int], int]
@@ -242,7 +226,8 @@ def _draw_histogram(
 
 
 def _n(f: _Family) -> int:
-    return sum(f[2]) + f[3]
+    """The valid p-values of a family (in [0, 1]); those outside do not count (P-10)."""
+    return sum(f[2])
 
 
 def _small_note(small: Sequence[_Family]) -> str:

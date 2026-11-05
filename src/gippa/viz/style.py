@@ -291,6 +291,8 @@ def fmt_pct(n: int, d: int) -> str:
 def shorten_middle(text: str, limit: int = 24) -> str:
     """``text`` if it has at most ``limit`` characters, else its head and tail joined by one
     middle ellipsis, ``limit`` characters in all (long contig names in titles and labels)."""
+    if limit < 1:
+        raise ValueError(f"limit must be at least 1, not {limit}")
     if len(text) <= limit:
         return text
     head = (limit - 1) // 2
