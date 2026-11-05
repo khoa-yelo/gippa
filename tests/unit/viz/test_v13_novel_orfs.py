@@ -128,7 +128,7 @@ def orf(
         "n_peptides": n_peptides,
         "peptides": peptides,
         "best_peptide_q": best_q,
-        "ostir_tir": 1000.0,
+        "tir_ostir": 1000.0,
         "promoter_score": 0.9,
         "promoter_supported": True,
         "terminator_downstream": True,
@@ -440,7 +440,7 @@ def test_evidence_columns_na_leave_panel_a_unchanged_and_views_render(
     """PR #180 not merged: the M7-09 evidence columns are all NA."""
     evidence = (
         "promoter_score", "promoter_supported", "terminator_downstream", "terminator_conf",
-        "terminator_distance_nt", "rbs_supported", "ostir_tir",
+        "terminator_distance_nt", "rbs_supported", "tir_ostir",
     )  # fmt: skip
     full = _example1_rows()
     bare = [{**r, **dict.fromkeys(evidence)} for r in full]

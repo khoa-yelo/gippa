@@ -11,7 +11,7 @@ Interface reading pinned here (test author; docs/specs/M7-07-novel-orf-outputs.m
   so both are passed by keyword (the same names as ``protein_records``);
 * ``scored`` is keyed by ``orf_id`` and holds the M7-06 ``minimal_call`` columns, optionally
   ``start_best_ostir`` (0-based lowest coordinate of the chosen start codon, an element of
-  ``Orf.starts``; NA when OSTIR has no score) and any other table column (``ostir_tir``,
+  ``Orf.starts``; NA when OSTIR has no score) and any other table column (``tir_ostir``,
   ``promoter_score``, the ADR-0012 columns, ``rbs_supported``, ``rank``, ``class_fdr``);
 * ``write_novel_orfs(path, table)`` writes ``novel_orfs.tsv``; the two GFF3 files are written with
   the M1-05 ``write_gff3`` and the FASTA with the M1-03 ``write_protein_fasta`` from
@@ -40,7 +40,7 @@ LIN = {"lin": Replicon("lin", 300, "linear", "plasmid")}
 NOVEL_ORFS_COLUMNS: tuple[str, ...] = (
     "orf_id", "class", "contig", "strand", "frame", "start_longest", "start_best_ostir", "end",
     "length_aa_longest", "length_aa_best", "start_codon_best", "n_peptides", "peptides",
-    "best_peptide_q", "ostir_tir", "promoter_score", "promoter_supported",
+    "best_peptide_q", "tir_ostir", "promoter_score", "promoter_supported",
     "terminator_downstream", "terminator_conf", "terminator_distance_nt", "rbs_supported",
     "class_fdr", "called", "rank", "overlapping_gene", "flags",
 )  # fmt: skip

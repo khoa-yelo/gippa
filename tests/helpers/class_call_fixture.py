@@ -6,7 +6,7 @@ The M7-11 frame layouts and score encodings are reused from ``helpers.novel_fdr_
 * a world genome (seeded random ACGT, four circular 200-kb contigs ``c1..c4``) and its
   ``GeneModel``, so ``class_fdr`` can read replicon lengths and ``nterm_entries``;
 * ``gene_table()``: 25 detected, non-partial genes with ``tir_ostir`` 1..25, so the M7-09 RBS
-  threshold exists; ORFs get ``ostir_tir = RBS_TIR`` (far above it) and so meet the RBS part of
+  threshold exists; ORFs get ``tir_ostir = RBS_TIR`` (far above it) and so meet the RBS part of
   their class rule ("every ORF meets its class rule unless stated", spec examples);
 * ``assemble``: the step body of spec "novel_orfs step" items 3-5 on in-memory frames:
   ``class_fdr`` -> ``minimal_call`` with ``class_fdr = class_fdr_cell(...)`` -> ``orf_table`` ->
@@ -219,7 +219,7 @@ def assemble(
     scored["start_best_ostir"] = pd.Series(
         [by_id[i].starts[0] if by_id[i].starts else None for i in scored["orf_id"]], dtype="object"
     )
-    scored["ostir_tir"] = tir
+    scored["tir_ostir"] = tir
     pre = orf_table(orfs, scored, genome=genome, replicons=gm.replicons)
     rules = class_rules(pre, orfs, gene_table=gt, gm=gm, genome=genome, cfg=cfg,
                         peptide_intervals={})  # fmt: skip
