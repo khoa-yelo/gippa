@@ -6,6 +6,19 @@ table is M6-04, the discordance tests M6-05, the missed-operon step M6-06 and th
 calibration gate M6-09. This note covers the engine and the discordance step (M6-05); the other step sections come
 later.
 
+## Report text
+
+The block below is copied into the run report's Methods section by `scripts/dev/sync_report_snippets.py` (plain paragraphs and lists only).
+
+<!-- report:begin -->
+For neighbouring genes in one predicted operon that are both detected, the log2
+abundance difference is fitted with a Student-t whose spread grows at low abundance. A pair far
+from the typical within-operon difference is called discordant at a Benjamini-Hochberg q of at
+most 0.1 by default. Missed operons are same-strand neighbours not predicted to share an operon
+whose abundances are close. Their FDR uses convergent and sandwiched neighbour pairs, which cannot
+share a transcript, as decoys, reweighted to the intergenic distances of the candidates.
+<!-- report:end -->
+
 ## The within-operon distribution
 
 **Model.** Δ = log2 abundance(downstream) − log2 abundance(upstream) over OP pairs whose two genes

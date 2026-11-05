@@ -3,7 +3,8 @@ criterion 1): ``gippa.novel.class_call`` (``class_fdr``, ``class_fdr_cell``, ``m
 ``denovo_inputs``), ``gippa.novel.fdr.denovo_class_fdr``, ``gippa.makedb.build.nterm_entries`` and
 ``gippa.novel.evidence.class_rules`` + the rule-6 call in ``apply_evidence``.
 
-Examples 1-5 and 7-13 with their exact cells (``class_fdr`` strings, ``called``), and every
+Examples 1-5 and 7-13 with their exact cells (``class_fdr`` as written, ``NA`` when unestimated
+since M12-04 PR 11c; ``called``), and every
 degenerate row that is not a step row. GIPPA_SPEC.md §7.6.4, §8.1, §9.3, §9.4; M7-11 decisions 5,
 7-9, 11, 13, 14; lead decisions 2026-10-23 (the side-table bool ``class_mismatch`` is *not* a
 ``novel_orfs`` flag, decision 3).
@@ -99,20 +100,20 @@ def test_public_names_and_dataclass_fields() -> None:
 @pytest.mark.parametrize(
     ("q", "reason", "want"),
     [(0.004, None, 0.004), (1.0, None, 1.0), (math.nan, "lost_pick", 1.0),
-     *[(math.nan, r, "unestimated") for r in (
+     *[(math.nan, r, math.nan) for r in (
          "no_decoys", "decoys_not_makedb", "untagged_class", "no_makedb_pair",
          "paired_share_low", "decoys_unscored", "no_target_score", "no_target_hit",
          "denovo_inputs_missing")]],
 )  # fmt: skip
-def test_rule_5_cell_value(q: float, reason: str | None, want: float | str) -> None:
+def test_rule_5_cell_value(q: float, reason: str | None, want: float) -> None:
     m = cc()
     regime = "unestimated" if reason in ("no_decoys", "decoys_not_makedb") else "picked_decoy"
     r = m.OrfClassFdr("NOVEL_c1_1_p", regime, "intergenic", q, reason, False)
     got = m.class_fdr_cell(r)
-    if isinstance(want, str):
-        assert got == want
+    assert isinstance(got, float) and not isinstance(got, bool)
+    if math.isnan(want):  # unestimated: NA (M12-04 PR 11c)
+        assert math.isnan(got)
     else:
-        assert isinstance(got, float) and not isinstance(got, bool)
         assert got == want
 
 
@@ -266,7 +267,7 @@ def test_example_5_bakta_decoys_not_makedb() -> None:
         r = a.res.orfs[o.orf_id]
         assert (r.regime, r.reason, r.fdr_class) == ("unestimated", "decoys_not_makedb", o.cls)
         assert math.isnan(r.q)
-        assert a.cell(o.orf_id) == "unestimated"
+        assert a.cell(o.orf_id) == "NA"
         assert "class_fdr_unestimated" in a.flags(o.orf_id)
     assert a.called("NOVEL_c1_1001_p")  # cds_outframe, 2 peptides
     assert not a.called("NOVEL_c2_2001_p")  # intergenic, 1 peptide
@@ -307,7 +308,7 @@ def test_example_7_untagged_classes_fall_back_to_two_peptides() -> None:
     for o in (s, p):
         r = a.res.orfs[o.orf_id]
         assert (r.regime, r.reason, r.fdr_class) == ("picked_decoy", "untagged_class", o.cls)
-        assert a.cell(o.orf_id) == "unestimated"
+        assert a.cell(o.orf_id) == "NA"
         assert "class_fdr_unestimated" in a.flags(o.orf_id)
     assert a.called(s.orf_id)
     assert not a.called(p.orf_id)
@@ -321,7 +322,7 @@ def test_cterm_extension_untagged_and_never_called() -> None:
     rows = [pep_row(x, ["b0100"], 10 + k, is_decoy=False) for k, x in enumerate(t.peptides)]
     a = assemble([t], peptides_frame([*w.pep_rows, *rows]), gm=GM, genome=GENOME)
     assert a.res.orfs[t.orf_id].reason == "untagged_class"
-    assert a.cell(t.orf_id) == "unestimated"
+    assert a.cell(t.orf_id) == "NA"
     assert a.rules[t.orf_id] is False
     assert not a.called(t.orf_id)
 
@@ -424,7 +425,7 @@ def test_denovo_inputs_missing_reason() -> None:
     for o in orfs:
         r = a.res.orfs[o.orf_id]
         assert (r.regime, r.reason) == ("denovo_subgroup", "denovo_inputs_missing")
-        assert a.cell(o.orf_id) == "unestimated"
+        assert a.cell(o.orf_id) == "NA"
     assert not any(s.regime == "denovo_subgroup" for s in a.res.classes)
 
 
@@ -438,7 +439,7 @@ def test_denovo_orf_without_finite_e_target_is_no_target_hit() -> None:
     a = assemble(orfs, peps, gm=GM, genome=GENOME, denovo=d)
     last = next(o for o in orfs if pep_all[2] in o.peptides)
     assert a.res.orfs[last.orf_id].reason == "no_target_hit"
-    assert a.cell(last.orf_id) == "unestimated"
+    assert a.cell(last.orf_id) == "NA"
     for o in orfs:
         if o is not last:
             assert a.res.orfs[o.orf_id].reason is None
@@ -520,7 +521,7 @@ def test_example_11_gene_model_without_the_gene_is_no_makedb_pair() -> None:
     a, oid, _ = _example11(with_gene=False)
     r = a.res.orfs[oid]
     assert (r.regime, r.reason) == ("picked_decoy", "no_makedb_pair")
-    assert a.cell(oid) == "unestimated"
+    assert a.cell(oid) == "NA"
     assert "class_fdr_unestimated" in a.flags(oid)
 
 
@@ -624,7 +625,7 @@ def test_unscored_decoys_make_the_class_unestimated() -> None:
     a = _asm(w)
     for o in ids:
         assert a.res.orfs[o].reason == "decoys_unscored"
-        assert a.cell(o) == "unestimated"
+        assert a.cell(o) == "NA"
         assert a.called(o)  # the 2-peptide rule and the cds_outframe rule
     s = a.summary("picked_decoy", "cds_outframe")
     _assert_summary(s, estimated=False, reason="decoys_unscored", q_floor=None,
@@ -771,8 +772,8 @@ def test_class_rules_covers_every_row() -> None:
 
 def test_apply_evidence_keeps_the_cell_it_receives() -> None:
     a, _ = _block(50)
-    assert set(a.pre["class_fdr"]) == {"0.02"}
-    assert set(a.table["class_fdr"]) == {"0.02"}  # no longer overwritten with "unestimated"
+    assert set(a.pre["class_fdr"]) == {0.02}
+    assert set(a.table["class_fdr"]) == {0.02}  # no longer overwritten with NA
 
 
 def test_rank_covers_called_orfs_only() -> None:

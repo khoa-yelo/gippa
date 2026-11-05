@@ -58,6 +58,7 @@ from hypothesis import strategies as st
 from gippa.determinants.models import MIN_ROWS, MIN_TUS
 from gippa.io.run_view import RunView
 from gippa.viz import style
+from gippa.viz.words import plain
 
 ALL_CARDS = {"genes_detected", "peptides_placed", "proteins_placed", "islands", "operon_flags",
              "alt_calls", "novel_orfs", "model_r2"}  # fmt: skip
@@ -278,8 +279,8 @@ def test_alt_calls_by_confidence_with_error_rate_range(tmp_path: Path) -> None:
 
 def test_alt_calls_unestimated_error_rate(tmp_path: Path) -> None:
     out = run_out(tmp_path)
-    write_variants(out, [("V1", "candidate", "unestimated")])
-    assert "unestimated" in _part(page(out), "alt_calls", "estimate")
+    write_variants(out, [("V1", "candidate", None)])  # NA plus the flag (M12-04 PR 11c)
+    assert plain("class_error_unestimated") in _part(page(out), "alt_calls", "estimate")
 
 
 # ---------------------------------------------------------------- degenerate: absent tables

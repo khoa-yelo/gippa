@@ -7,8 +7,9 @@ never change ``call``, ``confidence``, ``n_ref`` or ``n_alt``.
   flags (``sites`` -> ``vcf_records`` with no ``flags`` column) give the same rows with the same
   ``variant_id``, ``call``, ``confidence``, ``n_ref`` and ``n_alt``; the unflagged
   ``vcf_unrepresentable`` flags are kept; under ``related`` every row carries
-  ``strain_difference``. Peptide hits are hand-built on the M7-02 test genome
-  (``helpers.pileup_oracle``): exact windows of G1 (+) and G2 (-) with at most one substitution.
+  ``strain_difference``; ``class_error_unestimated`` is present iff the rate is NA, and last.
+  Peptide hits are hand-built on the M7-02 test genome (``helpers.pileup_oracle``): exact
+  windows of G1 (+) and G2 (-) with at most one substitution.
 """
 
 from __future__ import annotations
@@ -33,6 +34,8 @@ ORDER = (
     "start_codon", "stop_codon",
 )  # fmt: skip
 VCF_FLAG = "vcf_unrepresentable"
+#: set by vcf_records iff the class error is NA, after every other flag (M12-04 PR 11c)
+CE_FLAG = "class_error_unestimated"
 REP = Replicon("c1", L, "circular")
 GENOME = {"c1": SEQ}
 ALTS = "ACDEFGHIKLMNPQRSTVWY"
@@ -194,12 +197,15 @@ def test_flags_never_change_call_confidence_or_counts(
     pd.testing.assert_frame_equal(
         table[CORE].reset_index(drop=True), base[CORE].reset_index(drop=True)
     )
+    for rate, flags in zip(table["class_error_rate"], table["flags"], strict=True):
+        assert (CE_FLAG in tuple(flags)) == bool(pd.isna(rate)), (rate, flags)
     for got, old in zip(table["flags"], base["flags"], strict=True):
         got, old = tuple(got), tuple(old)
         assert set(old) <= set(got)
         assert (VCF_FLAG in got) == (VCF_FLAG in old)
-        m705 = [f for f in got if f != VCF_FLAG]
+        m705 = [f for f in got if f not in (VCF_FLAG, CE_FLAG)]
         assert m705 == sorted(set(m705), key=ORDER.index), got
+        assert CE_FLAG not in got[:-1], got  # the NA-rate flag comes last
         if relation == "related":
             assert "strain_difference" in got, got
         else:

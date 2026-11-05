@@ -37,7 +37,8 @@ M705_FLAGS: tuple[str, ...] = (
     "mass_equivalent", "snv", "multi_nt", "strain_difference", "database_derived",
     "start_codon", "stop_codon",
 )  # fmt: skip
-FLAG_ORDER: tuple[str, ...] = (*M705_FLAGS, "vcf_unrepresentable")  # §9.4 order (rule 7)
+#: §9.4 order (rule 7); ``class_error_unestimated`` marks an NA class error (M12-04 PR 11c)
+FLAG_ORDER: tuple[str, ...] = (*M705_FLAGS, "vcf_unrepresentable", "class_error_unestimated")
 
 _StartKey = tuple[str, str, int]  # (contig, strand, wrapped first codon)
 _START_TYPES = frozenset({"cds", "sorf"})

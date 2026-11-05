@@ -181,7 +181,11 @@ class Assembled:
             else str(f).split(";")  # fmt: skip
 
     def cell(self, orf_id: str) -> str:
-        return str(self.row(orf_id)["class_fdr"])
+        """The written ``class_fdr`` text: ``format_value`` of the float, ``NA`` when unestimated
+        (M12-04 PR 11c: the column is numeric)."""
+        from gippa.io.tsv import format_value
+
+        return format_value(self.row(orf_id)["class_fdr"])
 
     def called(self, orf_id: str) -> bool:
         return bool(self.row(orf_id)["called"])
@@ -214,7 +218,7 @@ def assemble(
     res = m.class_fdr(orfs, peptides, gm=gm, genome=genome, cfg=cfg, denovo=denovo)
     scored = minimal_call(orfs, cfg)
     scored["class_fdr"] = pd.Series([m.class_fdr_cell(res.orfs[i]) for i in scored["orf_id"]],
-                                     dtype="object")  # fmt: skip
+                                     dtype="float64")  # fmt: skip
     by_id = {o.orf_id: o for o in orfs}
     scored["start_best_ostir"] = pd.Series(
         [by_id[i].starts[0] if by_id[i].starts else None for i in scored["orf_id"]], dtype="object"

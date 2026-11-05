@@ -291,7 +291,7 @@ def test_diag_records_both_keys() -> None:
     novel = pd.DataFrame([_novel("A", "antisense", 407412, 407507, PEP)])
     side = pd.DataFrame({"orf_id": ["A"], "class": ["antisense"], "fdr_class": ["antisense"],
                          "regime": ["picked_decoy"], "q": [float("nan")],
-                         "class_fdr": ["unestimated"], "reason": ["no_makedb_pair"],
+                         "class_fdr": [None], "reason": ["no_makedb_pair"],
                          "class_mismatch": [False], "class_rule_met": [False],
                          "called": [False], "denovo_only_unsupported": [False]})  # fmt: skip
     run = M.NovelRun(Path("."), novel, side)

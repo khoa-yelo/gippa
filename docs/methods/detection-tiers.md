@@ -4,6 +4,46 @@ Status: M4-24 shared ranking key approved by the statistician 2026-10-23 (PR #23
 **changes requested** on the contaminant-decoy rule (lead decision 11), see Sign-off. Code: `src/gippa/genetable/detection.py`.
 Spec: GIPPA_SPEC.md §2.1 decision 4, §7.3, §7.3.2, §9.3; ADR-0009; docs/specs/M4-12-detection-tiers.md.
 
+## Report text
+
+The blocks below are copied into the run report's Methods section by `scripts/dev/sync_report_snippets.py` (plain paragraphs and lists only).
+
+One block per detection tier; the report shows the run's.
+
+<!-- report:begin decoy_picked -->
+The input carries decoy peptides, and enough of them (80 % by default) pair with a
+gene. For each gene, the best accepted target peptide competes with the best paired decoy: the
+better one wins, and a tie goes to the decoy. The gene q-value is the picked FDR: decoy wins
+divided by the share of decoys that paired, plus one, over target wins. A gene is detected when
+its q-value is at most the identification level (0.01 by default). The plus one sets a floor: no
+q-value is below 1 over the number of genes won by a target, so a run with few such genes may
+detect none.
+<!-- report:end -->
+
+<!-- report:begin mayu -->
+The peptides carry q-values or posterior error probabilities (PEPs), but no decoys
+pair with genes well enough for the picked estimate. At each threshold, the expected number of
+false peptides is the sum of their PEPs, or the threshold times the peptide count when PEPs are
+missing. False peptides are assumed to land on genes in proportion to each gene's observable
+peptides (MAYU); the estimate counts how many detected genes owe their detection to false peptides
+alone. That share is the gene FDR, and a gene is detected when its q-value is at most the
+identification level (0.01 by default).
+<!-- report:end -->
+
+<!-- report:begin two_peptide -->
+The peptides carry no q-values or error probabilities, so no gene-level FDR can
+be estimated. A gene is detected when it has at least the configured number of distinct accepted
+peptides (2 by default). A gene with a single peptide is reported as such and is not counted as
+detected. Genes carry no gene q-value, and the detection calls of this tier have no estimated
+error rate.
+<!-- report:end -->
+
+<!-- report:begin protein_list -->
+The input has proteins but no peptides. A gene is detected when an input
+protein aligns to it as its best hit. There is no peptide evidence to score, so genes carry no
+gene q-value, and the detection calls of this tier have no estimated error rate.
+<!-- report:end -->
+
 ## Tier choice (once per run, from the input)
 1. `decoy_picked`: at least one C9 decoy row with `protein_ids` passes q <= `input.q_value_max`
    (NA q passes), and the paired share f = paired / (paired + unpaired) is at least

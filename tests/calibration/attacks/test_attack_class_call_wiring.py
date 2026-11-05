@@ -12,7 +12,7 @@ a in ``levels``, streams ``novel_orfs.attack.class_call.<name>``.
   25 % of entries are true. A false entry's target and its decoy are exchangeable (best of 1-3
   N(0, 1)). About half of the false targets lose the pick. Rule 5 (``lost_pick`` -> 1, Q1) is
   what keeps them uncalled. Teeth: with ``class_fdr_cell`` mapping ``lost_pick`` to
-  ``"unestimated"`` (the rejected reading of Q1), the fallback calls every pick loser and FDP is
+  NA, unestimated (the rejected reading of Q1), the fallback calls every pick loser and FDP is
   far above level (checked by ``test_lost_pick_attack_has_teeth``).
 - ``repointed_decoys``: the ADR-0009 decoy-loss attack, routed through the pipeline's own
   ``makedb_id_map`` (rule 2, no ``db_id_map.tsv``). 20 % or 50 % of decoy rows are re-pointed to
@@ -95,7 +95,7 @@ def _cds_world(rng: np.random.Generator) -> tuple[PickedWorld, set[str]]:
 
 
 def _called_fdp(
-    cell: Callable[[object], float | str],
+    cell: Callable[[object], float],
 ) -> Callable[[np.random.Generator], np.ndarray]:
     """FDP of ``called`` at every level: class FDR once, then ``apply_evidence`` per alpha, with the
     step's float ``class_q`` (lead decision 6, gap 2)."""
@@ -111,7 +111,7 @@ def _called_fdp(
                               denovo=None)  # fmt: skip
         scored = minimal_call(w.orfs, config())
         scored["class_fdr"] = pd.Series([cell(res.orfs[i]) for i in scored["orf_id"]],
-                                        dtype="object")  # fmt: skip
+                                        dtype="float64")  # fmt: skip
         pre = orf_table(w.orfs, scored, genome=GENOME, replicons=GM.replicons)
         class_q = {k: r.q for k, r in res.orfs.items() if math.isfinite(r.q)}
         out = np.zeros(len(levels))
@@ -126,10 +126,10 @@ def _called_fdp(
     return fdp
 
 
-def _lost_pick_as_unestimated(r: object) -> float | str:
-    """The rejected Q1 reading: a pick loser gets ``unestimated`` (and so the fallback)."""
+def _lost_pick_as_unestimated(r: object) -> float:
+    """The rejected Q1 reading: a pick loser gets NA, unestimated (and so the fallback)."""
     v = _cc().class_fdr_cell(r)
-    return "unestimated" if getattr(r, "reason", None) == "lost_pick" else v
+    return math.nan if getattr(r, "reason", None) == "lost_pick" else v
 
 
 @pytest.mark.parametrize("full", MODES)

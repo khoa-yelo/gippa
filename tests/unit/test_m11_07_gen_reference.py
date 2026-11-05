@@ -386,7 +386,7 @@ def _toy_schemas(root: Path) -> Path:
 _HEAD = "| Field | Type | Unit | Description | Constraints |\n|---|---|---|---|---|\n"
 #: the link to the 1.0 -> 1.1 migration section (M12-04 PR 11b, spec § 5)
 CHANGES_LINK = (
-    "Columns renamed in 1.1 are listed in "
+    "Columns renamed or retyped in 1.1 are listed in "
     "[Outputs › Changes in 1.1](../user-guide/outputs.md#changes-in-11)."
 )
 TABLES_GOLDEN = (
@@ -426,7 +426,7 @@ Running ES.
 
 One row per gene.
 
-- Path: —
+- Path: `tables/genes.tsv`
 - Coordinates: 1-based closed
 - Schema: `tables/genes.schema.json`
 
@@ -439,7 +439,7 @@ One row per gene.
 
 One row per island.
 
-- Path: —
+- Path: `tables/islands.tsv`
 - Coordinates: —
 - Schema: `tables/islands.schema.json`
 
