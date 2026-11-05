@@ -45,7 +45,18 @@ def fill(cmd: str, directory: str = DOC_DIR) -> str:
     return " ".join(cmd.split()).replace("{out}", "{dir}/runs").replace("{dir}", directory)
 
 
-def readme(version: str, region: str, routes: Sequence[Mapping[str, Any]], expected: bool) -> str:
+def region_length(bp: int) -> str:
+    """``30 kb`` for a whole number of kb, ``30,500 bp`` otherwise."""
+    return f"{bp // 1000} kb" if bp % 1000 == 0 else f"{bp:,} bp"
+
+
+def readme(
+    version: str,
+    region: str,
+    length_bp: int,
+    routes: Sequence[Mapping[str, Any]],
+    expected: bool,
+) -> str:
     blocks = []
     for route in routes:
         cmds = "\n".join(fill(str(c)) for c in route["commands"])
@@ -57,10 +68,11 @@ def readme(version: str, region: str, routes: Sequence[Mapping[str, Any]], expec
         if expected
         else "This build has no `expected/` directory (the numbers are added at release prep)."
     )
+    length = region_length(length_bp)
     return f"""# GIPPA example bundle {version}
 
 A real, cut-down dataset for trying GIPPA: one region of the *E. coli* Nissle 1917 chromosome,
-`{region}` (1-based closed; 200 kb), and the peptides of the ProteomeXchange dataset {PXD}
+`{region}` (1-based closed; {length}), and the peptides of the ProteomeXchange dataset {PXD}
 (runs WT_1 to WT_3) that fall in it. The same region is given through four input routes: a DIA-NN
 report (A), a protein FASTA with an abundance table (B), Cascadia de novo results (C) and a generic
 peptide table (D). Nothing was re-searched; `SELECTION.json` holds the selection rule and the
@@ -91,7 +103,6 @@ longer (see the GIPPA docs, "Try the example").
   gene.
 - Route C keeps only the Cascadia rows whose peptide occurs in the region's six-frame translation,
   so every row is placeable: route C is a format demo, not a result.
-- Route B needs GIPPA issue #536 fixed; before it, `gippa run --proteins` writes no gene table.
 - The q-values, PEPs and MaxLFQ values of routes A, B and D are DIA-NN's, computed on the
   whole-proteome search (4,685 strain proteins plus contaminants, three runs). The subset does not
   recompute them.
@@ -106,7 +117,12 @@ def provenance(
     counts: Mapping[str, Any],
     build: Mapping[str, str],
     rewritten: Mapping[str, Sequence[str]],
+    static: Mapping[str, Mapping[str, str]],
 ) -> str:
+    """``static``: the ``diann_image``, ``diann_cfg``, ``a2_abundance`` and ``cascadia_weights``
+    labels and sha256s (``build_example.static_digests``)."""
+    st = {k: v["sha256"] for k, v in static.items()}
+    lb = {k: v["label"] for k, v in static.items()}
     src = "\n".join(f"| `{k}` | `{v['path']}` | `{v['sha256']}` |" for k, v in sources.items())
     runs = "\n".join(f"- {r}: `{f}`" for r, f in RUN_FILES.items())
     a, c = counts["A"], counts["C"]
@@ -140,6 +156,18 @@ def provenance(
 - D: route A's rows grouped by (stripped peptide, run); {counts["D"]["rows"]} rows.
 - Paths shortened to base names (R12): {scrub or "none"}.
 
+## Tools and tables
+
+- DIA-NN image (Apptainer `{lb["diann_image"]}`, DIA-NN {TOOLS["diann"]}): sha256
+  `{st["diann_image"]}`.
+- DIA-NN configuration of the A2 search: `{lb["diann_cfg"]}`, sha256 `{st["diann_cfg"]}`.
+- Route B's whole-proteome counterpart, the A2 `gippa convert --abundance-out` table
+  `{lb["a2_abundance"]}` (relative to `$GIPPA_ROOT`): sha256 `{st["a2_abundance"]}`.
+- Cascadia weights (`{lb["cascadia_weights"]}`, Cascadia {TOOLS["cascadia"]}): sha256
+  `{st["cascadia_weights"]}`.
+- Bakta database light 6.0 (`gippa setup --bakta light`) for the example runs; UniOP not
+  installed. The run settings are the route commands in `README.md`.
+
 ## Sources (paths relative to `$GIPPA_ROOT`)
 
 | Source | Path | sha256 |
@@ -150,6 +178,8 @@ def provenance(
 
 - Script: `scripts/example/build_example.py` at commit `{build["commit"] or "unknown"}`.
 - Bundle {version}, built with GIPPA {build["gippa_version"]}.
+- Slurm build job: recorded in `validation/example/bundles.tsv` (column `build_job`), not in this
+  file, because a rebuild must give a byte-identical archive whatever job runs it.
 - `expected/`: {build["expected"]}.
 
 `SELECTION.json` (next to this file) holds the selection rule verbatim, the counts and the sha256
@@ -162,12 +192,16 @@ LICENSE_DATA = f"""# Data licence
 The GIPPA software is MIT-licensed. This licence does **not** cover the data files of this bundle.
 
 The files under `A_diann/`, `B_proteins/`, `C_cascadia/` and `D_generic/` are derived from the
-ProteomeXchange dataset **{PXD}** (iProX **{IPX}**), announced 2026-05-16. The dataset record
-states no licence, and its publication is pending. The files are redistributed for the sole
-purpose of demonstrating and testing GIPPA, with attribution to the depositors of {PXD}. The
-content is unchanged: rows were selected and file paths shortened. The GIPPA authors grant no
-licence to these files. Cite {PXD} if you use them. If you are a rights holder and object, open an
-issue and the bundle will be withdrawn.
+ProteomeXchange dataset {PXD} (iProX {IPX}), announced 2026-05-16. The dataset record states no
+licence, and its publication is pending. The files are redistributed for the sole purpose of
+demonstrating and testing GIPPA, with attribution to the depositors of {PXD}. The rows of
+`A_diann/` and `C_cascadia/` are unchanged: rows were selected and file paths shortened to base
+names. The files under `B_proteins/` and `D_generic/` (routes B and D) are derived tables computed
+from the route A rows: the median abundance over runs of each protein group, the grouping of the
+rows by peptide and run, and the ProForma rewrite of the modified sequences; `proteins.faa` holds
+the strain database sequences of those proteins. The GIPPA authors grant no licence to these
+files. Cite {PXD} if you use them. If you are a rights holder and object, open an issue and the
+bundle will be withdrawn.
 
 `genome/` holds a region of the *E. coli* Nissle 1917 assembly {ASSEMBLY} (GenBank {GENBANK}),
 which is INSDC data with no use restrictions by NCBI. `expected/`, `README.md`, `PROVENANCE.md`,
