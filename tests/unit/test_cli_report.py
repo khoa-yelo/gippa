@@ -12,17 +12,19 @@ the combined CliRunner output; the HTML hooks of tests/helpers/report_fixtures.p
 
 from __future__ import annotations
 
-import re
 from pathlib import Path
 from types import ModuleType
 
 import pytest
 from click.testing import CliRunner, Result
 from helpers.report_fixtures import (
-    SECTION_IDS,
+    DOCS_METHODS,
+    expected_section_ids,
+    external_refs,
     parse,
     register_fake,
     run_out,
+    section_or_reason,
     swap_registry,
 )
 from helpers.viz_out_tree import write_resolved_config, write_schema_table
@@ -30,7 +32,6 @@ from helpers.viz_out_tree import write_resolved_config, write_schema_table
 from gippa.exitcodes import ExitCode
 
 FAST = ["--set", "report.formats=[svg]", "--set", "report.dpi=50"]
-EXTERNAL = re.compile(r"^\s*(https?:|//|file:)", re.I)
 
 
 @pytest.fixture(autouse=True)
@@ -85,7 +86,7 @@ def test_report_is_implemented_and_writes_plots_and_report(
         assert (out / "plots" / name).is_file(), name
     assert set(_data(out)) == {"V07_obs_vs_exp.tsv", "V17_qc.tsv", "V17_qc_b.tsv"}
     page = parse((out / "report" / "report.html").read_text(encoding="utf-8"))
-    assert [s.attrs.get("id") for s in page.sections()] == list(SECTION_IDS)
+    assert [s.attrs.get("id") for s in page.sections()] == expected_section_ids(page)
 
 
 def test_no_interactive_is_accepted(fake_registry: ModuleType, tmp_path: Path) -> None:
@@ -119,9 +120,9 @@ def test_example_7_links_resolve_and_nothing_is_external(
     assert "../tables/islands.tsv" in links
     assert "../plots/V07_obs_vs_exp.png" in links and "../plots/V07_obs_vs_exp.pdf" in links
     assert "../plots/data/V17_qc_b.tsv" in links
+    assert not external_refs(page), external_refs(page)  # docs methods <a href> only, no load
     for url in links:
-        assert not EXTERNAL.match(url), url
-        if url.startswith("#"):
+        if url.startswith("#") or DOCS_METHODS.match(url):
             continue
         assert (out / "report" / url).resolve().is_file(), url
     assert str(tmp_path) not in page.html
@@ -222,12 +223,14 @@ def test_a_plot_that_now_skips_leaves_no_stale_files(
     assert _report(out).exit_code == 0
     assert (out / "plots" / "V11_operon_pairs.svg").is_file()
     (out / "tables" / "pairs.tsv").unlink()
+    # header-only operon_flags.tsv keeps the Operons section applicable (M12-04 PR 2)
+    write_schema_table(out / "tables" / "operon_flags.tsv", "operon_flags")
     assert _report(out).exit_code == 0
     leftovers = [p for p in (out / "plots").rglob("V11_*")]
     assert not leftovers, leftovers
     page = parse((out / "report" / "report.html").read_text(encoding="utf-8"))
     text = " ".join(page.slot("V11").text().split())
-    assert "not run" in text and "pairs" in text, text
+    assert "V11: not shown: no gene pair table in this run" in text, text
 
 
 def test_older_plot_files_of_other_plots_are_kept(
@@ -260,5 +263,6 @@ def test_function_off_notes_v14_and_exits_0(fake_registry: ModuleType, tmp_path:
     assert calls == []
     assert not list((out / "plots").glob("V14_*"))
     page = parse((out / "report" / "report.html").read_text(encoding="utf-8"))
-    text = " ".join(page.slot("V14").text().split())
-    assert "not run" in text and "function" in text and "off" in text, text
+    # M12-04 PR 2: the section is listed as not applicable, with no V14 slot
+    assert section_or_reason(page, "function") == "the function module was not run"
+    assert not page.root.by_attr("data-plot", "V14")

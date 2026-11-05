@@ -13,10 +13,11 @@ from typing import Any
 
 import pytest
 from helpers.report_content import write_manifest
-from helpers.report_fixtures import cfg, preload, run_out
+from helpers.report_fixtures import NOT_APPLICABLE_ID, cfg, parse, preload, run_out
 
 OFF = "modules=[core,mobile,bgc]"
-OFF_WORDS = "the function module is off"
+#: M12-04 PR 2: function off is a "Not applicable in this run" entry, not a V14 note
+OFF_WORDS = "Function: the function module was not run"
 
 
 @pytest.fixture(autouse=True)
@@ -62,8 +63,10 @@ def test_no_resolved_config_and_function_off_gives_v14_module_off(
     assert "function" not in c.modules
     skipped = _skipped(out, c, monkeypatch)
     assert skipped.get("V14") == "module_off:function", skipped
-    page = (out / "report" / "report.html").read_text(encoding="utf-8")
-    assert OFF_WORDS in " ".join(page.split())
+    page = parse((out / "report" / "report.html").read_text(encoding="utf-8"))
+    listed = [" ".join(li.text().split()) for li in page.section(NOT_APPLICABLE_ID).by_tag("li")]
+    assert OFF_WORDS in listed, listed
+    assert not page.root.by_attr("data-plot", "V14")
 
 
 def test_cfg_modules_win_over_resolved_config(

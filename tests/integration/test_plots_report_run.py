@@ -340,4 +340,8 @@ def test_zero_detections_empty_states_drawn(zero: Path, pid: str) -> None:
     for svg in svgs:
         assert (zero / "plots" / "data" / f"{svg.stem}.tsv").is_file(), svg.name
     page = parse(_html(zero))
-    assert "not run" not in page.slot(pid).text(), f"{pid} shown as not run"
+    slot = page.slot(pid)
+    text = " ".join(slot.text().split())
+    assert "not run" not in text and "not shown" not in text, f"{pid} shown as skipped: {text}"
+    # M12-04 PR 2 (AC 2.8): an empty state is a .notice (or a figure for a drawn instance)
+    assert slot.by_class("notice") or slot.by_tag("figure"), f"{pid}: no notice and no figure"

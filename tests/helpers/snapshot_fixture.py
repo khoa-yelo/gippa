@@ -332,10 +332,13 @@ def build_report(fixture: str, tmp: Path) -> Path:
     """``report.html`` of ``fixture`` via ``gippa.steps.plots.write_report`` (plots under
     ``tmp/plots``); returns the page path."""
     from gippa.io.run_view import RunView
-    from gippa.steps.plots import write_report
+    from gippa.steps.plots import load_plot_modules, write_report
 
     plots = tmp / "plots"
     render_plot_files(fixture, plots, ("svg", "png"))
+    # a worker that copies another worker's SESSION_CACHE renders nothing itself, so its plot and
+    # twin registries would be empty; ``rerender_report`` loads them the same way
+    load_plot_modules()
     view = RunView.from_outdir(fixture_out(fixture))
     return write_report(view, plots, tmp / "report", fixture_cfg(fixture))
 
@@ -368,7 +371,9 @@ class _Structure(HTMLParser):
     * ``["div", "plot:<data-plot>"]`` for every ``<div class="plot">``, ``["div", id]`` for
       every other ``<div>`` with an ``id`` (the Plotly twins);
     * ``["svg", id-or-null]`` for every outermost ``<svg>`` (an inlined figure);
-    * ``["figure", stem]`` for every ``<figcaption>`` (its first word, the instance stem).
+    * ``["figure", stem]`` for every ``<figcaption>``: its ``data-stem`` attribute, the instance
+      stem (M12-04 PR 2: a report caption starts with the plot's question, not the stem); a
+      figcaption without ``data-stem`` (``compare.html``) gives its first word, the stem.
     """
 
     def __init__(self) -> None:
@@ -393,7 +398,9 @@ class _Structure(HTMLParser):
             self.items.append(["div", f"plot:{a.get('data-plot')}"])
         elif tag == "div" and a.get("id"):
             self.items.append(["div", a.get("id")])
-        elif tag in ("h2", "h3", "figcaption"):
+        elif tag == "figcaption":
+            self._open, self._text = (tag, a.get("data-stem")), []
+        elif tag in ("h2", "h3"):
             self._open, self._text = (tag, a.get("id")), []
 
     def handle_startendtag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
@@ -411,7 +418,8 @@ class _Structure(HTMLParser):
             text = " ".join("".join(self._text).split())
             name, ident = self._open
             if name == "figcaption":
-                self.items.append(["figure", text.split(" ")[0] if text else ""])
+                first = text.split(" ")[0] if text else ""
+                self.items.append(["figure", ident if ident is not None else first])
             else:
                 self.items.append([name, ident if ident else text])
             self._open, self._text = None, None

@@ -383,7 +383,9 @@ its prefix and then filled in.
 **AC.**
 - 2.1: in `report.html` of every fixture, the text of `p, li, figcaption, .card, .notice, h2, h3,
   dd` matches none of `ADR-\d{4}`, `§\s?\d`, `GIPPA_SPEC`, `docs/methods`. It also contains no
-  token of the flag vocabulary as a whole word.
+  token of the flag vocabulary as a whole word. (Lead note, 2026-11-04: "token" means a
+  vocabulary key containing `_` or `:`, such as `top3_lt3` or `uncalibrated:operon_distance`;
+  plain English keys such as `partial` or `pseudogene` may appear in prose.)
 - 2.2: every `figure` has a `figcaption` whose text starts with its plot's §10.2 Question
   (`CAPTIONS` keys = registered plot IDs, tested against `viz.base.registered()`).
 - 2.3: the genes preview has exactly the 8 columns in that order, and is sorted as stated, on

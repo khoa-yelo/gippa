@@ -15,8 +15,9 @@ Interface pinned here (M9-16 test author, beyond the spec text):
   run" without one; "KEGG not installed" (and no academic-use sentence) under
   ``layer_missing:kegg``;
 - ``<table data-table="island_diagnostics">`` in ``genome-context``: one row per replicon, a
-  header cell containing each of ℓ̂, ℓ′ and Î₁; ℓ̂ printed with
-  ``gippa.context.diagnostics.render_l_hat`` (never ``0``);
+  header cell containing each of ℓ̂, ℓ′ and (M12-04 PR 2) "lag-1 Moran's I of the detrended TU
+  scores (used to choose the block length)", its value through ``fmt_num`` (U+2212 minus); ℓ̂
+  printed with ``gippa.context.diagnostics.render_l_hat`` (never ``0``);
 - ``<table data-table="missed_operons_bins">`` in ``operons``: the ``bin_counts`` rows, bounds
   ``−∞`` (U+2212) / ``∞``, and π₀ printed beside it.
 ADR sentences are matched case-insensitively on whitespace-normalised section text, with room
@@ -117,7 +118,7 @@ def test_no_determinants_caveats_without_the_table(tmp_path: Path) -> None:
 @pytest.mark.parametrize(
     ("adr", "pattern"),
     [
-        ("ADR-0026", r"conditional on detection,? (with )?no p_detect adjustment"),
+        ("ADR-0026", r"conditional on detection,? (with )?no adjustment for detection probability"),
         ("ADR-0027", r"NES\b.{0,30}\b(no|without (a|an))\b.{0,20}interval"),
     ],
 )
@@ -126,13 +127,25 @@ def test_gsea_caveats(tmp_path: Path, adr: str, pattern: str) -> None:
     write_gsea(out, [None])
     text = section_text(page(out), "function")
     assert _has(pattern, text), f"{adr}: /{pattern}/ not in {text!r}"
+    _no_internal_token(text)
+
+
+def _no_internal_token(text: str) -> None:
+    """M12-04 PR 2: caveat prose carries no ADR number and no flag or column token."""
+    from helpers.m12_04_pr2 import flag_tokens, internal_refs
+
+    assert not internal_refs(text), internal_refs(text)
+    assert not flag_tokens(text), flag_tokens(text)
+    for token in ("p_detect", "genomic_cluster"):
+        assert token not in text, (token, text)
 
 
 def test_gsea_genomic_cluster_caveat(tmp_path: Path) -> None:
     out = run_out(tmp_path)
     write_gsea(out, [None, "genomic_cluster"])
     text = section_text(page(out), "function")
-    assert _has(r"no level claim.{0,60}genomic_cluster", text), text
+    assert _has(r"no level claim.{0,60}sets whose genes cluster along the genome", text), text
+    _no_internal_token(text)
 
 
 # ---------------------------------------------------------------- function coverage, Bakta, KEGG
@@ -208,10 +221,13 @@ def _diag_rows() -> list[dict[str, object]]:
         {"contig": "chr1", "scanned": True, "block_rule": "auto", "l_hat": 4, "block_len": 9,
          "morans_i_lag1": 0.4213},
         {"contig": "pA", "scanned": True, "block_rule": "fixed", "l_hat": None, "block_len": 12,
-         "morans_i_lag1": 0.1057},
+         "morans_i_lag1": -0.399},
         {"contig": "pB", "scanned": False, "block_rule": "not_scanned", "l_hat": None,
          "block_len": None, "morans_i_lag1": float("nan"), "flags": ["few_values"]},
     ]  # fmt: skip
+
+
+MORAN_HEADER = "lag-1 Moran's I of the detrended TU scores (used to choose the block length)"
 
 
 def _col(header: list[str], symbol: str) -> int:
@@ -222,6 +238,7 @@ def _col(header: list[str], symbol: str) -> int:
 
 def test_island_diagnostics_table_per_replicon(tmp_path: Path) -> None:
     from gippa.context.diagnostics import render_l_hat
+    from gippa.viz.style import fmt_num
 
     out = run_out(tmp_path)
     write_islands(out, [0.001])
@@ -231,11 +248,13 @@ def test_island_diagnostics_table_per_replicon(tmp_path: Path) -> None:
     assert table is not None, "no <table data-table='island_diagnostics'>"
     assert table in p.section("genome-context").iter()
     header, body = table_rows(table)
-    lh, lp, i1 = _col(header, "ℓ̂"), _col(header, "ℓ′"), _col(header, "Î₁")
+    lh, lp = _col(header, "ℓ̂"), _col(header, "ℓ′")
+    i1 = _col(header, MORAN_HEADER)
     rows = {r[0]: r for r in body}
     assert sorted(rows) == ["chr1", "pA", "pB"], body
     assert rows["chr1"][lh] == "4" and rows["chr1"][lp] == "9", rows["chr1"]
-    assert rows["chr1"][i1].startswith("0.421"), rows["chr1"]
+    assert rows["chr1"][i1] == fmt_num(0.4213) == "0.42", rows["chr1"]
+    assert rows["pA"][i1] == fmt_num(-0.399) == "\u22120.40", rows["pA"]  # U+2212 minus
     assert rows["pA"][lh] == render_l_hat(None, "fixed"), rows["pA"]
     assert rows["pA"][lp] == "12", rows["pA"]
     assert rows["pB"][lh] == render_l_hat(None, "not_scanned"), rows["pB"]

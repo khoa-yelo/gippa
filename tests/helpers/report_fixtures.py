@@ -17,7 +17,12 @@ Interface pinned by these helpers (M9-02 test author, beyond the spec text):
   element of class ``value`` (the number) and one of class ``estimate`` (the error estimate or the
   word ``unestimated``); names: ``genes_detected``, ``peptides_placed``, ``islands``,
   ``operon_flags``, ``novel_orfs``;
-- each table shown in the report is ``<table data-table="<PATHS key>">``.
+- each table shown in the report is ``<table data-table="<PATHS key>">``;
+- M12-04 PR 2: a section that does not apply to the run is not rendered; it is listed as
+  ``<li><heading>: <plain reason></li>`` in ``<section id="sec-not-applicable">``, the last section
+  (``expected_section_ids``, ``section_or_reason``). The only external URL allowed is an
+  ``<a href>`` to a docs-site methods page (``DOCS_METHODS``); nothing external is ever loaded
+  (``external_refs``).
 """
 
 from __future__ import annotations
@@ -380,3 +385,62 @@ def table_rows(table: Node) -> tuple[list[str], list[list[str]]]:
         elif tds:
             body.append([c.text().strip() for c in tds])
     return header, body
+
+
+# ---------------------------------------------------------------- M12-04 PR 2: sections, links
+
+NOT_APPLICABLE_ID = "sec-not-applicable"
+#: the one external URL the report may hold: a hyperlink (never a load) to a docs-site methods page
+DOCS_METHODS = re.compile(r"^https://khoa-yelo\.github\.io/gippa/methods/[A-Za-z0-9_-]+/$")
+EXTERNAL = re.compile(r"^\s*(https?:|//|file:)", re.I)
+_LOAD_ATTRS = ("href", "src", "xlink:href", "srcset", "poster", "data")
+
+
+def section_headings() -> dict[str, str]:
+    """Section id -> heading (``gippa.report.build.SECTIONS``)."""
+    from gippa.report.build import SECTIONS
+
+    return {s.id: s.heading for s in SECTIONS}
+
+
+def not_applicable_reasons(page: Page) -> dict[str, str]:
+    """``{name: plain reason}`` of ``#sec-not-applicable`` ({} when absent); every reason is
+    non-empty."""
+    from helpers.m12_04_pr2 import not_applicable_entries
+
+    entries = not_applicable_entries(page)
+    assert all(reason.strip() for _, reason in entries), entries
+    return dict(entries)
+
+
+def expected_section_ids(page: Page) -> list[str]:
+    """``SECTION_IDS`` minus the sections listed as not applicable, in order, then
+    ``sec-not-applicable`` when any is listed (M12-04 PR 2 lead decision 1)."""
+    listed = not_applicable_reasons(page)
+    heads = section_headings()
+    ids = [sid for sid in SECTION_IDS if heads[sid] not in listed]
+    return ids + ([NOT_APPLICABLE_ID] if listed else [])
+
+
+def section_or_reason(page: Page, sid: str) -> Node | str:
+    """The rendered section ``sid``, or its plain reason when it is listed as not applicable;
+    never both, never neither."""
+    found = [s for s in page.sections() if s.attrs.get("id") == sid]
+    reason = not_applicable_reasons(page).get(section_headings()[sid])
+    assert len(found) + (reason is not None) == 1, (sid, len(found), reason)
+    return found[0] if found else str(reason)
+
+
+def external_refs(page: Page) -> list[str]:
+    """Every external URL the page loads or links to, except an ``<a href>`` to a docs-site
+    methods page (a link, never a load; M12-04 Q12)."""
+    bad = []
+    for n in page.root.iter():
+        for attr in _LOAD_ATTRS:
+            value = n.attrs.get(attr)
+            if value is None or not EXTERNAL.match(value):
+                continue
+            if n.tag == "a" and attr == "href" and DOCS_METHODS.match(value):
+                continue
+            bad.append(f"<{n.tag} {attr}={value!r}>")
+    return bad
