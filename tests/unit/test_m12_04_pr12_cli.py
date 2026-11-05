@@ -253,6 +253,81 @@ def test_fresh_run_does_not_warn(
     assert _legacy_events(out) == []
 
 
+#: a user's own files next to the results (review round 1, M2): not 1.0 step intermediates
+FOREIGN = ("samplesheet.csv", "notes.txt", "slurm-123.out", "r\u00e9sum\u00e9.txt")
+
+
+def test_resume_with_a_users_own_files_does_not_warn(
+    nf: dict[str, Path], tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """M2: only known 1.0 intermediate names are legacy; a user's ``samplesheet.csv``,
+    ``notes.txt``, ``slurm-123.out`` (or a non-ASCII name) in ``OUT/`` gives no
+    ``legacy_intermediates`` event and no "can be removed" warning, is kept, and the README
+    (still ASCII) names it."""
+    out = tmp_path / "OUT"
+    out.mkdir()
+    for name in FOREIGN:
+        (out / name).write_bytes(b"mine\n")
+    _published(tmp_path, monkeypatch, "intermediate/context/island_diagnostics.parquet")
+    code, log = _run(nf, out, "--resume")
+    assert code == ExitCode.SUCCESS, log
+    assert _legacy_events(out) == []
+    assert "can be removed" not in log, log
+    for name in FOREIGN:
+        assert (out / name).read_bytes() == b"mine\n", name
+    text = (out / "README.txt").read_bytes().decode("ascii")
+    for name in FOREIGN:
+        assert name.encode("ascii", "backslashreplace").decode("ascii") in text, (name, text)
+    assert "removed" not in text, text
+
+
+def test_resume_into_a_1_0_directory_says_can_be_removed(
+    nf: dict[str, Path], tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """M2: a known 1.0 name (``genetable/``) still warns, on stderr and in the README, that
+    it can be removed; a user's file next to it is not counted."""
+    out = tmp_path / "OUT"
+    (out / "genetable").mkdir(parents=True)
+    (out / "genetable" / "genes.parquet").write_bytes(b"legacy\n")
+    (out / "samplesheet.csv").write_bytes(b"mine\n")
+    _published(tmp_path, monkeypatch, "intermediate/context/island_diagnostics.parquet")
+    code, log = _run(nf, out, "--resume")
+    assert code == ExitCode.SUCCESS, log
+    assert "can be removed" in log, log
+    (ev,) = _legacy_events(out)
+    counts = [v for v in ev["data"].values() if isinstance(v, int) and not isinstance(v, bool)]
+    assert 1 in counts, f"count of 1.0 entries is not 1 (a user's file counted?): {ev['data']}"
+    text = (out / "README.txt").read_text(encoding="ascii")
+    assert "genetable/" in text and "can be removed" in text, text
+    assert "samplesheet.csv" in text, text
+
+
+# ---------------------------------------------------------------- README after a preflight stop
+
+
+@pytest.mark.parametrize("executor", ["nextflow", "local"])
+def test_preflight_failure_still_writes_the_readme(
+    nf: dict[str, Path], tmp_path: Path, executor: str
+) -> None:
+    """M3 (edge case "A failed run"): a run that stops at preflight still leaves
+    ``OUT/README.txt``, naming what exists (``preflight/``), and launches nothing."""
+    from gippa.io.out_readme import render_readme
+
+    bad = tmp_path / "in" / "bad.fa"
+    bad.write_text("this is not a FASTA file\n")
+    out = tmp_path / "OUT"
+    nf_bad = {**nf, "genome": bad}
+    code, log = _run(nf_bad, out, "--executor", executor)
+    assert code == ExitCode.INVALID_INPUT, log
+    assert (out / "preflight").is_dir(), sorted(_top(out)) if out.exists() else "no OUT"
+    readme = out / "README.txt"
+    assert readme.is_file(), f"a preflight stop wrote no README.txt; OUT has {sorted(_top(out))}"
+    text = readme.read_text(encoding="ascii")
+    assert text == render_readme(out)
+    assert "preflight/" in text
+    assert not (tmp_path / "nf_args.txt").exists(), "nextflow launched after a preflight error"
+
+
 # ---------------------------------------------------------------- gippa report on both layouts
 
 

@@ -186,7 +186,9 @@ nextflow_pipeline {
             ['gene_table', 'detectability', 'context_stats', 'sensitivity'].each { s ->
                 assert H.stepCount(workflow.trace, s) == 0 : "${s} ran without peptides: ${H.names(workflow.trace)}"
             }
-            assert !new File("${outputDir}/intermediate/genetable").exists() : "intermediate/genetable/ published without peptides"
+            ['genetable', 'intermediate/genetable'].each { d ->
+                assert !new File("${outputDir}/${d}").exists() : "${d}/ published without peptides"
+            }
             assert !new File("${outputDir}/tables").exists() : "tables/ published without peptides"
         }
     }

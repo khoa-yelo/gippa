@@ -129,19 +129,172 @@ def test_ends_with_the_docs_link_and_the_version(tmp_path: Path) -> None:
 # ---------------------------------------------------------------- AC 12.3
 
 
+#: top-level names GIPPA 1.0 published at the top of ``OUT/`` that 1.1 moves under
+#: ``intermediate/`` (review round 1, M2): the first path parts of the 1.0 Nextflow ``key=path``
+#: outputs (``git show v1.0.0:workflow/**/*.nf``, so also of 1.0 ``PUBLISHED_FILES``) outside the
+#: published folders, ``work/`` and the plot support directories, plus the spec's "Example: A's
+#: top level" list. ``legacy_entries`` must treat each of these, and no user file, as legacy.
+LEGACY_1_0 = (
+    "annotation_meta.json", "codon.parquet", "context", "features.parquet", "genes.coords",
+    "genes.parquet", "genetable", "hits_exact.parquet", "hits_tolerant.parquet",
+    "layers.parquet", "mapping_fdr.parquet", "novel", "novel_candidates.parquet",
+    "novel_promoter_windows.parquet", "novel_windows", "novel_windows_map.parquet",
+    "operon_meta.json", "ostir_input.csv", "ostir_input_novel.csv", "pairs_raw.parquet",
+    "placement.parquet", "placement_costs.parquet", "promoter_windows.parquet",
+    "proteins.leftover.faa", "rbs.parquet", "rbs_novel.parquet", "region_genes.parquet",
+    "regions.parquet", "replicons.parquet", "rrna16s.fa", "sixframe.npz", "smoke.done",
+    "stratum0_classes.parquet", "terminators.parquet", "terminators_crosscheck.tsv",
+    "trna_counts.tsv", "tu_upstream", "tus.parquet", "tx_rates.parquet", "uniop_cds.gff",
+    "uniop_map.tsv", "windows", "windows_map.parquet", "xrefs.parquet",
+)  # fmt: skip
+#: 1.0 names that were folders (the rest were files)
+LEGACY_DIRS = frozenset({"context", "genetable", "novel", "novel_windows", "tu_upstream",
+                         "windows"})  # fmt: skip
+#: a user's own files next to the results: named in the README, never "can be removed"
+FOREIGN = ("samplesheet.csv", "notes.txt", "slurm-123.out")
+#: non-ASCII top-level names (a user's file); the README stays ASCII and names them escaped
+NON_ASCII = ("r\u00e9sum\u00e9.txt", "\u00fcbersicht", "\u6570\u636e.csv", "lambda_\u03bb.tsv",
+             "smile_\U0001f600.txt")  # fmt: skip
+REMOVABLE = "can be removed"
+
+
+def _ascii(name: str) -> str:
+    """How the README writes a top-level name: backslash-escaped outside ASCII."""
+    return name.encode("ascii", "backslashreplace").decode("ascii")
+
+
+def _names(text: str, name: str, is_dir: bool) -> bool:
+    """``text`` names the entry ``name`` as a whole token (``name/`` for a folder), so
+    ``genes.parquet`` is not found in ``genes.parquet.bak`` nor ``nes.tsv`` in ``genes.tsv``."""
+    token = re.escape(_ascii(name) + ("/" if is_dir else ""))
+    after = r"(?=$|[\s,;:)]|\.(?:\s|$))" if is_dir else r"(?=$|[\s,;:)/]|\.(?:\s|$))"
+    return re.search(r"(?<![\w./\\-])" + token + after, text, re.MULTILINE) is not None
+
+
+def _paragraphs_naming(text: str, name: str, is_dir: bool) -> list[str]:
+    return [p for p in text.split("\n\n") if _names(p, name, is_dir)]
+
+
+def _extras(out: Path, dirs: set[str], files: set[str]) -> None:
+    for d in dirs:
+        (out / d).mkdir()
+        (out / d / "part.parquet").write_bytes(b"x")
+    for f in files:
+        (out / f).write_bytes(b"x")
+
+
+_FOREIGN_NAME = st.one_of(
+    st.sampled_from(FOREIGN + NON_ASCII),
+    st.from_regex(r"\Amy_[a-z0-9]{2,8}(\.(txt|csv|out|log|tsv))?\Z", fullmatch=True),
+)
+
+
 @settings(
     max_examples=60, deadline=None, suppress_health_check=[HealthCheck.function_scoped_fixture]
 )
-@given(st.sets(st.sampled_from(FOLDERS)), st.sets(st.sampled_from(FILES)))
+@given(
+    st.sets(st.sampled_from(FOLDERS)),
+    st.sets(st.sampled_from(FILES)),
+    st.sets(st.sampled_from(LEGACY_1_0)),
+    st.sets(_FOREIGN_NAME, max_size=6),
+    st.data(),
+)
 def test_names_exactly_the_entries_that_exist(
-    tmp_path_factory: pytest.TempPathFactory, folders: set[str], files: set[str]
+    tmp_path_factory: pytest.TempPathFactory,
+    folders: set[str],
+    files: set[str],
+    legacy: set[str],
+    foreign: set[str],
+    data: st.DataObject,
 ) -> None:
-    """Property: the README names every top-level entry present (except itself) and nothing
-    absent, whatever subset of the published entries a run (or a failed run) left."""
+    """Property (AC 12.3): the README names every top-level entry present (except itself) and
+    nothing absent, whatever a run (or a failed run, or a ``--resume`` into a 1.0 folder holding a
+    user's own files) left: published entries on their own lines, 1.0 step intermediates and
+    foreign entries by name (non-ASCII names backslash-escaped, the text stays ASCII); only the
+    1.0 intermediates are called removable; ≤ 60 lines."""
+    from gippa.io.out_readme import legacy_entries
+
     out = _tree(tmp_path_factory.mktemp("rd") / "OUT", folders, files)
     (out / "README.txt").write_text("stale\n")
     (out / ".nextflow.log").write_text("hidden\n")
-    assert _named_heads(_render(out)) == folders | files
+    foreign_dirs = {f for f in foreign if data.draw(st.booleans(), label=f"{f} is a folder")}
+    _extras(out, (legacy & LEGACY_DIRS) | foreign_dirs,
+            (legacy - LEGACY_DIRS) | (foreign - foreign_dirs))  # fmt: skip
+    text = _render(out)
+    assert text.isascii()
+    assert len(text.splitlines()) <= 60, f"{len(text.splitlines())} lines"
+    published = set(FOLDERS) | set(FILES)
+    assert _named_heads(text) & published == folders | files
+    assert sorted(legacy_entries(out)) == sorted(legacy), "legacy_entries: 1.0 names only"
+    for name in legacy:
+        is_dir = name in LEGACY_DIRS
+        assert _names(text, name, is_dir), f"1.0 entry {name!r} not named:\n{text}"
+        assert any(REMOVABLE in p for p in _paragraphs_naming(text, name, is_dir)), (
+            f"1.0 entry {name!r} not called removable:\n{text}"
+        )
+    for name in foreign:
+        is_dir = name in foreign_dirs
+        assert _names(text, name, is_dir), f"entry {_ascii(name)!r} not named:\n{text}"
+        assert all("removed" not in p for p in _paragraphs_naming(text, name, is_dir)), (
+            f"a user's entry {_ascii(name)!r} is called removable:\n{text}"
+        )
+    for name in set(LEGACY_1_0) - legacy:
+        is_dir = name in LEGACY_DIRS
+        assert not _names(text, name, is_dir), f"absent entry {name!r} named:\n{text}"
+
+
+def test_fifty_legacy_entries_all_named_within_60_lines(tmp_path: Path) -> None:
+    """H1: a ``--resume`` into a 1.0 folder with ~50 top-level intermediates still gives a README
+    that names each of them, in at most 60 lines."""
+    out = _full(tmp_path / "OUT")
+    extra = tuple(f"step{i:02d}.parquet" for i in range(50 - len(LEGACY_1_0)))
+    _extras(out, set(LEGACY_DIRS), (set(LEGACY_1_0) - LEGACY_DIRS) | set(extra))
+    assert len(LEGACY_1_0) + len(extra) == 50
+    text = _render(out)
+    assert text.isascii()
+    assert len(text.splitlines()) <= 60, f"{len(text.splitlines())} lines:\n{text}"
+    missing = [n for n in LEGACY_1_0 if not _names(text, n, n in LEGACY_DIRS)]
+    missing += [n for n in extra if not _names(text, n, False)]
+    assert not missing, f"not named: {missing}\n{text}"
+
+
+@pytest.mark.parametrize("name", ["genetable", "codon.parquet", "context", "novel"])
+def test_a_known_1_0_name_is_legacy_and_removable(tmp_path: Path, name: str) -> None:
+    from gippa.io.out_readme import legacy_entries
+
+    out = _full(tmp_path / "OUT")
+    is_dir = name in LEGACY_DIRS
+    _extras(out, {name} if is_dir else set(), set() if is_dir else {name})
+    assert legacy_entries(out) == [name]
+    text = _render(out)
+    assert _names(text, name, is_dir), text
+    assert any(REMOVABLE in p for p in _paragraphs_naming(text, name, is_dir)), text
+
+
+@pytest.mark.parametrize("name", [*FOREIGN, *NON_ASCII, "my_results"])
+def test_a_users_own_entry_is_named_not_legacy_not_removable(tmp_path: Path, name: str) -> None:
+    """M2: only 1.0 step intermediates are legacy; a user's file next to the results is named
+    but never called removable (and triggers no ``legacy_intermediates`` warning)."""
+    from gippa.io.out_readme import legacy_entries, write_readme
+
+    out = _full(tmp_path / "OUT")
+    is_dir = name == "my_results"
+    _extras(out, {name} if is_dir else set(), set() if is_dir else {name})
+    assert legacy_entries(out) == []
+    path = write_readme(out)  # must not raise on a non-ASCII name
+    text = path.read_bytes().decode("ascii")
+    assert text == _render(out)
+    assert _names(text, name, is_dir), f"{_ascii(name)!r} not named:\n{text}"
+    assert "removed" not in text, text
+
+
+def test_users_entry_and_legacy_entry_together(tmp_path: Path) -> None:
+    out = _full(tmp_path / "OUT")
+    _extras(out, {"genetable"}, {"samplesheet.csv"})
+    text = _render(out)
+    assert any(REMOVABLE in p for p in _paragraphs_naming(text, "genetable", True)), text
+    assert _names(text, "samplesheet.csv", False), text
+    assert all("removed" not in p for p in _paragraphs_naming(text, "samplesheet.csv", False)), text
 
 
 def test_failed_run_without_report_names_no_report(tmp_path: Path) -> None:

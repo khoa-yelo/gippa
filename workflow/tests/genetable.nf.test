@@ -106,7 +106,9 @@ nextflow_workflow {
             ['gene_table', 'detectability'].each { s ->
                 assert H.stepCount(workflow.trace, s) == 0 : "${s} ran without the loci output: ${H.names(workflow.trace)}"
             }
-            assert !new File("${outputDir}/intermediate/genetable").exists() : "intermediate/genetable/ published without the loci output"
+            ['genetable', 'intermediate/genetable'].each { d ->
+                assert !new File("${outputDir}/${d}").exists() : "${d}/ published without the loci output"
+            }
         }
     }
 }
