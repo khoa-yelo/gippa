@@ -37,6 +37,7 @@ from gippa.config import GippaConfig, resolve_config
 from gippa.io.run_view import RunView
 from gippa.viz import base, checklist, style
 from gippa.viz.base import Instance, Skip
+from gippa.viz.words import plain
 
 SNAPSHOT = Path(__file__).resolve().parents[2] / "data" / "snapshot" / "sim_plots" / "OUT"
 needs_snapshot = pytest.mark.skipif(not SNAPSHOT.is_dir(), reason="M9-25 snapshot fixture absent")
@@ -230,14 +231,14 @@ def _site(rate: object, **kw: object) -> dict[str, object]:
 @pytest.mark.parametrize(
     ("rate", "shown"),
     [(0.872576, "0.87"), (1.0, "1"), (0.933333, "0.93"), (0.0234567, "0.023"), (0.0, "0"),
-     ("0.872576", "0.87"), ("unestimated", "unestimated")],
+     ("0.872576", "0.87"), (math.nan, "NA")],
 )  # fmt: skip
 def test_v12_site_line_rounds_the_class_error(rate: object, shown: str) -> None:
     from gippa.viz.variants import _header
 
     text = _header(_site(rate))
-    if shown == "unestimated":
-        assert text.endswith("class error unestimated"), text
+    if shown == "NA":  # M12-04 PR 11c: the flag's plain words
+        assert text.endswith(plain("class_error_unestimated")), text
     else:
         star = "*" if shown == "1" else ""
         assert text.endswith(f"class error {shown}{star} (pooled, class of 1805 paired reads)"), (
@@ -268,10 +269,11 @@ def test_v12_snapshot_panel_b_site_lines_are_rounded() -> None:
     tails = {
         line.rsplit("class error ", 1)[1].split(" (pooled", 1)[0].rstrip("*") for line in lines
     }
-    assert all("(pooled, class of " in line for line in lines if "unestimated" not in line)
+    na = plain("unestimated")  # "class error not estimated" (M12-04 PR 11c)
+    assert all("(pooled, class of " in line for line in lines if na not in line)
     assert "0.87" in tails
     for tail in tails:
-        assert tail == "unestimated" or tail == base.sig(float(tail)), tail
+        assert tail == na or tail == base.sig(float(tail)), tail
     assert not any("0.872576" in line for line in lines)
 
 

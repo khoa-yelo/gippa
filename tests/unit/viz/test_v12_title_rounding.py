@@ -5,6 +5,7 @@ A range whose ends round to the same text prints once.
 
 from __future__ import annotations
 
+import math
 from pathlib import Path
 
 import pandas as pd
@@ -14,6 +15,7 @@ from gippa.config import resolve_config
 from gippa.io.run_view import RunView
 from gippa.viz import style
 from gippa.viz.variants import EN_DASH, title, variants
+from gippa.viz.words import plain
 
 #: V12 title clause (M9-18 amendment: the class error is pooled per class)
 POOLED = ", pooled per class over ALT and mixed sites"
@@ -44,8 +46,9 @@ def test_ends_rounding_alike_print_once() -> None:
 
 
 def test_unestimated_rates_are_left_out() -> None:
-    assert title(_frame(["unestimated", "unestimated"])).endswith("(class error unestimated)")
-    assert title(_frame(["unestimated", 0.123456])).endswith(f"(class error 0.12{POOLED})")
+    na = math.nan  # unestimated (M12-04 PR 11c)
+    assert title(_frame([na, na])).endswith(f"(class error {plain('unestimated')})")
+    assert title(_frame([na, 0.123456])).endswith(f"(class error 0.12{POOLED})")
 
 
 @pytest.mark.skipif(not SNAPSHOT.is_dir(), reason="M9-25 snapshot fixture absent")
