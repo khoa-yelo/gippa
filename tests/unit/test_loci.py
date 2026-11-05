@@ -727,7 +727,7 @@ def test_gene_is_set_exactly_for_assigning_classes() -> None:
 
 
 def prot_row(pid: str, gene: str | None, start: int = 100, end: int = 400, rank: int = 1,
-             flags: str = "") -> dict[str, Any]:  # fmt: skip
+             flags: str = "", cls: str = "identical") -> dict[str, Any]:  # fmt: skip
     return {
         "protein_id": pid,
         "protein_len_aa": (end - start) // 3 - 1,
@@ -740,7 +740,7 @@ def prot_row(pid: str, gene: str | None, start: int = 100, end: int = 400, rank:
         "identity": 0.99,
         "query_coverage": 1.0,
         "reciprocal_overlap": 1.0,
-        "class": "identical",
+        "class": cls,
         "gene": gene,
         "flags": flags,
     }
@@ -755,7 +755,17 @@ def annotate_prot(rows: Sequence[Mapping[str, Any]]) -> list[dict[str, Any]]:
 
 
 def test_example_15_two_proteins_one_gene() -> None:
+    # M12-04 PR 9: an identical match under a foreign ID makes no cross-strain claim (the run
+    # flag foreign_protein_ids records it instead), so P0A7V8 carries only two_proteins_one_gene.
     out = annotate_prot([prot_row("P0A7V8", G1), prot_row(G1, G1)])
+    fl = {r["protein_id"]: flags_of(r["flags"]) for r in out}
+    assert fl["P0A7V8"] == {"two_proteins_one_gene"}
+    assert fl[G1] == {"two_proteins_one_gene"}
+
+
+@pytest.mark.parametrize("cls", ["near", "divergent"])
+def test_example_15_non_identical_foreign_id_is_cross_strain(cls: str) -> None:
+    out = annotate_prot([prot_row("P0A7V8", G1, cls=cls), prot_row(G1, G1)])
     fl = {r["protein_id"]: flags_of(r["flags"]) for r in out}
     assert fl["P0A7V8"] == {"two_proteins_one_gene", "cross_strain_protein"}
     assert fl[G1] == {"two_proteins_one_gene"}
@@ -774,7 +784,9 @@ def test_protein_flags_negative_cases() -> None:
 
 
 def test_cross_strain_protein_alone() -> None:
-    out = annotate_prot([prot_row("WP_000001", G2, 1000, 1300), prot_row(G1, G1, flags="fs;st")])
+    out = annotate_prot(
+        [prot_row("WP_000001", G2, 1000, 1300, cls="near"), prot_row(G1, G1, flags="fs;st")]
+    )
     fl = {r["protein_id"]: flags_of(r["flags"]) for r in out}
     assert fl["WP_000001"] == {"cross_strain_protein"}
     assert fl[G1] == {"fs", "st"}

@@ -90,7 +90,9 @@ def _written(tmp: Path, seed: int, exhaustive: int, grid: bool, monkeypatch: pyt
     cs._write_null_regions(tmp, table, nulls)
     f = next((tmp / "support").glob("null_regions.tsv*"))
     kw = {"sep": "\t", "na_values": ["NA"], "keep_default_na": False}
-    return pd.read_csv(f, **kw), pd.read_csv(tmp / "regions_stats.tsv", **kw)
+    # p_value kept as the written string: regions_stats.tsv writes it %.6g (M12-04 PR 9)
+    rs = pd.read_csv(tmp / "regions_stats.tsv", dtype={"p_value": str}, **kw)
+    return pd.read_csv(f, **kw), rs
 
 
 def _tested(rs: pd.DataFrame) -> pd.DataFrame:
@@ -107,6 +109,7 @@ def _null_of(nr: pd.DataFrame, row: pd.Series) -> pd.DataFrame:
 @pytest.mark.parametrize("exhaustive", [20000, 100], ids=["exhaustive", "sampled"])
 def test_r1_region_nulls_reproduce_p(tmp_path: Path, seed: int, exhaustive: int,
                                      monkeypatch: pytest.MonkeyPatch) -> None:  # fmt: skip
+    from gippa.io.tsv import format_value
     from gippa.stats.permutation import perm_p
 
     nr, rs = _written(tmp_path, seed, exhaustive, False, monkeypatch)
@@ -119,7 +122,8 @@ def test_r1_region_nulls_reproduce_p(tmp_path: Path, seed: int, exhaustive: int,
         z = sel["null_value"].to_numpy(float)
         assert int(np.count_nonzero(~np.isnan(z))) == int(row["n_perm"])
         p = perm_p(float(sel["observed"].iloc[0]), z)
-        assert p == pytest.approx(float(row["p_value"]), rel=1e-6), (row["region_id"], row["stat"])
+        # exact against the written %.6g cell (M12-04 PR 9; format_value, no tolerance)
+        assert format_value(p) == row["p_value"], (row["region_id"], row["stat"], p)
 
 
 @REGIONS
