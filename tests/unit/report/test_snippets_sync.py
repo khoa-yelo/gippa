@@ -10,14 +10,18 @@ Interface pinned here (M9-16 test author, beyond the spec text):
   missing, or has no source block (an orphan); exit 0 when all agree;
 - the generated HTML: one ``<p>`` per blank-line-separated paragraph (lines joined by a space),
   one ``<ul>`` of ``<li>`` per run of ``- `` lines; text HTML-escaped; nothing else;
-- the snippets are package data of ``gippa.report`` (``importlib.resources``); the methods
-  section renders every snippet; ``islands.html`` exists and holds the validity-domain sentence;
+- a keyed block ``<!-- report:begin <key> -->`` gives ``<topic>.<key>.html`` (M12-04 PR 3);
+- the snippets are package data of ``gippa.report`` (``importlib.resources``); every snippet is
+  rendered by some realistic run (M12-04 PR 3: a run shows only its steps' and its tier's
+  snippets, so no snippet file is dead); ``islands.html`` exists and holds the validity-domain
+  sentence;
 - no Markdown library is imported at run time.
 """
 
 from __future__ import annotations
 
 import ast
+import re
 import shutil
 import subprocess
 import sys
@@ -33,6 +37,8 @@ SCRIPT = ROOT / "scripts" / "dev" / "sync_report_snippets.py"
 DOCS = ROOT / "docs" / "methods"
 SNIPPETS = ROOT / "src" / "gippa" / "report" / "snippets"
 BEGIN, END = "<!-- report:begin -->", "<!-- report:end -->"
+#: an unkeyed or keyed (M12-04 PR 3) begin marker
+BEGIN_ANY = re.compile(r"<!-- report:begin(?: ([A-Za-z0-9_-]+))? -->")
 
 
 def _run(*args: str) -> subprocess.CompletedProcess[str]:
@@ -41,7 +47,12 @@ def _run(*args: str) -> subprocess.CompletedProcess[str]:
 
 
 def _sourced_topics() -> list[str]:
-    return sorted(p.stem for p in DOCS.glob("*.md") if BEGIN in p.read_text(encoding="utf-8"))
+    """Snippet stems with a source block: ``<topic>`` (unkeyed) or ``<topic>.<key>`` (keyed)."""
+    stems = set()
+    for p in DOCS.glob("*.md"):
+        for m in BEGIN_ANY.finditer(p.read_text(encoding="utf-8")):
+            stems.add(p.stem if m.group(1) is None else f"{p.stem}.{m.group(1)}")
+    return sorted(stems)
 
 
 def test_repo_snippets_are_in_sync() -> None:
@@ -129,10 +140,21 @@ def test_islands_snippet_holds_the_validity_domain_sentence() -> None:
 
 
 def test_methods_section_renders_every_snippet(tmp_path: Path) -> None:
-    methods = section_text(page(run_out(tmp_path)), "methods")
+    """No snippet file is dead: each one's body shows in the Methods section of some realistic
+    run (M12-04 PR 3 fixtures P, D, R and decoy cover the four tiers, de novo and abundance; their
+    manifests list the steps of an evidence-like run)."""
+    from unit.report.test_m12_04_pr1_fixtures import build
+    from unit.report.test_m12_04_pr3_methods import STEPS_A, STEPS_CORE, with_steps
+
+    runs = [("P", STEPS_A), ("D", STEPS_CORE), ("R", STEPS_A), ("decoy", STEPS_A)]
+    shown = [
+        section_text(with_steps(build(name, tmp_path / name), steps).page(), "methods")
+        for name, steps in runs
+    ]
+    shown.append(section_text(page(run_out(tmp_path / "plain")), "methods"))
     for path in sorted(SNIPPETS.glob("*.html")):
         body = words(parse(path.read_text(encoding="utf-8")).root.text())
-        assert body and body in methods, path.name
+        assert body and any(body in methods for methods in shown), path.name
 
 
 @pytest.mark.parametrize("path", sorted((ROOT / "src" / "gippa" / "report").rglob("*.py")))
