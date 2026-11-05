@@ -34,7 +34,7 @@ from gippa.model.coords import Interval
 G = genes_of(BASE)
 BY = {g.locus_tag: g for g in G}
 P_BASE = {("G1", "G2"): 0.8, ("G3", "G4"): 0.9, ("G5", "G1"): 0.1}
-EVIDENCE_COLS = ("promoter_between", "tx_rate_between", "terminator_between")
+EVIDENCE_COLS = ("promoter_score_between", "tx_rate_between", "terminator_score_between")
 
 
 def _base(probs: dict[tuple[str, str], float] | None = None, **kw: object) -> pd.DataFrame:
@@ -73,23 +73,23 @@ def test_adjacent_chain_is_genome_order_with_wrap() -> None:
 def test_columns_and_one_row_per_adjacent_pair() -> None:
     df = _base()
     assert set(PAIR_COLS) <= set(df.columns)
-    assert len(df) == 5 and set(df["class"]) <= {"OP", "NO", "CV", "DV"}
+    assert len(df) == 5 and set(df["pair_class"]) <= {"OP", "NO", "CV", "DV"}
 
 
 def test_example_1_op_and_example_2_no() -> None:
     r = row(_base(), "G1", "G2")
-    assert (r["class"], r["strand"], r["intergenic_bp"], r["uniop_p"]) == ("OP", "+", 50, 0.8)
+    assert (r["pair_class"], r["strand"], r["intergenic_bp"], r["uniop_p"]) == ("OP", "+", 50, 0.8)
     r = row(_base({**P_BASE, ("G1", "G2"): 0.2}), "G1", "G2")
-    assert (r["class"], r["strand"], r["intergenic_bp"], r["uniop_p"]) == ("NO", "+", 50, 0.2)
+    assert (r["pair_class"], r["strand"], r["intergenic_bp"], r["uniop_p"]) == ("NO", "+", 50, 0.2)
 
 
 def test_threshold_is_inclusive() -> None:
-    assert row(_base({**P_BASE, ("G1", "G2"): 0.5}), "G1", "G2")["class"] == "OP"
+    assert row(_base({**P_BASE, ("G1", "G2"): 0.5}), "G1", "G2")["pair_class"] == "OP"
 
 
 def test_example_3_convergent() -> None:
     r = row(_base(), "G2", "G3")
-    assert (r["class"], r["strand"], r["intergenic_bp"]) == ("CV", ".", 50)
+    assert (r["pair_class"], r["strand"], r["intergenic_bp"]) == ("CV", ".", 50)
     assert pd.isna(r["uniop_p"]) and all(pd.isna(r[c]) for c in EVIDENCE_COLS)
 
 
@@ -97,14 +97,14 @@ def test_example_4_minus_strand_op_is_oriented_upstream_first() -> None:
     ab = {"G3": 18.0, "G4": 16.5}
     df = _base(tbl=gene_tbl(G, ab))
     r = row(df, "G4", "G3")
-    assert (r["class"], r["strand"], r["intergenic_bp"], r["uniop_p"]) == ("OP", "-", 100, 0.9)
+    assert (r["pair_class"], r["strand"], r["intergenic_bp"], r["uniop_p"]) == ("OP", "-", 100, 0.9)
     assert r["delta_log2"] == pytest.approx(1.5)  # example 10, second half
     assert not ((df["gene_a"] == "G3") & (df["gene_b"] == "G4")).any()
 
 
 def test_example_5_divergent_a_is_left() -> None:
     r = row(_base(), "G4", "G5")
-    assert (r["class"], r["strand"], r["intergenic_bp"]) == ("DV", ".", 100)
+    assert (r["pair_class"], r["strand"], r["intergenic_bp"]) == ("DV", ".", 100)
 
 
 def test_example_7_sandwich_decoy() -> None:
@@ -112,7 +112,7 @@ def test_example_7_sandwich_decoy() -> None:
     gs = genes_of(rows)
     probs = {("G1", "G2"): 0.8, ("G2", "G3"): 0.7, ("G5", "G1"): 0.1}
     df = frame(gs, ring(), probs)
-    sw = df[df["class"] == "SW"]
+    sw = df[df["pair_class"] == "SW"]
     assert len(sw) == 1
     r = sw.iloc[0]
     assert (r["gene_a"], r["gene_b"], r["strand"], r["intergenic_bp"]) == ("G3", "G5", "+", 200)
@@ -129,7 +129,7 @@ def test_sw_on_minus_strand_is_oriented_upstream_first() -> None:
 
 def test_example_8_wrap_pair() -> None:
     r = row(_base(), "G5", "G1")
-    assert (r["class"], r["strand"], r["intergenic_bp"]) == ("NO", "+", 10_000 - 2400 + 100)
+    assert (r["pair_class"], r["strand"], r["intergenic_bp"]) == ("NO", "+", 10_000 - 2400 + 100)
 
 
 def test_example_10_delta_and_per_gene_columns() -> None:
@@ -201,8 +201,8 @@ def test_evidence_columns_use_the_m2_helpers_with_raw_terminator_maximum() -> No
         for col, e in zip(EVIDENCE_COLS, exp, strict=True):
             assert (pd.isna(r[col]) and e is None) or r[col] == pytest.approx(e), (up, col)
     r = row(df, "G1", "G2")
-    assert (r["promoter_between"], r["tx_rate_between"]) == (0.7, 5.0)
-    assert r["terminator_between"] == pytest.approx(0.3)  # below the default yes = 0.5 (dec. 5)
+    assert (r["promoter_score_between"], r["tx_rate_between"]) == (0.7, 5.0)
+    assert r["terminator_score_between"] == pytest.approx(0.3)  # below the default yes = 0.5 (dec. 5)
 
 
 def test_cv_dv_evidence_is_na_even_with_layers() -> None:
@@ -216,7 +216,7 @@ def test_example_11_missing_layer_gives_all_na_column(missing: int) -> None:
     layers: list[object] = list(_layers())
     layers[missing] = None
     df = _base(ev=evidence(*layers))  # type: ignore[arg-type]
-    order = ("promoter_between", "terminator_between", "tx_rate_between")
+    order = ("promoter_score_between", "terminator_score_between", "tx_rate_between")
     assert df[order[missing]].isna().all()
     assert all(df[c].notna().any() for c in order if c != order[missing])
 
@@ -225,7 +225,7 @@ def test_example_9_rna_between() -> None:
     rna = rna_frame([("t1", "trna", 410, 440, "+"), ("r1", "rrna", 3000, 4000, "+")])
     df = _base(ev=evidence(rna=rna))
     assert "rna_between" in _flags(row(df, "G1", "G2"))  # type: ignore[operator]
-    assert row(df, "G1", "G2")["class"] == "OP"  # otherwise ordinary
+    assert row(df, "G1", "G2")["pair_class"] == "OP"  # otherwise ordinary
     for a, b in (("G2", "G3"), ("G4", "G3"), ("G4", "G5")):
         assert "rna_between" not in _flags(row(df, a, b))  # type: ignore[operator]
     assert "rna_between" in _flags(row(df, "G5", "G1"))  # type: ignore[operator]  # 3000-4000
@@ -262,7 +262,7 @@ def test_linear_no_wrap_pair_and_no_sw_across_ends() -> None:
     gs = genes_of(rows)
     probs = {("A", "B"): 0.9, ("B", "C"): 0.9}
     lin = frame(gs, reps(("c1", L, "linear")), probs)
-    assert len(lin) == 3 and "SW" not in set(lin["class"])
+    assert len(lin) == 3 and "SW" not in set(lin["pair_class"])
     circ = frame(gs, ring(), probs)
     assert row(circ, "D", "A", "DV")["intergenic_bp"] == L - 1600 + 100
     assert row(circ, "C", "A", "SW")["intergenic_bp"] == 100 + (L - 1600 + 100)
@@ -272,7 +272,7 @@ def test_partial_gene_keeps_its_row_and_gene_table_values() -> None:
     gs = [gene("A", 100, 400, "+", partial=True), gene("B", 450, 900, "+")]
     tbl = gene_tbl(gs, detected={"A": False}, p_detect={"A": float("nan")})
     r = row(frame(gs, reps(("c1", L, "linear")), {("A", "B"): 0.9}, tbl=tbl), "A", "B")
-    assert (r["class"], r["intergenic_bp"], bool(r["detected_a"])) == ("OP", 50, False)
+    assert (r["pair_class"], r["intergenic_bp"], bool(r["detected_a"])) == ("OP", 50, False)
     assert pd.isna(r["p_detect_a"])
 
 

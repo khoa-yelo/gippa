@@ -54,15 +54,15 @@ def row(
     out: dict[str, Any] = {c: NAN for c in PAIR_COLS}
     out.update(
         {
-            "class": cls,
+            "pair_class": cls,
             "gene_a": gene_a,
             "gene_b": gene_b,
             "strand": "." if cls in ("CV", "DV") else "+",
             "intergenic_bp": 40,
             "uniop_p": 0.9 if cls == "OP" else (0.1 if cls == "NO" else NAN),
-            "promoter_between": prom,
+            "promoter_score_between": prom,
             "tx_rate_between": NAN,
-            "terminator_between": term,
+            "terminator_score_between": term,
             "detected_a": det_a,
             "detected_b": det_b,
             "p_detect_a": 0.9,

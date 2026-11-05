@@ -22,8 +22,8 @@ def test_pairs_outside_every_bin_are_counted_in_a_warning(
     caplog: pytest.LogCaptureFixture,
 ) -> None:
     pairs = example_frame()
-    n_no = int(((pairs["class"] == "NO") & (pairs["intergenic_bp"] < 0)).sum())
-    n_d = int(((pairs["class"] != "NO") & (pairs["intergenic_bp"] < 0)).sum())
+    n_no = int(((pairs["pair_class"] == "NO") & (pairs["intergenic_bp"] < 0)).sum())
+    n_d = int(((pairs["pair_class"] != "NO") & (pairs["intergenic_bp"] < 0)).sum())
     assert n_no and n_d
     with caplog.at_level(logging.WARNING, logger="gippa.operons.missed"):
         res = missed_operons(pairs, cfg(distance_bins_bp=EDGES_NO_OVERLAP))
@@ -42,7 +42,7 @@ def test_default_bins_never_warn_about_out_of_bin_pairs(caplog: pytest.LogCaptur
 @pytest.mark.parametrize("side", ["gene_a", "gene_b"])
 def test_a_no_pair_with_an_imputed_gene_is_labelled(side: str) -> None:
     pairs = example_frame()
-    no = pairs.index[pairs["class"] == "NO"]
+    no = pairs.index[pairs["pair_class"] == "NO"]
     genes = genes_for(pairs, abundance_imputed=dict.fromkeys(pairs.loc[no[:5], side], True))
     rows = missed_operons(pairs, cfg(), genes=genes).rows.set_index("pair_id")
     for pid in pairs.loc[no, "pair_id"]:
@@ -77,7 +77,7 @@ def test_scored_rows_flag_the_missing_ci_and_unscored_rows_do_not() -> None:
 
 def test_scored_rows_keep_their_input_flags() -> None:
     pairs = example_frame()
-    first = pairs.index[pairs["class"] == "NO"][0]
+    first = pairs.index[pairs["pair_class"] == "NO"][0]
     pairs.at[first, "flags"] = ["rna_between"]
     rows = missed_operons(pairs, cfg()).rows.set_index("pair_id")
     assert rows.at[pairs.at[first, "pair_id"], "flags"] == ["rna_between", "ci_unestimated"]

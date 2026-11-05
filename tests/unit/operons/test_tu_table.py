@@ -128,13 +128,13 @@ def test_n_flags_counts_pairs_with_both_genes_in_the_tu() -> None:
         [tu("T1", tu_genes[0], 0, 900), tu("T2", tu_genes[1], 1000, 1600)], tu_genes, ab, q=q
     )
     # A->B and B->C are discordant OP pairs; C->D a co-abundant NO pair between the TUs
-    assert sorted(flagged["flag"]) == [
+    assert sorted(flagged["flags"]) == [
         "novel_operon_candidate", "unexplained_discordance", "unexplained_discordance",
     ]  # fmt: skip
     by = _by_id(out)
     assert by.loc["T1", "n_flags"] == 2
     assert by.loc["T2", "n_flags"] == 0
-    n_op = int((flagged["uniop_class"] == "OP").sum())
+    n_op = int((flagged["pair_class"] == "OP").sum())
     assert int(out["n_flags"].sum()) <= n_op
 
 

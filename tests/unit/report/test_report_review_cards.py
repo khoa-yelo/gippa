@@ -158,7 +158,7 @@ def test_b1_property_estimate_is_the_called_rows_bound(
 
 # ---------------------------------------------------------------- B2 operon card
 
-_PAIR = {"gene_a": "g1", "gene_b": "g2", "uniop_class": "OP", "promoter_between_yes": False,
+_PAIR = {"gene_a": "g1", "gene_b": "g2", "pair_class": "OP", "promoter_between_yes": False,
          "terminator_between_yes": False, "lfdr": 0.5, "evidence_note": "x"}  # fmt: skip
 
 
@@ -166,17 +166,17 @@ def _flags(out: Path) -> None:
     rows = [
         # discordant, exactly at the default alpha = 0.1 (a boundary row: q ≤ alpha counts)
         {**_PAIR, "pair_id": "PAIR_1", "abundance_pattern": "discordant",
-         "flag": "internal_promoter_supported", "promoter_between_yes": True, "q_value": 0.1},
+         "flags": "internal_promoter_supported", "promoter_between_yes": True, "q_value": 0.1},
         # co-abundant despite a terminator
         {**_PAIR, "pair_id": "PAIR_2", "abundance_pattern": "coabundant",
-         "flag": "coabundant_despite_terminator", "terminator_between_yes": True,
+         "flags": "coabundant_despite_terminator", "terminator_between_yes": True,
          "q_value": 0.02},
         # concordant pairs flagged for a terminator inside an operon: q > alpha, never counted
         {**_PAIR, "pair_id": "PAIR_3", "abundance_pattern": "concordant",
-         "flag": "conflict_terminator_in_operon", "terminator_between_yes": True,
+         "flags": "conflict_terminator_in_operon", "terminator_between_yes": True,
          "q_value": 0.5},
         {**_PAIR, "pair_id": "PAIR_4", "abundance_pattern": "concordant",
-         "flag": "conflict_terminator_in_operon", "terminator_between_yes": True,
+         "flags": "conflict_terminator_in_operon", "terminator_between_yes": True,
          "q_value": None},
     ]  # fmt: skip
     write_schema_table(out / "tables" / "operon_flags.tsv", "operon_flags", rows)
@@ -207,7 +207,7 @@ def test_b2_operon_card_label_follows_alpha(tmp_path: Path) -> None:
 def test_b2_only_concordant_conflicts_count_zero(tmp_path: Path) -> None:
     out = run_out(tmp_path)
     rows = [{**_PAIR, "pair_id": f"PAIR_{i}", "abundance_pattern": "concordant",
-             "flag": "conflict_terminator_in_operon", "terminator_between_yes": True,
+             "flags": "conflict_terminator_in_operon", "terminator_between_yes": True,
              "q_value": q} for i, q in ((1, 0.4), (2, 0.9))]  # fmt: skip
     write_schema_table(out / "tables" / "operon_flags.tsv", "operon_flags", rows)
     page = _page(out)

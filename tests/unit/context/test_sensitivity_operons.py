@@ -293,15 +293,15 @@ def test_examples_3_4_threshold_variant(
     assert _pair_genes(gt, t, tabs) == _pair_genes(gt, PRIMARY_T, tabs)
     m_p, _ = so.oracle_frames(gt, cfg, tabs)
     m_v, f_v = so.oracle_frames(gt, vcfg, tabs)
-    n_op_p, n_op_v = int((m_p["class"] == "OP").sum()), int((m_v["class"] == "OP").sum())
+    n_op_p, n_op_v = int((m_p["pair_class"] == "OP").sum()), int((m_v["pair_class"] == "OP").sum())
     assert (n_op_v > n_op_p) if t < PRIMARY_T else (n_op_v < n_op_p), "fixture: classes move"
     prim = so.call_family(gt, cfg, _rng(), tabs)
     r = _row(prim, var, so.variant_name(t))
     assert _is_na(r["jaccard"]) or 0.0 <= float(r["jaccard"]) <= 1.0
     if t < PRIMARY_T:  # example 3 on this fixture: discordance flags rise, NO flags do not
         _, f_p = so.oracle_frames(gt, cfg, tabs)
-        assert f_v["flag"].isin(OP_FLAGS).sum() >= f_p["flag"].isin(OP_FLAGS).sum()
-        assert f_v["flag"].isin(NO_FLAGS).sum() <= f_p["flag"].isin(NO_FLAGS).sum()
+        assert f_v["flags"].isin(OP_FLAGS).sum() >= f_p["flags"].isin(OP_FLAGS).sum()
+        assert f_v["flags"].isin(NO_FLAGS).sum() <= f_p["flags"].isin(NO_FLAGS).sum()
 
 
 def test_degenerate_07_leaves_too_few_op_pairs(
@@ -311,10 +311,10 @@ def test_degenerate_07_leaves_too_few_op_pairs(
     set holds only pairs that are NO in that run (missed-operon flags)."""
     vcfg = so.with_threshold(so.config(), 0.7)
     merged, _ = so.oracle_frames(gt, vcfg, tabs)
-    op = merged[merged["class"] == "OP"]
+    op = merged[merged["pair_class"] == "OP"]
     assert len(op) and all("unestimated" in list(f) for f in op["flags"]), "fixture: OP tested"
     var = so.call_family(gt, vcfg, _rng(), tabs)
-    no_ids = set(merged.loc[merged["class"] == "NO", "pair_id"].astype(str))
+    no_ids = set(merged.loc[merged["pair_class"] == "NO", "pair_id"].astype(str))
     assert var <= no_ids
     assert var == so.oracle_flagged(gt, vcfg, tabs)
 

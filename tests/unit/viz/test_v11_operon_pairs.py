@@ -121,7 +121,7 @@ def _pair(
         test = "both_detected_t"
     return {
         "pair_id": f"PAIR_{n}",
-        "class": cls,
+        "pair_class": cls,
         "gene_a": f"G{n}a",
         "gene_b": f"G{n}b",
         "strand": strand if strand is not None else ("." if cls in ("CV", "DV") else "+"),
@@ -149,11 +149,11 @@ def _flag_row(
         "pair_id": pair["pair_id"],
         "gene_a": pair["gene_a"],
         "gene_b": pair["gene_b"],
-        "uniop_class": pair["class"],
+        "pair_class": pair["pair_class"],
         "promoter_between_yes": False,
         "terminator_between_yes": False,
         "abundance_pattern": "discordant",
-        "flag": flag,
+        "flags": flag,
         "q_value": q,
         "lfdr": lfdr,
         "evidence_note": f"q={q:g}",
@@ -747,7 +747,7 @@ def test_renders_on_an_m6_flag_fixture(tmp_path: Path, cfg: GippaConfig) -> None
     assert inst.title.endswith("; 3 of 4 candidate flags at q ≤ 0.1")
     c = _by_pair(_rows(inst, "c"))
     for _, f in flagged.iterrows():
-        assert str(c[str(f["pair_id"])]["flag"]) == f["flag"]
+        assert str(c[str(f["pair_id"])]["flag"]) == f["flags"]
     assert len(_outlined(_ax(inst, "c"))) == 3
     assert set(_by_pair(_rows(inst, "b"))) == {"PAIR_5", "PAIR_6"}
     assert _counts(inst) == {"OP": 4, "NO": 2, "CV": 1, "SW": 1, "DV": 1}
@@ -828,7 +828,7 @@ def test_property_panel_b_and_c_row_sets(
     want_c = {
         str(p["pair_id"]): p
         for p in pairs
-        if p["class"] in ("OP", "NO")
+        if p["pair_class"] in ("OP", "NO")
         and p["abundance_log2_a"] is not None
         and p["abundance_log2_b"] is not None
     }

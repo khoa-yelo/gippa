@@ -186,8 +186,8 @@ def write_islands(out: Path, p_values: Sequence[float]) -> None:
 
 
 def write_operon_flags(out: Path, q_values: Sequence[float]) -> None:
-    rows = [{"pair_id": f"PAIR_{i}", "gene_a": "g1", "gene_b": "g2", "uniop_class": "OP",
-             "abundance_pattern": "discordant", "flag": "internal_promoter_supported",
+    rows = [{"pair_id": f"PAIR_{i}", "gene_a": "g1", "gene_b": "g2", "pair_class": "OP",
+             "abundance_pattern": "discordant", "flags": "internal_promoter_supported",
              "promoter_between_yes": True, "terminator_between_yes": False, "lfdr": 0.5,
              "q_value": q, "evidence_note": "x"} for i, q in enumerate(q_values)]  # fmt: skip
     write_schema_table(out / "tables" / "operon_flags.tsv", "operon_flags", rows)

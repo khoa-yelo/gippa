@@ -286,7 +286,7 @@ def test_pairs_one_row_per_adjacent_pair_plus_sandwiches(chain: Chain, full: Run
     n_adj, n_sw = len(adjacent_chain(genes, reps)), len(sandwich_pairs(genes, reps))
     df = full.frame("pairs")
     assert len(df) == n_adj + n_sw
-    assert int((df["class"] == "SW").sum()) == n_sw
+    assert int((df["pair_class"] == "SW").sum()) == n_sw
     assert df["pair_id"].is_unique
     nums = [int(p.rsplit("_", 1)[1]) for p in df["pair_id"]]
     assert nums == list(range(1, len(df) + 1))
@@ -372,7 +372,7 @@ def test_example_3_too_few_pairs_is_the_normal_outcome(no_abundance: Run) -> Non
     passes."""
     df = no_abundance.frame("pairs")
     flags = df["flags"].map(lambda s: set() if s == "NA" else set(s.split(";")))
-    op, no = df["class"] == "OP", df["class"] == "NO"
+    op, no = df["pair_class"] == "OP", df["pair_class"] == "NO"
     assert flags[op].map(lambda f: "too_few_op_pairs" in f).any()
     assert flags[no].map(lambda f: "too_few_no_pairs" in f).all()
 
@@ -388,13 +388,13 @@ def test_example_3_equals_the_decision_4_chain(no_abundance: Run, tmp_path: Path
 
 def test_example_4_terminator_between_na_everywhere(no_terminators: Run) -> None:
     df = no_terminators.frame("pairs")
-    assert set(df["terminator_between"]) == {"NA"}
+    assert set(df["terminator_score_between"]) == {"NA"}
 
 
 def test_example_4_layer_missing_on_op_and_no_rows_only(no_terminators: Run) -> None:
     df = no_terminators.frame("pairs")
     has = df["flags"].map(lambda s: "layer_missing:terminators" in s.split(";"))
-    op_no = df["class"].isin(["OP", "NO"])
+    op_no = df["pair_class"].isin(["OP", "NO"])
     assert has[op_no].all()
     assert not has[~op_no].any()
 
@@ -417,10 +417,10 @@ def test_all_three_layers_missing_names_each(chain: Chain, tmp_path: Path) -> No
     ins = step_inputs(chain, gt, drop=tuple(LAYER_NAME))
     run = run_operons_step(ins, tmp_path / "out", _cfg())
     df = run.frame("pairs")
-    for col in ("promoter_between", "tx_rate_between", "terminator_between"):
+    for col in ("promoter_score_between", "tx_rate_between", "terminator_score_between"):
         assert set(df[col]) == {"NA"}, col
     want = {f"layer_missing:{v}" for v in LAYER_NAME.values()}
-    op_no = df.loc[df["class"].isin(["OP", "NO"]), "flags"]
+    op_no = df.loc[df["pair_class"].isin(["OP", "NO"]), "flags"]
     assert op_no.map(lambda s: want <= set(s.split(";"))).all()
     logged = " ".join(run.messages())
     for flag in want:
