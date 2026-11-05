@@ -261,7 +261,7 @@ def test_points_are_drawn_in_kb_and_blue(tmp_path: Path, cfg1: GippaConfig) -> N
     assert [x for x, _ in pts] == pytest.approx([m / 1000 for m in EX1_MIDS], abs=1e-3)
     assert [y for _, y in pts] == pytest.approx(EX1_LOG2)
     assert ax.get_xlabel() == "position (kb)"
-    assert ax.get_ylabel() == "log2 abundance"
+    assert ax.get_ylabel() == style.run_abundance_label(pd.DataFrame(_ex1_genes()))  # P-13
 
 
 def test_legend_names_the_loess_span(tmp_path: Path, cfg: GippaConfig, cfg1: GippaConfig) -> None:
@@ -344,7 +344,7 @@ def test_island_alpha_follows_the_config_inclusively(tmp_path: Path) -> None:
     assert len(_spans(_ax(inst, "chr1"))) == 1
 
 
-def test_title_adds_the_lag1_gene_label_morans_i(tmp_path: Path, cfg1: GippaConfig) -> None:
+def test_title_adds_the_lag1_tu_block_morans_i(tmp_path: Path, cfg1: GippaConfig) -> None:
     rows = correlogram_rows(
         overrides={
             ("morans_i", "gene_label", 1): (0.31, -0.002, -0.05, 0.05, 0.002),
@@ -354,8 +354,10 @@ def test_title_adds_the_lag1_gene_label_morans_i(tmp_path: Path, cfg1: GippaConf
     islands = [island("ISL_1", "high", 20_001, 40_000, 0.01)]
     out = landscape_out(tmp_path, genes=_ex1_genes(), islands=islands, autocorr=rows)
     inst = _render(out, cfg1)
+    # M12-04 P-04: the TU-block row, with its null named; P-18: q through fmt_q
     assert inst.title == (
-        "1 high and 0 low abundance islands at FWER ≤ 0.05; lag-1 Moran's I 0.31 (q = 0.002)"
+        "1 high and 0 low abundance islands at FWER ≤ 0.05; lag-1 Moran's I "
+        f"{style.fmt_num(0.31)} ({style.q_equals(0.03)}, TU-block null)"
     )
 
 
