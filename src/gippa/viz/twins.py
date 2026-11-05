@@ -24,8 +24,8 @@ from gippa.viz import detection as det
 from gippa.viz import style
 from gippa.viz.interactive import interactive
 from gippa.viz.landscape import COLUMNS as V02_ALL
+from gippa.viz.mapping_fdr import ASSUMED, DECOY, NOT_NEEDED, TARGET, all_assumed
 from gippa.viz.mapping_fdr import COLUMNS as V06_COLUMNS
-from gippa.viz.mapping_fdr import DECOY, TARGET
 from gippa.viz.mapping_sankey import CLASSES, NODE_GREY, OUTCOME_COLOUR, OUTCOMES, ROUTES
 from gippa.viz.mapping_sankey import COLUMNS as V05_COLUMNS
 
@@ -194,13 +194,18 @@ def v06(data: pd.DataFrame, title: str, meta: Meta = None) -> Any:
     """(a) targets/decoys on a log axis, (b) stratum FDR with the alpha line, (c) precision; rows
     the static plot did not draw (``drawn`` false, M12-04 PR 4) are left out."""
     level, known = alpha(meta, "placement")
+    whole = data
     if "drawn" in data.columns:
         data = data[~data["drawn"].astype(str).str.lower().isin(("false", "0"))]
     sub = {p: data[data["panel"] == p] for p in "abc"}
-    panels = ["a", "b", *(["c"] if len(sub["c"]) else [])]
+    # exact-only placement (P-02): the static (a)/(b) are one line, so is the twin
+    exact = whole["panel"].isin(["a", "b"]).any() and not (len(sub["a"]) or len(sub["b"]))
+    panels = [*([] if exact else ["a", "b"]), *(["c"] if len(sub["c"]) else [])]
     names = {"a": "(a) targets vs. decoys", "c": "(c) de novo precision",
              "b": "(b) stratum FDR"
              + (f" (dashed: {style.fmt_alpha(level)})" if known else "")}  # fmt: skip
+    if exact:
+        return _v06_exact(whole, title, panels, names)
     fig = make_subplots(rows=1, cols=len(panels), subplot_titles=[names[p] for p in panels],
                         column_widths=[2.6, 1.5, 1.3][: len(panels)])  # fmt: skip
     for metric, colour in (("targets", TARGET), ("decoys", DECOY)):
@@ -225,21 +230,55 @@ def v06(data: pd.DataFrame, title: str, meta: Meta = None) -> Any:
                       row=1, col=2)  # fmt: skip
     fig.add_hline(y=level, line={"dash": "dash", "color": MUTED, "width": 1}, row=1, col=2)
     if "c" in panels:
-        c = sub["c"]
-        y, lo, hi = floats(c["value"]), floats(c["ci_low"]), floats(c["ci_high"])
-        cells = zip(c["score_bin"], c["value"], c["ci_low"], c["ci_high"], strict=True)
-        text = [f"bin {fmt(s)}{DOT}precision {fmt(v)} ({ci(a, z)})" for s, v, a, z in cells]
-        sym = ["circle-open" if "c_assumed" in flag_list(f) else "circle" for f in c["flags"]]
-        fig.add_trace(go.Scatter(x=floats(c["score_bin"]), y=y, mode="markers", hovertext=text,
-                                 hoverinfo="text", showlegend=False,
-                                 error_y={"array": hi - y, "arrayminus": y - lo, "color": MUTED},
-                                 marker={"color": TARGET, "size": 7, "symbol": sym}),
-                      row=1, col=3)  # fmt: skip
-        titles(fig, {"row": 1, "col": 3}, "de novo score bin", "precision (CI)")
+        _v06_c(fig, sub["c"], 3)
     titles(fig, {"row": 1, "col": 1}, "differences per length class (aa)",
            "placements (0 at the floor)", type="log")  # fmt: skip
     titles(fig, {"row": 1, "col": 2}, "differences (n_diff)", "stratum FDR", rangemode="tozero")
     return finish(fig, title, 380, barmode="group")
+
+
+def _v06_c(fig: Any, c: pd.DataFrame, col: int) -> None:
+    """Panel (c): precision per bin; "(CI)" in the axis title only with a drawn interval."""
+    y, lo, hi = floats(c["value"]), floats(c["ci_low"]), floats(c["ci_high"])
+    cells = zip(c["score_bin"], c["value"], c["ci_low"], c["ci_high"], strict=True)
+    text = [f"bin {fmt(s)}{DOT}precision {fmt(v)} ({ci(a, z)})" for s, v, a, z in cells]
+    sym = ["circle-open" if "c_assumed" in flag_list(f) else "circle" for f in c["flags"]]
+    has_ci = bool((np.isfinite(y) & np.isfinite(lo) & np.isfinite(hi) & (hi > lo)).any())
+    error = {"array": hi - y, "arrayminus": y - lo, "color": MUTED} if has_ci else None
+    fig.add_trace(go.Scatter(x=floats(c["score_bin"]), y=y, mode="markers", hovertext=text,
+                             hoverinfo="text", showlegend=False, error_y=error,
+                             marker={"color": TARGET, "size": 7, "symbol": sym}),
+                  row=1, col=col)  # fmt: skip
+    titles(fig, {"row": 1, "col": col}, "de novo score bin",
+           "precision (CI)" if has_ci else "precision")  # fmt: skip
+
+
+def _v06_exact(whole: pd.DataFrame, title: str, panels: list[str], names: Mapping[str, str]) -> Any:
+    """No tolerant targets (P-02): the exact-match line as an annotation, (c) when drawn."""
+    head = title.split(";")[0] if "placed by exact match" in title else ""
+    line = f"{head or 'All peptides placed by exact match'}: {NOT_NEEDED}."
+    if panels:
+        fig = make_subplots(rows=1, cols=2, subplot_titles=["", names["c"]],
+                            column_widths=[1.4, 1.3])  # fmt: skip
+        _v06_c(fig, whole[whole["panel"] == "c"].pipe(_drawn_rows), 2)
+        fig.update_xaxes(visible=False, row=1, col=1)
+        fig.update_yaxes(visible=False, row=1, col=1)
+        note(fig, line, "paper", 0.2, 0.5)
+    else:
+        fig = go.Figure()
+        fig.update_xaxes(visible=False)
+        fig.update_yaxes(visible=False)
+        note(fig, line, "paper", 0.5, 0.6)
+        c = whole[whole["panel"] == "c"]
+        if len(c) and all_assumed(c):
+            note(fig, ASSUMED.format(c="0.99"), "paper", 0.5, 0.4)
+    return finish(fig, title, 300)
+
+
+def _drawn_rows(frame: pd.DataFrame) -> pd.DataFrame:
+    if "drawn" not in frame.columns:
+        return frame
+    return frame[~frame["drawn"].astype(str).str.lower().isin(("false", "0"))]
 
 
 # ---------------------------------------------------------------- V7

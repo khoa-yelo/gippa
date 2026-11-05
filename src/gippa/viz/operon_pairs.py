@@ -51,7 +51,7 @@ DENSITY_CLASSES = ("OP", "NO", "CV", "SW")
 CLASS_COLOUR: Mapping[str, str] = MappingProxyType(
     {
         "OP": style.OKABE_ITO["blue"],
-        "NO": "#009E73",  # bluish green: not a detection colour (P-11)
+        "NO": style.OKABE_ITO["bluish_green"],  # not a detection colour (P-11)
         "CV": style.OKABE_ITO["vermillion"],
         "SW": style.OKABE_ITO["reddish_purple"],
     }

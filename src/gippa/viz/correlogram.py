@@ -7,8 +7,9 @@ grey) and TU-block (``#56B4E9``) 2.5-97.5 % envelopes (``null_lo``-``null_hi``) 
 means. A marker is filled when the TU-block row's ``q_value ≤ stats.alpha.context`` (the
 conservative null ADR-0020 gates); NA rows, and rows flagged ``not_estimable`` or ``few_values``
 whatever their value (lead decision 21), draw nothing, and a panel whose rows are all NA says
-"not estimable (<flags>)". Contigs wrap into rows of at most 3 columns, each (b) panel under its
-(a) panel (lead decision 23). ``oriter_slope`` rows are context-table rows and are not drawn.
+"Not drawn: <flags in plain words>" (``flags_text``). Contigs wrap into rows of at most 3
+columns, each (b) panel under its (a) panel (lead decision 23). ``oriter_slope`` rows are
+context-table rows and are not drawn.
 A ``join_count_bb`` row's ``value`` is the raw count BB_k while its ``null_*`` and ``effect`` are on
 the Pearson-residual statistic S_k (ADR-0020 Amendment 1), so (b) plots S_k = ``effect +
 null_mean`` against the envelopes (docs/specs/stat-m5-joincount-scale.md).
@@ -21,6 +22,7 @@ autocorrelation."). Flags in partial panels are written in plain words (``words.
 from __future__ import annotations
 
 import math
+import textwrap
 from collections.abc import Sequence
 from typing import TYPE_CHECKING
 
@@ -155,7 +157,7 @@ def title(data: pd.DataFrame, order: Sequence[str]) -> str:
             f"({style.q_equals(q)}, {name} null)")  # fmt: skip
 
 
-def _flags(rows: pd.DataFrame) -> str:
+def flags_text(rows: pd.DataFrame) -> str:
     """The flags of ``rows`` in plain words: those that make a row NA when any, else all."""
     seen: dict[str, None] = {}
     for f in rows["flags"]:
@@ -164,14 +166,22 @@ def _flags(rows: pd.DataFrame) -> str:
     return "; ".join(plain(t) for t in tokens) or "no estimable value"
 
 
+def _fit(ax: Axes, text: str, size: float) -> str:
+    """``text`` wrapped to the width of ``ax`` (about 0.55 em per character)."""
+    fig = ax.get_figure(root=True)
+    width_in = ax.get_position().width * (fig.get_figwidth() if fig is not None else 7.0)
+    chars = max(12, int(width_in * 72 / (0.55 * size)))
+    return textwrap.fill(text, chars)
+
+
 def _panel(ax: Axes, rows: pd.DataFrame, statistic: str, lags: tuple[int, int]) -> None:
     num = {c: rows[c].to_numpy(dtype=float) for c in ("value", "effect", "null_mean")}
     rows = rows.assign(y=plotted(list(rows["statistic"]), num["value"], num["effect"],
                                  num["null_mean"]))  # fmt: skip
     if not np.isfinite(rows["y"].to_numpy(dtype=float)).any():
         ax.set_axis_off()
-        ax.text(0.5, 0.5, f"Not drawn: {_flags(rows)}", ha="center", va="center",
-                transform=ax.transAxes, color=GREY, fontsize=6, wrap=True)  # fmt: skip
+        ax.text(0.0, 0.5, _fit(ax, f"Not drawn: {flags_text(rows)}", 6), ha="left", va="center",
+                transform=ax.transAxes, color=GREY, fontsize=6)  # fmt: skip
         return
     finite = np.isfinite(rows["y"].to_numpy(dtype=float))
     na_lags = sorted({int(v) for v in rows["lag"].dropna()} - {int(v) for v in
@@ -179,9 +189,9 @@ def _panel(ax: Axes, rows: pd.DataFrame, statistic: str, lags: tuple[int, int]) 
     if na_lags:
         na_rows = rows[rows["lag"].isin(na_lags)]
         noun = "lag" if len(na_lags) == 1 else "lags"
-        note = f"{noun} {', '.join(str(v) for v in na_lags)} not drawn: {_flags(na_rows)}"
-        ax.text(0.02, 0.02, note, ha="left", va="bottom", transform=ax.transAxes, color=GREY,
-                fontsize=5, wrap=True)  # fmt: skip
+        note = f"{noun} {', '.join(str(v) for v in na_lags)} not drawn: {flags_text(na_rows)}"
+        ax.text(0.02, 0.02, _fit(ax, note, 5), ha="left", va="bottom", transform=ax.transAxes,
+                color=GREY, fontsize=5)  # fmt: skip
     by_null = {n: rows[rows["null_model"] == n] for n in NULLS}
     for null, sub in by_null.items():
         band, a, line = NULL_STYLE[null]

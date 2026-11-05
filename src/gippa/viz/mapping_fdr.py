@@ -51,6 +51,8 @@ EMPTY = "no peptide placements"
 EMPTY_TITLE = "No peptide placements or de novo precision in this run"
 #: the tolerant route had no targets (P-02): the empty state and the collapsed (a)/(b) line
 NOT_NEEDED = "the tolerant-route FDR is not needed"
+#: panel (c) when no bin has a precision value (and the bins are not ``c_assumed``)
+NO_PRECISION = "no de novo precision values"
 #: panel (c) when every bin is ``c_assumed`` (P-03); ``{c}`` is the assumed value
 ASSUMED = "De novo precision not measured (no reference peptides); assumed c = {c}"
 _FLOOR_A = 0.5  # panel (a) log-axis floor: 0 counts are drawn here
@@ -97,6 +99,11 @@ def _row(
 
 def _assumed(flags: object) -> bool:
     return "c_assumed" in str(_py(flags) or "").split(";")
+
+
+def all_assumed(c: pd.DataFrame) -> bool:
+    """Every panel (c) row is ``c_assumed`` (P-03: precision not measured)."""
+    return bool(len(c)) and all(_assumed(f) for f in c["flags"])
 
 
 def exact_only(fdr: pd.DataFrame) -> bool:
@@ -154,7 +161,7 @@ def data_frame(fdr: pd.DataFrame, classes: Sequence[str]) -> pd.DataFrame:
         )
     data = pd.DataFrame(rows, columns=list(COLUMNS), dtype=object)
     c = data["panel"] == "c"
-    if c.any() and all(_assumed(f) for f in data.loc[c, "flags"]):
+    if all_assumed(data.loc[c]):
         data.loc[c, "drawn"] = False  # P-03: nothing measured, the values are kept
     elif c.any():
         data.loc[c, "drawn"] = [_py(v) is not None for v in data.loc[c, "value"]]
@@ -205,9 +212,9 @@ def title(data: pd.DataFrame, alpha: float, exact: str | None = None) -> str:
     return "; ".join(parts)
 
 
-def _empty(ax: Axes) -> None:
+def _empty(ax: Axes, text: str = EMPTY) -> None:
     ax.set_axis_off()
-    ax.text(0.5, 0.5, EMPTY, ha="center", va="center", transform=ax.transAxes, color="#555555")
+    ax.text(0.5, 0.5, text, ha="center", va="center", transform=ax.transAxes, color="#555555")
 
 
 def _panel_a(ax: Axes, a: pd.DataFrame) -> None:
@@ -404,8 +411,10 @@ def mapping_fdr(view: RunView, cfg: GippaConfig) -> list[base.Instance] | base.S
         _empty(axes["a"])
         _empty(axes["b"])
     if "c" in axes:
-        if not sub["c"]["drawn"].astype(bool).any():
+        if all_assumed(sub["c"]):
             _panel_c_assumed(axes["c"], _c_value(fdr))
+        elif not sub["c"]["drawn"].astype(bool).any():
+            _empty(axes["c"], NO_PRECISION)
         elif _panel_c(axes["c"], sub["c"]):
             fig.text(0.98, 0.02, FOOTNOTE, ha="right", va="bottom", fontsize=6, color="#555555")
     text = title(data, alpha, exact)

@@ -19,12 +19,13 @@ from gippa.viz.correlogram import (
     NULLS,
     STATISTICS,
     YLABEL,
+    flags_text,
     plotted,
 )
 from gippa.viz.diagnostics import COLUMNS as V18_COLUMNS
 from gippa.viz.diagnostics import FAMILIES, MAX_DRAWN, N_BINS, OUTSIDE_METRIC
 from gippa.viz.interactive import interactive
-from gippa.viz.operon_pairs import CLASS_COLOUR, DENSITY_CLASSES, NOTE_B
+from gippa.viz.operon_pairs import CLASS_COLOUR, DENSITY_CLASSES, NOTE_B, OP_ALPHA, class_label
 from gippa.viz.operon_pairs import COLUMNS as V11_COLUMNS
 from gippa.viz.qc import COLUMNS as V17_COLUMNS
 from gippa.viz.qc import IMPUTED, KIND_COLOUR, LEVEL_COLOUR, LEVELS, PLACED, UNMAPPED
@@ -79,8 +80,8 @@ def v10(data: pd.DataFrame, title: str, meta: Meta = None) -> Any:
             d = shown[(shown["contig"].astype(str) == contig) & (shown["statistic"] == stat)]
             titles(fig, at, "lag (genes)", YLABEL[stat])
             if not np.isfinite(floats(d["y"])).any():
-                flags = ", ".join(dict.fromkeys(f for v in d["flags"] for f in flag_list(v)))
-                note(fig, f"not estimable ({flags})", _ref(at["row"], at["col"], cols))
+                text = f"Not drawn (not estimable): {flags_text(d)}"  # plain words (P-06)
+                note(fig, text, _ref(at["row"], at["col"], cols))
                 continue
             for null in NULLS:
                 s = d[d["null_model"] == null]
@@ -136,15 +137,17 @@ def v11(data: pd.DataFrame, title: str, meta: Meta = None) -> Any:
     """(a) the TSV's density bins per class (at the bin index, lead decision 6), (b) the lfdr
     line, (c) the partners, flags with q at most alpha as symbols."""
     level, known = alpha(meta, "operon_flags")
+    part = data[data["panel"] == "c"]
+    drawn = [k for k in ("NO", "OP") if (part["class"] == k).any()]  # OP last: on top (P-11)
     fig = make_subplots(rows=1, cols=3, subplot_titles=("(a) |Δ| by pair class", "(b) local fdr",
-                                                        "(c) partners (OP, NO)"))  # fmt: skip
+                        f"(c) partners ({', '.join(drawn[::-1])})"))  # fmt: skip
     a = data[data["panel"] == "a"]
     counts = {str(c): fmt(n) for c, n in zip(a["class"], a["n"], strict=True) if not isna(n)}
     for c in DENSITY_CLASSES:
         h = a[a["bin"].notna() & (a["class"] == c)]
         if len(h):
             fig.add_trace(go.Bar(x=floats(h["bin"]), y=floats(h["density"]), opacity=0.55,
-                                 name=f"{c} (n = {counts.get(c, '0')})",
+                                 name=f"{class_label(c)}, n = {counts.get(c, '0')}",
                                  marker={"color": CLASS_COLOUR[c]}), row=1, col=1)  # fmt: skip
     b = data[data["panel"] == "b"]
     b = b.iloc[np.argsort(floats(b["abs_delta_log2"]), kind="stable")]
@@ -157,10 +160,10 @@ def v11(data: pd.DataFrame, title: str, meta: Meta = None) -> Any:
                   annotation_text=f"flag threshold (q) {fmt_alpha(level)}" if known
                   else None)  # fmt: skip
     note(fig, NOTE_B, "2", 0.3, 0.97)
-    c = data[data["panel"] == "c"]
+    c = part
     q, flag = floats(c["q_value"]), np.array(["" if isna(f) else str(f) for f in c["flag"]])
     hit = (flag != "") & np.isfinite(q) & (q <= level)
-    groups = [(k, (c["class"] == k).to_numpy() & ~hit, "circle") for k in ("OP", "NO")]
+    groups = [(k, (c["class"] == k).to_numpy() & ~hit, "circle") for k in drawn]
     groups += [(f.replace("_", " "), hit & (flag == f), s) for f, s in FLAG_SYMBOL.items()]
     for name, sel, symbol in [g for g in groups if g[1].any()]:
         s, big = c[sel], symbol != "circle"
@@ -168,8 +171,10 @@ def v11(data: pd.DataFrame, title: str, meta: Meta = None) -> Any:
                 for p, k, f, v in zip(s["pair_id"], s["class"], flag[sel], s["q_value"],
                                       strict=True)]  # fmt: skip
         colour = [CLASS_COLOUR.get(str(k), MUTED) for k in s["class"]]
+        label = class_label(name) if symbol == "circle" else name
         fig.add_trace(go.Scatter(x=floats(s["upstream_log2"]), y=floats(s["downstream_log2"]),
-                                 mode="markers", name=name, hovertext=text, hoverinfo="text",
+                                 mode="markers", name=label, hovertext=text, hoverinfo="text",
+                                 opacity=OP_ALPHA if name == "OP" else None,
                                  marker={"symbol": symbol, "size": 11 if big else 6,
                                          "color": colour,
                                          "line": {"color": BLACK, "width": 1 if big else 0}}),
