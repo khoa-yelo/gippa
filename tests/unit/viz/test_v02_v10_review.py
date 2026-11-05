@@ -195,7 +195,10 @@ def test_a_flagged_lag1_row_is_not_the_title_row(tmp_path: Path, cfg: GippaConfi
             r.update(null_hi=0.0)
     inst = _render("V10", _v10_out(tmp_path, rows, (CHR_A, CHR_B)), cfg)
     # chrB lag 1: 0.16 above its TU envelope (-0.094, 0.086), q 0.5 (default_cell)
-    assert inst.title == "Lag-1 Moran's I 0.16: above the TU-block envelope (q = 0.5)"
+    assert inst.title == (  # M12-04 P-04 / P-18
+        f"Lag-1 Moran's I {style.fmt_num(0.16)}: above the TU-block envelope "
+        f"({style.q_equals(0.5)}, TU-block null)"
+    )
 
 
 # --- decision 22: V2 legend with oriC / ter entries -------------------------------------------
@@ -437,7 +440,10 @@ def test_value_on_the_envelope_edge_is_within(
         ("morans_i", "tu_block", 1): (value, -0.004, lo, hi, 0.04),
     }
     inst = _render("V10", _v10_out(tmp_path, correlogram_rows("chrA", overrides=over)), cfg)
-    assert inst.title == f"Lag-1 Moran's I {value:g}: within the TU-block envelope (q = 0.04)"
+    assert inst.title == (  # M12-04 P-04 / P-18
+        f"Lag-1 Moran's I {style.fmt_num(value)}: within the TU-block envelope "
+        f"({style.q_equals(0.04)}, TU-block null)"
+    )
 
 
 def test_marker_falls_back_to_the_gene_label_value(tmp_path: Path, cfg: GippaConfig) -> None:
