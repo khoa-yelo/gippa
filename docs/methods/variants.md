@@ -3,6 +3,20 @@
 Methods notes for `gippa.variants` (GIPPA_SPEC.md §7.5). Only the class error rates section exists
 so far; the pileup, call and VCF sections follow with their modules.
 
+## Report text
+
+The block below is copied into the run report's Methods section by `scripts/dev/sync_report_snippets.py` (plain paragraphs and lists only).
+
+<!-- report:begin -->
+A peptide that differs from the annotated protein at a site supports an ALT residue
+there, and a call's confidence grows with the number of supporting peptides. For de novo peptides,
+each class of change (its type, and whether it is mass-equivalent) gets an error rate: among de
+novo reads whose spectrum a database search also identifies confidently, the share where the two
+peptides disagree. Each rate comes with its count. It is informative only when the reference search
+could return the variant peptide; a rate of 1 from a search against the reference proteome means
+not measured, not that every ALT is false.
+<!-- report:end -->
+
 ## Class error rates
 
 Implements `gippa.variants.error_rates` (GIPPA_SPEC.md §7.5.4, §8.1 row "ALT call is real",

@@ -302,6 +302,37 @@ CHANGES_LINK = (
 RUN_LEVEL = "gippa:run_level"
 
 
+#: where the ``compare_*`` tables are written (``gippa compare``'s output directory)
+COMPARE_TABLES = "<compare outdir>/tables"
+
+
+def _table_path(name: str, resource_path: str | None) -> str | None:
+    """The datapackage resource path, else ``<compare outdir>/tables/<name>.tsv`` for a compare
+    table, else ``gippa.io.run_view.PATHS`` (``genes`` read as ``genes_tsv``), else ``None``."""
+    from gippa.io.run_view import PATHS
+
+    if resource_path:
+        return resource_path
+    if name.startswith("compare_"):
+        return f"{COMPARE_TABLES}/{name}.tsv"
+    return PATHS.get("genes_tsv" if name == "genes" else name)
+
+
+def _strip_spec(text: str) -> str:
+    """``text`` without its "(GIPPA_SPEC.md …)" parentheticals (nested parentheses included) and
+    the whitespace before each; other parentheticals stay."""
+    out, i = [], 0
+    while (j := text.find("(GIPPA_SPEC.md", i)) >= 0:
+        depth, k = 0, j
+        for k in range(j, len(text)):
+            depth += {"(": 1, ")": -1}.get(text[k], 0)
+            if depth == 0:
+                break
+        out.append(text[i:j].rstrip())
+        i = k + 1
+    return "".join(out) + text[i:]
+
+
 def _field_constraints(field: Mapping[str, Any]) -> str:
     """The Constraints cell: ``run-level`` first when the field carries ``RUN_LEVEL``."""
     text = _constraints(field.get("constraints") or {})
@@ -317,7 +348,8 @@ def render_tables(schemas_dir: Path, missing: list[str] | None = None) -> str:
     for rel, path, coords, schema in _table_entries(schemas_dir):
         body += [f"## {_code(str(schema['name']))}", ""]
         if schema.get("description"):
-            body += [_prose(str(schema["description"])), ""]
+            body += [_prose(_strip_spec(str(schema["description"]))), ""]
+        path = _table_path(str(schema["name"]), path)
         body += [
             f"- Path: {_code(path) if path else DASH}",
             f"- Coordinates: {_coordinates(coords)}",
@@ -329,7 +361,7 @@ def render_tables(schemas_dir: Path, missing: list[str] | None = None) -> str:
                 _code(str(f["name"])),
                 _text(f.get("type")),
                 _text(f.get("unit")),
-                _text(f.get("description")),
+                _text(_strip_spec(str(f.get("description") or ""))),
                 _field_constraints(f),
             ]
             for f in schema.get("fields", [])
