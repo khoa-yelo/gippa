@@ -268,6 +268,11 @@ def test_attack_4_dosage_is_in_the_plasmid_hl(runs: dict[str, Path]) -> None:
     pd.testing.assert_frame_equal(a[pl_oe].drop(columns=hl_cols), b[pl_oe].drop(columns=hl_cols))
     chrom = a["region_type"] != "plasmid"
     pd.testing.assert_frame_equal(a[chrom], b[chrom])
+    # "nothing else changes" at full precision too: the files hold %.6g cells (M12-04 PR 9)
+    m_oe, m_chrom = pl_oe.to_numpy(), chrom.to_numpy()
+    pd.testing.assert_frame_equal(ma[m_oe].drop(columns=hl_cols), mb[m_oe].drop(columns=hl_cols),
+                                  check_exact=True)  # fmt: skip
+    pd.testing.assert_frame_equal(ma[m_chrom], mb[m_chrom], check_exact=True)
 
 
 @pytest.mark.parametrize("name", ["plain", "depth", "copy20", "no_plasmid"])
@@ -279,6 +284,9 @@ def test_row_order(runs: dict[str, Path], name: str) -> None:
 
 def test_example_9_byte_identical(runs: dict[str, Path]) -> None:
     assert runs["plain"].read_bytes() == runs["again"].read_bytes()
+    # and identical at full precision: the file holds %.6g cells (M12-04 PR 9)
+    pd.testing.assert_frame_equal(_TABLES[runs["plain"]], _TABLES[runs["again"]],
+                                  check_exact=True)  # fmt: skip
 
 
 def test_m4_17_rows_unchanged_by_the_plasmid(runs: dict[str, Path]) -> None:
@@ -290,17 +298,37 @@ def test_m4_17_rows_unchanged_by_the_plasmid(runs: dict[str, Path]) -> None:
     ka = a[a["region_type"] != "plasmid"].reset_index(drop=True)
     kb = b.reset_index(drop=True)
     pd.testing.assert_frame_equal(ka, kb)
+    # and identical at full precision: the files hold %.6g cells (M12-04 PR 9)
+    ma = _TABLES[runs["plain"]]
+    mb = _TABLES[runs["no_plasmid"]]
+    assert (ma["region_type"] == "plasmid").any()
+    assert not (mb["region_type"] == "plasmid").any()
+    mka = ma[ma["region_type"] != "plasmid"].reset_index(drop=True)
+    pd.testing.assert_frame_equal(mka, mb.reset_index(drop=True), check_exact=True)
 
 
 def test_step_inputs_left_untouched(tmp_path: Path) -> None:
     """The step only reads its inputs: running it twice in the same work directory gives the
     same table."""
+    import gippa.steps.context_stats as cs
+
     out = _build(tmp_path / "w")
     first = out.read_bytes()
-    from gippa.steps.context_stats import run_context_stats
+    first_table = _TABLES[out]
+    seen: list[pd.DataFrame] = []
+    real = cs.write_regions_stats
 
-    run_context_stats(tmp_path / "w", _cfg(), None)
+    def keep(path: Path, df: pd.DataFrame) -> None:
+        seen.append(df.copy())
+        real(path, df)
+
+    with pytest.MonkeyPatch.context() as mp:
+        mp.setattr(cs, "write_regions_stats", keep)
+        cs.run_context_stats(tmp_path / "w", _cfg(), None)
     assert out.read_bytes() == first
+    # and the same table at full precision: the file holds %.6g cells (M12-04 PR 9)
+    assert len(seen) == 1
+    pd.testing.assert_frame_equal(seen[0], first_table, check_exact=True)
 
 
 # --------------------------------------------------------------------------- decisions 18, 21, 22

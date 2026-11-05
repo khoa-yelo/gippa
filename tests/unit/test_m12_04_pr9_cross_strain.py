@@ -150,6 +150,44 @@ def test_flag_iff_foreign_and_not_identical(rows: list[tuple[str, str | None, st
         assert (CROSS in fl) == (p not in TAGS and c != "identical"), (p, c, fl)
 
 
+def has_foreign(rows: Sequence[Mapping[str, Any]], tags: Sequence[str] = TAGS) -> bool:
+    from gippa.mapping.loci import has_foreign_protein_ids
+
+    return bool(has_foreign_protein_ids(pd.DataFrame(list(rows)), model(tags)))
+
+
+def test_run_flag_on_mixed_ids() -> None:
+    """One foreign ID among locus-tag IDs raises the run flag, whatever its class (it is any, not
+    all, of the protein IDs)."""
+    assert has_foreign([hit(TAGS[0], TAGS[0], "identical"),
+                        hit("WP_1", TAGS[1], "identical", rank=2)])  # fmt: skip
+    assert has_foreign([hit("WP_1", TAGS[1], "identical"), hit(TAGS[0], TAGS[0], "near", rank=2),
+                        hit(TAGS[2], TAGS[2], "divergent", rank=3)])  # fmt: skip
+
+
+def test_run_flag_off_on_locus_tag_ids() -> None:
+    assert not has_foreign([hit(t, t, c, rank=i + 1) for i, (t, c) in
+                            enumerate(zip(TAGS, ("identical", "near", "divergent", "near"),
+                                          strict=True))])  # fmt: skip
+
+
+@SETTINGS
+@given(
+    rows=st.lists(
+        st.tuples(
+            st.one_of(st.sampled_from(TAGS), st.sampled_from(("JNOIEE_1", "JNOIEE_2", "WP_3"))),
+            st.sampled_from(CLASSES),
+        ),
+        min_size=1,
+        max_size=8,
+    )
+)
+def test_run_flag_iff_any_foreign_id(rows: list[tuple[str, str]]) -> None:
+    """Property: the run flag ⇔ at least one protein ID is not a locus tag of the model."""
+    recs = [hit(p, TAGS[0], c, rank=i + 1) for i, (p, c) in enumerate(rows)]
+    assert has_foreign(recs) == any(p not in TAGS for p, _ in rows), rows
+
+
 # ---------------------------------------------------------------- fixture R (AC 9.2, 9.3)
 
 
