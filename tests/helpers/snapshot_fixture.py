@@ -332,10 +332,13 @@ def build_report(fixture: str, tmp: Path) -> Path:
     """``report.html`` of ``fixture`` via ``gippa.steps.plots.write_report`` (plots under
     ``tmp/plots``); returns the page path."""
     from gippa.io.run_view import RunView
-    from gippa.steps.plots import write_report
+    from gippa.steps.plots import load_plot_modules, write_report
 
     plots = tmp / "plots"
     render_plot_files(fixture, plots, ("svg", "png"))
+    # a worker that copies another worker's SESSION_CACHE renders nothing itself, so its plot and
+    # twin registries would be empty; ``rerender_report`` loads them the same way
+    load_plot_modules()
     view = RunView.from_outdir(fixture_out(fixture))
     return write_report(view, plots, tmp / "report", fixture_cfg(fixture))
 
