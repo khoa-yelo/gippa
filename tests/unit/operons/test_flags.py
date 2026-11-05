@@ -46,6 +46,7 @@ from helpers.flags_data import (
     row,
     rows_frame,
 )
+from helpers.m12_04_renames import RENAMES
 from helpers.pairs_data import PAIR_COLS
 
 from gippa.operons import flags as fl
@@ -57,8 +58,8 @@ FLAGS = (
     "other",
 )  # fmt: skip
 FLAG_COLUMNS = (
-    "pair_id", "gene_a", "gene_b", "uniop_class", "promoter_between_yes",
-    "terminator_between_yes", "abundance_pattern", "flag", "q_value", "lfdr", "evidence_note",
+    "pair_id", "gene_a", "gene_b", "pair_class", "promoter_between_yes",
+    "terminator_between_yes", "abundance_pattern", "flags", "q_value", "lfdr", "evidence_note",
 )  # fmt: skip
 PATTERNS = (
     "downstream_higher",
@@ -98,7 +99,7 @@ def reference_flag(cls: str, p: bool, t: bool, pattern: str) -> str | None:
 
 def flag_of(*rows: dict, c=None) -> list[str]:
     out = fl.flag_pairs(frame(*rows), c or cfg())
-    return list(out["flag"])
+    return list(out["flags"])
 
 
 # ---------------------------------------------------------------------- constants and schema
@@ -118,7 +119,9 @@ def test_flags_match_spec_9_3_enum() -> None:
 def test_flag_columns_match_spec_9_3() -> None:
     line = re.sub(r"enum\{[^}]*\}", "", _spec_line("**`tables/operon_flags.tsv`:**"))
     cols = tuple(re.findall(r"`([^`]+)`", line))[1:]
-    assert cols == FLAG_COLUMNS
+    # GIPPA_SPEC.md keeps the 1.0 names; ADR-0075 renames them for 1.1 (M12-04 PR 11b)
+    renamed = RENAMES["operon_flags"]
+    assert tuple(renamed.get(c, c) for c in cols) == FLAG_COLUMNS
     assert tuple(fl.FLAG_COLUMNS) == FLAG_COLUMNS
 
 
@@ -219,7 +222,7 @@ def test_one_detected_mirror_upstream_detected() -> None:
     r = row("OP", prom=0.10, term=0.80, q=0.03, detected=(True, False))
     out = fl.flag_pairs(frame(r), cfg())
     assert list(out["abundance_pattern"]) == ["upstream_higher"]
-    assert list(out["flag"]) == ["internal_terminator_supported"]
+    assert list(out["flags"]) == ["internal_terminator_supported"]
 
 
 def test_row_3_with_upstream_higher() -> None:
@@ -358,12 +361,12 @@ def test_flag_pairs_columns_and_values() -> None:
     assert list(out["pair_id"]) == ["PAIR_1", "PAIR_2"]
     assert list(out["gene_a"]) == ["G1a", "G2a"]
     assert list(out["gene_b"]) == ["G1b", "G2b"]
-    assert list(out["uniop_class"]) == ["OP", "NO"]
+    assert list(out["pair_class"]) == ["OP", "NO"]
     assert [bool(v) for v in out["promoter_between_yes"]] == [True, False]
     assert [bool(v) for v in out["terminator_between_yes"]] == [False, False]
     assert all(isinstance(v, bool | np.bool_) for v in out["promoter_between_yes"])
     assert list(out["abundance_pattern"]) == ["downstream_higher", "coabundant"]
-    assert list(out["flag"]) == ["internal_promoter_supported", "novel_operon_candidate"]
+    assert list(out["flags"]) == ["internal_promoter_supported", "novel_operon_candidate"]
     assert out["q_value"].tolist() == pytest.approx([0.02, 0.04])
     assert math.isnan(out["lfdr"].iloc[0])
     assert out["lfdr"].iloc[1] == pytest.approx(0.3)
@@ -432,7 +435,7 @@ def test_flagged_rows_keep_pair_q_values() -> None:
     for pid, q in zip(out["pair_id"], out["q_value"], strict=True):
         assert by_id.loc[pid, "q_value"] == pytest.approx(q)
     assert "none" not in set(out["abundance_pattern"])
-    assert set(out["flag"]) <= set(FLAGS)
+    assert set(out["flags"]) <= set(FLAGS)
 
 
 # ------------------------------------------------------------------------------ evidence_note
@@ -476,7 +479,7 @@ def test_no_terminator_layer_rows_2_4_6_impossible() -> None:
     )
     out = fl.flag_pairs(frame(*rs), cfg())
     assert list(out["pair_id"]) == ["PAIR_1", "PAIR_3"]
-    assert list(out["flag"]) == ["unexplained_discordance", "other"]
+    assert list(out["flags"]) == ["unexplained_discordance", "other"]
     assert not out["terminator_between_yes"].astype(bool).any()
 
 
@@ -494,7 +497,7 @@ def test_no_terminator_layer_is_said_in_evidence_note() -> None:
 def test_no_promoter_layer_never_internal_promoter_supported() -> None:
     r = row("OP", term=0.1, delta=1.4, q=0.02, flags=["ci_unestimated", *PROM_MISSING])
     out = fl.flag_pairs(frame(r), cfg())
-    assert list(out["flag"]) == ["unexplained_discordance"]
+    assert list(out["flags"]) == ["unexplained_discordance"]
     note = out["evidence_note"].iloc[0].lower()
     assert "promoter" in note and "missing" in note and "no promoter" not in note
 
@@ -563,7 +566,7 @@ def test_merge_tests_fills_test_columns_and_drops_which() -> None:
         assert by.loc[pid, "test"] == "none"
         assert math.isnan(by.loc[pid, "q_value"])
     # the pair columns themselves are untouched
-    for c in ("class", "gene_a", "gene_b", "promoter_between", "delta_log2"):
+    for c in ("pair_class", "gene_a", "gene_b", "promoter_score_between", "delta_log2"):
         pd.testing.assert_series_equal(out[c], pairs[c], check_names=False)
 
 
@@ -642,7 +645,7 @@ def test_merge_then_flag_end_to_end() -> None:
     merged = fl.merge_tests(pairs, _disc_rows(), _missed_rows(), _genes(pairs))
     out = fl.flag_pairs(merged, cfg())
     assert list(out["pair_id"]) == ["PAIR_1", "PAIR_2"]
-    assert list(out["flag"]) == ["internal_promoter_supported", "novel_operon_candidate"]
+    assert list(out["flags"]) == ["internal_promoter_supported", "novel_operon_candidate"]
 
 
 def test_real_discordance_and_missed_rows_merge_and_flag() -> None:
@@ -661,8 +664,8 @@ def test_real_discordance_and_missed_rows_merge_and_flag() -> None:
         block("CV", rng.normal(0.0, 1.0, 30)),
         block("SW", rng.normal(0.0, 1.0, 30)),
     )
-    pairs["promoter_between"] = 0.1
-    pairs["terminator_between"] = 0.1
+    pairs["promoter_score_between"] = 0.1
+    pairs["terminator_score_between"] = 0.1
     genes = genes_for(pairs)
     c = mcfg()
     d = discordance(pairs, genes, c, None, sigma_model="constant")  # the M6-05 null (M6-13)
@@ -672,12 +675,14 @@ def test_real_discordance_and_missed_rows_merge_and_flag() -> None:
     out = fl.flag_pairs(merged, c)
     by = merged.set_index("pair_id")
     assert "which" not in merged.columns
-    discordant = set(merged.loc[(merged["class"] == "OP") & (merged["q_value"] <= 0.1), "pair_id"])
+    discordant = set(
+        merged.loc[(merged["pair_class"] == "OP") & (merged["q_value"] <= 0.1), "pair_id"]
+    )
     assert {"PAIR_101", "PAIR_102"} <= discordant  # the planted |Delta| = 6 OP pairs
-    op_out = out.loc[out["uniop_class"] == "OP"]
+    op_out = out.loc[out["pair_class"] == "OP"]
     assert set(op_out["pair_id"]) == discordant
-    assert set(op_out["flag"]) == {"unexplained_discordance"}
+    assert set(op_out["flags"]) == {"unexplained_discordance"}
     for pid, q in zip(out["pair_id"], out["q_value"], strict=True):
         assert by.loc[pid, "q_value"] == pytest.approx(q)
         assert by.loc[pid, "q_value"] <= 0.1
-    assert set(out["uniop_class"]) <= {"OP", "NO"}
+    assert set(out["pair_class"]) <= {"OP", "NO"}

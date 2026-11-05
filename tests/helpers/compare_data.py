@@ -181,8 +181,8 @@ def island(genes: Sequence[str], p: float, island_id: str = "ISL_1") -> dict[str
 
 
 def operon_flag(a: str, b: str, q: float) -> dict[str, object]:
-    return {"pair_id": f"{a}_{b}", "gene_a": a, "gene_b": b, "uniop_class": "OP",
-            "abundance_pattern": "discordant", "flag": "unexplained_discordance",
+    return {"pair_id": f"{a}_{b}", "gene_a": a, "gene_b": b, "pair_class": "OP",
+            "abundance_pattern": "discordant", "flags": "unexplained_discordance",
             "q_value": q}  # fmt: skip
 
 

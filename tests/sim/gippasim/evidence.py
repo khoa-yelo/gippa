@@ -46,7 +46,7 @@ _TYPES: dict[str, tuple[tuple[str, str], ...]] = {
     ),
     "abundance": (("protein_id", "str"), ("value", "float")),
     "peptide_hits": (
-        ("peptide", "str"), ("peptide_len", "int"), ("source", "str"), ("best_q_input", "float"),
+        ("peptide", "str"), ("peptide_len_aa", "int"), ("source", "str"), ("best_q_input", "float"),
         ("pep_input", "float"), ("score_input", "float"), ("contig", "str"), ("start", "int"),
         ("end", "int"), ("strand", "str"), ("frame", "int"), ("crosses_origin", "bool"),
         ("route", "str"), ("n_diff", "int"), ("diff_types", "list"), ("placement_q", "float"),
@@ -354,7 +354,7 @@ def _rows_frames(rows: list[tuple[str, int, int, str]], hits: list[tuple[int, in
         g, p = genes[i], rows[k][0]
         s, e, cross = _span(g, a, a + len(p), int(length[g["contig"]]))
         tol = route == "tolerant"
-        for c, v in (("peptide", p), ("peptide_len", len(p)), ("source", "gippasim"),
+        for c, v in (("peptide", p), ("peptide_len_aa", len(p)), ("source", "gippasim"),
                      ("best_q_input", col["q_value"][k]), ("pep_input", col["pep"][k]),
                      ("score_input", col["score"][k]), ("contig", g["contig"]), ("start", s),
                      ("end", e), ("strand", g["strand"]), ("frame", None),

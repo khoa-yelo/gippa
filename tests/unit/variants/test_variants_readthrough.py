@@ -64,7 +64,7 @@ def _hit(
 ) -> dict[str, Any]:
     return {
         "peptide": pep,
-        "peptide_len": len(pep),
+        "peptide_len_aa": len(pep),
         "source": source,
         "contig": "c1",
         "start": s,

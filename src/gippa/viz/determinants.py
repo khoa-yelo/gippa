@@ -4,7 +4,7 @@ ADR-0031..0034). Draws the M8 ``determinants_*`` tables and the M9-17 support fi
 ``determinants_pd`` / ``determinants_shap``; computes no statistic.
 
 (a) drop-one-block ΔR² with its CI, elastic net (primary, ADR-0033) beside LightGBM; (b) partial
-dependence of ``cai``, ``tai``, ``tir_ostir`` and ``promotech_max`` ("promoter score", lead
+dependence of ``cai``, ``tai``, ``tir_ostir`` and ``promoter_score`` ("promoter score", lead
 decision 2), the ``pd_low`` to ``pd_high`` spread shaded, a rug of the model rows' values; (c) the
 SHAP beeswarm of the top 20 features, jittered and coloured by rank within the feature; (d)
 observed vs. LightGBM out-of-fold predicted, unexplained genes and ribosomal references marked
@@ -41,11 +41,12 @@ LEGEND = {"elastic_net": "elastic net (primary, ADR-0033)",
 MARKER = {"elastic_net": ("o", True), "lightgbm": ("D", False)}  # (marker, filled)
 MODEL_COLOUR = {"elastic_net": style.OKABE_ITO["blue"],
                 "lightgbm": style.OKABE_ITO["bluish_green"]}  # fmt: skip
-PD_FEATURES = ("cai", "tai", "tir_ostir", "promotech_max")
+PD_FEATURES = ("cai", "tai", "tir_ostir", "promoter_score")
 PD_XLABEL = {"cai": "CAI (index)", "tai": "tAI (index)", "tir_ostir": "OSTIR TIR (au)",
-             "promotech_max": "promoter score (promotech_max)"}  # fmt: skip
+             "promoter_score": "promoter score"}  # fmt: skip
 #: the layer a PD feature comes from (decision 4: fallback when no run flag names it)
-PD_LAYER = {"cai": "codon", "tai": "codon", "tir_ostir": "ostir", "promotech_max": "promoters"}
+PD_LAYER = {"cai": "codon", "tai": "codon", "tir_ostir": "ostir",
+            "promoter_score": "promoters"}  # fmt: skip
 SHAP_TOP = 20
 MAX_DRAWN = 20_000  # the M9-01 element rule
 _C_EXTRA = 1  # panel (c)'s zero line counts towards the rule too

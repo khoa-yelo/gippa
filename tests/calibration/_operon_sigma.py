@@ -97,7 +97,7 @@ def noise_by_shape(pairs: pd.DataFrame, shape: str) -> pd.DataFrame:
     out = pairs.copy()
     a = out["abundance_log2_a"].astype(float).to_numpy()
     b = out["abundance_log2_b"].astype(float).to_numpy()
-    keep = (out["class"] == "OP").to_numpy() & np.isfinite(a) & np.isfinite(b)
+    keep = (out["pair_class"] == "OP").to_numpy() & np.isfinite(a) & np.isfinite(b)
     m = (a + b) / 2
     h = np.zeros(len(out))
     z = (m[keep] - m[keep].mean()) / m[keep].std(ddof=1)

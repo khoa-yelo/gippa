@@ -133,7 +133,7 @@ def write_peptide_hits(
             elif rng.random() >= expit(-0.5 + 1.2 * (a - 12.0) - 0.03 * (len(s) - 15)):
                 continue
             cell = {
-                "peptide": s, "peptide_len": len(s), "source": None, "best_q_input": 0.001,
+                "peptide": s, "peptide_len_aa": len(s), "source": None, "best_q_input": 0.001,
                 "pep_input": None, "score_input": None, "contig": r.contig,
                 "start": int(r.start) + 1, "end": int(r.end), "strand": r.strand, "frame": None,
                 "crosses_origin": False, "route": "exact", "n_diff": 0, "diff_types": None,
@@ -221,7 +221,7 @@ def _f(s: str) -> float:
 def _one_detected_op(df: pd.DataFrame) -> pd.Series:
     """OP rows with exactly one detected gene, neither partial (the rows that carried
     ``no_detection_limit_model`` in pass 1)."""
-    op = df["class"] == "OP"
+    op = df["pair_class"] == "OP"
     return (
         op
         & (df["detected_a"] != df["detected_b"])
@@ -249,7 +249,7 @@ def _seen_one_detected(df: pd.DataFrame, seen: Mapping[str, int], k_min: int = 1
     sa = df["gene_a"].map(lambda g: seen.get(g, 0) >= k_min)
     sb = df["gene_b"].map(lambda g: seen.get(g, 0) >= k_min)
     ok = df["flags"].map(lambda s: "too_few_op_pairs" not in _flags(s))
-    return (df["class"] == "OP") & (sa != sb) & (df["test"] != TTEST) & ok
+    return (df["pair_class"] == "OP") & (sa != sb) & (df["test"] != TTEST) & ok
 
 
 # ----------------------------------------------------------------------------- the live branch
@@ -309,7 +309,9 @@ def test_pmiss_rows_follow_item4(with_peptides: Run) -> None:
 
 def test_bh_family_from_the_step(with_peptides: Run) -> None:
     df = with_peptides.frame()
-    fam = df["test"].isin({TTEST, PMISS} if PMISS_IN_BH_FAMILY else {TTEST}) & (df["class"] == "OP")
+    fam = df["test"].isin({TTEST, PMISS} if PMISS_IN_BH_FAMILY else {TTEST}) & (
+        df["pair_class"] == "OP"
+    )
     assert fam.sum() > 0
     p = df.loc[fam, "p_value"].map(_f).to_numpy()
     q = df.loc[fam, "q_value"].map(_f).to_numpy()
@@ -354,7 +356,9 @@ def test_pmiss_values_equal_the_m6_02_oracle(chain: Chain, with_peptides: Run) -
     hits = _read_tsv_table("peptide_hits", with_peptides.inputs["peptide_hits"])
     model = dl.fit_detection_limit(genes, hits, None, cfg, for_step(DL_STEP, cfg.seed)).model
     df = with_peptides.frame()
-    delta = df.loc[(df["class"] == "OP") & (df["test"] == TTEST), "delta_log2"].map(_f).to_numpy()
+    delta = (
+        df.loc[(df["pair_class"] == "OP") & (df["test"] == TTEST), "delta_log2"].map(_f).to_numpy()
+    )
     tu, aa = genes.set_index("locus_tag")["tu_id"], genes.set_index("locus_tag")["aa"]
     pm = df[df["test"] == PMISS]
     assert len(pm) > 0
@@ -398,7 +402,9 @@ def test_pmiss_uses_the_partners_tu_when_the_pair_crosses_tus(chain: Chain, tmp_
                                    for_step(DL_STEP, cfg.seed)).model  # fmt: skip
     assert model.usable and model.fold_coef
     df = run.frame()
-    delta = df.loc[(df["class"] == "OP") & (df["test"] == TTEST), "delta_log2"].map(_f).to_numpy()
+    delta = (
+        df.loc[(df["pair_class"] == "OP") & (df["test"] == TTEST), "delta_log2"].map(_f).to_numpy()
+    )
     tu, aa = genes.set_index("locus_tag")["tu_id"], genes.set_index("locus_tag")["aa"]
     pm = df[df["test"] == PMISS]
     assert len(pm) > 0

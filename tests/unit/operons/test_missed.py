@@ -73,7 +73,9 @@ def by_id(res: MissedOperons) -> pd.DataFrame:
 
 
 def q_at(res: MissedOperons, pairs: pd.DataFrame, abs_delta: float) -> np.ndarray:
-    ids = pairs.loc[(pairs["class"] == "NO") & np.isclose(pairs["delta_log2"].abs(), abs_delta)]
+    ids = pairs.loc[
+        (pairs["pair_class"] == "NO") & np.isclose(pairs["delta_log2"].abs(), abs_delta)
+    ]
     return by_id(res).loc[ids["pair_id"], "q_value"].to_numpy()
 
 
@@ -106,7 +108,7 @@ def test_example2_sandwich_decoys_win_where_their_fdr_is_larger() -> None:
     res = missed_operons(pairs, cfg())
     assert res.n_decoys == {"convergent": 200, "sandwich": 70}
     assert q_at(res, pairs, 0.1) == pytest.approx(EX2, rel=1e-9)
-    top = pairs.loc[(pairs["class"] == "NO") & np.isclose(pairs["delta_log2"].abs(), 0.1)]
+    top = pairs.loc[(pairs["pair_class"] == "NO") & np.isclose(pairs["delta_log2"].abs(), 0.1)]
     assert set(by_id(res).loc[top["pair_id"], "which"]) == {"sandwich"}
 
 
@@ -116,7 +118,7 @@ def test_the_rows_carry_the_spec_step4_test_columns() -> None:
     assert set(ROW_COLS) <= set(res.rows.columns)
     s = scored(res)
     assert len(s) == 300
-    assert set(s["pair_id"]) == set(pairs.loc[pairs["class"] == "NO", "pair_id"])
+    assert set(s["pair_id"]) == set(pairs.loc[pairs["pair_class"] == "NO", "pair_id"])
     d = pairs.set_index("pair_id").loc[s["pair_id"], "delta_log2"].to_numpy()
     np.testing.assert_allclose(s["stat"].to_numpy(dtype=float), -np.abs(d), rtol=0, atol=1e-12)
     np.testing.assert_allclose(s["effect"].to_numpy(dtype=float), np.abs(d), rtol=0, atol=1e-12)
@@ -181,13 +183,13 @@ def test_only_both_detected_finite_no_pairs_are_targets() -> None:
     assert res.n_targets == 300
     assert res.n_decoys == {"convergent": 200, "sandwich": 70}
     assert len(scored(res)) == 300
-    assert set(res.rows["pair_id"]) <= set(pairs.loc[pairs["class"] == "NO", "pair_id"])
+    assert set(res.rows["pair_id"]) <= set(pairs.loc[pairs["pair_class"] == "NO", "pair_id"])
     assert q_at(res, pairs, 0.1) == pytest.approx(EX2, rel=1e-9)
 
 
 def test_rna_between_and_imputed_abundances_stay_among_the_targets() -> None:
     pairs = example_frame()
-    no = pairs.index[pairs["class"] == "NO"]
+    no = pairs.index[pairs["pair_class"] == "NO"]
     for i in no[:10]:
         pairs.at[i, "flags"] = ["rna_between"]
     genes = genes_for(pairs, abundance_imputed=dict.fromkeys(pairs.loc[no[10:20], "gene_a"], True))

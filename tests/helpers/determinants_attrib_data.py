@@ -92,11 +92,11 @@ def toy_world(
         {
             "cai": rng.normal(0.0, 1.0, n),
             "gravy": rng.normal(0.0, 1.0, n),
-            "promotech_max": rng.normal(0.0, 1.0, n),
+            "promoter_score": rng.normal(0.0, 1.0, n),
         },
         index=pd.Index([f"G{i:05d}" for i in range(n)], name="locus_tag"),
     )
-    y = signal * (X["cai"] - 0.5 * X["gravy"] + 0.3 * X["promotech_max"]).to_numpy()
+    y = signal * (X["cai"] - 0.5 * X["gravy"] + 0.3 * X["promoter_score"]).to_numpy()
     y = y + rng.normal(0.0, 0.5, n)
-    blocks = {"cai": "codon", "gravy": "protein", "promotech_max": "transcription"}
+    blocks = {"cai": "codon", "gravy": "protein", "promoter_score": "transcription"}
     return X, np.asarray(y, dtype=float), tu, blocks

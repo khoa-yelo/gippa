@@ -104,7 +104,7 @@ def test_schema_types_and_enums() -> None:
     for col in ("frame", "start_longest", "start_best_ostir", "end", "length_aa_longest",
                 "length_aa_best", "n_peptides", "rank", "terminator_distance_nt"):  # fmt: skip
         assert f[col]["type"] == "integer", col
-    for col in ("best_peptide_q", "ostir_tir", "promoter_score", "terminator_conf"):
+    for col in ("best_peptide_q", "tir_ostir", "promoter_score", "terminator_conf"):
         assert f[col]["type"] == "number", col
     for col in ("called", "promoter_supported", "terminator_downstream", "rbs_supported"):
         assert f[col]["type"] == "boolean", col
@@ -259,7 +259,7 @@ def test_round_trip_property(
 ) -> None:  # fmt: skip
     case = ex1()
     orfs = orfs_of(case)
-    cols = {"ostir_tir": tir, "promoter_score": prom, "promoter_supported": psup,
+    cols = {"tir_ostir": tir, "promoter_score": prom, "promoter_supported": psup,
             "terminator_distance_nt": tdist, "rank": rank, "class_fdr": fdr}  # fmt: skip
     sc = scored(orfs, best={ID1: best}, called={ID1: called},
                 **{k: {ID1: v} for k, v in cols.items()})  # fmt: skip

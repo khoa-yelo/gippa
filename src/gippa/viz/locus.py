@@ -77,7 +77,7 @@ class Locus:
     discordance BH q or the missed-operon decoy-FDR q for operon flags. Estimates of different
     families are on different scales and are never compared with each other. ``family`` is the
     §8.1 test family (empty = the same as ``kind``); operon flags carry ``operon_discordance``
-    (``uniop_class = OP``) or ``missed_operon`` (``NO``)."""
+    (``pair_class = OP``) or ``missed_operon`` (``NO``)."""
 
     locus_id: str
     kind: Kind
@@ -196,8 +196,8 @@ def _flag_loci(view: RunView, alpha: float) -> list[Locus]:
             span = tu_span[tu_a]
         else:
             span = _pair_span(view, a, b)
-        clause = f"{f.flag} between {f.gene_a} and {f.gene_b} (q = {base.sig(q, 3)})"
-        family = "missed_operon" if str(f.uniop_class) == "NO" else "operon_discordance"
+        clause = f"{f.flags} between {f.gene_a} and {f.gene_b} (q = {base.sig(q, 3)})"
+        family = "missed_operon" if str(f.pair_class) == "NO" else "operon_discordance"
         kept.append((q, str(f.pair_id), family, str(a.contig), span, clause))
     # merge within a family only, so a merged locus never takes a minimum across families
     merged: dict[tuple[str, str, int, int], list[tuple[float, str, str]]] = {}

@@ -5,7 +5,7 @@
   "missingValues": ["NA", ""],
   "fields": [
     {"name": "peptide", "type": "string", "description": "Peptide sequence as written in the input (I/L kept)", "constraints": {"required": true}},
-    {"name": "peptide_len", "type": "integer", "description": "Peptide length (aa)", "constraints": {"required": true}},
+    {"name": "peptide_len_aa", "type": "integer", "description": "Peptide length (aa)", "constraints": {"required": true}},
     {"name": "source", "type": "string", "description": "Peptide source (database or denovo)"},
     {"name": "best_q_input", "type": "number", "description": "Best engine q-value of the input PSMs"},
     {"name": "pep_input", "type": "number", "description": "Engine posterior error probability"},

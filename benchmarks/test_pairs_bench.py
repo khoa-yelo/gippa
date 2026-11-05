@@ -75,7 +75,7 @@ def test_pair_frame_4500_genes_budget(benchmark: Any) -> None:
     def run() -> float:
         secs, out = timed(lambda: pdat.frame(genes, reps, probs, ev=ev, tbl=tbl))
         assert set(pdat.PAIR_COLS) <= set(out.columns)
-        assert (out["class"] != "SW").sum() == N_GENES
+        assert (out["pair_class"] != "SW").sum() == N_GENES
         return secs
 
     secs = benchmark.pedantic(run, rounds=1, iterations=1)

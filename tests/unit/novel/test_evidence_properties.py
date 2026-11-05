@@ -95,7 +95,7 @@ def _run(
     sc = scored(
         orfs,
         best={i: s["best"] for i, s in zip(ids, specs, strict=True)},
-        ostir_tir={i: (s["tir"] if s["best"] is not None else None)
+        tir_ostir={i: (s["tir"] if s["best"] is not None else None)
                    for i, s in zip(ids, specs, strict=True)},
         promoter_score=dict(zip(ids, prom, strict=True)),
     )  # fmt: skip

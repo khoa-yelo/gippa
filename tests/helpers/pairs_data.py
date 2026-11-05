@@ -26,9 +26,10 @@ TEST_COLS = (
     "n_perm", "lfdr",
 )  # fmt: skip
 PAIR_COLS = (
-    "pair_id", "class", "gene_a", "gene_b", "strand", "intergenic_bp", "uniop_p",
-    "promoter_between", "tx_rate_between", "terminator_between", "detected_a", "detected_b",
-    "p_detect_a", "p_detect_b", "abundance_log2_a", "abundance_log2_b", "delta_log2", "test",
+    "pair_id", "pair_class", "gene_a", "gene_b", "strand", "intergenic_bp", "uniop_p",
+    "promoter_score_between", "tx_rate_between", "terminator_score_between", "detected_a",
+    "detected_b", "p_detect_a", "p_detect_b", "abundance_log2_a", "abundance_log2_b",
+    "delta_log2", "test",
     *TEST_COLS, "flags",
 )  # fmt: skip
 
@@ -122,7 +123,7 @@ def frame(
 def row(df: pd.DataFrame, a: str, b: str, cls: str | None = None) -> pd.Series:
     sel = (df["gene_a"] == a) & (df["gene_b"] == b)
     if cls is not None:
-        sel &= df["class"] == cls
+        sel &= df["pair_class"] == cls
     hit = df[sel]
     assert len(hit) == 1, f"expected one {cls or ''} row {a}->{b}, got {len(hit)}:\n{df}"
     return hit.iloc[0]

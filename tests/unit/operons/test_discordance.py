@@ -136,7 +136,7 @@ def test_result_shape_and_row_columns() -> None:
     assert isinstance(res, disc.Discordance)
     assert isinstance(res.fit, StudentT)
     assert set(ROW_COLS) <= set(res.rows.columns)
-    assert set(pairs.loc[pairs["class"] == "OP", "pair_id"]) <= set(res.rows["pair_id"])
+    assert set(pairs.loc[pairs["pair_class"] == "OP", "pair_id"]) <= set(res.rows["pair_id"])
     assert res.rows["pair_id"].is_unique
 
 
@@ -145,7 +145,7 @@ def test_fit_rows_selects_usable_op_pairs() -> None:
     pairs = pairs.copy()
     pairs["abundance_imputed_a"] = [False, True, False, False, False, False]
     pairs["abundance_imputed_b"] = False
-    pairs.loc[0, "class"] = "NO"
+    pairs.loc[0, "pair_class"] = "NO"
     got = np.sort(np.asarray(disc.fit_rows(pairs), dtype=float))
     # pair 0 not OP, pair 1 imputed, pairs 3/4 touch the NaN gene 4, pair 5 the undetected gene 6
     np.testing.assert_allclose(got, [0.3], atol=1e-6)  # chain() rounds Δ to 2**-20
@@ -228,7 +228,7 @@ def test_only_op_pairs_are_tested_and_enter_bh() -> None:
     """NO pairs never get a t p-value, so the BH family is the 60 OP pairs."""
     op, g1 = chain(_t_draws(60))
     no, g2 = chain(_t_draws(10, seed=3), prefix="N", contig="c2", uniop_p=0.05)
-    assert (no["class"] == "NO").all()
+    assert (no["pair_class"] == "NO").all()
     pairs = pd.concat([op, no], ignore_index=True)
     res = run(pairs, pd.concat([g1, g2], ignore_index=True))
     assert not res.rows["pair_id"].isin(no["pair_id"]).any()
@@ -352,7 +352,7 @@ def test_example9_relative_scale_skips_every_test() -> None:
     res = run(pairs, genes)
     _all_untested(res, "relative_scale")
     pd.testing.assert_frame_equal(pairs, before)  # classes, distances, evidence untouched
-    assert (pairs["class"] == "OP").all()
+    assert (pairs["pair_class"] == "OP").all()
 
 
 def test_example10_deterministic() -> None:

@@ -7,8 +7,8 @@ The rule under test: each locus gets the key ``(tier, family_rank, family_index,
 - ``tier`` is 0 when ``error <= alpha(family)`` (plain float ``<=``), 1 when above, 2 when NA.
   ``alpha`` is ``stats.alpha.context`` for prophage, bgc and island, and
   ``stats.alpha.operon_flags`` for both flag families, read from the ``cfg`` passed in.
-- The families, in order: prophage, bgc, island, operon_discordance (``uniop_class = OP``
-  flags) and missed_operon (``uniop_class = NO`` flags). ``Locus.kind`` stays ``operon_flag``
+- The families, in order: prophage, bgc, island, operon_discordance (``pair_class = OP``
+  flags) and missed_operon (``pair_class = NO`` flags). ``Locus.kind`` stays ``operon_flag``
   for both flag families; the tests know each flag's family from the rows they write.
 - ``family_rank`` is the 1-based position among the loci of the same family and tier sorted by
   ``(error, locus_id)``; 0 in tier 2.
@@ -125,7 +125,7 @@ def _flag_row(fam: str, pid: str, a: str, b: str, e: float | None) -> dict[str, 
     if fam == "operon_discordance":
         return vl.flag(pid, a, b, _cell(e))  # type: ignore[arg-type]
     row = vl.flag(pid, a, b, _cell(e), flag="novel_operon_candidate")  # type: ignore[arg-type]
-    row.update(uniop_class="NO", abundance_pattern="coabundant")
+    row.update(pair_class="NO", abundance_pattern="coabundant")
     return row
 
 

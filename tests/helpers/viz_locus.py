@@ -147,11 +147,11 @@ def flag(
         "pair_id": pair_id,
         "gene_a": gene_a,
         "gene_b": gene_b,
-        "uniop_class": "OP",
+        "pair_class": "OP",
         "promoter_between_yes": True,
         "terminator_between_yes": False,
         "abundance_pattern": "discordant",
-        "flag": flag,
+        "flags": flag,
         "q_value": q,
         "lfdr": q,
         "evidence_note": "test",
@@ -207,7 +207,7 @@ def hit(peptide: str, contig: str, start: int, end: int, strand: str = "+") -> d
     """One ``mapping/peptide_hits.tsv`` placement (1-based closed)."""
     return {
         "peptide": peptide,
-        "peptide_len": len(peptide),
+        "peptide_len_aa": len(peptide),
         "source": "database",
         "contig": contig,
         "start": start,

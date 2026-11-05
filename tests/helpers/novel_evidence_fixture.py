@@ -128,7 +128,7 @@ def row(**kw: Any) -> dict[str, Any]:
         "orf_id": ID1, "class": "intergenic", "contig": "c1", "strand": "+", "frame": 1,
         "start_longest": 42, "start_best_ostir": 60, "end": 122, "length_aa_longest": 26,
         "length_aa_best": 20, "start_codon_best": "GTG", "n_peptides": 2,
-        "peptides": "ALEKRDSPHW;SPHWFNQ", "best_peptide_q": 0.001, "ostir_tir": 500.0,
+        "peptides": "ALEKRDSPHW;SPHWFNQ", "best_peptide_q": 0.001, "tir_ostir": 500.0,
         "promoter_score": None, "promoter_supported": None, "terminator_downstream": None,
         "terminator_conf": None, "terminator_distance_nt": None, "rbs_supported": None,
         "class_fdr": "unestimated", "called": False, "rank": None, "overlapping_gene": None,
@@ -197,7 +197,7 @@ def evidence_table(
     orfs = orfs if orfs is not None else orfs_of(case)
     cols: dict[str, dict[str, Any]] = {}
     if tir is not None:
-        cols["ostir_tir"] = dict(tir)
+        cols["tir_ostir"] = dict(tir)
     if promoter is not None:
         cols["promoter_score"] = dict(promoter)
     t = table(case, orfs, scored(orfs, best=dict(best) if best is not None else None, **cols))

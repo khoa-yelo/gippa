@@ -169,7 +169,7 @@ def missed_operons(
         )
     edges = [float(e) for e in oc.distance_bins_bp]
     n_bins = len(edges) - 1
-    cls = pairs["class"].astype(str).to_numpy()
+    cls = pairs["pair_class"].astype(str).to_numpy()
     bins = bin_index(pairs["intergenic_bp"].astype(float).to_numpy(), edges)
     measured = _measured(pairs)
     in_bin = (bins >= 0) & (bins < n_bins)

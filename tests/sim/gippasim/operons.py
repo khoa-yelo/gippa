@@ -130,11 +130,11 @@ def _skeleton(layout: Layout) -> pd.DataFrame:
                 d = dist(x, y, i == n - 1) + dist(y, z, i == n - 2)
                 a, b = (z, x) if strand[x] == "-" else (x, z)
                 rows.append(("SW", a, b, strand[a], d, math.nan, False, True, True))
-    cols = ["class", "ia", "ib", "strand", "intergenic_bp", "uniop_p", *PAIR_TRUTH]
+    cols = ["pair_class", "ia", "ib", "strand", "intergenic_bp", "uniop_p", *PAIR_TRUTH]
     df = pd.DataFrame(rows, columns=cols)
     df["_c"] = [rank[contig[a]] for a in df["ia"]]
     df["_sa"], df["_sb"] = start[df["ia"].to_numpy(int)], start[df["ib"].to_numpy(int)]
-    df["_r"] = df["class"].map(_RANK)
+    df["_r"] = df["pair_class"].map(_RANK)
     df["gene_a"], df["gene_b"] = tags[df["ia"].to_numpy(int)], tags[df["ib"].to_numpy(int)]
     df = df.sort_values(["_c", "_sa", "_sb", "_r", "gene_a", "gene_b"], kind="stable")
     df = df.drop(columns=["_c", "_sa", "_sb", "_r"]).reset_index(drop=True)
@@ -181,7 +181,7 @@ def simulate_operons(cfgs: tuple[LayoutConfig, ExpressionConfig], seed: int) -> 
     layout = simulate_layout(lcfg, r_layout)
     expr = simulate_expression(layout, ecfg, r_expr)
     pairs = _skeleton(layout)
-    if not (pairs["class"] == "CV").any():
+    if not (pairs["pair_class"] == "CV").any():
         raise ValueError("no convergent (CV) pair: the CV/SW decoys would not exist")
     ocfg = ecfg if isinstance(ecfg, OperonConfig) else OperonConfig()
     genes = expr.genes
@@ -189,7 +189,7 @@ def simulate_operons(cfgs: tuple[LayoutConfig, ExpressionConfig], seed: int) -> 
     det = genes["detected_true"].to_numpy(bool)
     ia, ib = pairs["ia"].to_numpy(int), pairs["ib"].to_numpy(int)
     both = det[ia] & det[ib]
-    cls = pairs["class"].to_numpy()
+    cls = pairs["pair_class"].to_numpy()
     true_op = pairs["true_operon"].to_numpy(bool)
     t_draw = r_op.standard_t(ocfg.operon_t[2], n) if ocfg.operon_t else np.zeros(n)
     z_draw = r_op.standard_normal(n)
@@ -258,12 +258,12 @@ def simulate_operons(cfgs: tuple[LayoutConfig, ExpressionConfig], seed: int) -> 
         pairs[f"abundance_log2_{side}"] = obs[ix]
     pairs["delta_log2"] = pairs["abundance_log2_b"] - pairs["abundance_log2_a"]
     pairs = pairs.drop(columns=["ia", "ib"])
-    head = ("pair_id", "class", "gene_a", "gene_b", "strand", "intergenic_bp", "uniop_p")
+    head = ("pair_id", "pair_class", "gene_a", "gene_b", "strand", "intergenic_bp", "uniop_p")
     rest = [c for c in pairs.columns if c not in head and c not in PAIR_TRUTH]
     pairs = pairs[[*head, *rest, *PAIR_TRUTH]]
     t = ocfg.operon_t
     truth = {
-        "pairs": pairs[["pair_id", "class", "gene_a", "gene_b", *PAIR_TRUTH]].copy(),
+        "pairs": pairs[["pair_id", "pair_class", "gene_a", "gene_b", *PAIR_TRUTH]].copy(),
         "missed_operons": missed if len(missed) else _empty(("pair_id", "gene_a", "gene_b")),
         "discordant_pairs": disc if len(disc) else _empty(
             ("pair_id", "gene_a", "gene_b", "direction", "element", "effect_log2")),

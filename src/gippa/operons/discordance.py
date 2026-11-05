@@ -109,7 +109,7 @@ def _usable(pairs: pd.DataFrame) -> npt.NDArray[np.bool_]:
 
 def fit_rows(pairs: pd.DataFrame) -> F64:
     """Delta of the OP pairs usable for the fit, sorted ascending (so the fit is order-free)."""
-    keep = (pairs["class"] == "OP").to_numpy() & _usable(pairs)
+    keep = (pairs["pair_class"] == "OP").to_numpy() & _usable(pairs)
     d = pairs["delta_log2"].astype(float).to_numpy()[keep]
     return np.sort(d[np.isfinite(d)])
 
@@ -117,7 +117,7 @@ def fit_rows(pairs: pd.DataFrame) -> F64:
 def fit_pairs(pairs: pd.DataFrame) -> tuple[F64, F64]:
     """(Delta, m) of the OP pairs usable for the fit, m the pair-mean log2 abundance, sorted
     lexicographically on (Delta, m)."""
-    keep = (pairs["class"] == "OP").to_numpy() & _usable(pairs)
+    keep = (pairs["pair_class"] == "OP").to_numpy() & _usable(pairs)
     d = pairs["delta_log2"].astype(float).to_numpy()[keep]
     a = pairs["abundance_log2_a"].astype(float).to_numpy()[keep]
     m = (a + pairs["abundance_log2_b"].astype(float).to_numpy()[keep]) / 2
@@ -263,7 +263,7 @@ def discordance(
         are not modified.
     """
     del cfg  # NaN abundances are untested in every ``abundance.missing`` mode
-    op = pairs.loc[pairs["class"] == "OP"].reset_index(drop=True)
+    op = pairs.loc[pairs["pair_class"] == "OP"].reset_index(drop=True)
     work = op.copy()
     for side in ("a", "b"):
         tags = work[f"gene_{side}"]

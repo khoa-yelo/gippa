@@ -16,14 +16,15 @@ Interface assumed beyond the spec's five signatures (test-author choices, report
   (all randomness from ``seed``) and returns an object with
   - ``layout`` (``gippasim.layout.Layout``) and ``expression`` (``gippasim.expression.Expression``),
   - ``pairs``: one row per pair, at least ``PAIR_KEYS`` below: the §9.3 ``pairs.tsv`` columns the
-    sim can know (``pair_id`` unique; ``class`` OP/NO/CV/DV/SW as gippa.operons.pairs would call it:
+    sim can know (``pair_id`` unique; ``pair_class`` OP/NO/CV/DV/SW as gippa.operons.pairs would
+    call it (the 1.1 name, M12-04 PR 11b; 1.0 ``class``):
     same-strand adjacent pairs are OP iff ``uniop_p >= 0.5``; OP, NO and SW oriented in the
     direction of transcription with ``a`` upstream, CV and DV with ``a`` the left gene;
     ``abundance_log2_*`` equal to ``abundance_log2_true`` for detected genes and ``delta_log2 =
     abundance_log2_b - abundance_log2_a`` when both are detected) plus three truth columns:
     ``true_operon`` (both genes in one planted TU), ``promoter_between_true`` and
     ``terminator_between_true`` (a true element planted in the gap between the two genes),
-  - ``truth``: a mapping of truth frames, keys ``TRUTH_KEYS``: ``pairs`` (``pair_id, class,
+  - ``truth``: a mapping of truth frames, keys ``TRUTH_KEYS``: ``pairs`` (``pair_id, pair_class,
     gene_a, gene_b, true_operon, promoter_between_true, terminator_between_true``, every row of
     ``pairs``), ``missed_operons`` (``pair_id, gene_a, gene_b``: the planted co-abundant NO
     pairs), ``discordant_pairs`` (``pair_id, gene_a, gene_b, direction, element, effect_log2``;
@@ -72,13 +73,13 @@ N = 1800
 SCENARIOS = ("operon_null", "missed_operon_power", "discordance_power", "operon_attack_ar1",
              "operon_attack_detection")  # fmt: skip
 PAIR_KEYS = (
-    "pair_id", "class", "gene_a", "gene_b", "strand", "intergenic_bp", "uniop_p", "detected_a",
-    "detected_b", "abundance_log2_a", "abundance_log2_b", "delta_log2", "true_operon",
+    "pair_id", "pair_class", "gene_a", "gene_b", "strand", "intergenic_bp", "uniop_p",
+    "detected_a", "detected_b", "abundance_log2_a", "abundance_log2_b", "delta_log2", "true_operon",
     "promoter_between_true", "terminator_between_true",
 )  # fmt: skip
 TRUTH_KEYS = ("pairs", "missed_operons", "discordant_pairs", "operon_t")
 TRUTH_COLUMNS = {
-    "pairs": ("pair_id", "class", "gene_a", "gene_b", "true_operon", "promoter_between_true",
+    "pairs": ("pair_id", "pair_class", "gene_a", "gene_b", "true_operon", "promoter_between_true",
               "terminator_between_true"),
     "missed_operons": ("pair_id", "gene_a", "gene_b"),
     "discordant_pairs": ("pair_id", "gene_a", "gene_b", "direction", "element", "effect_log2"),
@@ -123,11 +124,11 @@ def true_delta(s: Any, p: pd.DataFrame) -> np.ndarray:
 
 
 def op_true(p: pd.DataFrame) -> pd.DataFrame:
-    return p[(p["class"] == "OP").to_numpy() & _b(p["true_operon"])]
+    return p[(p["pair_class"] == "OP").to_numpy() & _b(p["true_operon"])]
 
 
 def no_true(p: pd.DataFrame) -> pd.DataFrame:
-    return p[(p["class"] == "NO").to_numpy() & ~_b(p["true_operon"])]
+    return p[(p["pair_class"] == "NO").to_numpy() & ~_b(p["true_operon"])]
 
 
 def t_params(s: Any) -> tuple[float, float, float]:
@@ -179,7 +180,9 @@ def test_pairs_and_truth_frames_have_the_declared_columns() -> None:
     for key, cols in TRUTH_COLUMNS.items():
         assert tuple(s.truth[key].columns[: len(cols)]) == cols, key
     assert s.pairs["pair_id"].is_unique
-    assert set(s.pairs["class"]) <= {"OP", "NO", "CV", "DV", "SW"}
+    assert set(s.pairs["pair_class"]) <= {"OP", "NO", "CV", "DV", "SW"}
+    # one name per quantity (M12-04 PR 11b): the 1.0 name is not kept alongside
+    assert "class" not in s.pairs.columns and "class" not in s.truth["pairs"].columns
 
 
 def test_pairs_agree_with_the_layout() -> None:
@@ -193,7 +196,7 @@ def test_pairs_agree_with_the_layout() -> None:
            for a, b, p in zip(op["gene_a"], op["gene_b"], op["uniop_p"], strict=True)}  # fmt: skip
     half = float(s.layout.replicons["length"].iloc[0]) / 2.0
     for r in s.pairs.to_dict("records"):
-        a, b, cls = str(r["gene_a"]), str(r["gene_b"]), str(r["class"])
+        a, b, cls = str(r["gene_a"]), str(r["gene_b"]), str(r["pair_class"])
         sa, sb = g.at[a, "strand"], g.at[b, "strand"]
         if cls in ("OP", "NO"):
             assert sa == sb
@@ -246,7 +249,7 @@ def test_example1_operon_null_pair_counts() -> None:
     """``operon_null(1800)``: >= 300 OP, >= 200 NO, >= 100 CV, >= 30 SW pairs with both genes
     detected (every seed of 3)."""
     for seed in range(3):
-        counts = both(sim("operon_null", (N,), seed).pairs)["class"].value_counts()
+        counts = both(sim("operon_null", (N,), seed).pairs)["pair_class"].value_counts()
         assert counts.get("OP", 0) >= 300, (seed, dict(counts))
         assert counts.get("NO", 0) >= 200, (seed, dict(counts))
         assert counts.get("CV", 0) >= 100, (seed, dict(counts))
@@ -288,8 +291,8 @@ def test_example3_planted_pairs_have_the_smallest_delta() -> None:
             "planted": np.median(np.abs(true_delta(s, p[is_p]))),
             "NO": np.median(np.abs(true_delta(s, no_true(p[~is_p])))),
             "OP": np.median(np.abs(true_delta(s, op_true(p)))),
-            "CV": np.median(np.abs(true_delta(s, p[p["class"] == "CV"]))),
-            "SW": np.median(np.abs(true_delta(s, p[p["class"] == "SW"]))),
+            "CV": np.median(np.abs(true_delta(s, p[p["pair_class"] == "CV"]))),
+            "SW": np.median(np.abs(true_delta(s, p[p["pair_class"] == "SW"]))),
         }
         ok += m["planted"] <= 0.25 * m["NO"] and all(m["planted"] < m[k] for k in
                                                        ("OP", "CV", "SW"))  # fmt: skip
@@ -301,7 +304,7 @@ def test_example3_planted_pairs_are_uniop_false_negatives() -> None:
     in one TU (a planted co-abundant NO pair is exactly a UniOP false negative)."""
     s = sim("missed_operon_power", (N, 50, 0.1), 0)
     pp = s.pairs.set_index("pair_id").loc[list(s.truth["missed_operons"]["pair_id"])]
-    assert (pp["class"] == "NO").all()
+    assert (pp["pair_class"] == "NO").all()
     assert (pp["uniop_p"].astype(float) < 0.5).all()
     assert not _b(pp["true_operon"]).any()
     tr = s.truth["missed_operons"].set_index("pair_id")
@@ -326,7 +329,7 @@ def test_example4_discordance_power_truth() -> None:
     pp = s.pairs.set_index("pair_id")
     for part, element in ((prom, "promoter"), (term, "terminator")):
         rows = pp.loc[list(part["pair_id"])]
-        assert (rows["class"] == "OP").all() and _b(rows["true_operon"]).all()
+        assert (rows["pair_class"] == "OP").all() and _b(rows["true_operon"]).all()
         assert _b(rows[f"{element}_between_true"]).all()
         other = "terminator" if element == "promoter" else "promoter"
         assert not _b(rows[f"{other}_between_true"]).any()
@@ -429,7 +432,7 @@ def test_decision1_operon_null_plants_no_internal_elements() -> None:
         assert len(op) > 0
         assert not _b(op["promoter_between_true"]).any(), seed
         assert not _b(op["terminator_between_true"]).any(), seed
-        no = p[(p["class"].isin(["OP", "NO"])).to_numpy() & ~_b(p["true_operon"])]
+        no = p[(p["pair_class"].isin(["OP", "NO"])).to_numpy() & ~_b(p["true_operon"])]
         boundary = _b(no["promoter_between_true"]) | _b(no["terminator_between_true"])
         assert boundary.mean() >= 0.5, seed
 
@@ -438,13 +441,13 @@ def test_item6_uniop_errors_are_recorded_separately() -> None:
     """The planted truth (``true_operon``) is independent of the UniOP class: the default layout
     gives true-operon pairs on both sides of 0.5 (Beta(8, 2) has ~2 % mass below 0.5)."""
     p = sim("missed_operon_power", (N, 50, 0.1), 0).pairs
-    same = p[p["class"].isin(["OP", "NO"])]
+    same = p[p["pair_class"].isin(["OP", "NO"])]
     tru = _b(same["true_operon"])
     assert tru.any() and (~tru).any()
-    assert ((same["class"] == "OP").to_numpy() & tru).sum() > 0
-    assert ((same["class"] == "NO").to_numpy() & ~tru).sum() > 0
-    assert ((same["class"] == "NO").to_numpy() & tru).sum() + (
-        (same["class"] == "OP").to_numpy() & ~tru).sum() > 0  # fmt: skip
+    assert ((same["pair_class"] == "OP").to_numpy() & tru).sum() > 0
+    assert ((same["pair_class"] == "NO").to_numpy() & ~tru).sum() > 0
+    assert ((same["pair_class"] == "NO").to_numpy() & tru).sum() + (
+        (same["pair_class"] == "OP").to_numpy() & ~tru).sum() > 0  # fmt: skip
 
 
 def test_item7_one_detected_op_pairs_exist() -> None:
@@ -569,9 +572,9 @@ def test_property_pair_invariants(seed: int, n: int, name: str) -> None:
     s = _sc().simulate_operons(_call(name, *args), seed)
     p = s.pairs
     assert p["pair_id"].is_unique
-    same = p["class"].isin(["OP", "NO"]).to_numpy()
+    same = p["pair_class"].isin(["OP", "NO"]).to_numpy()
     u = p["uniop_p"].astype(float).to_numpy()
-    assert ((p["class"] == "OP").to_numpy()[same] == (u[same] >= 0.5)).all()
+    assert ((p["pair_class"] == "OP").to_numpy()[same] == (u[same] >= 0.5)).all()
     assert not _b(p["true_operon"])[~same].any()
     tru = _b(p["true_operon"])
     assert not (_b(p["promoter_between_true"]) & tru).any()

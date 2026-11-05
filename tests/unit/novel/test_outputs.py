@@ -4,7 +4,7 @@ decision 3, ADR-0013 decision 3).
 
 Examples 1-6 and 8 and every degenerate row of docs/specs/M7-07-novel-orf-outputs.md with its lead
 decisions (minus-strand ``start_*``/``end`` in transcription direction; no OSTIR score -> NA
-``start_best_ostir``/``ostir_tir``, ``*_best`` from the longest start, flag ``ostir_missing``;
+``start_best_ostir``/``tir_ostir``, ``*_best`` from the longest start, flag ``ostir_missing``;
 FASTA suffixes ``|longest``/``|best_ostir``, merged when equal; no ``cterm_extension`` patch row).
 Example 7 (``gippa makedb --patch``) is tests/integration/test_patch_makedb_roundtrip.py.
 
@@ -78,7 +78,7 @@ def _ex1_table(best: int | None = 60, **kw: dict[str, Any]) -> tuple[Case, list[
     case = ex1()
     orfs = orfs_of(case)
     tir = {ID1: 1234.5} if best is not None else {}
-    sc = scored(orfs, best={ID1: best}, ostir_tir=tir, **kw)
+    sc = scored(orfs, best={ID1: best}, tir_ostir=tir, **kw)
     return case, orfs, table(case, orfs, sc)
 
 
@@ -128,7 +128,7 @@ def test_example1_tsv_row(tmp_path: Path) -> None:
     assert row["n_peptides"] == "2"
     assert row["peptides"] == "ALEKRDSPHW;SPHWFNQ"
     assert row["best_peptide_q"] == "0.001"
-    assert row["ostir_tir"] == "1234.5"
+    assert row["tir_ostir"] == "1234.5"
     assert row["class_fdr"] == "unestimated"
     assert row["called"] == "true"
     assert row["overlapping_gene"] is None
@@ -280,7 +280,7 @@ def test_no_ostir_score_falls_back_to_the_longest_start(tmp_path: Path) -> None:
     case, _, t = _ex1_table(best=None)
     paths = _written(tmp_path, case, t)
     row = _row(paths["novel_orfs.tsv"], ID1)
-    assert row["start_best_ostir"] is None and row["ostir_tir"] is None
+    assert row["start_best_ostir"] is None and row["tir_ostir"] is None
     assert (row["length_aa_best"], row["start_codon_best"]) == ("26", "ATG")
     assert row["flags"] is not None
     assert set(row["flags"].split(";")) == {"class_fdr_unestimated", "ostir_missing"}
@@ -302,7 +302,7 @@ def test_scored_none_writes_na_best_columns(tmp_path: Path) -> None:
     assert tuple(t.columns) == NOVEL_ORFS_COLUMNS and len(t) == 1
     novel_io().write_novel_orfs(tmp_path / "novel_orfs.tsv", t)
     (row,) = tsv_rows(tmp_path / "novel_orfs.tsv")
-    assert row["start_best_ostir"] is None and row["ostir_tir"] is None
+    assert row["start_best_ostir"] is None and row["tir_ostir"] is None
     assert row["start_longest"] == "43" and row["length_aa_best"] == "26"
     assert "ostir_missing" in (row["flags"] or "").split(";")
 
@@ -583,7 +583,7 @@ def test_fasta_lengths_match_the_table(tmp_path: Path) -> None:
 def _build(tmp: Path, shuffle: int | None = None) -> dict[str, bytes]:
     case = ex1_ex6()
     orfs = orfs_of(case)
-    sc = scored(orfs, best={ID1: 60}, called={ID6: True}, ostir_tir={ID1: 1234.5})
+    sc = scored(orfs, best={ID1: 60}, called={ID6: True}, tir_ostir={ID1: 1234.5})
     if shuffle is not None:
         random.Random(shuffle).shuffle(orfs)
         sc = sc.sample(frac=1.0, random_state=shuffle).reset_index(drop=True)

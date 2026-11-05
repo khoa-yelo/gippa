@@ -23,7 +23,7 @@ import pandas as pd
 # M4-06 C11 (M3-16 peptide_hits.tsv) column order.
 HIT_COLUMNS: tuple[str, ...] = (
     "peptide",
-    "peptide_len",
+    "peptide_len_aa",
     "source",
     "best_q_input",
     "pep_input",
@@ -133,7 +133,7 @@ def hit(
     e = start + 3 * len(peptide) if end is None else end
     return {
         "peptide": peptide,
-        "peptide_len": len(peptide),
+        "peptide_len_aa": len(peptide),
         "source": "database",
         "best_q_input": best_q,
         "pep_input": 0.01,
@@ -166,7 +166,7 @@ def hits_frame(rows: Iterable[Mapping[str, Any]]) -> pd.DataFrame:
     return df.astype(
         {
             "peptide": object,
-            "peptide_len": "int64",
+            "peptide_len_aa": "int64",
             "best_q_input": "float64",
             "pep_input": "float64",
             "score_input": "float64",

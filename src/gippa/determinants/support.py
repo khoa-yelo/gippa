@@ -25,7 +25,7 @@ from gippa.determinants.null import NullResult
 __all__ = ["PD_FEATURES", "SHAP_TOP", "null_rows", "pd_rows", "shap_rows"]
 
 SHAP_TOP = 20
-PD_FEATURES: tuple[str, ...] = ("cai", "tai", "tir_ostir", "promotech_max")
+PD_FEATURES: tuple[str, ...] = ("cai", "tai", "tir_ostir", "promoter_score")
 PD_QUANTILES = np.arange(5, 100, 5) / 100.0
 
 

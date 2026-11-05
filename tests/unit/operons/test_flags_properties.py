@@ -54,10 +54,14 @@ def test_flag_rows_come_from_pairs_with_the_same_q(pairs: pd.DataFrame) -> None:
         src = by.loc[r.pair_id]
         assert _same(float(src["q_value"]), float(r.q_value))
         assert _same(float(src["lfdr"]), float(r.lfdr))
-        assert (src["gene_a"], src["gene_b"], src["class"]) == (r.gene_a, r.gene_b, r.uniop_class)
+        assert (src["gene_a"], src["gene_b"], src["pair_class"]) == (
+            r.gene_a,
+            r.gene_b,
+            r.pair_class,
+        )
     assert "none" not in set(out["abundance_pattern"])
-    assert set(out["flag"]) <= set(fl.FLAGS)
-    assert set(out["uniop_class"]) <= {"OP", "NO"}
+    assert set(out["flags"]) <= set(fl.FLAGS)
+    assert set(out["pair_class"]) <= {"OP", "NO"}
     assert out["pair_id"].is_unique
 
 
@@ -70,7 +74,7 @@ def test_flag_is_a_function_of_class_evidence_and_pattern(pairs: pd.DataFrame) -
     expected = {}
     for i, r in pairs.iterrows():
         f = fl.flag_for(
-            r["class"],
+            r["pair_class"],
             bool(ev.loc[i, "promoter_between_yes"]),
             bool(ev.loc[i, "terminator_between_yes"]),
             pat.loc[i],
@@ -80,7 +84,7 @@ def test_flag_is_a_function_of_class_evidence_and_pattern(pairs: pd.DataFrame) -
     out = fl.flag_pairs(pairs, c)
     got = {
         p: (f, a)
-        for p, f, a in zip(out["pair_id"], out["flag"], out["abundance_pattern"], strict=True)
+        for p, f, a in zip(out["pair_id"], out["flags"], out["abundance_pattern"], strict=True)
     }
     assert got == expected
 
@@ -143,7 +147,7 @@ def test_tu_table_properties(layout) -> None:
     assert list(out["tu_id"]) == [f"TU_{k + 1}" for k in range(len(tu_genes))]
     assert [list(g) for g in out["genes"]] == [list(g) for g in tu_genes]
     assert list(out["n_genes"]) == [len(g) for g in tu_genes]
-    n_op = int((flagged["uniop_class"] == "OP").sum())
+    n_op = int((flagged["pair_class"] == "OP").sum())
     assert int(out["n_flags"].sum()) <= n_op
     # in this layout every OP pair lies inside one TU, so the bound is reached
     assert int(out["n_flags"].sum()) == n_op

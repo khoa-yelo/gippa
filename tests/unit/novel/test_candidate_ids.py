@@ -171,7 +171,7 @@ def test_property_non_novel_rows_never_get_an_id(rows: list[tuple[str, str, str 
 # ---------------------------------------------------------------- backfill_candidate_ids
 
 HITS_HEADER = [
-    "peptide", "peptide_len", "source", "best_q_input", "pep_input", "score_input", "contig",
+    "peptide", "peptide_len_aa", "source", "best_q_input", "pep_input", "score_input", "contig",
     "start", "end", "strand", "frame", "crosses_origin", "route", "n_diff", "diff_types",
     "placement_q", "length_class", "locus_class", "uniqueness", "gene", "novel_candidate_id",
     "flags",

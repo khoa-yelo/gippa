@@ -132,11 +132,11 @@ def _noise_by_abundance(pairs: pd.DataFrame, classes: list[str], no_shift: float
     out = pairs.copy()
     a = out["abundance_log2_a"].astype(float).to_numpy()
     b = out["abundance_log2_b"].astype(float).to_numpy()
-    keep = out["class"].isin(classes).to_numpy() & np.isfinite(a) & np.isfinite(b)
+    keep = out["pair_class"].isin(classes).to_numpy() & np.isfinite(a) & np.isfinite(b)
     m = (a + b) / 2
     z = np.zeros(len(out))
     z[keep] = (m[keep] - m[keep].mean()) / m[keep].std(ddof=1)
-    z[keep & (out["class"] == "NO").to_numpy()] += no_shift
+    z[keep & (out["pair_class"] == "NO").to_numpy()] += no_shift
     d = b - a
     new = np.where(keep, loc + (d - loc) * np.exp(-0.5 * z), d)
     out["abundance_log2_b"] = np.where(keep, a + new, b)
@@ -174,7 +174,7 @@ def _co_impute(sim: Any, rng: np.random.Generator) -> tuple[pd.DataFrame, pd.Dat
     pos = {t: i for i, t in enumerate(tags)}
     ia = np.array([pos[str(t)] for t in p["gene_a"]])
     ib = np.array([pos[str(t)] for t in p["gene_b"]])
-    no = (p["class"] == "NO").to_numpy() & det[ia] & det[ib]
+    no = (p["pair_class"] == "NO").to_numpy() & det[ia] & det[ib]
     pick = no & (rng.random(len(p)) < 0.05)
     imp[ia[pick]] = imp[ib[pick]] = True
     obs = np.where(det, np.where(imp, float(np.median(ab[det])), ab), np.nan)
@@ -292,7 +292,7 @@ def _oracle_pmiss(sim: Any, cfgs: Any) -> np.ndarray:
                   strict=True))  # fmt: skip
     p = sim.pairs
     ratios = fit_rows(p)
-    op = p[p["class"] == "OP"]
+    op = p[p["pair_class"] == "OP"]
     da, db = op["detected_a"].astype(bool).to_numpy(), op["detected_b"].astype(bool).to_numpy()
     out = []
     for row, a_det, b_det in zip(op.itertuples(index=False), da, db, strict=True):

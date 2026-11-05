@@ -80,7 +80,7 @@ N1_PEP = "M" + PROT2[1:8]
 def _hit(pep: str, contig: str, start: int, end: int, strand: str, source: str,
          dt: str) -> dict[str, Any]:  # fmt: skip
     return {
-        "peptide": pep, "peptide_len": len(pep), "source": source, "contig": contig,
+        "peptide": pep, "peptide_len_aa": len(pep), "source": source, "contig": contig,
         "start": start, "end": end, "strand": strand, "n_diff": 1, "diff_types": dt,
         "placement_q": 0.0, "uniqueness": "unique",
     }  # fmt: skip

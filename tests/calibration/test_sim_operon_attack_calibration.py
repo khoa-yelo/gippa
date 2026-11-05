@@ -69,11 +69,11 @@ def _absdelta(s: Any, p: Any) -> np.ndarray:
 
 
 def _targets(p: Any) -> Any:
-    return p[(p["class"] == "NO").to_numpy() & ~_b(p["true_operon"])]
+    return p[(p["pair_class"] == "NO").to_numpy() & ~_b(p["true_operon"])]
 
 
 def _decoys(p: Any) -> Any:
-    return p[p["class"].isin(["CV", "SW"]).to_numpy()]
+    return p[p["pair_class"].isin(["CV", "SW"]).to_numpy()]
 
 
 def _bin(p: Any) -> np.ndarray:
@@ -133,7 +133,7 @@ def test_detection_attack_block_pairs_are_both_detected_at_least_a_quarter(full:
                                        "region_id"])  # fmt: skip
         rg = s.layout.region_genes
         block = set(rg.loc[rg["region_id"].isin(ids), "locus_tag"].astype(str))
-        p = s.pairs[s.pairs["class"] != "SW"]
+        p = s.pairs[s.pairs["pair_class"] != "SW"]
         inb = p["gene_a"].astype(str).isin(block) & p["gene_b"].astype(str).isin(block)
         bp = p[inb.to_numpy()]
         k += int((_b(bp["detected_a"]) & _b(bp["detected_b"])).sum())

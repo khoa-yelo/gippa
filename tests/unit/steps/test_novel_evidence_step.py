@@ -92,7 +92,7 @@ def _check(table: pd.DataFrame, work: Path, sim: Any, cfg: Any, thr: float | Non
     for r in recs:
         oid, cls, f = r["orf_id"], r["class"], flags_of(r)
         assert f == sorted(f, key=FLAG_ORDER.index), (oid, f)
-        tir = r["ostir_tir"]
+        tir = r["tir_ostir"]
         if thr is None or is_na(tir):
             assert is_na(r["rbs_supported"]), oid
             rbs = False
@@ -174,7 +174,7 @@ def test_step_with_detected_genes_applies_the_rbs_threshold(
     o = nf.run("novel_orfs", cfg1, ins, tmp_path / "o")
     table = read_novel_orfs(o["novel_orfs"])
     _check(table, work, sim, cfg1, thr)
-    rbs_rows = table[table["class"].isin(RBS_CLASSES) & table["ostir_tir"].notna()]
+    rbs_rows = table[table["class"].isin(RBS_CLASSES) & table["tir_ostir"].notna()]
     assert len(rbs_rows) and rbs_rows["rbs_supported"].notna().all()
     assert table["called"].any() and table["rank"].notna().any()
     nf.assert_valid_novel_orfs(o["novel_orfs"])

@@ -413,13 +413,13 @@ def _operons(out: Path) -> None:
         cls = "OP" if same_tu else "NO"
         test = "both_detected_t" if same_tu and i < 2000 else "none"
         pairs.append([f"PAIR_{i + 1}", cls, locus(i), locus(i + 1), test, "NA"])
-    tsv(out / "tables" / "pairs.tsv", ["pair_id", "class", "gene_a", "gene_b", "test", "flags"],
-        pairs)  # fmt: skip
+    tsv(out / "tables" / "pairs.tsv",
+        ["pair_id", "pair_class", "gene_a", "gene_b", "test", "flags"], pairs)  # fmt: skip
     tsv(out / "tables" / "operons.tsv", ["tu_id", "contig", "strand", "genes", "n_genes"],
         [[f"TU_{k + 1}", CONTIG, "+", f"{locus(2 * k)};{locus(2 * k + 1)}", 2]
          for k in range(N_TUS)])  # fmt: skip
     tsv(out / "tables" / "operon_flags.tsv",
-        ["pair_id", "gene_a", "gene_b", "uniop_class", "flag", "q_value"],
+        ["pair_id", "gene_a", "gene_b", "pair_class", "flags", "q_value"],
         [["PAIR_1", locus(0), locus(1), "OP", "unexplained_discordance", 0.02]])  # fmt: skip
 
 

@@ -96,8 +96,8 @@ def test_pair_frame_evidence_equals_the_per_pair_helpers(world: tuple) -> None:
     probs = {(a.locus_tag, b.locus_tag): 0.6 for a, b in adjacent_pairs(genes, replicons)}
     df = frame(genes, replicons, probs, ev=evidence(windows, terms, tx, rna))
     by = {g.locus_tag: g for g in genes}
-    cols = ["class", "gene_a", "gene_b", "promoter_between", "tx_rate_between",
-            "terminator_between", "flags"]  # fmt: skip
+    cols = ["pair_class", "gene_a", "gene_b", "promoter_score_between", "tx_rate_between",
+            "terminator_score_between", "flags"]  # fmt: skip
     got = Counter()
     for cls, a, b, prom, txr, term, flags in df[cols].itertuples(index=False):
         if cls in ("CV", "DV"):

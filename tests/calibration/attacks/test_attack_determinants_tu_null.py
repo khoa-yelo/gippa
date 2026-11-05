@@ -3,8 +3,9 @@ models (§7.8.2 steps 2-3, §8.2 "resample TUs, not genes"; docs/specs/M8-08-det
 
 Generator (replicate ``i`` of stream ``determinants.attack_tu.<name>``): 1,500 genes (600 for the
 CV arm) in TUs of geometric size (p 0.45, capped at 8). Features that are **constant within a TU**
-(``promotech_tu`` uniform, ``tx_rate_sum_tu`` normal: the transcription block) and gene-level noise
-(``cai``, ``gravy``, ``pi``); the response is a TU random effect plus gene noise (SD 1 / 0.7);
+(``promoter_score_tu`` uniform, ``tx_rate_sum_tu`` normal: the transcription block) and
+gene-level noise (``cai``, ``gravy``, ``pi``); the response is a TU random effect plus gene
+noise (SD 1 / 0.7);
 detection is a TU-shared latent above its 30 % quantile. Everything is independent of the
 features, but every feature and the response share the TU structure, which is what fools a
 gene-level resampler: a gene bootstrap or gene-split folds treat a TU's genes as independent.
@@ -12,7 +13,7 @@ gene-level resampler: a gene bootstrap or gene-split folds treat a TU's genes as
 Gated (a failing attack blocks the merge):
 
 - ``test_univariate_ci_level``: the 95 % TU-block bootstrap CIs of Spearman rho (true 0) and
-  AUROC (true 0.5) of ``promotech_tu`` miss the truth in at most ``level_bound(0.05, R)`` of
+  AUROC (true 0.5) of ``promoter_score_tu`` miss the truth in at most ``level_bound(0.05, R)`` of
   replicates, **unless** every univariate row carries ``ci_unestimated`` (then the rates are
   recorded and a warning is raised: an unflagged interval must be at level, R4). The gene
   bootstrap on the same data is recorded (it should fail: the attack bites). Statistician probe
@@ -47,7 +48,7 @@ pytestmark = [pytest.mark.calibration, pytest.mark.calsuite(SUITE)]
 MODES = [pytest.param(False, marks=pytest.mark.calibration_nightly, id="fast"),
          pytest.param(True, marks=pytest.mark.calibration_full, id="full")]  # fmt: skip
 B = 1000
-BLOCKS = {"promotech_tu": "transcription", "tx_rate_sum_tu": "transcription", "cai": "codon",
+BLOCKS = {"promoter_score_tu": "transcription", "tx_rate_sum_tu": "transcription", "cai": "codon",
           "gravy": "protein", "pi": "protein"}  # fmt: skip
 CV_LEAK_TOL = 0.02
 
@@ -68,7 +69,7 @@ def _world(
     sizes = _sizes(rng, n)
     k, codes = len(sizes), np.repeat(np.arange(len(sizes)), sizes)
     X = pd.DataFrame(
-        {"promotech_tu": rng.random(k)[codes], "tx_rate_sum_tu": rng.normal(size=k)[codes],
+        {"promoter_score_tu": rng.random(k)[codes], "tx_rate_sum_tu": rng.normal(size=k)[codes],
          "cai": rng.normal(size=n), "gravy": rng.normal(size=n), "pi": rng.normal(size=n)},
         index=pd.Index([f"G{i:05d}" for i in range(n)]),
     )  # fmt: skip
@@ -97,7 +98,8 @@ def test_univariate_ci_level(full: bool) -> None:
     for i in range(R):
         rng = C.replicate_rng(f"{SUITE}.attack_tu.uni", i)
         tu, X, y, det = _world(rng, 1500)
-        f = d.features({"promotech_tu": X["promotech_tu"].tolist()}, tu=tu, detected=det.tolist(),
+        f = d.features({"promoter_score_tu": X["promoter_score_tu"].tolist()}, tu=tu,
+                       detected=det.tolist(),
                        abundance=np.where(det, y, np.nan).tolist())  # fmt: skip
         uni = m.univariate(f, B, rng)
         rho = d.one(uni, metric="spearman_rho")
@@ -105,7 +107,7 @@ def test_univariate_ci_level(full: bool) -> None:
         flagged &= all("ci_unestimated" in d.flags_of(v) for v in uni["flags"])
         miss["rho"].append(_miss(rho.ci_low, rho.ci_high, 0.0))
         miss["auroc"].append(_miss(auc.ci_low, auc.ci_high, 0.5))
-        x = X["promotech_tu"].to_numpy()
+        x = X["promoter_score_tu"].to_numpy()
         gr = pd.DataFrame({"tu": np.arange(det.sum()).astype(str), "x": x[det], "y": y[det]})
         ga = pd.DataFrame({"tu": np.arange(det.size).astype(str), "x": x, "y": det})
         cr = bootstrap.tu_block_bootstrap(gr, "tu", m._rho, B, rng, columns=("x", "y"))

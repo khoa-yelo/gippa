@@ -275,7 +275,7 @@ Support = Mapping[str, tuple[bool, bool]] | str | None
 def _evidence(case: Case, orfs: list[Any], *, best: Mapping[str, int | None],
               tir: Mapping[str, float], gt: pd.DataFrame = GT30,
               support: Support = "absent") -> pd.DataFrame:  # fmt: skip
-    cols: dict[str, dict[str, Any]] = {"ostir_tir": dict(tir)}
+    cols: dict[str, dict[str, Any]] = {"tir_ostir": dict(tir)}
     t = table(case, orfs, scored(orfs, best=dict(best), **cols))
     kw: dict[str, Any] = {} if support == "absent" else {"denovo_support": support}
     return ev().apply_evidence(t, orfs, gene_table=gt, terminators=[], gm=case.gm,

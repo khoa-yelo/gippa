@@ -99,6 +99,13 @@ def test_model_matrix_drops_the_all_na_layers_of_the_hand_world(world: dict[str,
     df = _features(world)
     x, blocks = mod().model_matrix(df)
     assert set(blocks) == set(x.columns)
-    for c in ("promotech_max", "promotech_tu", "tir_ostir", "sd_dg", "cai", "replichore_position"):
+    for c in (
+        "promoter_score",
+        "promoter_score_tu",
+        "tir_ostir",
+        "sd_dg",
+        "cai",
+        "replichore_position",
+    ):
         assert df[c].isna().all() and c not in x.columns, c
     assert {"tu_position", "dist_to_tu_start_bp", "length_aa"} <= set(x.columns)

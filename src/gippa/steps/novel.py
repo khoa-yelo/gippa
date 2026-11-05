@@ -297,7 +297,7 @@ def second_round_scores(
     width: int,
 ) -> pd.DataFrame:
     """Per ORF: ``start_best_ostir`` (lowest codon coordinate; highest ``tir_ostir``, ties →
-    the more upstream start), ``ostir_tir`` and the ``promoter_score`` at the used start (best,
+    the more upstream start), ``tir_ostir`` and the ``promoter_score`` at the used start (best,
     else longest): the maximum over its windows' ``(contig, strand, end3p)``."""
     recs = []
     for o in orfs:
@@ -318,7 +318,7 @@ def second_round_scores(
             vals = [promoters[k] for w in wins if (k := (w.contig, w.strand, w.end3p)) in promoters]
             score = max(vals) if vals else score
         recs.append((o.orf_id, best, tir, score))
-    df = pd.DataFrame(recs, columns=["orf_id", "start_best_ostir", "ostir_tir", "promoter_score"])
+    df = pd.DataFrame(recs, columns=["orf_id", "start_best_ostir", "tir_ostir", "promoter_score"])
     return df.astype({"start_best_ostir": "object"})
 
 

@@ -62,7 +62,7 @@ def frame(
     n = d.size
     rows = {
         "pair_id": [f"P{i}" for i in range(n)],
-        "class": ["OP"] * n,
+        "pair_class": ["OP"] * n,
         "gene_a": [f"A{i}" for i in range(n)],
         "gene_b": [f"B{i}" for i in range(n)],
         "strand": ["+"] * n,
@@ -75,7 +75,7 @@ def frame(
     if one_detected:
         k = len(one_detected)
         extra = pd.DataFrame({
-            "pair_id": [f"U{j}" for j in range(k)], "class": ["OP"] * k,
+            "pair_id": [f"U{j}" for j in range(k)], "pair_class": ["OP"] * k,
             "gene_a": [f"UA{j}" for j in range(k)], "gene_b": [f"UB{j}" for j in range(k)],
             "strand": ["+"] * k, "detected_a": [True] * k, "detected_b": [False] * k,
             "abundance_log2_a": [float(v) for v, _ in one_detected],

@@ -56,7 +56,7 @@ ORF_ROW: dict[str, str] = {
     "n_peptides": "2",
     "peptides": "PEPTIDEK;LLAMAR",
     "best_peptide_q": "0.001",
-    "ostir_tir": "120.5",
+    "tir_ostir": "120.5",
     "promoter_score": "NA",
     "promoter_supported": "true",
     "terminator_downstream": "false",
@@ -149,7 +149,7 @@ def test_non_integer_fails(tmp_path: Path) -> None:
 
 
 def test_non_number_fails(tmp_path: Path) -> None:
-    _fails("novel_orfs", _orfs(tmp_path, ostir_tir="high"), "novel_orfs", "ostir_tir", "number")
+    _fails("novel_orfs", _orfs(tmp_path, tir_ostir="high"), "novel_orfs", "tir_ostir", "number")
 
 
 def test_bad_boolean_fails(tmp_path: Path) -> None:
