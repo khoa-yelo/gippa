@@ -96,6 +96,7 @@ MAX_ELEMENTS = 20_000
 MARKER_CAP = 500
 MARKER_TRACKS = ("promoter", "terminator", "alt_site", "novel_orf")
 KEY_PT = 6.0  # ring numbers, ring key and colour bar text
+ORIGIN_GAP = 5.0  # degrees left open at the origin of a single circular replicon
 DENSITY_BP = 10_000
 #: peptide-density bars: a neutral grey (§10.1 furniture), not Okabe-Ito grey, which with the
 #: detection colours and the plasmid green would draw the whole COG palette in one figure
@@ -142,6 +143,12 @@ def tick_step(length: int) -> int:
             if length // (m * 10**n) >= 4:
                 step = m * 10**n
     return step
+
+
+def end_repeats_length(length: int, step: int) -> bool:
+    """Whether the last tick label equals ``length`` rounded to the tick unit (bp, kb or Mb)."""
+    unit = 1_000_000 if step >= 1_000_000 else (1_000 if step >= 1_000 else 1)
+    return (length // step) * step == math.floor(length / unit + 0.5) * unit
 
 
 def tick_label(x: float, step: int, zero: str = "") -> str:
@@ -453,21 +460,17 @@ def _ticks(plot: _Plot, canvas: _Canvas, view: RunView) -> None:
         lengths = frame["chrom"].astype(str).map(plot.length).to_numpy(dtype=np.int64)
         tss = (np.where(minus, frame["end"].astype(int) - 1, frame["start"].astype(int))) % lengths
         frame = frame.assign(tss=tss, minus=minus)
-        segs = []
         if track != "tu_start" and len(frame) > MARKER_CAP:
             bins = _marker_bins(plot, track, frame["chrom"].astype(str).tolist(), tss)
             _count_ticks(canvas, track, bins, (lo, hi), colour)
             continue
         if len(frame) > MAX_ELEMENTS:  # per-bin counts, bar length to the sector maximum
             bins = _bins(plot, frame.assign(contig=frame["chrom"]), "tss", "tss", len)
-            top: dict[str, int] = {}
-            for c, *_, n in bins:
-                top[c] = max(top.get(c, 1), n)
             for c, s0, e0, n in bins:
                 plot.add(track, c, s0, e0, n, "count", True)
-                segs.append((c, (s0 + e0) / 2, lo, lo + (hi - lo) * n / top[c]))
-            canvas.ticks(track, segs, colour)
+            _count_ticks(canvas, track, bins, (lo, hi), colour)
             continue
+        segs = []
         for r in frame.itertuples(index=False):
             c = str(r.chrom)
             s0, e0 = (r.tss, r.tss + 1) if track == "tu_start" else (int(r.start), int(r.end))
@@ -596,46 +599,37 @@ def _legend(
     items += [
         box(c, f"island {k}", h) for k, (c, h) in style.ISLAND.items() if ("island", k) in drawn
     ]
-    lines = [
-        (c, lab)
-        for t, c, lab in (
-            ("tu_start", BLACK, "TU start"),
-            ("promoter", PROMOTER, "promoter"),
-            ("terminator", TERMINATOR, "terminator"),
-            ("alt_site", BLACK, "ALT sites per bin"),
-            ("novel_orf", NOVEL, "novel ORFs per bin"),
+    lines = [  # TU starts (black) have no line: the ring key names them
+        (c, per_bin if (t, "bin") in drawn else lab)
+        for t, c, lab, per_bin in (
+            ("promoter", PROMOTER, "promoter", "promoters per bin"),
+            ("terminator", TERMINATOR, "terminator", "terminators per bin"),
+            ("alt_site", BLACK, "", "ALT sites per bin"),
+            ("novel_orf", NOVEL, "", "novel ORFs per bin"),
         )
-        if t in tracks and ((t, "bin") in drawn) == (t in ("alt_site", "novel_orf"))
+        if t in tracks and (lab or (t, "bin") in drawn)
     ]
     handles: list[Artist] = [h for h, _ in items]
     handles += [Line2D([], [], color=c) for c, _ in lines]
     labels = [lab for _, lab in items] + [lab for _, lab in lines]
+    dots = "novel_orf" in tracks and ("novel_orf", "bin") not in drawn
     for marker, face, edge, lab, shown in (
         ("^", BLACK, BLACK, "ALT site (high)", ("alt_site", "high") in drawn),
         ("^", "none", BLACK, "ALT site (candidate)", ("alt_site", "candidate") in drawn),
-        (
-            "o",
-            NOVEL,
-            NOVEL,
-            "novel ORF",
-            ("novel_orf", "bin") not in drawn and "novel_orf" in tracks,
-        ),
+        ("o", NOVEL, NOVEL, "novel ORF", dots),
     ):
-        if not shown:
-            continue
-        handles.append(
-            Line2D(
-                [], [], marker=marker, linestyle="none", markerfacecolor=face, markeredgecolor=edge
-            )
-        )
-        labels.append(lab)
+        if shown:
+            handles.append(dot := Line2D([], [], marker=marker, mfc=face, mec=edge))
+            dot.set_linestyle("none")
+            labels.append(lab)
     if handles:
         fig.legend(handles, labels, loc="upper left", bbox_to_anchor=(0.70, 0.92), frameon=False,
                    fontsize=6)  # fmt: skip
     key = "gene colour: detected share (viridis)" if binned else "gene colour: detection status"
     text = [key, *(["abundance: viridis 2nd-98th pct; white = NA or imputed"] * abundance)]
     if any(t in MARKER_TRACKS and c == "bin" for t, c in drawn):
-        text.append(f"markers: counts per bin where a track has over {MARKER_CAP}")
+        text.append(f"markers over {MARKER_CAP} per track: counts in ≤ {MARKER_CAP} bins per "
+                    "replicon, so bar heights compare only within a replicon")  # fmt: skip
     text += notes
     wrapped = [line for t in text for line in textwrap.wrap(t, 46, subsequent_indent="  ")]
     fig.text(0.70, 0.02, "\n".join(wrapped), ha="left", va="bottom", fontsize=6, color="#555555")
@@ -695,31 +689,43 @@ def circos(view: RunView, cfg: GippaConfig) -> list[base.Instance] | base.Skip:
     plot = _Plot([r for r in pre["replicons"] if int(r["length"]) > 0])
     one = len(plot.reps) == 1 and plot.circular(next(iter(plot.reps)))
     ab_label = style.run_abundance_label(genes)
-    space = 0 if one else 2
+    space = ORIGIN_GAP if one else 2  # one circular replicon: a gap holds the ring numbers
     layout = Circos({c: plot.length(c) for c in plot.reps}, space=space)
     fig = style.new_figure("double", 6.0)
     fig.set_label("V01_circos")
     width, height = fig.get_size_inches()
     radius_pt = min(AX_RECT[2] * width, AX_RECT[3] * height) * 36  # half the axes, in points
     step = tick_step(max(plot.length(c) for c in plot.reps))
+    regions, reg = view.table("regions_tsv"), None
+    if regions is not None:
+        regions = plot.known(regions)
+        no_xy = regions["start"].isna() | regions["end"].isna()
+        if (no_xy & (regions["region_type"] == "amr")).any():
+            plot.notes.append("AMR sets without coordinates not drawn")
+        reg = regions[~no_xy].assign(category=regions["region_type"], value=None)
+    bands = ["region"] if reg is not None and len(reg) else []
+    strands = set(plot.known(genes)["strand"])  # a band only under a ring that has rows
+    bands += [t for t, k in (("gene_plus", "+"), ("gene_minus", "-")) if k in strands]
+    bands += ["abundance"] if ab_label and strands else []
     names: list[Label] = []
     for sector in layout.sectors:
         c = sector.name
         plot.add("sector", c, 0, plot.length(c), plot.length(c), str(plot.reps[c].get("topology")))
         track = sector.add_track(RADII["sector"])
         track.axis(fc="#DDDDDD", ec="none")
-        # one circular replicon: "0" at the origin, no end label on top of it (M12-04 AC 7a.4)
+        # one circular replicon: "0" at the origin, and no end label that repeats the length
+        # rounded to the tick unit next to it (M12-04 AC 7a.4)
         track.xticks_by_interval(
             step,
             label_size=6,
             tick_length=1.5,
-            show_endlabel=not one,
+            show_endlabel=not (one and end_repeats_length(plot.length(c), step)),
             label_formatter=lambda x: tick_label(x, step, "0" if one else ""),
         )
         room = (sector.rad_size + math.radians(space)) * NAME_R[0] / 105 * radius_pt  # rlim 105
         options, orientation = name_options(c, room)
         names.append((float(np.mean(sector.rad_lim)), options, NAME_PT, orientation))
-        for name in ("region", "gene_plus", "gene_minus", "abundance")[: 4 if ab_label else 3]:
+        for name in bands:
             sector.add_track(RADII[name]).axis(fc="#F4F4F4", ec="none")
     ax = fig.add_axes(AX_RECT, projection="polar")
     layout.plotfig(ax=ax)
@@ -733,14 +739,7 @@ def circos(view: RunView, cfg: GippaConfig) -> list[base.Instance] | base.Skip:
     ]
     canvas.ticks("sector", linear, BLACK)
 
-    regions = view.table("regions_tsv")
-    if regions is not None:
-        regions = plot.known(regions)
-        no_xy = regions["start"].isna() | regions["end"].isna()
-        if (no_xy & (regions["region_type"] == "amr")).any():
-            plot.notes.append("AMR sets without coordinates not drawn")
-        reg = regions[~no_xy]
-        reg = reg.assign(category=reg["region_type"], value=None)
+    if reg is not None:
         canvas.rects(
             "region",
             _intervals(
