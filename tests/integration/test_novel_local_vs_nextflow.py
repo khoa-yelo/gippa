@@ -78,7 +78,7 @@ def test_example_2_local_and_nextflow_byte_identical(
 # ``novel/novel_class_fdr.parquet`` must be the same bytes. The side table must show the picked
 # regime, so the parity covers the wired class FDR and not only its ``decoys_not_makedb`` path.
 
-SIDE = "novel/novel_class_fdr.parquet"
+SIDE = "intermediate/novel/novel_class_fdr.parquet"  # M12-04 PR 12
 
 
 @pytest.fixture(scope="module")
