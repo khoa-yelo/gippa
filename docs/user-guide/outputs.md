@@ -49,8 +49,9 @@ between versions. `work/` is Nextflow's work directory; delete it once you no lo
 
 Output folders of GIPPA 1.0 kept these intermediates at the top level (`codon.parquet`,
 `genetable/`, `context/`, `novel/`, ...). `gippa report` and `gippa compare` still read such folders.
-A `--resume` into one leaves the old files in place and logs one warning with their count; you can
-remove them.
+Any run into such a folder (for example a `--resume`) leaves the old files in place and logs one
+warning naming them; they can be removed. `README.txt` names every top-level entry of the output
+folder except hidden ones (names starting with `.`, such as `.nextflow.log`).
 
 Optional modules that are switched off write no files. `run_manifest.json` lists them under
 `modules_off` (`mobile`, `bgc`, `function`). The `function` module writes `category_summary.tsv`,

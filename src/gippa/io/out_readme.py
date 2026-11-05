@@ -4,17 +4,21 @@
 ``render_readme`` names only the top-level entries present in ``OUT/``, in a fixed order, each
 with a fixed sentence; it ends with the coordinate note, the table reference link and the GIPPA
 version. The text is ASCII, with no timestamp and no path outside ``OUT/``, so two runs that leave
-the same entries get the same README. ``legacy_entries`` lists the top-level step intermediates
-an earlier GIPPA version left at the top of ``OUT/`` (they now live under ``intermediate/``).
+the same entries get the same README. Every other non-hidden top-level entry is named too
+(non-ASCII names backslash-escaped): the step intermediates GIPPA 1.0 left at the top of
+``OUT/`` (``LEGACY_TOP``, now under ``intermediate/``) in a paragraph saying they can be
+removed, anything else (a user's own files) in a separate neutral paragraph.
+``legacy_entries`` lists the ``LEGACY_TOP`` names present.
 """
 
 from __future__ import annotations
 
-from collections.abc import Sequence
+import textwrap
+from collections.abc import Iterable, Sequence
 from pathlib import Path
 
 import gippa
-from gippa.runner.local import INTERMEDIATE, PUBLISHED_TOP
+from gippa.runner.local import INTERMEDIATE
 
 README = "README.txt"
 DOCS_TABLES = "https://khoa-yelo.github.io/gippa/reference/tables/"
@@ -50,8 +54,24 @@ COORDINATES = (
 #: name column widths: "Start here" and "Files" share one, "Folders" has its own
 _WIDE = max(len(n) for n, _ in (*START_HERE, *FILES))
 _FOLDER_WIDE = max(len(n) + 1 for n, _ in FOLDERS)
-#: top-level names GIPPA 1.1 writes or Nextflow keeps (everything else is legacy or foreign)
-_KNOWN = PUBLISHED_TOP | {INTERMEDIATE, "work"}
+#: top-level step intermediates GIPPA 1.0 published at the top of ``OUT/`` (1.1 writes them under
+#: ``intermediate/``): the first path parts of the 1.0 workflow's published outputs outside the
+#: published folders and ``work/``
+LEGACY_TOP: frozenset[str] = frozenset({
+    "annotation_meta.json", "codon.parquet", "context", "features.parquet", "genes.coords",
+    "genes.parquet", "genetable", "hits_exact.parquet", "hits_tolerant.parquet",
+    "layers.parquet", "mapping_fdr.parquet", "novel", "novel_candidates.parquet",
+    "novel_promoter_windows.parquet", "novel_windows", "novel_windows_map.parquet",
+    "operon_meta.json", "ostir_input.csv", "ostir_input_novel.csv", "pairs_raw.parquet",
+    "placement.parquet", "placement_costs.parquet", "promoter_windows.parquet",
+    "proteins.leftover.faa", "rbs.parquet", "rbs_novel.parquet", "region_genes.parquet",
+    "regions.parquet", "replicons.parquet", "rrna16s.fa", "sixframe.npz", "smoke.done",
+    "stratum0_classes.parquet", "terminators.parquet", "terminators_crosscheck.tsv",
+    "trna_counts.tsv", "tu_upstream", "tus.parquet", "tx_rates.parquet", "uniop_cds.gff",
+    "uniop_map.tsv", "windows", "windows_map.parquet", "xrefs.parquet",
+})  # fmt: skip
+#: width of the wrapped name lists (two-space indent included)
+_WRAP = 96
 
 
 def _entries(out: Path) -> set[str]:
@@ -68,9 +88,24 @@ def _section(title: str, rows: Sequence[tuple[str, str]], width: int) -> list[st
 
 
 def legacy_entries(out: Path) -> list[str]:
-    """Top-level entries of ``out`` that are not published names, ``intermediate/`` or ``work/``
-    (hidden entries ignored), sorted: the step intermediates an earlier version published there."""
-    return sorted(_entries(out) - _KNOWN)
+    """The ``LEGACY_TOP`` names present at the top of ``out``, sorted: the step intermediates
+    GIPPA 1.0 published there (a user's own files are never legacy)."""
+    return sorted(_entries(out) & LEGACY_TOP)
+
+
+def _token(out: Path, name: str) -> str:
+    """How the README writes a top-level entry: ``name/`` for a folder, the file name for a file,
+    backslash-escaped outside ASCII."""
+    text = name.encode("ascii", "backslashreplace").decode("ascii")
+    return f"{text}/" if (out / name).is_dir() else text
+
+
+def _name_list(title: str, out: Path, names: Iterable[str]) -> list[str]:
+    """``title`` then the entries ``names``, comma-separated and wrapped, then a blank line."""
+    tokens = ", ".join(_token(out, n) for n in names)
+    wrapped = textwrap.wrap(tokens, _WRAP, initial_indent="  ", subsequent_indent="  ",
+                            break_on_hyphens=False, break_long_words=False)  # fmt: skip
+    return [title, *wrapped, ""]
 
 
 def count_files(out: Path, names: Sequence[str]) -> int:
@@ -93,10 +128,15 @@ def render_readme(out: Path) -> str:
     lines += _section("Start here", start, _WIDE)
     lines += _section("Folders", folders, _FOLDER_WIDE)
     lines += _section("Files", files, _WIDE)
-    legacy = len(legacy_entries(out))
+    legacy = legacy_entries(out)
     if legacy:
-        lines += [f"Also here: {legacy} other top-level entries, not written by this version "
-                  "(an earlier version's step intermediates can be removed).", ""]  # fmt: skip
+        lines += _name_list("From an earlier GIPPA version (step intermediates, now written under "
+                            "intermediate/); they can be removed:", out, legacy)  # fmt: skip
+    shown = {n for n, _ in FOLDERS if n in present and (out / n).is_dir()}
+    shown |= {n for n, _ in FILES if n in present and (out / n).is_file()}
+    other = sorted(present - shown - set(legacy))
+    if other:
+        lines += _name_list("Also here, not written by GIPPA:", out, other)
     lines += [COORDINATES, f"Table reference: {DOCS_TABLES}",
               f"Written by GIPPA {gippa.__version__}."]  # fmt: skip
     return "\n".join(lines) + "\n"

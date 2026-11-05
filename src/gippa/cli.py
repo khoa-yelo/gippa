@@ -804,13 +804,14 @@ def _write_readme(outdir: Path) -> None:
     try:
         if not path.is_file() or path.read_bytes() != render_readme(path.parent).encode("ascii"):
             write_readme(path.parent)
-    except OSError as exc:
+    except (OSError, ValueError, UnicodeError) as exc:
         click.echo(f"gippa run: README.txt was not written ({exc})", err=True)
 
 
 def _legacy_warning(outdir: Path) -> None:
-    """One ``outputs.legacy_intermediates`` WARNING event when ``OUT/`` holds top-level step
-    intermediates of an earlier version (a ``--resume`` into a 1.0 directory); they are kept."""
+    """One ``outputs.legacy_intermediates`` WARNING event, naming and counting them, when ``OUT/``
+    holds GIPPA 1.0 top-level step intermediates (``LEGACY_TOP``, e.g. a ``--resume`` into a 1.0
+    directory); they are kept. A user's own files never trigger it."""
     from gippa.io.out_readme import count_files, legacy_entries
 
     names = legacy_entries(outdir)
@@ -819,10 +820,11 @@ def _legacy_warning(outdir: Path) -> None:
     from gippa.io.events import append_event, event_record
 
     n_files = count_files(outdir, names)
-    data = {"count": len(names), "files": n_files,
+    listed = ", ".join(names)
+    data = {"count": len(names), "files": n_files, "names": names,
             "message": f"{len(names)} top-level entries from an earlier GIPPA version (step "
-                       "intermediates, now written under intermediate/) were left in place; they "
-                       "can be removed"}  # fmt: skip
+                       f"intermediates, now written under intermediate/) were left in place: "
+                       f"{listed}; they can be removed"}  # fmt: skip
     append_event(outdir / "logs", event_record("outputs", "legacy_intermediates", data, "WARNING"))
     click.echo(f"gippa run: warning: {data['message']}", err=True)
 
@@ -919,6 +921,7 @@ def _run_preflight(
     code = exit_code(report, strict)
     if code != ExitCode.SUCCESS:
         click.echo(render_preflight_md(report), err=True, nl=False)
+        _write_readme(outdir)  # a preflight stop still leaves OUT/README.txt
         sys.exit(code)
     for c in report.checks:  # the UniOP fallback is never silent (ADR-0061 decision 5)
         if c.rule_id == "environment.tools" and c.level == "warn":
@@ -1002,6 +1005,7 @@ def _local_roots(
         for c in report.checks:
             if c.level == "error":
                 click.echo(f"gippa run: preflight error {c.rule_id}: {c.message}", err=True)
+        _write_readme(outdir)  # a preflight stop still leaves OUT/README.txt
         sys.exit(code)
     work = outdir / "work" / "preflight"
     files = {"genome": "genome.norm.fa", "peptides": "peptides.norm.parquet",
