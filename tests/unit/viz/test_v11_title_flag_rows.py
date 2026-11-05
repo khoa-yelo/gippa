@@ -24,7 +24,8 @@ SNAPSHOT = Path(__file__).resolve().parents[2] / "data" / "snapshot" / "sim_plot
 
 def test_rows_above_alpha_are_counted_as_candidates() -> None:
     got = title(MEDS, 0, 0.1, 1)
-    assert got == "Median |Δ| OP 0.4 vs NO 1.3 log2; 0 of 1 candidate flags at q ≤ 0.1"
+    n = style.fmt_num  # M12-04 P-18
+    assert got == f"Median |Δ| OP {n(0.4)} vs NO {n(1.3)} log2; 0 of 1 candidate flags at q ≤ 0.1"
     assert "pairs flagged" not in got
 
 

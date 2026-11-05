@@ -1,6 +1,6 @@
-"""V12 title: the class-error range is printed with ``gippa.viz.base.sig`` (2 significant digits),
-not ``%g`` (viz batch 2, 2026-10-24: the snapshot fixture printed "0.872576" as the low end).
-A range whose ends round to the same text prints once.
+"""V12 title: the class-error range is printed with 2 significant digits, not ``%g`` (viz batch
+2, 2026-10-24: the snapshot fixture printed "0.872576" as the low end); since M12-04 P-18 through
+``style.fmt_num`` (trailing zeros kept). A range whose ends round to the same text prints once.
 """
 
 from __future__ import annotations
@@ -17,6 +17,7 @@ from gippa.viz.variants import EN_DASH, title, variants
 
 #: V12 title clause (M9-18 amendment: the class error is pooled per class)
 POOLED = ", pooled per class over ALT and mixed sites"
+_n = style.fmt_num
 SNAPSHOT = Path(__file__).resolve().parents[2] / "data" / "snapshot" / "sim_plots" / "OUT"
 
 
@@ -30,13 +31,14 @@ def _frame(rates: list[object], conf: list[str] | None = None) -> pd.DataFrame:
 def test_range_is_rounded_to_two_significant_digits() -> None:
     got = title(_frame([0.872576, 1.0, 0.933333], ["high", "candidate", "high"]))
     assert got == (
-        f"2 high-confidence and 1 candidate ALT sites (class error 0.87{EN_DASH}1*{POOLED})"
+        f"2 high-confidence and 1 candidate ALT sites (class error {_n(0.872576)}{EN_DASH}"
+        f"{_n(1.0)}*{POOLED})"
     )
 
 
 def test_small_rates_keep_their_digits() -> None:
     got = title(_frame([0.004, 0.0234567]))
-    assert got.endswith(f"(class error 0.004{EN_DASH}0.023{POOLED})")
+    assert got.endswith(f"(class error {_n(0.004)}{EN_DASH}{_n(0.0234567)}{POOLED})"), got
 
 
 def test_ends_rounding_alike_print_once() -> None:
@@ -54,5 +56,5 @@ def test_snapshot_fixture_title_has_no_unrounded_rate() -> None:
     view = RunView.from_outdir(SNAPSHOT)
     result = variants(view, resolve_config(SNAPSHOT / "resolved_config.yaml"))
     assert isinstance(result, list)
-    assert result[0].title.endswith(f"(class error 0.87{EN_DASH}1*{POOLED})")
+    assert result[0].title.endswith(f"(class error {_n(0.87)}{EN_DASH}{_n(1.0)}*{POOLED})")
     assert "0.872576" not in result[0].title
