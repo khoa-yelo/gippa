@@ -19,6 +19,7 @@ import pandas as pd
 from matplotlib.collections import PolyCollection
 from matplotlib.figure import Figure
 from matplotlib.patches import Patch
+from matplotlib.ticker import MaxNLocator
 
 from gippa.io.cog_categories import cog_descriptions
 from gippa.viz.base import Instance, Skip, empty_state, plot, plural
@@ -30,6 +31,7 @@ from gippa.viz.style import (
     REGION,
     cog_colour,
     fmt_alpha,
+    fmt_count,
     fmt_num,
     new_figure,
     q_equals,
@@ -40,15 +42,23 @@ if TYPE_CHECKING:
     from gippa.config import GippaConfig
     from gippa.io.run_view import RunView
 
-V07_COLUMNS = (
+#: the 1.0 columns (the interactive twin needs only these); 1.1 adds the percentage points
+V07_BASE_COLUMNS = (
     "block", "group", "region_type", "n", "observed", "expected", "o_minus_e",
     "ci_low", "ci_high", "q_value", "flags",
 )  # fmt: skip
+V07_COLUMNS = (*V07_BASE_COLUMNS, "o_minus_e_pp", "ci_low_pp", "ci_high_pp")
 V08_COLUMNS = (
     "category", "super_category", "locus_tag", "abundance_log2", "detected",
     "median_log2", "n_genes", "n_detected", "n_imputed",
 )  # fmt: skip
-V07_XLABEL = "observed \N{MINUS SIGN} expected detected genes"
+V07_XLABEL = "observed \N{MINUS SIGN} expected detected genes"  # the interactive twin (genes)
+V07_XLABEL_PP = "observed \N{MINUS SIGN} expected detected (percentage points)"
+V07_HEADER = {"replicon": "Replicon", "feature_class": "Feature class",
+              "cog_category": "COG category", "region": "Region"}  # fmt: skip
+V07_MAX_ROWS = 40  # drawn rows; the rest (smallest |pp|) are counted in a note (P-08)
+MORE_ROWS = "{k} more rows in the data TSV"
+COG_NAME_MAX = 40  # characters of a COG row's short name (every first clause fits)
 V08_YLABEL = ABUNDANCE_FALLBACK  # without a recorded measure; else ``run_abundance_label``
 NO_ABUNDANCE = "No measured abundance; detected fraction per COG category"
 BASIC_BLOCKS = ("replicon", "feature_class", "cog_category")
@@ -154,8 +164,12 @@ def _region_rows(
     return rows, labels
 
 
+def _count(n: int, word: str, many: str) -> str:
+    return f"{n} {word if n == 1 else many}"
+
+
 def v07_title(data: pd.DataFrame, has_regions: bool, alpha: float) -> str:
-    """The V7 title from its data TSV (index decision 5; M9-06 lead decisions 1, 2)."""
+    """The V7 title from its data TSV (index decision 5; M9-06 lead decisions 1, 2; P-08)."""
     recs = data.to_dict("records")
     if has_regions:
         tested = [r for r in recs if r["block"] == "region" and r["q_value"] is not None]
@@ -170,9 +184,11 @@ def v07_title(data: pd.DataFrame, has_regions: bool, alpha: float) -> str:
                 f"({q_equals(best['q_value'])})"
             )
         le = "\N{LESS-THAN OR EQUAL TO}"
-        k = len(tested)
-        return (f"No region departs from detectability at q {le} {fmt_alpha(alpha)}; "
-                f"{k} regions tested")  # fmt: skip
+        n_cls = sum(r["block"] != "region" for r in recs)
+        counts = [_count(len(tested), "region", "regions")]
+        counts += [_count(n_cls, "class", "classes")] if n_cls else []
+        return (f"No group departs from detectability at q {le} {fmt_alpha(alpha)} "
+                f"({', '.join(counts)} tested)")  # fmt: skip
     top = None
     for r in recs:
         lo, hi, ome = r["ci_low"], r["ci_high"], r["o_minus_e"]
@@ -197,37 +213,78 @@ def _ci_unestimated(r: Mapping[str, object]) -> bool:
     return lo is None or hi is None or lo == hi or "ci_unestimated" in _flags(r["flags"])
 
 
+def _pp(v: float | None, n: object) -> float | None:
+    """``v`` in percentage points of ``n`` genes, at ``%.6g`` (the TSV precision)."""
+    if v is None or _na(n) or not n:
+        return None
+    return float(f"{100.0 * v / float(str(n)):.6g}")
+
+
 def _xlim(recs: Sequence[Mapping[str, object]]) -> tuple[float, float]:
-    """The estimates, CI ends and 0, padded 8 %, at least 2 genes wide."""
-    xs = [0.0] + [float(v) for r in recs for c in ("o_minus_e", "ci_low", "ci_high")
+    """The pp estimates, CI ends and 0, padded 8 %, at least 2 pp wide."""
+    cols = ("o_minus_e_pp", "ci_low_pp", "ci_high_pp")
+    xs = [0.0] + [float(v) for r in recs for c in cols
                   if isinstance(v := r[c], float | int) and math.isfinite(v)]  # fmt: skip
     lo, hi = min(xs), max(xs)
     pad = max(0.08 * (hi - lo), (2.0 - (hi - lo)) / 2, 0.0)
     return lo - pad, hi + pad
 
 
+def _cog_name(letter: str) -> str:
+    """The first clause of the NCBI description, cut at a word to ``COG_NAME_MAX`` characters."""
+    name = cog_descriptions().get(letter, "").split(",")[0].strip()
+    if len(name) > COG_NAME_MAX:
+        name = name[: COG_NAME_MAX - 1].rsplit(" ", 1)[0] + "\N{HORIZONTAL ELLIPSIS}"
+    return name
+
+
+def _row_label(r: Mapping[str, object]) -> str:
+    n = "NA" if r["n"] is None else fmt_count(r["n"])
+    group = str(r["group"])
+    if r["block"] == "cog_category" and _cog_name(group):
+        group = f"{group} {_cog_name(group)}"
+    return f"{group} (n = {n})"
+
+
+def _shown(recs: Sequence[Mapping[str, object]]) -> list[int]:
+    """The indices drawn: every row, or the ``V07_MAX_ROWS`` largest |pp| in table order."""
+    if len(recs) <= V07_MAX_ROWS:
+        return list(range(len(recs)))
+
+    def size(i: int) -> float:
+        v = recs[i]["o_minus_e_pp"]
+        return -1.0 if not isinstance(v, float | int) else abs(float(v))
+
+    ranked = sorted(range(len(recs)), key=lambda i: (-size(i), i))
+    return sorted(ranked[:V07_MAX_ROWS])
+
+
 def _forest(data: pd.DataFrame, notes: Sequence[str | None], title: str) -> Figure:
     recs = data.to_dict("records")
-    # lead decision 6: double above 20 rows; also when an "(untested)" label would leave a
-    # single-width forest no room (decision recorded in the M9-06 report)
-    wide = len(recs) > 20 or any(n is not None and n.endswith("(untested)") for n in notes)
-    width: Literal["single", "double"] = "double" if wide else "single"
+    shown = _shown(recs)
+    heads: list[tuple[float, str]] = []
     ys: list[float] = []
     y, prev = 0.0, None
-    for r in recs:
-        if prev is not None and r["block"] != prev:
-            y -= 0.6
+    for i in shown:
+        block = str(recs[i]["block"])
+        if block != prev:
+            y -= 0.0 if prev is None else 0.4
+            heads.append((y, V07_HEADER.get(block, block)))
+            y -= 1.0
         ys.append(y)
-        y, prev = y - 1.0, r["block"]
-    fig = _figure(width, 1.2 + 0.17 * (1.0 - ys[-1]), "V07_obs_vs_exp", title)
+        y, prev = y - 1.0, block
+    more = len(recs) - len(shown)
+    bottom = y if more else ys[-1]
+    fig = _figure("double", 1.2 + 0.17 * (1.0 - bottom), "V07_obs_vs_exp", title)
     ax = fig.add_subplot()
     ax.axvline(0.0, color="#777777", lw=0.6, zorder=0)
-    unest = [_ci_unestimated(r) for r in recs]
+    unest = [_ci_unestimated(recs[i]) for i in shown]
     note_dx = 62 if any(unest) else 4  # the right-hand columns: "CI unestimated", then q / label
-    for r, yv, note, no_ci in zip(recs, ys, notes, unest, strict=True):
+    for i, yv, no_ci in zip(shown, ys, unest, strict=True):
+        r, note = recs[i], notes[i]
         flags = _flags(r["flags"])
         colour = REGION.get(str(r["region_type"]), BLACK) if r["block"] == "region" else BLACK
-        lo, hi, ome = r["ci_low"], r["ci_high"], r["o_minus_e"]
+        lo, hi, ome = r["ci_low_pp"], r["ci_high_pp"], r["o_minus_e_pp"]
         if lo is not None and hi is not None:
             ax.plot([lo, hi], [yv, yv], color=colour, lw=0.9, solid_capstyle="butt")
         if ome is not None:
@@ -238,18 +295,25 @@ def _forest(data: pd.DataFrame, notes: Sequence[str | None], title: str) -> Figu
         for text, dx in right:
             ax.annotate(text, (1.0, yv), xycoords=("axes fraction", "data"), xytext=(dx, 0),
                         textcoords="offset points", va="center", fontsize=6)  # fmt: skip
-    labels = [f"{r['group']} (n = {'NA' if r['n'] is None else r['n']})" for r in recs]
-    ax.set_yticks(ys, labels=labels)
-    ax.set_ylim(ys[-1] - 0.7, 0.7)
+    for yh, text in heads:
+        ax.annotate(text, (0.0, yh), xycoords=("axes fraction", "data"), xytext=(-3.5, 0),
+                    textcoords="offset points", ha="right", va="center", fontsize=7,
+                    fontweight="bold")  # fmt: skip
+    if more:
+        ax.text(0.01, bottom, MORE_ROWS.format(k=fmt_count(more)), va="center", fontsize=6,
+                transform=ax.get_yaxis_transform(), color="#555555")  # fmt: skip
+    ax.set_yticks(ys, labels=[_row_label(recs[i]) for i in shown])
+    ax.set_ylim(bottom - 0.7, 0.7)
     ax.set_xlim(*_xlim(recs))
-    ax.set_xlabel(V07_XLABEL)
+    ax.xaxis.set_major_locator(MaxNLocator(5))
+    ax.set_xlabel(V07_XLABEL_PP)
     ax.spines[["top", "right"]].set_visible(False)
     return fig
 
 
 @plot("V07", "obs_vs_exp", needs=("detection_summary",), optional=("regions_stats",))
 def obs_vs_exp(view: RunView, cfg: GippaConfig) -> list[Instance] | Skip:
-    """§10.2 V7: the O - E forest of the basic groups and the regions."""
+    """§10.2 V7: the O - E forest of the basic groups and the regions, in percentage points."""
     summary = view.table("detection_summary")
     if summary is None:
         return Skip("input_absent:detection_summary")
@@ -259,9 +323,12 @@ def obs_vs_exp(view: RunView, cfg: GippaConfig) -> list[Instance] | Skip:
     if regions is not None:
         region_rows, labels = _region_rows(regions, list(cfg.context.region_types))
         rows, notes = rows + region_rows, notes + labels
+    keep = [i for i, r in enumerate(rows) if r[3] != 0]  # n = 0: nothing to test (P-08)
+    rows = [rows[i] + [_pp(_num(rows[i][c]), rows[i][3]) for c in (6, 7, 8)] for i in keep]
+    notes = [notes[i] for i in keep]
     if not rows:
         msg = "No detection summary or region rows in this run"
-        return [empty_state("V07", "obs_vs_exp", msg, V07_COLUMNS, "single")]
+        return [empty_state("V07", "obs_vs_exp", msg, V07_COLUMNS, "double")]
     data = _frame(rows, V07_COLUMNS)
     title = v07_title(data, regions is not None, cfg.stats.alpha.context)
     return [Instance(suffix=None, figure=_forest(data, notes, title), data=data, title=title)]

@@ -22,7 +22,7 @@ import numpy as np
 import pandas as pd
 from matplotlib.axes import Axes
 
-from gippa.viz.style import OKABE_ITO, fmt_q
+from gippa.viz.style import OKABE_ITO, fmt_q, shorten_middle
 
 if TYPE_CHECKING:
     from gippa.io.run_view import RunView
@@ -42,6 +42,7 @@ PER_REPLICON = "per-replicon maximum"
 NOT_DRAWN = "n_not_drawn"
 UNCALIBRATED_NOTE = "(uncalibrated, ADR-0034)"
 TOO_FEW = "too_few_rows"
+CONTIG_MAX = 24  # characters of a contig name in a title (middle ellipsis beyond)
 
 
 @dataclass(frozen=True)
@@ -232,5 +233,9 @@ def draw(ax: Axes, m: Multiple) -> None:
         ax.set_ylabel("count", fontsize=6)
     if math.isfinite(m.observed):
         ax.axvline(m.observed, color=OKABE_ITO["vermillion"], linewidth=1.0)
-    ax.set_title(f"{m.table}\n{m.family}\n{m.caption}", fontsize=6)
+    family = m.family
+    if m.table == "islands" and m.family != GENOME:  # "<contig> / <direction>" (P-10)
+        contig, _, direction = m.family.rpartition(" / ")
+        family = f"{shorten_middle(contig, CONTIG_MAX)} / {direction}"
+    ax.set_title(f"{m.table}\n{family}\n{m.caption}", fontsize=6)
     ax.set_xlabel(XLABEL[m.table], fontsize=6)

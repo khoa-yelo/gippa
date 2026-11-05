@@ -1,9 +1,10 @@
 """V17 ``qc``: are the inputs sane? (M9-04; GIPPA_SPEC.md §10.2 V17, §7.0, §9.3).
 
-Five panels and a warning list on a double-width 2 x 3 grid: (a) preflight check counts by level,
-(b) contig lengths, (c) distinct peptide lengths (placed / unmapped), (d) the measured and imputed
-``abundance_log2`` histogram, (e) the NA share of the §9.3 feature columns over ``partial = false``
-genes. The data frame is the long ``panel, group, key, value, n`` table of
+Five panels and a warning list on a double-width grid, (e) the whole bottom row: (a) preflight
+check counts by level, (b) contig lengths, (c) distinct peptide lengths (placed / unmapped),
+(d) the measured and imputed ``abundance_log2`` histogram, (e) the NA share of the §9.3 feature
+columns over ``partial = false`` genes, named by ``FEATURE_LABEL``, with the reason when a run
+flag left a column uncomputed. The data frame is the long ``panel, group, key, value, n`` table of
 ``plots/data/V17_qc.tsv``. Pure: every table comes from the ``RunView``.
 """
 
@@ -18,8 +19,9 @@ import numpy as np
 import pandas as pd
 from matplotlib.axes import Axes
 
-from gippa.viz.base import Instance, Skip, plot, title_pct
-from gippa.viz.style import DETECTION, OKABE_ITO, REGION, new_figure
+from gippa.viz.base import Instance, Skip, plot, plural, title_pct
+from gippa.viz.style import DETECTION, OKABE_ITO, REGION, new_figure, shorten_middle
+from gippa.viz.words import NOT_COMPUTED, feature_label
 
 if TYPE_CHECKING:
     from gippa.config import GippaConfig
@@ -53,6 +55,14 @@ FEATURE_GROUPS: Mapping[str, tuple[str, ...]] = {
     "protein": ("mw_da", "pi", "gravy", "tm_segments", "n_observable_peptides"),
     "translation initiation": ("tir_ostir", "sd_dg", "mrna_dg", "spacer_bp", "start_codon"),
 }
+#: run flag -> the panel-(e) columns it leaves uncomputed (the reason is ``NOT_COMPUTED``)
+FLAG_COLUMNS: Mapping[str, tuple[str, ...]] = {
+    "layer_missing:tx_rates": ("tx_rate_max_tu", "tx_rate_sum_tu"),
+    "cai_reference_missing": ("cai",),
+}
+_RAW_ABUNDANCE = "raw abundance"
+FIG_HEIGHT = 7.6
+CONTIG_MAX = 24  # characters of a panel-(b) contig label (middle ellipsis beyond)
 MAX_WARN_LINES = 10
 #: drawn lines in the warning cell (each message takes at most 2) and characters per line
 _CELL_LINES, _WRAP = 20, 36
@@ -148,7 +158,7 @@ def _panel_b(ax: Axes, replicons: Sequence[Mapping[str, Any]], threshold: int) -
         color=_MUTED,
     )
     label.set_in_layout(False)
-    ax.set_yticks(ys, [str(r["id"]) for r in replicons])
+    ax.set_yticks(ys, [shorten_middle(str(r["id"]), CONTIG_MAX) for r in replicons])
     ax.invert_yaxis()  # FASTA order top to bottom
     span = [*lengths, threshold]
     ax.set_xlim(10 ** math.floor(math.log10(max(min(span), 1) / 2)), max(span) * 3)
@@ -241,8 +251,12 @@ def _panel_d(ax: Axes, whole: pd.DataFrame) -> list[Row]:
     return sorted(rows, key=lambda row: (row[1], row[2]))
 
 
-def _panel_e(ax: Axes, whole: pd.DataFrame) -> list[Row]:
-    ax.set_title("(e) missingness\n(non-partial genes)", loc="left")  # one line hits (f)
+def _reasons(flags: frozenset[str]) -> dict[str, str]:
+    return {c: NOT_COMPUTED[f] for f, cols in FLAG_COLUMNS.items() if f in flags for c in cols}
+
+
+def _panel_e(ax: Axes, whole: pd.DataFrame, flags: frozenset[str]) -> list[Row]:
+    ax.set_title("(e) missingness\n(non-partial genes)", loc="left")  # the 1.0 title (two lines)
     ax.set_xlabel("missing (%)")
     n = len(whole)
     rows: list[Row] = []
@@ -256,22 +270,29 @@ def _panel_e(ax: Axes, whole: pd.DataFrame) -> list[Row]:
     for i in range(1, len(rows)):  # thin rules between feature groups (the TSV names them)
         if rows[i][1] != rows[i - 1][1]:
             ax.axhline(i - 0.5, color="#BBBBBB", linewidth=0.5)
-    ax.set_yticks(ys, [str(r[2]) for r in rows], fontsize=6)
+    reasons = _reasons(flags)
+    for y, r in zip(ys, rows, strict=True):  # a 100 %-missing column the run left uncomputed
+        if r[3] == 1.0 and r[2] in reasons:
+            ax.text(1.0, y, reasons[r[2]], va="center", ha="left", fontsize=6, color="black")
+    names = [_RAW_ABUNDANCE if r[2] == "abundance_raw" else feature_label(r[2]) for r in rows]
+    ax.set_yticks(ys, names, fontsize=6)
     ax.invert_yaxis()
     ax.set_xlim(0, 100)
     return rows
 
 
 def _title(n_warn: int, n_err: int, whole: pd.DataFrame | None) -> str:
-    head = f"{n_warn} preflight warnings"
+    head = plural(n_warn, "preflight warning")
     if whole is None:
-        return f"{head}, {n_err} errors; abundance not available"
+        return f"{head}, {plural(n_err, 'error')}; abundance not available"
     log2 = pd.to_numeric(whole["abundance_log2"], errors="coerce")
     if log2.notna().sum() == 0:
         return f"{head}; no abundance input"
     measured = int((log2.notna() & ~whole["abundance_imputed"].fillna(False).astype(bool)).sum())
-    share = title_pct(measured, len(whole))
-    return f"{head}, {n_err} errors; {share} of genes have a measured abundance"
+    detected = int(whole["detected"].fillna(False).astype(bool).sum()) if "detected" in whole else 0
+    shares = (f"{title_pct(measured, len(whole))} with measured abundance "
+              f"({title_pct(detected, len(whole))} detected)")  # fmt: skip
+    return f"{head}, {plural(n_err, 'error')}; {shares}"
 
 
 @plot("V17", "qc", needs=["preflight"], optional=["genes_tsv", "peptide_hits", "unmapped"])
@@ -281,12 +302,15 @@ def qc(view: RunView, cfg: GippaConfig) -> list[Instance] | Skip:
     if pf is None:  # the registry wrapper skips first; kept for direct calls
         return Skip("input_absent:preflight")
     checks = list(pf.get("checks") or [])
-    fig = new_figure("double", 6.0, layout="constrained")
+    fig = new_figure("double", FIG_HEIGHT, layout="constrained")
     fig.set_label("V17_qc")
-    grid = fig.add_gridspec(2, 3, height_ratios=(1.0, 1.4))
+    rows_ = fig.add_gridspec(3, 1, height_ratios=(1.0, 1.0, 1.5))
+    # one grid per row, so the long (e) names do not widen the other rows' margins (P-16)
+    top, mid = rows_[0].subgridspec(1, 3), rows_[1].subgridspec(1, 3)
+    cells = [top[0, 0], top[0, 1], top[0, 2], mid[0, 0], rows_[2], mid[0, 1:]]
     axes = {
-        lab: fig.add_subplot(grid[i // 3, i % 3], label=lab)
-        for i, lab in enumerate(("a", "b", "c", "d", "e", "warnings"))
+        lab: fig.add_subplot(cell, label=lab)
+        for lab, cell in zip(("a", "b", "c", "d", "e", "warnings"), cells, strict=True)
     }
     rows = _panel_a(axes["a"], axes["warnings"], checks)
     rows += _panel_b(
@@ -304,7 +328,7 @@ def qc(view: RunView, cfg: GippaConfig) -> list[Instance] | Skip:
             _note(axes[lab], "not available (no genes.tsv)")
     else:
         rows += _panel_d(axes["d"], whole)
-        rows += _panel_e(axes["e"], whole)
+        rows += _panel_e(axes["e"], whole, view.run_flags())
     n_warn = sum(str(c.get("level")) == "warn" for c in checks)
     n_err = sum(str(c.get("level")) == "error" for c in checks)
     title = _title(n_warn, n_err, whole)

@@ -258,6 +258,14 @@ FEATURE_LABEL: Mapping[str, str] = MappingProxyType(
     }
 )
 
+#: run flag -> why a feature column is 100 % missing (V17 panel e); ``FLAG_TEXT`` keeps its words
+NOT_COMPUTED: Mapping[str, str] = MappingProxyType(
+    {
+        "layer_missing:tx_rates": "not computed: transcription-rate layer off",
+        "cai_reference_missing": "not computed: no CAI reference",
+    }
+)
+
 #: detection tier -> sentence without the tier name (the caller adds it); ``{alpha}`` is the
 #: run's FDR level
 TIER_TEXT: Mapping[str, str] = MappingProxyType(

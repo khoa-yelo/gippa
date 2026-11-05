@@ -13,16 +13,18 @@ missing: neither binned nor counted.
 from __future__ import annotations
 
 import math
-from collections.abc import Sequence
+import textwrap
+from collections.abc import Mapping, Sequence
 from fractions import Fraction
 from typing import TYPE_CHECKING
 
 import numpy as np
 import pandas as pd
 from matplotlib.axes import Axes
+from matplotlib.ticker import MaxNLocator
 
 from gippa.viz import null_panels
-from gippa.viz.base import Instance, plot
+from gippa.viz.base import Instance, empty_state, plot
 from gippa.viz.style import OKABE_ITO, fmt_num, new_figure
 
 if TYPE_CHECKING:
@@ -51,6 +53,22 @@ NO_NULL_TEXT = "null draws not available"
 OUTSIDE_METRIC = "n_outside_0_1"
 #: the one explanatory row of an input-free run (``panel`` NA, ``value`` = the panel texts)
 MESSAGE_METRIC = "empty_state"
+#: a family with fewer p-values is listed in ``SMALL_NOTE``, not drawn (P-10); its rows stay
+MIN_TESTS = 10
+SMALL_NOTE = "Not shown (fewer than 10 tests): "
+ALL_SMALL = "Nothing to show: no test family has 10 or more tests in this run."
+_NOTE_WRAP = 80
+#: human names of the family key values (schema enums); any other value: underscores -> spaces
+_NAMES: Mapping[str, Mapping[str, str]] = {
+    "stat": {"o_minus_e": "O \N{MINUS SIGN} E", "hl_shift": "abundance shift"},
+    "statistic": {"morans_i": "Moran's I", "join_count_bb": "Join count",
+                  "oriter_slope": "ori\N{EN DASH}ter slope"},
+    "null_model": {"gene_label": "gene-label", "tu_block": "TU-block"},
+    "test": {"both_detected_t": "both detected", "one_detected_pmiss": "one detected",
+             "missed_operon_decoy": "missed-operon decoy"},
+    "collection": {"cog": "COG", "kegg": "KEGG", "go_bp": "GO BP", "go_mf": "GO MF",
+                   "go_cc": "GO CC", "go_slim": "GO slim"},
+}  # fmt: skip
 _MAX_AREA = 60.0  # pt², the marker area of the largest bin
 _GREY = OKABE_ITO["grey"]
 _TEXT = "#555555"
@@ -125,7 +143,7 @@ def _draw_reliability(ax: Axes, rows: Sequence[_Row], overall: dict[str, float])
     ax.set_ylim(0.0, 1.0)
     ax.set_xlabel("mean predicted p_detect")
     ax.set_ylabel("observed detection rate")
-    ax.set_title("a  detectability reliability", fontsize=7, loc="left")
+    ax.set_title("(a) detectability reliability", fontsize=7, loc="left")
     ax.plot([0.0, 1.0], [0.0, 1.0], linestyle="--", color=_GREY, linewidth=0.8)
     pts = [r for r in rows if r["metric"] is None]
     xs = [float(str(r["x"])) for r in pts]
@@ -149,6 +167,29 @@ def _message(ax: Axes, text: str) -> None:
 
 
 # --- panel (b) --------------------------------------------------------------------------------
+
+
+def family_names(table: str, family: str) -> tuple[str, str]:
+    """(panel title, short name for the note) of a test family, e.g. ``regions_stats`` /
+    ``o_minus_e`` -> ("Region tests (O minus E)", "region O minus E") with a minus sign."""
+    keys = dict(FAMILIES).get(table, ())
+    parts = family.split(" / ")
+    vals = [
+        _NAMES.get(k, {}).get(v, v.replace("_", " ")) for k, v in zip(keys, parts, strict=False)
+    ]
+    if table == "regions_stats":
+        return f"Region tests ({vals[0]})", f"region {vals[0]}"
+    if table == "autocorrelation":
+        name = f"{vals[0]}, {vals[1]} null"
+        return name, name
+    if table == "pairs":
+        return f"Pair tests ({vals[0]})", f"pair {vals[0]}"
+    if table == "enrichment_detection":
+        return f"Enrichment ({', '.join(vals)})", f"enrichment {' '.join(vals)}"
+    if table == "enrichment_gsea":
+        return f"GSEA ({vals[0]})", f"GSEA {vals[0]}"
+    name = " ".join(vals) or family.replace("_", " ")
+    return name, name
 
 
 _Family = tuple[str, str, list[int], int]
@@ -194,9 +235,19 @@ def _draw_histogram(
     ax.bar(edges, counts, width=1 / N_BINS, align="edge", color=OKABE_ITO["sky_blue"])
     ax.set_xlim(0.0, 1.0)
     extra = f", {n_outside} outside [0, 1]" if n_outside else ""
-    ax.set_title(f"{table}\n{family}, n = {sum(counts)}{extra}", fontsize=6)
+    ax.set_title(f"{family_names(table, family)[0]}\nn = {sum(counts)}{extra}", fontsize=6)
     ax.set_xlabel("p-value", fontsize=6)
     ax.set_ylabel("count", fontsize=6)
+    ax.yaxis.set_major_locator(MaxNLocator(integer=True))
+
+
+def _n(f: _Family) -> int:
+    return sum(f[2]) + f[3]
+
+
+def _small_note(small: Sequence[_Family]) -> str:
+    listed = ", ".join(f"{family_names(f[0], f[1])[1]} ({_n(f)})" for f in small)
+    return textwrap.fill(SMALL_NOTE + listed, _NOTE_WRAP)
 
 
 # --- the plot ---------------------------------------------------------------------------------
@@ -221,24 +272,34 @@ def stat_diagnostics(view: RunView, cfg: GippaConfig) -> list[Instance]:
         state = "fit"
 
     families = _family_counts(view)
+    small = [f for f in families if _n(f) < MIN_TESTS]
     order = {t: i for i, (t, _) in enumerate(FAMILIES)}
-    ranked = sorted(families, key=lambda f: (-sum(f[2]), order[f[0]], f[1]))
+    big = [f for f in families if _n(f) >= MIN_TESTS]
+    ranked = sorted(big, key=lambda f: (-sum(f[2]), order[f[0]], f[1]))
     keep = {(t, f) for t, f, _, _ in ranked[:MAX_DRAWN]}
     drawn = [f for f in families if (f[0], f[1]) in keep]
 
     nulls = null_panels.multiples(view)
     n_rows = math.ceil(len(drawn) / GRID_COLS)
     c_rows = max(1, math.ceil(len(nulls) / GRID_COLS))
-    fig = new_figure("double", 2.6 + 1.5 * n_rows + 1.8 * c_rows, layout="constrained")
+    fit = state == "fit"  # without a curve the top row is one line of text (P-10)
+    top_h = 2.6 if fit else 0.9
+    fig = new_figure("double", top_h + 1.5 * n_rows + 1.8 * c_rows, layout="constrained")
     fig.set_label("V18_stat_diagnostics")
-    ratios = [1.6] + [1.0] * n_rows + [1.2] * c_rows
+    ratios = [1.6 if fit else 0.35] + [1.0] * n_rows + [1.2] * c_rows
     gs = fig.add_gridspec(1 + n_rows + c_rows, GRID_COLS, height_ratios=ratios)
     ax_a = fig.add_subplot(gs[0, :2], label="a")
     if state == "fit":
         _draw_reliability(ax_a, a_rows, overall)
     else:
         _message(ax_a, CONSTANT_TEXT if state == "constant" else ABSENT_TEXT)
-    if not drawn:
+        ax_a.set_title("(a) detectability reliability", fontsize=7, loc="left")
+    if small:
+        ax_b = fig.add_subplot(gs[0, 2:], label="b_note")  # not "b": no histogram
+        ax_b.set_axis_off()
+        ax_b.text(0.0, 0.5, _small_note(small), transform=ax_b.transAxes, va="center",
+                  fontsize=6, color=_TEXT)  # fmt: skip
+    elif not drawn:
         _message(fig.add_subplot(gs[0, 2:], label="b"), NO_P_TEXT)
     for i, (table, family, counts, n_out) in enumerate(drawn):
         ax = fig.add_subplot(gs[1 + i // GRID_COLS, i % GRID_COLS], label=f"b:{table} / {family}")
@@ -256,10 +317,10 @@ def stat_diagnostics(view: RunView, cfg: GippaConfig) -> list[Instance]:
             f"(intercept {_g2(overall.get('calibration_intercept', math.nan))}), "
             f"Brier {_g2(overall.get('brier', math.nan))}"
         )
-    elif state == "constant":
-        title = f"Detectability constant; {k} test families shown"
     else:
-        title = f"Detectability not available; {k} test families shown"
+        shown = f"{k} test {'family' if k == 1 else 'families'} shown"
+        what = "constant" if state == "constant" else "not available"
+        title = f"Detectability {what}; {shown}"
     fig.suptitle(title)
 
     b_rows: list[_Row] = []
@@ -277,4 +338,7 @@ def stat_diagnostics(view: RunView, cfg: GippaConfig) -> list[Instance]:
         every = [{c: None for c in COLUMNS} | {"metric": MESSAGE_METRIC, "value": note}]
     cells = [[r.get(c) for c in COLUMNS] for r in every]
     data = pd.DataFrame(cells, columns=list(COLUMNS), dtype=object)
+    if small and not drawn and not nulls and not fit:  # every family small, nothing drawn
+        blank = empty_state("V18", "stat_diagnostics", ALL_SMALL, COLUMNS, "double")
+        return [Instance(suffix=None, figure=blank.figure, data=data, title=ALL_SMALL, empty=True)]
     return [Instance(suffix=None, figure=fig, data=data, title=title)]

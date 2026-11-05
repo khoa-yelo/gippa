@@ -242,7 +242,7 @@ def v06(data: pd.DataFrame, title: str, meta: Meta = None) -> Any:
 # ---------------------------------------------------------------- V7
 
 
-@interactive("V07", det.V07_COLUMNS)
+@interactive("V07", det.V07_BASE_COLUMNS)
 def v07(data: pd.DataFrame, title: str) -> Any:
     """The O - E forest in drawing order: one trace per row, region rows by region type."""
     fig, labels = go.Figure(), []
