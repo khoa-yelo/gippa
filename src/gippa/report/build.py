@@ -530,6 +530,9 @@ def _page(
     absent = not_applicable(view, plots)
     off = {sid for sid, _, _ in absent}
     shown_sections = [s for s in SECTIONS if s.id not in off]
+    if content.function_no_terms(view):  # the section is one notice (M12-04 PR 8)
+        shown_sections = [Section(s.id, s.heading) if s.id == "function" else s
+                          for s in shown_sections]  # fmt: skip
     sections: list[dict[str, Any]] = [
         {"id": s.id, "heading": s.heading,
          "plots": [_plot_slot(p, plots.get(p), skipped, twins, True, linked)
