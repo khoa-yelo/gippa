@@ -5,6 +5,21 @@ the genome" and step 4, §8.1, §8.4, §9.3, §9.4; issue M3-11; ADR-0010).
 
 **Status:** signed off by the statistician (M3-11 review, 2026-10-14; see Sign-off).
 
+## Report text
+
+The block below is copied into the run report's Methods section by `scripts/dev/sync_report_snippets.py` (plain paragraphs and lists only).
+
+<!-- report:begin -->
+De novo peptides are binned by score decile and split into length classes. In
+each, the share matching the genome's six-frame translation exactly is compared with the share
+matching a shuffled decoy and with the share of confidently identified reference peptides of that
+class matching the genome (0.99 when none are given). A length class is left out of a bin when its
+reference match rate is less than 0.05 above the decoy match rate; a bin with no class left has no
+estimate. Otherwise the estimate is the fraction of distinct de novo peptides in the bin that are
+correct, with a bootstrap interval. One minus its lower bound is each peptide's prior error in
+the placement FDR.
+<!-- report:end -->
+
 ## Estimand (ADR-0019 decision 5)
 
 **Status:** signed off by the statistician (M3-25 review of #124, 2026-10-20; ADR-0019 decisions

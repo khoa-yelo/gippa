@@ -426,7 +426,7 @@ Running ES.
 
 One row per gene.
 
-- Path: —
+- Path: `tables/genes.tsv`
 - Coordinates: 1-based closed
 - Schema: `tables/genes.schema.json`
 
@@ -439,7 +439,7 @@ One row per gene.
 
 One row per island.
 
-- Path: —
+- Path: `tables/islands.tsv`
 - Coordinates: —
 - Schema: `tables/islands.schema.json`
 

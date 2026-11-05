@@ -11,6 +11,20 @@ ranking, π̂_wrong sources, Same-strain input, Calibration (M3-10, **signed bel
 approved at 031378c after two same-strain fixes**, see "Implementation review (M3-10)"). Genome-level
 calibration with tolerant hits and de novo errors, and attack 5, are M3-21.
 
+## Report text
+
+The block below is copied into the run report's Methods section by `scripts/dev/sync_report_snippets.py` (plain paragraphs and lists only).
+
+<!-- report:begin -->
+Each peptide is searched against the six-frame translation of the genome and,
+in the same way, against a decoy translation: reversed frames for database peptides, frames
+shuffled in windows of 50 residues for de novo peptides. The decoy has the size and composition of
+the target, so decoy hits estimate how many wrong peptides land in the genome by chance. Peptides
+are ranked by their expected number of chance hits, in separate lists (strata) for matches
+with 0, 1 and 2 differences. Each list's decoy count gives the placement q-value; a placement is
+accepted when it is at most 0.01 by default.
+<!-- report:end -->
+
 ## Genome decoys (M3-03)
 
 ### What the decoy has to estimate
