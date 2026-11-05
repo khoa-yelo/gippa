@@ -70,7 +70,9 @@ CLASSES = (
 STATUSES = ("called", "not_called", "unestimated")
 COUNT_COLUMNS = ["class", "status", "n", "class_fdr_max_called"]
 INDEX_COLUMNS = ["rank", "orf_id", "rendered"]
-LOCUS_COLUMNS = ["track", "id", "contig", "start", "end", "strand", "value", "category"]
+#: the V03 locus columns; M12-04 P-01 appends ``fill``
+LOCUS_COLUMNS = ["track", "id", "contig", "start", "end", "strand", "value", "category", "fill"]
+_n = style.fmt_num  # M12-04 P-18: in-figure numbers keep trailing zeros
 CALLED, NOT_CALLED, UNEST = "#0072B2", "#BBBBBB", "#E69F00"
 ORF_EDGE = "#CC79A7"
 THIN, NNBSP, MINUS = chr(0x2009), chr(0x202F), chr(0x2212)
@@ -275,7 +277,7 @@ def test_example1_class_fdr_max_called(tmp_path: Path, cfg: GippaConfig, nov: Mo
 
 def test_example1_title(tmp_path: Path, cfg: GippaConfig, nov: ModuleType) -> None:
     main = _main(_run(_out(tmp_path, _example1_rows()), cfg, nov))
-    want = "2 novel ORFs called (class FDR ≤ 0.008), 2 unestimated"
+    want = f"2 novel ORFs called (class FDR ≤ {_n(0.008)}), 2 unestimated"
     assert _collapse(main.title) == want
     assert any(want in _collapse(t.get_text()) for t in _texts(main.figure))
 
@@ -294,7 +296,7 @@ def test_example1_bar_labels_give_the_fdr_range_or_unestimated(
 ) -> None:
     ax = _axes(_main(_run(_out(tmp_path, _example1_rows()), cfg, nov)).figure, "counts")
     texts = [_collapse(t.get_text()) for t in ax.texts]
-    assert "FDR ≤ 0.008" in texts
+    assert f"FDR ≤ {_n(0.008)}" in texts
     assert "unestimated" in texts
 
 
@@ -378,7 +380,8 @@ def test_called_row_with_unestimated_fdr_titles_class_fdr_unestimated(
     rows = [orf("NOVEL_chr1_5001_p", class_fdr="unestimated", n_peptides=3, best_q=0.002)]
     (view,) = _views(_run(_out(tmp_path, rows), cfg, nov))
     assert _collapse(view.title) == (
-        "NOVEL_chr1_5001_p (intergenic): 3 peptides, best q 0.002, class FDR unestimated"
+        f"NOVEL_chr1_5001_p (intergenic): 3 peptides, best q {style.fmt_q(0.002)}, "
+        "class FDR unestimated"
     )
 
 
@@ -551,7 +554,8 @@ def test_views_have_the_v3_layout_plus_a_novel_orf_track(
 def test_locus_title(tmp_path: Path, cfg: GippaConfig, nov: ModuleType) -> None:
     rows = [orf("NOVEL_chr1_5001_p", n_peptides=3, best_q=0.0001, class_fdr="0.004")]
     (view,) = _views(_run(_out(tmp_path, rows), cfg, nov))
-    want = "NOVEL_chr1_5001_p (intergenic): 3 peptides, best q 1e-04, class FDR 0.004"
+    want = (f"NOVEL_chr1_5001_p (intergenic): 3 peptides, best q {style.fmt_q(1e-4)}, "
+            f"class FDR {_n(0.004)}")  # fmt: skip
     assert _collapse(view.title) == want
     assert want in _collapse(" ".join(t.get_text() for t in _texts(view.figure)))
 

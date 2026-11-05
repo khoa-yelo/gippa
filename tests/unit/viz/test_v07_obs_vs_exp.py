@@ -433,8 +433,8 @@ def test_ci_bars_span_the_interval(tmp_path: Path, cfg: GippaConfig) -> None:
 
 def test_example1_q_labels_and_example2_untested_label(tmp_path: Path, cfg: GippaConfig) -> None:
     found = texts(_render(_out(tmp_path), cfg).figure)
-    assert "q = 0.003" in found
-    assert "q = 0.4" in found
+    assert style.q_equals(0.003) in found  # M12-04 P-18: fmt_q, trailing zeros kept
+    assert style.q_equals(0.4) in found
     assert "dosage_plus_regulation (untested)" in found
 
 
@@ -476,7 +476,8 @@ def test_region_rows_coloured_by_type_basic_rows_black(tmp_path: Path, cfg: Gipp
 
 def test_example1_title(tmp_path: Path, cfg: GippaConfig) -> None:
     inst = _render(_out(tmp_path), cfg)
-    assert inst.title == "prophage_1 (prophage): 12 % detected vs 31 % expected (q = 0.003)"
+    want = f"prophage_1 (prophage): 12 % detected vs 31 % expected ({style.q_equals(0.003)})"
+    assert inst.title == want
 
 
 def test_title_when_no_region_passes(tmp_path: Path, cfg: GippaConfig) -> None:
@@ -497,7 +498,7 @@ def test_title_alpha_from_stats_alpha_context(tmp_path: Path) -> None:
     out = _out(tmp_path, regions=regions)
     cfg = resolve_config(overrides=["stats.alpha.context=0.3"])
     assert _render(out, cfg).title == (
-        "prophage_1 (prophage): 10 % detected vs 25 % expected (q = 0.2)"
+        f"prophage_1 (prophage): 10 % detected vs 25 % expected ({style.q_equals(0.2)})"
     )
     cfg = resolve_config(overrides=["stats.alpha.context=0.1"])
     assert _render(out, cfg).title == (
@@ -511,7 +512,7 @@ def test_title_picks_the_smallest_q_across_types(tmp_path: Path, cfg: GippaConfi
         region("bgc_1", "bgc", n_eligible=10, observed=9.0, expected=5.0, q=0.01),
     ]
     inst = _render(_out(tmp_path, regions=regions), cfg)
-    assert inst.title == "bgc_1 (bgc): 90 % detected vs 50 % expected (q = 0.01)"
+    assert inst.title == f"bgc_1 (bgc): 90 % detected vs 50 % expected ({style.q_equals(0.01)})"
 
 
 def test_basic_only_title_names_the_largest_ci_excluding_zero(

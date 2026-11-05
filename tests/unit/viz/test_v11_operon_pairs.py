@@ -375,7 +375,8 @@ def test_panel_c_axis_labels_name_upstream_and_downstream(tmp_path: Path, cfg: G
 
 def test_example1_title_states_medians_and_flag_count(tmp_path: Path, cfg: GippaConfig) -> None:
     inst = _render(_out(tmp_path, EXAMPLE1), cfg)
-    expected = "Median |Δ| OP 0.4 vs NO 1.3 log2; 0 pairs flagged at q ≤ 0.1"
+    n = style.fmt_num  # M12-04 P-18: trailing zeros kept
+    expected = f"Median |Δ| OP {n(0.4)} vs NO {n(1.3)} log2; 0 pairs flagged at q ≤ 0.1"
     assert inst.title == expected
     assert expected in [t.get_text() for t in inst.figure.findobj(Text)]
     assert "express" not in inst.title.lower()
@@ -506,7 +507,8 @@ def test_zero_max_delta_bins_over_unit_interval(tmp_path: Path, cfg: GippaConfig
         assert len(dens) == N_BINS
         assert dens[0] == pytest.approx(1 / width, rel=1e-5)
         assert sum(dens[1:]) == pytest.approx(0.0)
-    assert inst.title.startswith("Median |Δ| OP 0 vs NO 0 log2;")
+    n = style.fmt_num(0.0)  # M12-04 P-18
+    assert inst.title.startswith(f"Median |Δ| OP {n} vs NO {n} log2;"), inst.title
 
 
 def test_single_pair_class_is_a_single_bin_histogram(tmp_path: Path, cfg: GippaConfig) -> None:

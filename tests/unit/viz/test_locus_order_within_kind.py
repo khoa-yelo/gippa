@@ -470,9 +470,10 @@ def test_flags_of_two_families_in_one_tu_stay_two_loci(tmp_path: Path) -> None:
     assert no.error == pytest.approx(0.01)
     assert (op.start0, op.end0) == (no.start0, no.end0) == (40_000, 42_000)
     assert "PAIR_9" not in op.label and "novel_operon_candidate" not in op.label
-    assert "internal_promoter_supported between g3 and g4 (q = 0.02)" in op.label
-    assert "internal_promoter_supported between g4 and g3 (q = 0.05)" in op.label
-    assert no.label == "novel_operon_candidate between g3 and g4 (q = 0.01)"
+    q = style.q_equals  # M12-04 P-18
+    assert f"internal_promoter_supported between g3 and g4 ({q(0.02)})" in op.label
+    assert f"internal_promoter_supported between g4 and g3 ({q(0.05)})" in op.label
+    assert no.label == f"novel_operon_candidate between g3 and g4 ({q(0.01)})"
 
 
 # --- properties ------------------------------------------------------------------------------

@@ -113,7 +113,7 @@ def title(counts: Mapping[Flow, int]) -> str:
         if total == 0:
             continue
         n_placed = sum(n for (c, _, o), n in counts.items() if c == cls and o == "placed")
-        parts.append(f"{base.title_pct(n_placed, total)} of {total} {noun}")
+        parts.append(f"{base.title_pct(n_placed, total)} of {style.fmt_count(total)} {noun}")
     text = "; ".join(parts)
     head, sep, rest = text.partition(";")
     return f"{head} placed in the genome{sep}{rest}"
@@ -192,7 +192,8 @@ def _draw(ax: Axes, counts: Mapping[Flow, int]) -> None:
         ha, x = ("right", _X[col] - 0.01) if col == 0 else ("left", _X[col] + _W + 0.01)
         sep = "\n" if col != 1 else " "
         for node, y in zip(nodes, spread(centres, _LABEL_SEP[col]), strict=True):
-            ax.text(x, y, f"{node}{sep}({size[node]:,})", ha=ha, va="center", fontsize=6)
+            text = f"{node}{sep}({style.fmt_count(size[node])})"
+            ax.text(x, y, text, ha=ha, va="center", fontsize=6)
 
 
 def spread(ys: Sequence[float], sep: float, floor: float = 0.0) -> list[float]:

@@ -87,8 +87,13 @@ def _short(text: str, n: int) -> str:
     return text if len(text) <= n else text[: n - 1] + "…"
 
 
-def _g(v: float, spec: str = ".2g") -> str:
-    return format(v, spec) if math.isfinite(v) else "NA"
+def _g(v: float, sig: int = 2) -> str:
+    """A number in figure text (``style.fmt_num``): a true minus, NA when not finite."""
+    return style.fmt_num(v, sig) if math.isfinite(v) else "NA"
+
+
+def _q(v: float) -> str:
+    return style.fmt_q(v) if math.isfinite(v) else "NA"
 
 
 def _row(panel: str, r: Mapping[str, Any], **kw: Any) -> dict[str, Any]:
@@ -174,10 +179,11 @@ def title(gsea: pd.DataFrame, ora: pd.DataFrame, level: float) -> str:
     n = int(((gsea["q_value"].astype(float) <= level) & ~red).sum())
     m = int((ora["q_value"].astype(float) <= level).sum())
     if not n and not m:
-        return f"No set or category passes q ≤ {level:g}"
+        return f"No set or category passes q ≤ {style.fmt_alpha(level)}"
     sets = "set" if n == 1 else "sets"
     cats = "category" if m == 1 else "categories"
-    return (f"{n} {sets} enriched by abundance at q ≤ {level:g} (conditional on detection); "
+    return (f"{n} {sets} enriched by abundance at q ≤ {style.fmt_alpha(level)} "
+            f"(conditional on detection); "
             f"{m} {cats} detected more or less than expected")  # fmt: skip
 
 
@@ -212,7 +218,7 @@ def _draw_set(ax: Axes, row: Mapping[str, Any], sub: pd.DataFrame) -> None:
     name = _short(f"{row['term']} {row['name'] or ''}".strip(), 34)
     bad = [f for f in UNCALIBRATED if f in _flags(row["flags"])]
     ax.set_title(f"{name}\n({row['collection']}) NES {_g(_f(row['nes']))}, q "
-                 f"{_g(_f(row['q_value']))}", fontsize=6, pad=13 if bad else 4)  # fmt: skip
+                 f"{_q(_f(row['q_value']))}", fontsize=6, pad=13 if bad else 4)  # fmt: skip
     if bad:  # N4: between the title and the plot area
         ax.annotate(f"not calibrated ({', '.join(bad)})", xy=(0.5, 1.0), xycoords="axes fraction",
                     xytext=(0, 2), textcoords="offset points", ha="center", va="bottom",
@@ -300,14 +306,14 @@ def _draw_c(ax: Axes, ax_q: Axes, rows: pd.DataFrame, level: float) -> list[str]
     fin = xs[np.isfinite(xs)]
     lo, hi = (float(fin.min()), float(fin.max())) if len(fin) else (0.5, 2.0)
     ax.set_xlim(min(lo, 1.0) / 1.5, max(hi, 1.0) * 1.5)
-    ax.xaxis.set_major_formatter(FuncFormatter(lambda v, _: f"{v:g}"))
+    ax.xaxis.set_major_formatter(FuncFormatter(lambda v, _: f"{v:g}".replace("-", style.MINUS)))
     labels = [_short(f"{r['term']} {r['name'] or ''}".strip(), 22) + f" ({r['collection']})"
               for _, r in rows.iterrows()]  # fmt: skip
     ax.set_yticks(y, labels)
     ax.set_ylim(len(rows) - 0.5, -0.5)
     ax.set_xlabel(XLABEL_C, loc="right")  # clear of the q strip's label
     for yi, cov in zip(y, rows["coverage"].astype(float), strict=True):
-        ax.text(1.04, yi, _g(cov, ".2f"), transform=ax.get_yaxis_transform(), va="center",
+        ax.text(1.04, yi, _g(cov), transform=ax.get_yaxis_transform(), va="center",
                 fontsize=6)  # fmt: skip
     ax.text(1.04, 1.01, "coverage", transform=ax.transAxes, va="bottom", fontsize=6)
     q = rows["q_value"].astype(float).to_numpy()
@@ -319,7 +325,7 @@ def _draw_c(ax: Axes, ax_q: Axes, rows: pd.DataFrame, level: float) -> list[str]
     ax_q.set_xlim(0.0, max(cap, -math.log10(level)) * 1.15)
     ax_q.set_xlabel(LOG10_Q)
     if (q == 0).any():  # N1
-        notes.append(f"(c) q = 0 drawn at the cap \N{MINUS SIGN}log10 q = {cap:.3g}")
+        notes.append(f"(c) q = 0 drawn at the cap \N{MINUS SIGN}log10 q = {style.fmt_num(cap, 3)}")
     if (oe == 0).any():
         notes.append("O/E = 0 drawn at the axis floor")
     n_nan = int(np.isnan(oe).sum())
@@ -460,7 +466,7 @@ def _figure(
         ax_b.set_title("(b) NES vs \N{MINUS SIGN}log10 q", loc="left", fontsize=7)
         cap = _draw_b(ax_b, finite, level, h_bc * 72)
         if cap is not None:
-            notes.append(f"q = 0 drawn at the cap \N{MINUS SIGN}log10 q = {cap:.3g}")
+            notes.append(f"q = 0 drawn at the cap \N{MINUS SIGN}log10 q = {style.fmt_num(cap, 3)}")
     else:
         _note(fig, rect(0.55, top_bc, 2.9, h_bc), "b", no_b)
     if len(drawn):
@@ -518,7 +524,7 @@ def enrichment_twin(data: pd.DataFrame, text: str) -> Any:
             continue
         sub, q, y = b[m], q_all[m], y_all[m]
         red = [_bool(v) for v in sub["redundant"].fillna(False)]
-        hover = [f"{t} {n} · NES {_g(v, '.3g')} · q {_g(w, '.3g')} · {';'.join(_flags(f))}"
+        hover = [f"{t} {n} · NES {_g(v)} · q {_q(w)} · {';'.join(_flags(f))}"
                  for t, n, v, w, f in zip(sub["term"], sub["name"], sub["nes"].astype(float), q,
                                           sub["flags"], strict=True)]  # fmt: skip
         sym = [("triangle-up" if w == 0 else "circle")
@@ -540,7 +546,7 @@ def enrichment_twin(data: pd.DataFrame, text: str) -> Any:
         c = c.sort_values("_oe", kind="stable", na_position="first")
         labels = [f"{t} ({k}, {d})" for t, k, d in zip(c["term"], c["collection"], c["direction"],
                                                       strict=True)]  # fmt: skip
-        hover = [f"{lab} · O/E {_g(o, '.3g')} · coverage {_g(v, '.2f')} · CI unestimated"
+        hover = [f"{lab} · O/E {_g(o)} · coverage {_g(v)} · CI unestimated"
                  for lab, o, v in zip(labels, c["_oe"], c["coverage"].astype(float),
                                       strict=True)]  # fmt: skip
         fig.add_trace(go.Scatter(x=c["_oe"].tolist(), y=labels,

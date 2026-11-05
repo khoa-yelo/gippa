@@ -208,12 +208,13 @@ def title(meds: Mapping[str, float], k: int, alpha: float, n: int | None = None)
     some rows miss ``alpha`` (``n > k``) the clause names both, "0 of 1 candidate flags at
     q ≤ 0.1", so a shown flag row with a large q is not read as a flagged pair."""
     if n is not None and n > k:
-        flagged = f"{k} of {n} candidate flags at q ≤ {alpha:g}"
+        flagged = f"{k} of {n} candidate flags at q ≤ {style.fmt_alpha(alpha)}"
     else:
-        flagged = f"{k} pairs flagged at q ≤ {alpha:g}"
+        flagged = f"{k} pairs flagged at q ≤ {style.fmt_alpha(alpha)}"
     if any(math.isnan(meds.get(c, math.nan)) for c in ("OP", "NO")):
         return f"{flagged}; too few measured pairs for densities"
-    return f"Median |Δ| OP {meds['OP']:.2g} vs NO {meds['NO']:.2g} log2; {flagged}"
+    op, no = style.fmt_num(meds["OP"]), style.fmt_num(meds["NO"])
+    return f"Median |Δ| OP {op} vs NO {no} log2; {flagged}"
 
 
 def _empty(ax: Axes, message: str) -> None:
@@ -221,7 +222,7 @@ def _empty(ax: Axes, message: str) -> None:
     ax.text(0.5, 0.5, message, ha="center", va="center", transform=ax.transAxes, color=GREY)
 
 
-def _panel_a(ax: Axes, a: pd.DataFrame, bins: np.ndarray) -> None:
+def _panel_a(ax: Axes, a: pd.DataFrame, bins: np.ndarray, lab: str) -> None:
     counts = {str(r["class"]): int(_num(r["n"])) for _, r in a[a["bin"].isna()].iterrows()}
     hist = a[a["bin"].notna()]
     if not len(hist):
@@ -233,13 +234,13 @@ def _panel_a(ax: Axes, a: pd.DataFrame, bins: np.ndarray) -> None:
             label = f"{c} (n = {counts.get(c, 0)})"
             ax.stairs(dens, bins, color=CLASS_COLOUR[c], linewidth=1.0, label=label)
     ax.set_xlim(0.0, float(bins[-1]))
-    ax.set_xlabel("|Δ| partner log2 abundance")
+    ax.set_xlabel(f"|Δ| partner {lab}")
     ax.set_ylabel("density")
     ax.legend(frameon=False, loc="upper right")
     ax.set_title("(a) |Δ| by pair class", loc="left")
 
 
-def _panel_b(ax: Axes, b: pd.DataFrame, alpha: float) -> None:
+def _panel_b(ax: Axes, b: pd.DataFrame, alpha: float, lab: str) -> None:
     if not len(b):
         _empty(ax, "no lfdr values")
         return
@@ -249,13 +250,13 @@ def _panel_b(ax: Axes, b: pd.DataFrame, alpha: float) -> None:
     ax.axhline(alpha, linestyle="--", color=GREY, linewidth=0.8, label=THRESHOLD_LABEL)
     ax.text(0.02, 0.98, NOTE_B, transform=ax.transAxes, fontsize=6, color=GREY, va="top")
     ax.set_ylim(0.0, 1.05)
-    ax.set_xlabel("|Δ| partner log2 abundance")
+    ax.set_xlabel(f"|Δ| partner {lab}")
     ax.set_ylabel("local fdr")
     ax.legend(frameon=False, loc="center right")  # clear of the alpha line and the note
     ax.set_title("(b) local fdr", loc="left")
 
 
-def _panel_c(ax: Axes, c: pd.DataFrame, alpha: float) -> None:
+def _panel_c(ax: Axes, c: pd.DataFrame, alpha: float, lab: str) -> None:
     if not len(c):
         _empty(ax, "no measured same-strand pairs")
         return
@@ -286,8 +287,8 @@ def _panel_c(ax: Axes, c: pd.DataFrame, alpha: float) -> None:
                 label=f.replace("_", " "),
                 zorder=3,
             )
-    ax.set_xlabel("upstream partner log2 abundance")
-    ax.set_ylabel("downstream partner log2 abundance")
+    ax.set_xlabel(f"upstream partner {lab}")
+    ax.set_ylabel(f"downstream partner {lab}")
     handles, labels = ax.get_legend_handles_labels()
     ax.get_figure(root=True).legend(  # type: ignore[union-attr]
         handles,
@@ -301,7 +302,7 @@ def _panel_c(ax: Axes, c: pd.DataFrame, alpha: float) -> None:
     ax.set_title("(c) partners (OP, NO)", loc="left")
 
 
-@base.plot("V11", "operon_pairs", needs=("pairs",), optional=("operon_flags",))
+@base.plot("V11", "operon_pairs", needs=("pairs",), optional=("operon_flags", "genes_tsv"))
 def operon_pairs(view: RunView, cfg: GippaConfig) -> list[base.Instance] | base.Skip:
     """V11: |Δ| densities per pair class, the lfdr curve and the partner scatter."""
     pairs = view.table("pairs")
@@ -319,9 +320,10 @@ def operon_pairs(view: RunView, cfg: GippaConfig) -> list[base.Instance] | base.
     fig.set_label("V11_operon_pairs")
     grid = fig.add_gridspec(1, 3, left=0.07, right=0.98, bottom=0.25, top=0.84, wspace=0.32)
     axes = {p: fig.add_subplot(grid[0, i], label=p) for i, p in enumerate(("a", "b", "c"))}
-    _panel_a(axes["a"], sub["a"], bins)
-    _panel_b(axes["b"], sub["b"], alpha)
-    _panel_c(axes["c"], sub["c"], alpha)
+    lab = style.run_abundance_label(view.table("genes_tsv")) or style.ABUNDANCE_FALLBACK
+    _panel_a(axes["a"], sub["a"], bins, lab)
+    _panel_b(axes["b"], sub["b"], alpha, lab)
+    _panel_c(axes["c"], sub["c"], alpha, lab)
     n = 0 if flags is None else len(flags)
     text = title(medians(pairs), k, alpha, n)
     fig.suptitle(text, y=0.97)

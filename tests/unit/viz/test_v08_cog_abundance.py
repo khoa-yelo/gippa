@@ -61,7 +61,8 @@ COLUMNS = [
     "n_detected",
     "n_imputed",
 ]
-YLABEL = "log2 abundance"
+#: the abundance axis names the run's measure (M12-04 P-13); every fixture here is iBAQ, no scale
+YLABEL = style.abundance_label("ibaq", None)
 NO_ABUNDANCE_TITLE = "No measured abundance; detected fraction per COG category"
 GREY = "#999999"
 

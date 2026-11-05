@@ -392,9 +392,16 @@ def test_one_instance_with_exact_columns(tmp_path: Path, cfg: GippaConfig) -> No
     assert width in (style.SINGLE_IN, style.DOUBLE_IN)
 
 
+def _cal_title(slope: float | None, intercept: float | None, brier: float | None) -> str:
+    """The V18 title, its numbers through fmt_num (M12-04 P-18: trailing zeros, Unicode minus)."""
+    n = style.fmt_num
+    return (f"Detectability calibration slope {n(slope)} (intercept {n(intercept)}), "
+            f"Brier {n(brier)}")  # fmt: skip
+
+
 def test_example1_title_and_bin_rows(tmp_path: Path, cfg: GippaConfig) -> None:
     inst = _render(_out(tmp_path, detection_summary=EX1_SUMMARY), cfg)
-    expected = "Detectability calibration slope 0.97 (intercept 0.02), Brier 0.11"
+    expected = _cal_title(0.97, 0.02, 0.11)
     assert inst.title == expected
     assert expected in [t.get_text() for t in inst.figure.findobj(Text)]
     a = _rows(inst, "a")
@@ -414,7 +421,8 @@ def test_example1_title_and_bin_rows(tmp_path: Path, cfg: GippaConfig) -> None:
 def test_title_numbers_use_two_significant_digits(tmp_path: Path, cfg: GippaConfig) -> None:
     summary = [*_bins([(0.2, 0.3, 10), (0.7, 0.6, 10)]), *_overall(1.234, -0.0456, 0.1)]
     inst = _render(_out(tmp_path, detection_summary=summary), cfg)
-    assert inst.title == "Detectability calibration slope 1.2 (intercept -0.046), Brier 0.1"
+    assert inst.title == _cal_title(1.234, -0.0456, 0.1)
+    assert inst.title == "Detectability calibration slope 1.2 (intercept \u22120.046), Brier 0.10"
 
 
 def test_constant_title_counts_drawn_families(tmp_path: Path, cfg: GippaConfig) -> None:

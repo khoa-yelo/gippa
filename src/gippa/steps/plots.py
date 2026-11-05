@@ -115,11 +115,18 @@ def skipped_plots(view: RunView) -> dict[str, str]:
 
 
 def twin_meta(view: RunView, cfg: GippaConfig) -> dict[str, Any]:
-    """The run context of the twins (M9-15 lead decision 5): the ``stats.alpha`` levels and the
-    replicon lengths in FASTA order."""
+    """The run context of the twins (M9-15 lead decision 5): the ``stats.alpha`` levels, the
+    replicon lengths in FASTA order and the abundance axis label (M12-04 P-13)."""
+    from gippa.viz.style import run_abundance_label
+
     reps = (view.preflight() or {}).get("replicons", [])
+    try:
+        label = run_abundance_label(view.table("genes_tsv"))
+    except (OSError, ValueError):  # an unreadable gene table: the twins keep the plain label
+        label = None
     return {"alpha": cfg.stats.alpha.model_dump(),
-            "replicons": {str(r["id"]): int(r["length"]) for r in reps}}  # fmt: skip
+            "replicons": {str(r["id"]): int(r["length"]) for r in reps},
+            "abundance_label": label}  # fmt: skip
 
 
 #: identifier columns of plot data TSVs, read as text so ``01`` / ``0001`` keep their spelling

@@ -30,7 +30,7 @@ from gippa.viz.determinants import (
 )
 from gippa.viz.interactive import interactive
 from gippa.viz.style import OKABE_ITO
-from gippa.viz.twins import DOT, ci, finish, floats, fmt, points, rgba, titles
+from gippa.viz.twins import DOT, Meta, abundance, ci, finish, floats, fmt, points, rgba, titles
 
 _SYMBOL = {"elastic_net": "circle", "lightgbm": "diamond-open"}
 
@@ -40,7 +40,7 @@ _AT = {"a": (1, 1), "d": (1, 3), "c": (2, 1)}
 
 
 @interactive("V15", COLUMNS)
-def v15(data: pd.DataFrame, title: str) -> Any:
+def v15(data: pd.DataFrame, title: str, meta: Meta = None) -> Any:
     """(a) ΔR² with CI bars per model; (b) PD mean and spread; (c) SHAP points; (d) observed vs.
     predicted by category, the locus tag in the hover text."""
     names = [A_HEADER, D_HEADER, "(c) SHAP (LightGBM, secondary)",
@@ -98,8 +98,8 @@ def v15(data: pd.DataFrame, title: str) -> Any:
         fig.add_trace(points(len(s), x=floats(s["x"]), y=floats(s["y"]), mode="markers",
                              name=CAT_LABEL[cat], text=hover, marker={"color": colour, "size": 4}),
                       *_AT["d"])  # fmt: skip
-    titles(fig, {"row": 1, "col": 3}, "predicted log2 abundance (out-of-fold)",
-           "observed log2 abundance")  # fmt: skip
+    titles(fig, {"row": 1, "col": 3}, abundance(meta, "predicted ") + " (out-of-fold)",
+           abundance(meta, "observed "))  # fmt: skip
     notes = [DELTA_FOOT] if len(a) else []
     fig.add_annotation(text="<br>".join([*notes, CAVEATS[0]]), x=0.0, y=-0.05, xref="paper",
                        yref="paper", xanchor="left", yanchor="top", align="left",

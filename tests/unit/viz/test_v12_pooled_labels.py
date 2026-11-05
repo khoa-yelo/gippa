@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import pandas as pd
 
+from gippa.viz import style
 from gippa.viz.variants import DEGENERATE_NOTE, POOLED, _header, title
 
 
@@ -40,7 +41,7 @@ def test_pooled_clause_only_with_a_numeric_rate() -> None:
 
 
 def test_rate_one_marks_the_title_and_below_one_does_not() -> None:
-    assert "1*" in title(_alt([0.2, 1.0]))
+    assert f"{style.fmt_num(1.0)}*" in title(_alt([0.2, 1.0]))  # "1.0*" (M12-04 P-18)
     assert "*" not in title(_alt([0.2, 0.9]))
 
 
