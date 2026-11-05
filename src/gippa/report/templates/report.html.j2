@@ -208,10 +208,11 @@
 <dd>{{ text }}</dd>
 {% endfor %}
 </dl>
-{% for topic, body in snippets %}
-<div class="snippet" data-topic="{{ topic }}">
-<h3>{{ topic }}</h3>
-{{ body }}
+{% for sn in snippets %}
+<div class="snippet" data-topic="{{ sn.topic }}">
+<h3>{{ sn.title }}</h3>
+{{ sn.body }}
+<p>Full note: <a href="{{ sn.link }}">{{ sn.link }}</a></p>
 </div>
 {% endfor %}
 {% elif s.id == "provenance" %}
