@@ -50,7 +50,7 @@ METRICS = {"cv_r2_mean", "cv_r2_sd", "null_p", "delta_r2", "spearman_rho", "auro
 #: spec example 1: the signal column and the noise columns, with their blocks
 PLANTED_BLOCKS: Mapping[str, str] = {
     "cai": "codon",
-    "promotech_max": "transcription",
+    "promoter_score": "transcription",
     "sd_dg": "translation",
     "gravy": "protein",
     "pi": "protein",

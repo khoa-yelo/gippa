@@ -32,7 +32,7 @@ def fitted() -> tuple[object, pd.DataFrame, pd.DataFrame]:
     feats = X.reset_index()
     feats["tai"] = np.abs(rng.normal(0.4, 0.1, len(feats)))  # absent from the model columns
     feats["tir_ostir"] = np.nan  # no value: no rows
-    feats["promotech_max"] = np.exp(X["promotech_max"].to_numpy())  # positive, own scale
+    feats["promoter_score"] = np.exp(X["promoter_score"].to_numpy())  # positive, own scale
     return cv["lightgbm"], X, feats
 
 
@@ -43,7 +43,7 @@ def test_pd_rows_identical_across_threads(fitted: tuple[object, pd.DataFrame, pd
     one = pd_rows(cv, X, feats)  # type: ignore[arg-type]
     many = pd_rows(cv, X, feats, threads)  # type: ignore[arg-type]
     assert len(cv.boosters) > 1  # type: ignore[attr-defined]
-    assert not one.empty and set(one["feature"]) == {"cai", "tai", "promotech_max"}
+    assert not one.empty and set(one["feature"]) == {"cai", "tai", "promoter_score"}
     pd.testing.assert_frame_equal(one, many, check_exact=True)
     for c in ("grid_value", "pd_mean", "pd_low", "pd_high"):
         assert one[c].to_numpy(float).tobytes() == many[c].to_numpy(float).tobytes(), c

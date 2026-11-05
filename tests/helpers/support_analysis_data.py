@@ -57,7 +57,7 @@ GRID_COLUMNS: tuple[str, ...] = (
 #: Q2: the exhaustive file is written while it is under 5 MB (1 MB = 2^20 bytes, ADR-0043)
 NULL_REGIONS_MAX_BYTES = 5 * 2**20
 #: the PD features (V15(b))
-PD_FEATURES: tuple[str, ...] = ("cai", "tai", "tir_ostir", "promotech_max")
+PD_FEATURES: tuple[str, ...] = ("cai", "tai", "tir_ostir", "promoter_score")
 PD_GRID_POINTS = 21  # 5 %, 10 %, ..., 95 % quantiles plus min and max
 SHAP_TOP = 20
 GSEA_TOP = 6

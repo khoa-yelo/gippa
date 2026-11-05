@@ -126,4 +126,6 @@ def test_pair_ids_do_not_depend_on_the_threshold(lay: tuple) -> None:
     moved = m["pair_class_lo"] != m["pair_class_hi"]
     band = m["uniop_p_lo"].between(0.3, 0.7, inclusive="left")
     assert (moved == band).all()
-    assert (m.loc[moved, "pair_class_lo"] == "OP").all() and (m.loc[moved, "pair_class_hi"] == "NO").all()
+    assert (m.loc[moved, "pair_class_lo"] == "OP").all() and (
+        m.loc[moved, "pair_class_hi"] == "NO"
+    ).all()

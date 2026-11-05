@@ -20,7 +20,7 @@ support_analysis_data.py):
 * ``determinants_shap``: model rows only; ``feature`` = an encoded model column; the top
   ``min(20, n columns)`` columns by mean |SHAP| over the model rows (ties by column name);
   ``feature_value`` the model-matrix value (NA when NaN).
-* ``determinants_pd``: rows in ``cai, tai, tir_ostir, promotech_max`` order, ``grid_value``
+* ``determinants_pd``: rows in ``cai, tai, tir_ostir, promoter_score`` order, ``grid_value``
   ascending, on the **feature's own scale** (``determinants_features.tsv``; the step applies the
   model's ln to ``tir_ostir`` before predicting); grid = numpy's default (linear) quantiles at
   5 %, ..., 95 % plus the min and max over the model rows with a value; per booster the mean
@@ -402,7 +402,7 @@ def test_ostir_missing_drops_its_pd_rows(work: Path, tmp_path: Path) -> None:
     gt = _with_pd_features(work, tmp_path / "gt" / "genes.parquet", ostir=False)
     out = _run(s.config(SEED, B=9), s.inputs(work, gene_table=gt), tmp_path / "noostir")
     pdt = _table(out, "determinants_pd")
-    assert list(dict.fromkeys(pdt["feature"])) == ["cai", "tai", "promotech_max"]
+    assert list(dict.fromkeys(pdt["feature"])) == ["cai", "tai", "promoter_score"]
     shap = _table(out, "determinants_shap")
     assert "tir_ostir" not in set(shap["feature"])
     assert len(_table(out, "null_determinants")) == 2 * 9

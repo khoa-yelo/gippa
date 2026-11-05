@@ -171,6 +171,6 @@ def test_missing_layers_never_change_rows_or_other_columns(missing: frozenset[st
     full = _WORLD.features()
     df = _world_without(missing).features()
     assert df["locus_tag"].tolist() == full["locus_tag"].tolist()
-    untouched = ["tu_position", "dist_to_tu_start_bp", "length_aa", "mw", "pi", "gravy",
+    untouched = ["tu_position", "dist_to_tu_start_bp", "length_aa", "mw_da", "pi", "gravy",
                  "nterm_residue", "tm_segments", "replicon_type", "ribosomal_protein"]  # fmt: skip
     pd.testing.assert_frame_equal(df[untouched], full[untouched], check_exact=True)

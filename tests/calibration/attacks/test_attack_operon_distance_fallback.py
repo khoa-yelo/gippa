@@ -45,8 +45,8 @@ is never linked. The arm feeds:
   recalibration, with that test's ``ora_uncalibrated`` fallback rule, R = ``ora``;
 - determinants: ``test_attack_determinants_tu_null::test_univariate_ci_level`` (95 % TU-block
   bootstrap CIs of Spearman rho and AUROC of a TU-constant feature; the feature is constant
-  within the *analysis* TU, as the pipeline computes ``promotech_tu`` on the TUs it built), with
-  that test's ``ci_unestimated`` rule, R = 5 x ``determinants``;
+  within the *analysis* TU, as the pipeline computes ``promoter_score_tu`` on the TUs it
+  built), with that test's ``ci_unestimated`` rule, R = 5 x ``determinants``;
 - autocorrelation: the TU-block null of ``context.autocorrelation`` on ``scenarios.tu_null``
   (tu_sd 2, decay 0.2, detection on abundance), both statistics at lags 1 and 20, R =
   ``autocorrelation``.
@@ -657,7 +657,7 @@ def test_arm_b_determinants_univariate_ci_level(source: str, full: bool) -> None
         rng = C.replicate_rng(world, i)
         tu, x_an, x_true, y, det = _det_world(rng, _links_rng(world, i, source), source)
         brng = C.replicate_rng(f"{world}.boot.{source}", i)
-        f = dm.features({"promotech_tu": x_an.tolist()}, tu=tu, detected=det.tolist(),
+        f = dm.features({"promoter_score_tu": x_an.tolist()}, tu=tu, detected=det.tolist(),
                         abundance=np.where(det, y, np.nan).tolist())  # fmt: skip
         uni = m.univariate(f, 1000, brng)
         rho, auc = dm.one(uni, metric="spearman_rho"), dm.one(uni, metric="auroc")

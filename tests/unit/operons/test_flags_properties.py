@@ -54,7 +54,11 @@ def test_flag_rows_come_from_pairs_with_the_same_q(pairs: pd.DataFrame) -> None:
         src = by.loc[r.pair_id]
         assert _same(float(src["q_value"]), float(r.q_value))
         assert _same(float(src["lfdr"]), float(r.lfdr))
-        assert (src["gene_a"], src["gene_b"], src["pair_class"]) == (r.gene_a, r.gene_b, r.pair_class)
+        assert (src["gene_a"], src["gene_b"], src["pair_class"]) == (
+            r.gene_a,
+            r.gene_b,
+            r.pair_class,
+        )
     assert "none" not in set(out["abundance_pattern"])
     assert set(out["flags"]) <= set(fl.FLAGS)
     assert set(out["pair_class"]) <= {"OP", "NO"}

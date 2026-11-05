@@ -202,7 +202,9 @@ def test_evidence_columns_use_the_m2_helpers_with_raw_terminator_maximum() -> No
             assert (pd.isna(r[col]) and e is None) or r[col] == pytest.approx(e), (up, col)
     r = row(df, "G1", "G2")
     assert (r["promoter_score_between"], r["tx_rate_between"]) == (0.7, 5.0)
-    assert r["terminator_score_between"] == pytest.approx(0.3)  # below the default yes = 0.5 (dec. 5)
+    assert r["terminator_score_between"] == pytest.approx(
+        0.3
+    )  # below the default yes = 0.5 (dec. 5)
 
 
 def test_cv_dv_evidence_is_na_even_with_layers() -> None:

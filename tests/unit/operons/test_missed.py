@@ -73,7 +73,9 @@ def by_id(res: MissedOperons) -> pd.DataFrame:
 
 
 def q_at(res: MissedOperons, pairs: pd.DataFrame, abs_delta: float) -> np.ndarray:
-    ids = pairs.loc[(pairs["pair_class"] == "NO") & np.isclose(pairs["delta_log2"].abs(), abs_delta)]
+    ids = pairs.loc[
+        (pairs["pair_class"] == "NO") & np.isclose(pairs["delta_log2"].abs(), abs_delta)
+    ]
     return by_id(res).loc[ids["pair_id"], "q_value"].to_numpy()
 
 

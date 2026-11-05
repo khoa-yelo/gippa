@@ -675,7 +675,9 @@ def test_real_discordance_and_missed_rows_merge_and_flag() -> None:
     out = fl.flag_pairs(merged, c)
     by = merged.set_index("pair_id")
     assert "which" not in merged.columns
-    discordant = set(merged.loc[(merged["pair_class"] == "OP") & (merged["q_value"] <= 0.1), "pair_id"])
+    discordant = set(
+        merged.loc[(merged["pair_class"] == "OP") & (merged["q_value"] <= 0.1), "pair_id"]
+    )
     assert {"PAIR_101", "PAIR_102"} <= discordant  # the planted |Delta| = 6 OP pairs
     op_out = out.loc[out["pair_class"] == "OP"]
     assert set(op_out["pair_id"]) == discordant

@@ -28,7 +28,8 @@ TEST_COLS = (
 PAIR_COLS = (
     "pair_id", "pair_class", "gene_a", "gene_b", "strand", "intergenic_bp", "uniop_p",
     "promoter_score_between", "tx_rate_between", "terminator_score_between", "detected_a",
-    "detected_b", "p_detect_a", "p_detect_b", "abundance_log2_a", "abundance_log2_b", "delta_log2", "test",
+    "detected_b", "p_detect_a", "p_detect_b", "abundance_log2_a", "abundance_log2_b",
+    "delta_log2", "test",
     *TEST_COLS, "flags",
 )  # fmt: skip
 

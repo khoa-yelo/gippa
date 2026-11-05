@@ -5,7 +5,7 @@ files, its lead decision 5; M9-20 lead decisions 1-5 of 2026-10-23; decision 5 i
 round: B1-B4, S1-S3, N3, N4).
 
 Covers examples 1-6, the four panels, the title rule (the elastic net's ΔR² leads, decision 1),
-the feature naming ("promoter score" = ``promotech_max``, decision 2), the footnotes, the
+the feature naming ("promoter score" = ``promoter_score``, decision 2), the footnotes, the
 degenerate cases (``too_few_rows``, support files absent, a block without a row, ΔR² CI NA, NA
 predictions, > 20,000 genes), the §14.4 style checklist (M9-24), determinism, the registry entry,
 the ``plots`` step rendering and the Plotly twin. No ``--mpl`` baselines: Khoa approves those at
@@ -34,7 +34,7 @@ Interface assumed where the spec leaves it open (M9-20 test author):
   ``predicted_log2``, ``y`` = ``abundance_log2``, ``category`` ``unexplained`` /
   ``ribosomal_reference`` for the flagged rows, ``flags`` the attribution flags.
 - Axes (``Axes.get_label()``): ``"a"``; the PD sub-panels ``"b_<feature>"`` (``b_cai``,
-  ``b_tai``, ``b_tir_ostir``, ``b_promotech_max``) or one ``"b"`` when the PD file is absent;
+  ``b_tai``, ``b_tir_ostir``, ``b_promoter_score``) or one ``"b"`` when the PD file is absent;
   ``"c"``; ``"d"``. Other axes (a colour bar) may exist. Footnotes are ``Text`` artists anywhere
   in the figure.
 - The ``too_few_rows`` title counts model rows (§7.8.2 rule 1: detected, non-imputed abundance,
@@ -365,14 +365,16 @@ def test_panel_b_rows_are_the_pd_grid(tmp_path: Path, cfg: GippaConfig) -> None:
 
 
 def test_panel_b_features_and_promoter_score_name(tmp_path: Path, cfg: GippaConfig) -> None:
-    """Decision 2: "promoter score" is ``promotech_max``, the feature name in the data."""
+    """Decision 2: "promoter score" is ``promoter_score``, the feature name in the data (the 1.0
+    name ``promotech_max`` is gone, M12-04 PR 11b)."""
     inst = _main(tmp_path, cfg)
     feats = list(dict.fromkeys(_rows(inst, "b")["feature"].astype(str)))
     assert feats == list(sa.PD_FEATURES)
-    assert "promoter_score" not in set(inst.data["feature"].astype(str))
+    assert "promoter_score" in feats
+    assert "promotech_max" not in set(inst.data["feature"].astype(str))
     for f in sa.PD_FEATURES:
         _axes(inst, f"b_{f}")
-    assert "promoter score" in _axes(inst, "b_promotech_max").get_xlabel().lower()
+    assert "promoter score" in _axes(inst, "b_promoter_score").get_xlabel().lower()
 
 
 def test_panel_b_pd_is_on_each_features_own_scale(tmp_path: Path, cfg: GippaConfig) -> None:
@@ -401,7 +403,7 @@ def test_panel_b_spread_is_shaded_and_mean_is_a_line(tmp_path: Path, cfg: GippaC
 
 
 def test_missing_pd_feature_is_not_available(tmp_path: Path, cfg: GippaConfig) -> None:
-    pdf = vd.pd_frame(("cai", "tai", "promotech_max"))
+    pdf = vd.pd_frame(("cai", "tai", "promoter_score"))
     inst = _main(tmp_path, cfg, pd_=pdf, flags=["layer_missing:ostir"])
     feats = set(_rows(inst, "b")["feature"].astype(str))
     assert "tir_ostir" not in feats
