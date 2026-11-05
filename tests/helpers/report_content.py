@@ -111,13 +111,15 @@ def write_tier_fdr(out: Path, fdr_at: Mapping[str, float | None]) -> None:
     write_schema_table(out / "tables" / "detection_summary.tsv", "detection_summary", rows)
 
 
-def write_variants(out: Path, rows: Sequence[tuple[str, str, str]]) -> None:
-    """``(variant_id, confidence, class_error_rate)`` ALT rows."""
+def write_variants(out: Path, rows: Sequence[tuple[str, str, str | None]]) -> None:
+    """``(variant_id, confidence, class_error_rate)`` ALT rows; a ``None`` rate is NA and the row
+    carries ``class_error_unestimated`` (M12-04 PR 11c)."""
     body = [{"variant_id": v, "contig": "chr1", "codon_start": 100 + 3 * i, "strand": "+",
              "gene": "g00001", "aa_pos": 10 + i, "ref_codon": "GCT", "ref_aa": "A",
              "alt_aa": "V", "alt_type": "substitution", "call": "ALT", "confidence": c,
              "n_ref": 0, "n_alt": 3, "nt_changes": 1, "alt_codon_vcf": "GTT",
-             "class_error_rate": e, "class_error_n": 50, "source": "pileup"}
+             "class_error_rate": e, "class_error_n": None if e is None else 50,
+             "source": "pileup", "flags": "class_error_unestimated" if e is None else None}
             for i, (v, c, e) in enumerate(rows)]  # fmt: skip
     write_schema_table(out / "tables" / "variants.tsv", "variants", body)
 

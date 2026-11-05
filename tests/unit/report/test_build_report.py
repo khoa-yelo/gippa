@@ -42,6 +42,7 @@ from helpers.viz_out_tree import gene_row, schema_columns, write_schema_table
 import gippa
 from gippa.io.run_view import RunView
 from gippa.steps import registry as reg
+from gippa.viz.words import plain
 
 EXTERNAL = re.compile(r"^\s*(https?:|//|file:)", re.I)
 
@@ -268,13 +269,19 @@ def test_operon_flags_card_counts_q_at_alpha(tmp_path: Path) -> None:
 def test_novel_orfs_card_unestimated_class_fdr(tmp_path: Path) -> None:
     out = run_out(tmp_path)
     rows = [
-        {"orf_id": f"N{i}", "class": "intergenic", "called": c, "class_fdr": "unestimated"}
+        {
+            "orf_id": f"N{i}",
+            "class": "intergenic",
+            "called": c,
+            "class_fdr": None,
+            "flags": "class_fdr_unestimated",
+        }  # NA plus the flag (M12-04 PR 11c)
         for i, c in enumerate([True, True, False])
     ]
     write_schema_table(out / "tables" / "novel_orfs.tsv", "novel_orfs", rows)
     page = _report(out)
     assert re.search(r"\b2\b", _card_text(page, "novel_orfs", "value"))
-    assert "unestimated" in _card_text(page, "novel_orfs", "estimate")
+    assert plain("class_fdr_unestimated") in _card_text(page, "novel_orfs", "estimate")
 
 
 def test_every_card_has_a_value_and_an_estimate(tmp_path: Path) -> None:
