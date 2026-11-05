@@ -96,9 +96,15 @@ because the root `--version` is only on the `gippa` group. The help text says "b
    With `--version`: that row, else exit 1 listing the pinned versions. A pin older than the
    installed minor gives the same warning.
 2. **Check the outdir.** Absent, or an empty directory: continue. Holding a previous fetch of the
-   **same** bundle (its `bundle.json` `sha256` equals the pin and every file verifies against
-   `CHECKSUMS.sha256`): print `already fetched`, print the commands, exit 0, no network. Anything
+   **same** bundle: print `already fetched`, print the commands, exit 0, no network. Anything
    else: exit 1 `<DIR> exists and is not this example; use --outdir or remove it`.
+   *Amendment (2026-11-04, from the #542 review):* a re-fetch is detected with the marker
+   `DIR/.gippa-example.json`, written at unpack time and holding the archive sha256, the bundle
+   version and the GIPPA version, because an archive cannot hold its own sha256 (so `bundle.json`
+   cannot be compared with the pin). The marker must name the selected pin (archive sha256 and
+   bundle version), and every file listed in `CHECKSUMS.sha256` must verify. A re-fetch checks
+   only the listed files: unlisted entries, such as the routes' outputs under `DIR/runs/`, are the
+   user's and are ignored. The marker is not listed in `CHECKSUMS.sha256`.
 3. **Get the archive** into a private staging directory `DIR.partial-<random>` created next to
    `DIR` (same filesystem, so the final rename is atomic).
    - Default: `HttpsFetcher().fetch(row.url, staging/<file name>)`.
