@@ -203,8 +203,8 @@ def test_example_1_resources_staged_under_item_names(local: Path, db: Path) -> N
 
 def test_example_1_tu_folds_published_and_header_only(local: Path) -> None:
     """sim100k is a constant detectability model (Q10): ``tu_folds.parquet`` has no rows."""
-    path = local / "genetable" / "tu_folds.parquet"
-    assert path.is_file(), "genetable/tu_folds.parquet not published under --executor local"
+    path = local / "intermediate" / "genetable" / "tu_folds.parquet"
+    assert path.is_file(), f"{path} not published under --executor local"
     df = pd.read_parquet(path)
     assert list(df.columns) == ["tu_id", "fold"]
     assert len(df) == 0
@@ -232,7 +232,7 @@ def test_example_2_nextflow_gives_byte_identical_tables(
 ) -> None:
     nf = tmp_path_factory.mktemp("NF") / "OUT"
     _run(sim, nf, db, "core,function", "--executor", "nextflow", "--profile", "farmshare_local")
-    for rel in (*(f"tables/{t}" for t in TABLES), "genetable/tu_folds.parquet"):
+    for rel in (*(f"tables/{t}" for t in TABLES), "intermediate/genetable/tu_folds.parquet"):
         got = nf / rel
         assert got.is_file(), f"Nextflow run did not publish {rel}"
         assert got.read_bytes() == (local / rel).read_bytes(), rel

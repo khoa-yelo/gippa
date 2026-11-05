@@ -9,7 +9,8 @@
 //         peptides / abundance / preflight / cog2020_def: value channel or channel.empty()
 // Both py steps run through GIPPA_STEP aliases named after the step (M2-07), so each task's
 // --in keys follow the registry (data/annotate/step_registry.json, kept equal to gippa.steps by
-// tests/unit/test_nf_annotate_registry.py). gene_table publishes genetable/genes_pre.parquet,
+// tests/unit/test_nf_annotate_registry.py). gene_table publishes (under OUT/intermediate/)
+// genetable/genes_pre.parquet,
 // detectability genetable/genes.parquet and the detectability diagnostics parquet.
 
 nextflow_workflow {
@@ -68,11 +69,13 @@ nextflow_workflow {
             def gtDir = H.stepDirs(work, 'gene_table')[0].canonicalPath
             assert H.staged(H.stepDirs(work, 'detectability')[0]).any { new File(it[0]).canonicalPath.startsWith(gtDir) } : "detectability does not stage gene_table's output"
 
-            ['genetable/genes_pre.parquet', 'genetable/genes.parquet',
-             'genetable/detection_summary_parts/detectability.parquet',
-             'genetable/tu_folds.parquet'].each { f ->  // M8-06 tu_folds output
+            ['intermediate/genetable/genes_pre.parquet', 'intermediate/genetable/genes.parquet',
+             'intermediate/genetable/detection_summary_parts/detectability.parquet',
+             'intermediate/genetable/tu_folds.parquet'].each { f ->  // M8-06 tu_folds output
                 assert new File("${outputDir}/${f}").isFile() : "${f} not published"
             }
+            // M12-04 PR 12: step intermediates sit under intermediate/, never at the 1.0 top level
+            assert !new File("${outputDir}/genetable").exists() : "genetable/ published at the 1.0 top level"
         }
     }
 
@@ -103,7 +106,9 @@ nextflow_workflow {
             ['gene_table', 'detectability'].each { s ->
                 assert H.stepCount(workflow.trace, s) == 0 : "${s} ran without the loci output: ${H.names(workflow.trace)}"
             }
-            assert !new File("${outputDir}/genetable").exists() : "genetable/ published without the loci output"
+            ['genetable', 'intermediate/genetable'].each { d ->
+                assert !new File("${outputDir}/${d}").exists() : "${d}/ published without the loci output"
+            }
         }
     }
 }

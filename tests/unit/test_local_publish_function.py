@@ -3,7 +3,8 @@
 docs/specs/M8-06-function-step-and-run.md, "Publishing (M6-08 decision 7)": only the three
 ``tables/*.tsv`` files and ``genetable/tu_folds.parquet`` are named, and
 ``gippa.runner.local.PUBLISHED_FILES`` gains the same four keys (``test_local_publish_names.py``
-pins them against the Nextflow names).
+pins them against the Nextflow names). Since M12-04 PR 12 the TU folds are published under
+``OUT/intermediate/``.
 """
 
 from __future__ import annotations
@@ -18,6 +19,9 @@ WANT = {
     "enrichment_gsea": "tables/enrichment_gsea.tsv",
     "tu_folds": "genetable/tu_folds.parquet",
 }
+#: where ``publish`` writes them: the TU folds are a step intermediate, under ``intermediate/``
+#: (M12-04 PR 12); the tables keep their names
+PUBLISHED_AT = {**WANT, "tu_folds": "intermediate/genetable/tu_folds.parquet"}
 
 
 @pytest.mark.parametrize("key", sorted(WANT))
@@ -35,9 +39,10 @@ def test_publish_copies_function_outputs_to_their_names(tmp_path: Path) -> None:
     for key in WANT:
         (work / key).write_bytes(f"{key}\n".encode())
     done = publish(work, out)
-    for key, rel in WANT.items():
+    for key, rel in PUBLISHED_AT.items():
         assert (out / rel).read_bytes() == f"{key}\n".encode(), rel
         assert out / rel in done
+    assert not (out / "genetable").exists()  # not at the 1.0 top-level location
 
 
 def test_function_off_publishes_no_function_table(tmp_path: Path) -> None:

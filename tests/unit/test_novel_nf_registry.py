@@ -36,6 +36,8 @@ PUBLISHED = {
     "annotation_patch": "tables/annotation_patch.gff3",
     "novel_class_fdr": "novel/novel_class_fdr.parquet",  # M7-11b side table
 }
+#: where ``publish`` writes them: the side table is a step intermediate (M12-04 PR 12)
+PUBLISHED_AT = {**PUBLISHED, "novel_class_fdr": "intermediate/novel/novel_class_fdr.parquet"}
 
 
 def _registry() -> dict[str, dict[str, list[str]]]:
@@ -194,8 +196,9 @@ def test_local_publish_copies_the_four_tables(tmp_path: Path) -> None:
     for key in PUBLISHED:
         (work / key).write_text(key + "\n")
     publish(work, out)
-    for key, rel in PUBLISHED.items():
+    for key, rel in PUBLISHED_AT.items():
         assert (out / rel).read_text() == key + "\n", rel
+    assert not (out / "novel").exists()  # not at the 1.0 top-level location
 
 
 # ---------------------------------------------------------------- main.nf

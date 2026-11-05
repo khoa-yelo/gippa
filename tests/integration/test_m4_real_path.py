@@ -90,5 +90,5 @@ def test_the_local_executor_itself_plans_runs_and_publishes_context_stats(
     for key in ("regions_stats", "detection_summary", "sensitivity"):
         assert (work / key).is_file(), f"the executor did not run the step writing {key}"
     for rel in ("tables/regions_stats.tsv", "tables/detection_summary.tsv",
-                "tables/sensitivity.tsv", "genetable/genes.parquet"):  # fmt: skip
+                "tables/sensitivity.tsv", "intermediate/genetable/genes.parquet"):  # fmt: skip
         assert (out / rel).is_file(), f"gippa run published no {rel}"
