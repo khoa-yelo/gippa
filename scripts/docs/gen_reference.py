@@ -291,10 +291,17 @@ def _constraints(constraints: Mapping[str, Any]) -> str:
     return "; ".join(parts) or DASH
 
 
+#: First line of the tables page: where the 1.1 column renames are listed (ADR-0075).
+CHANGES_LINK = (
+    "Columns renamed in 1.1 are listed in "
+    "[Outputs › Changes in 1.1](../user-guide/outputs.md#changes-in-11)."  # noqa: RUF001 (the docs breadcrumb)
+)
+
+
 def render_tables(schemas_dir: Path, missing: list[str] | None = None) -> str:
     """One section per datapackage resource and per unlisted table schema; ``missing`` collects
     the ``table.field`` names that have no description."""
-    body: list[str] = []
+    body: list[str] = [CHANGES_LINK, ""]
     for rel, path, coords, schema in _table_entries(schemas_dir):
         body += [f"## {_code(str(schema['name']))}", ""]
         if schema.get("description"):
