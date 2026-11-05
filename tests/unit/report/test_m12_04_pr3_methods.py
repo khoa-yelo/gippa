@@ -32,7 +32,7 @@ from pathlib import Path
 
 import pytest
 from helpers.m12_04_pr2 import METHODS_PREFIX
-from helpers.report_content import words
+from helpers.report_content import words, write_variants
 from helpers.report_fixtures import Node, Page, island_rows, parse
 from helpers.viz_out_tree import write_schema_table
 from unit.report.test_m12_04_pr1_fixtures import Run, build
@@ -206,8 +206,10 @@ def test_fallback_without_steps_follows_the_tables_d(tmp_path: Path) -> None:
 
 def test_fallback_without_steps_follows_the_tables_p(tmp_path: Path) -> None:
     """P's tables: genes (with abundance), detection_summary, peptide_hits, mapping_fdr,
-    determinants_model, variants. No islands, operons, novel ORFs or function tables."""
+    determinants_model, variants (given one row here). No islands, operons, novel ORFs or
+    function tables."""
     run = with_steps(build("P", tmp_path), None)
+    write_variants(run.out, [("v1", "high", "0.01")])  # a header-only table counts as absent
     topics = topics_of(run)
     for present in ("detection-tiers.mayu", "placement-fdr", "abundance", "variants",
                     "determinants"):  # fmt: skip

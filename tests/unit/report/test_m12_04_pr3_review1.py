@@ -34,6 +34,7 @@ from pathlib import Path
 import pandas as pd
 import pytest
 from helpers.m12_04_pr2 import not_applicable_entries, sim_report
+from helpers.report_content import write_variants
 from helpers.viz_out_tree import write_schema_table
 from hypothesis import HealthCheck, given, settings
 from hypothesis import strategies as st
@@ -255,6 +256,7 @@ def test_m2_header_only_determinants_model_is_no_determinants(tmp_path: Path) ->
 
 def test_m2_header_only_variants_is_no_variants(tmp_path: Path) -> None:
     run = with_steps(build("P", tmp_path), None)
+    write_variants(run.out, [("v1", "high", "0.01")])  # P's own table is header-only
     assert "variants" in topics_of(run)
     header_only(run, "variants")
     assert "variants" not in topics_of(run)

@@ -143,6 +143,7 @@ def test_methods_section_renders_every_snippet(tmp_path: Path) -> None:
     """No snippet file is dead: each one's body shows in the Methods section of some realistic
     run (M12-04 PR 3 fixtures P, D, R and decoy cover the four tiers, de novo and abundance; their
     manifests list the steps of an evidence-like run)."""
+    from helpers.viz_out_tree import write_schema_table
     from unit.report.test_m12_04_pr1_fixtures import build
     from unit.report.test_m12_04_pr3_methods import STEPS_A, STEPS_CORE, with_steps
 
@@ -151,6 +152,11 @@ def test_methods_section_renders_every_snippet(tmp_path: Path) -> None:
         section_text(with_steps(build(name, tmp_path / name), steps).page(), "methods")
         for name, steps in runs
     ]
+    # an A-like run that writes its pair and novel ORF tables, so those sections (and notes) apply
+    a_like = with_steps(build("P", tmp_path / "A"), STEPS_A)
+    for key in ("pairs", "novel_orfs"):
+        write_schema_table(a_like.out / "tables" / f"{key}.tsv", key, [])
+    shown.append(section_text(a_like.page(), "methods"))
     shown.append(section_text(page(run_out(tmp_path / "plain")), "methods"))
     for path in sorted(SNIPPETS.glob("*.html")):
         body = words(parse(path.read_text(encoding="utf-8")).root.text())
