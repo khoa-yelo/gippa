@@ -22,7 +22,18 @@ from pathlib import Path
 from types import ModuleType
 
 import pytest
-from helpers.report_fixtures import Page, cfg, parse, run_out, swap_registry
+from helpers.report_fixtures import (
+    NOT_APPLICABLE_ID,
+    SECTION_IDS,
+    Page,
+    cfg,
+    expected_section_ids,
+    not_applicable_reasons,
+    parse,
+    run_out,
+    section_headings,
+    swap_registry,
+)
 from helpers.viz_out_tree import gene_row, write_schema_table
 from hypothesis import HealthCheck, given, settings
 from hypothesis import strategies as st
@@ -357,4 +368,13 @@ def test_b5_property_build_report_never_raises_on_a_corrupt_table(which: str, bo
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_bytes(body)
         page = _page(out)
-        assert len(page.sections()) == 13
+        # M12-04 PR 2: 13 sections = rendered + listed as not applicable
+        rendered = [x.attrs.get("id") for x in page.sections()]
+        assert rendered == expected_section_ids(page)
+        listed = not_applicable_reasons(page)
+        assert (
+            len([r for r in rendered if r != NOT_APPLICABLE_ID])
+            + len([n for n in listed if n in section_headings().values()])
+            == len(SECTION_IDS)
+            == 13
+        )

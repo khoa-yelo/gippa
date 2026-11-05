@@ -23,16 +23,22 @@ from types import ModuleType
 
 import pytest
 from helpers.report_fixtures import (
+    DOCS_METHODS,
     INPUTS,
     SECTION_IDS,
     SECTION_PLOTS,
     Page,
     cfg,
+    expected_section_ids,
+    external_refs,
     island_rows,
     local_refs,
+    not_applicable_reasons,
     parse,
     register_fake,
     run_out,
+    section_headings,
+    section_or_reason,
     sha256,
     swap_registry,
     table_rows,
@@ -43,8 +49,6 @@ import gippa
 from gippa.io.run_view import RunView
 from gippa.steps import registry as reg
 from gippa.viz.words import plain
-
-EXTERNAL = re.compile(r"^\s*(https?:|//|file:)", re.I)
 
 
 @pytest.fixture
@@ -109,8 +113,13 @@ def test_section_tables_are_published_tables() -> None:
 
 
 def test_example_6_thirteen_sections_in_order(tmp_path: Path) -> None:
+    """M12-04 PR 2: the applicable sections in ``SECTION_IDS`` order, then the not-applicable
+    list (this run has no pair, variant or novel ORF table)."""
     page = _report(run_out(tmp_path))
-    assert [s.attrs.get("id") for s in page.sections()] == list(SECTION_IDS)
+    assert [s.attrs.get("id") for s in page.sections()] == expected_section_ids(page)
+    listed = not_applicable_reasons(page)
+    heads = section_headings()
+    assert {heads["operons"], heads["variants"], heads["novel-orfs"]} <= set(listed), listed
     assert page.html.lstrip().lower().startswith("<!doctype html")
 
 
@@ -119,13 +128,18 @@ def test_every_section_exists_on_an_empty_run(tmp_path: Path) -> None:
     (out / "preflight").mkdir(parents=True)
     (out / "preflight" / "preflight.json").write_text('{"inputs": []}')
     page = _report(out)
-    assert [s.attrs.get("id") for s in page.sections()] == list(SECTION_IDS)
+    assert [s.attrs.get("id") for s in page.sections()] == expected_section_ids(page)
+    for sid in SECTION_IDS:  # rendered, or listed as not applicable with a reason
+        assert section_or_reason(page, sid), sid
 
 
 def test_every_listed_plot_has_a_slot_in_its_section(tmp_path: Path) -> None:
     page = _report(run_out(tmp_path))
     for sid, pids in SECTION_PLOTS.items():
-        section = page.section(sid)
+        section = section_or_reason(page, sid)
+        if isinstance(section, str):  # not applicable: listed, its plots have no slot
+            assert not [p for p in pids if page.root.by_attr("data-plot", p)], (sid, pids)
+            continue
         got = [n.attrs["data-plot"] for n in section.by_attr("data-plot")]
         for pid in pids:
             assert pid in got, (sid, pid, got)
@@ -137,9 +151,12 @@ def test_css_is_inlined_and_nothing_is_fetched(tmp_path: Path) -> None:
     assert styles and styles[0].text().strip(), "no inline <style>"
     assert not [n for n in page.root.by_tag("link") if "stylesheet" in n.attrs.get("rel", "")]
     assert not [n for n in page.root.by_tag("script") if n.attrs.get("src")]
-    bad = [u for u in page.links() if EXTERNAL.match(u)]
+    bad = external_refs(page)
     assert not bad, bad
     assert "@import" not in page.html
+    hrefs = [n.attrs.get("href", "") for n in page.root.by_tag("a")]
+    assert [h for h in hrefs if DOCS_METHODS.match(h)], "the islands caveat links its methods page"
+    assert not page.root.by_tag("iframe") and not page.root.by_tag("img"), "nothing is loaded"
 
 
 def test_no_absolute_path_no_timestamp_no_express(tmp_path: Path) -> None:
@@ -180,28 +197,48 @@ def test_absent_table_says_not_produced(tmp_path: Path) -> None:
     assert "not produced in this run" in page.section("sensitivity").text()
 
 
-def test_header_only_table_is_shown_with_no_rows(tmp_path: Path) -> None:
+def test_header_only_table_is_hidden_with_none_and_a_link(tmp_path: Path) -> None:
+    """M12-04 PR 2 (AC 2.6): a 0-row table is not rendered; "none" and the full-table link."""
     out = run_out(tmp_path)
     write_schema_table(out / "tables" / "sensitivity.tsv", "sensitivity")
-    table = _report(out).table("sensitivity")
-    assert table is not None
-    header, body = table_rows(table)
-    assert header == schema_columns("sensitivity") and body == []
+    page = _report(out)
+    assert page.table("sensitivity") is None
+    section = page.section("sensitivity")
+    assert not [t for t in section.by_tag("table") if not table_rows(t)[1]]
+    text = " ".join(section.text().split())
+    assert "none" in text, text
+    assert "../tables/sensitivity.tsv" in [n.attrs.get("href") for n in section.by_tag("a")]
+    assert (out / "tables" / "sensitivity.tsv").is_file()
 
 
 # ---------------------------------------------------------------- skip notes (behaviour 2)
 
 
+def _operon_flags(out: Path) -> None:
+    """A header-only ``operon_flags.tsv``: the Operons section applies, ``pairs.tsv`` is absent."""
+    write_schema_table(out / "tables" / "operon_flags.tsv", "operon_flags")
+
+
 def test_skipped_plot_note_names_the_reason(tmp_path: Path) -> None:
-    page = _report(
-        run_out(tmp_path),
-        skipped={"V11": "input_absent:pairs", "V14": "module_off:function"},
-    )
+    """M12-04 PR 2: "Vnn: not shown: <plain reason>" in a section that applies."""
+    out = run_out(tmp_path)
+    _operon_flags(out)
+    page = _report(out, skipped={"V11": "input_absent:pairs"})
     v11 = " ".join(page.slot("V11").text().split())
-    assert "not run" in v11 and "pairs" in v11, v11
-    v14 = " ".join(page.slot("V14").text().split())
-    assert "not run" in v14 and "function" in v14 and "off" in v14, v14
+    assert "V11: not shown: no gene pair table in this run" in v11, v11
+    assert "input_absent" not in v11 and "not run" not in v11, v11
     assert page.slot("V11") in page.section("operons").iter()
+
+
+def test_module_off_section_is_listed_not_applicable(tmp_path: Path) -> None:
+    """M12-04 PR 2: function off -> "Function: the function module was not run", no V14 slot."""
+    from helpers.viz_out_tree import write_resolved_config
+
+    out = run_out(tmp_path)
+    write_resolved_config(out / "resolved_config.yaml", ["core", "mobile", "bgc"])
+    page = _report(out, skipped={"V14": "module_off:function"})
+    assert section_or_reason(page, "function") == "the function module was not run"
+    assert not page.root.by_attr("data-plot", "V14")
 
 
 # ---------------------------------------------------------------- cards (behaviour 5)
@@ -323,13 +360,18 @@ def test_provenance_without_resolved_config(tmp_path: Path) -> None:
 # ---------------------------------------------------------------- the report step (SVG embedding)
 
 
-def _steps(tmp_path: Path, c: object | None = None) -> Page:
+def _steps(tmp_path: Path, c: object | None = None, *, operon_flags: bool = False) -> Page:
     out = run_out(tmp_path)
     work = tmp_path / "work"
     pre = out / "preflight" / "preflight.json"
+    extra: dict[str, Path] = {}
+    if operon_flags:
+        _operon_flags(out)
+        extra["operon_flags"] = out / "tables" / "operon_flags.tsv"
     c = c or cfg()
-    reg.run_step("plots", c, {"preflight": pre}, {"plots": work / "plots"})  # type: ignore[arg-type]
-    reg.run_step("report", c, {"plots": work / "plots", "preflight": pre},  # type: ignore[arg-type]
+    reg.run_step("plots", c, {"preflight": pre, **extra},  # type: ignore[arg-type]
+                 {"plots": work / "plots"})  # fmt: skip
+    reg.run_step("report", c, {"plots": work / "plots", "preflight": pre, **extra},  # type: ignore[arg-type]
                  {"report": work / "report"})  # fmt: skip
     html = work / "report" / "report.html"
     assert html.is_file()
@@ -390,9 +432,9 @@ def test_svg_only_formats_link_no_png_or_pdf(fake_registry: ModuleType, tmp_path
 
 def test_report_step_notes_a_skipped_plot(fake_registry: ModuleType, tmp_path: Path) -> None:
     register_fake("V11", needs=["pairs"])
-    page = _steps(tmp_path)
+    page = _steps(tmp_path, operon_flags=True)
     text = " ".join(page.slot("V11").text().split())
-    assert "not run" in text and "pairs" in text, text
+    assert "V11: not shown: no gene pair table in this run" in text, text
     assert not page.slot("V11").by_tag("svg")
 
 
@@ -403,8 +445,8 @@ def test_example_7_report_step_links_resolve_in_work_layout(
     register_fake(pid)
     page = _steps(tmp_path, cfg("report.formats=[svg, png]"))
     base = tmp_path / "work" / "report"
+    assert not external_refs(page), external_refs(page)
     for url in page.links():
-        if url.startswith("#") or "/tables/" in url:
+        if url.startswith("#") or "/tables/" in url or DOCS_METHODS.match(url):
             continue  # tables are linked against OUT/, checked in test_cli_report.py
-        assert not EXTERNAL.match(url), url
         assert (base / url).resolve().is_file(), url

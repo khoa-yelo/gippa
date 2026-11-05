@@ -36,7 +36,7 @@ TOC_COUNTS: Mapping[str, str] = {
 
 
 #: what reading a present but malformed table raises (``ValueError`` covers decoding, parquet
-#: and schema errors; ``KeyError`` a missing column; ``EOFError`` a truncated ``.gz``)
+#: and schema errors; ``KeyError`` a missing column; ``EOFError`` a truncated gzip stream)
 READ_ERRORS = (OSError, ValueError, KeyError, EOFError)
 
 
