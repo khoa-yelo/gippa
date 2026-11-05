@@ -7,11 +7,15 @@ Pure constants and functions, no file I/O. ``apply()`` sets the rcParams once pe
 
 from __future__ import annotations
 
+import math
 from collections.abc import Mapping, MutableMapping
+from decimal import Decimal
 from types import MappingProxyType
 from typing import Any, Literal, cast
 
 import matplotlib
+import numpy as np
+import pandas as pd
 from cycler import cycler
 from matplotlib.figure import Figure
 
@@ -145,3 +149,86 @@ def plotly_template() -> Any:
             "hoverlabel": {"font": {"size": RC["font.size"] + 2}},
         }
     )
+
+
+# --- numbers and labels in figure text and the report (M12-04 PR 0) ----------------------------
+
+MINUS = "\u2212"
+_ABUNDANCE_NAME: Mapping[str, str] = MappingProxyType(
+    {"ibaq": "iBAQ", "maxlfq": "MaxLFQ", "top3": "Top3", "intensity": "intensity"}
+)
+
+
+def _is_na(x: object) -> bool:
+    """``None``, ``pd.NA`` and NaN (float or numpy) are NA."""
+    if x is None or x is pd.NA:
+        return True
+    try:
+        return bool(math.isnan(cast(float, x)))
+    except (TypeError, ValueError):
+        return False
+
+
+def _signed(text: str, negative: bool) -> str:
+    return f"{MINUS}{text}" if negative else text
+
+
+def _sig_text(x: float, sig: int) -> str:
+    """``|x|`` to ``sig`` significant digits, trailing zeros kept: plain inside
+    ``1e-4 <= |x| < 1e6`` after rounding, ``1.2e-12`` style outside it."""
+    rounded = f"{abs(x):.{sig - 1}e}"
+    mant, exp = rounded.split("e")
+    if -4 <= int(exp) < 6:
+        return format(Decimal(rounded), "f")
+    return f"{mant}e{int(exp):+d}" if int(exp) > 0 else f"{mant}e{int(exp)}"
+
+
+def fmt_num(x: object, sig: int = 2) -> str:
+    """A number for prose: integers exact (comma-grouped from 10,000), other values to ``sig``
+    significant digits with trailing zeros kept; a true minus (U+2212), never on zero; NA and
+    infinity -> ``"NA"``."""
+    if _is_na(x):
+        return "NA"
+    if isinstance(x, (int, np.integer)):
+        n = int(x)
+        body = f"{abs(n):,}" if abs(n) >= 10_000 else str(abs(n))
+        return _signed(body, n < 0)
+    v = float(cast(float, x))
+    if not math.isfinite(v):
+        return "NA"
+    if v == 0.0:
+        return _sig_text(0.0, sig)
+    return _signed(_sig_text(v, sig), v < 0)
+
+
+def fmt_q(q: object) -> str:
+    """A q- or p-value: ``"< 0.001"`` below 0.001, otherwise 2 significant digits with trailing
+    zeros kept (``0.05`` -> ``"0.050"``); NA -> ``"NA"``."""
+    if _is_na(q):
+        return "NA"
+    v = float(cast(float, q))
+    if not math.isfinite(v):
+        return "NA"
+    return "< 0.001" if v < 0.001 else _sig_text(v, 2)
+
+
+def fmt_pct(n: int, d: int) -> str:
+    """``n / d`` as a whole percent (``"12 %"``); ``d == 0`` -> ``"NA"``; a partial share never
+    rounds to 0 % or 100 %."""
+    if d == 0:
+        return "NA"
+    pct = int(100 * n / d + 0.5)
+    if 0 < n < d:
+        pct = min(max(pct, 1), 99)
+    return f"{pct} %"
+
+
+def abundance_label(atype: object, scale: object) -> str | None:
+    """The abundance axis label from ``abundance_type`` and ``abundance_scale``; ``None`` when
+    the run has no abundance (``none`` or NA), so the caller draws no abundance axis."""
+    if _is_na(atype) or atype == "none":
+        return None
+    name = _ABUNDANCE_NAME.get(str(atype))
+    if name is None or _is_na(scale):
+        return "log2 abundance (measure unknown)" if name is None else f"log2 {name}"
+    return f"log2 {name} ({scale})"
