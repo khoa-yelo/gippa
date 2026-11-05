@@ -22,6 +22,7 @@ from gippa.model.coords import Replicon
 from gippa.model.genetic_code import recoded_codons
 
 __all__ = [
+    "CLASS_ERROR_UNESTIMATED",
     "FORMAT_FIELDS",
     "INFO_FIELDS",
     "VARIANTS_COLUMNS",
@@ -37,10 +38,11 @@ VARIANTS_COLUMNS: tuple[str, ...] = (
 )  # fmt: skip
 _FLAG_ORDER: tuple[str, ...] = (
     "mass_equivalent", "snv", "multi_nt", "strain_difference", "database_derived",
-    "start_codon", "stop_codon", "vcf_unrepresentable",
+    "start_codon", "stop_codon", "vcf_unrepresentable", "class_error_unestimated",
 )  # fmt: skip
 VARIANT_FLAGS: frozenset[str] = frozenset(_FLAG_ORDER)
-UNESTIMATED = "unestimated"
+#: the flag of a row whose ``class_error_rate`` is NA (M12-04 PR 11c)
+CLASS_ERROR_UNESTIMATED = "class_error_unestimated"
 
 _F = VcfHeaderField
 INFO_FIELDS: tuple[VcfHeaderField, ...] = (
@@ -106,10 +108,20 @@ def _ordered(items: Iterable[str]) -> tuple[str, ...]:
     return tuple(f for f in _FLAG_ORDER if f in seen)
 
 
-def _class_err(v: object) -> str:
-    if _na(v) or v == UNESTIMATED:
-        return UNESTIMATED
-    return f"{float(v):.6g}"  # type: ignore[arg-type]
+def _class_err(v: object) -> float:
+    """The ``class_error_rate`` cell as a float; NaN (NA) when missing or not a number."""
+    if _na(v):
+        return math.nan
+    try:
+        return float(v)  # type: ignore[arg-type]
+    except ValueError:
+        return math.nan
+
+
+def _with_unestimated(flags: tuple[str, ...], rate: float) -> tuple[str, ...]:
+    """``flags`` holding ``class_error_unestimated`` if and only if ``rate`` is NA."""
+    kept = tuple(f for f in flags if f != CLASS_ERROR_UNESTIMATED)
+    return _ordered((*kept, CLASS_ERROR_UNESTIMATED)) if math.isnan(rate) else kept
 
 
 def _dp(pile: pd.DataFrame) -> dict[tuple[str, int, str], int]:
@@ -145,7 +157,7 @@ def _record(rows: list[dict[str, Any]], ref: str, pos0: int, dp: int, table: int
     flags = list(_ordered(f for r in rows for f in r["flags"]))
     if flags:
         info["FLAGS"] = flags
-    info["CLASS_ERR"] = [str(r["class_error_rate"]) for r in rows]
+    info["CLASS_ERR"] = [float(r["class_error_rate"]) for r in rows]  # NaN is written "."
     alts = tuple(str(r["alt_codon_vcf"]) for r in rows)
     ad = (int(first["n_ref"]), *n_alt)
     return VcfRecord(str(first["contig"]), pos0, ref, alts, info, gt, ad, dp)
@@ -161,16 +173,17 @@ def vcf_records(
 ) -> tuple[list[VcfRecord], pd.DataFrame]:
     """VCF records (rules 2-8) and the ``variants.tsv`` table, one row per ``sites`` row in order.
 
-    Optional ``sites`` columns from M7-05/M7-10: ``flags`` (tuples), ``class_error_rate`` (float
-    or ``unestimated``) and ``class_error_n``. ``table`` is the run's genetic code.
+    Optional ``sites`` columns from M7-05/M7-10: ``flags`` (tuples), ``class_error_rate`` (float,
+    NA when unestimated) and ``class_error_n``. A row's ``flags`` hold ``class_error_unestimated``
+    exactly when its rate is NA (M12-04 PR 11c). ``table`` is the run's genetic code.
     """
     dp = _dp(pile)
     groups: dict[tuple[str, int, str, int, int], list[dict[str, Any]]] = {}
     rows: list[dict[str, Any]] = []
     for s in sites.to_dict("records"):
         row = {c: s.get(c, pd.NA) for c in VARIANTS_COLUMNS}
-        row["flags"] = _flags(s.get("flags"))
-        row["class_error_rate"] = _class_err(s.get("class_error_rate"))
+        row["class_error_rate"] = rate = _class_err(s.get("class_error_rate"))
+        row["flags"] = _with_unestimated(_flags(s.get("flags")), rate)
         ref_nt, alt = str(s["ref_codon"]), str(s["alt_aa"])
         width = len(ref_nt)
         row["nt_changes"] = row["alt_codon_vcf"] = pd.NA
@@ -198,4 +211,5 @@ def vcf_records(
     frame = pd.DataFrame(rows, columns=list(VARIANTS_COLUMNS))
     for col in ("aa_pos", "nt_changes", "class_error_n"):
         frame[col] = frame[col].astype("Int64")
+    frame["class_error_rate"] = frame["class_error_rate"].astype("float64")
     return recs, frame

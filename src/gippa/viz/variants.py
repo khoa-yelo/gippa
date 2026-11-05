@@ -38,6 +38,7 @@ from matplotlib.transforms import offset_copy
 from gippa.variants.flags import FLAG_ORDER
 from gippa.viz import base, style
 from gippa.viz.support import VARIANT_FLANK_AA, class_error_value, top_alt_sites
+from gippa.viz.words import plain
 
 if TYPE_CHECKING:
     from gippa.config import GippaConfig
@@ -58,6 +59,7 @@ FLAG_COLOUR: Mapping[str, str] = dict(
 NO_FLAG_COLOUR = style.OKABE_ITO["grey"]
 ALT_COLOUR = style.OKABE_ITO["vermillion"]
 EN_DASH = "\N{EN DASH}"
+CE_FLAG = "class_error_unestimated"  # its rate is NA (M12-04 PR 11c)
 NOTE = "length-changing: shown unaligned"
 UNALIGNED = frozenset({"block", "frameshift"})
 EMPTY = "No ALT site supported by peptides"
@@ -85,7 +87,8 @@ def _na(value: object) -> bool:
 
 
 def _flags(value: object) -> list[str]:
-    return [] if _na(value) else [f for f in str(value).split(";") if f]
+    """The site flags drawn in panel (a); an NA class error is in the title, not a bar."""
+    return [] if _na(value) else [f for f in str(value).split(";") if f and f != CE_FLAG]
 
 
 def _flag_rank(flag: str) -> tuple[int, str]:
@@ -206,7 +209,7 @@ def title(variants: pd.DataFrame) -> str:
     h, c = int((alt["confidence"] == "high").sum()), int((alt["confidence"] == "candidate").sum())
     rates = [r for r in (class_error_value(v) for v in alt["class_error_rate"]) if r is not None]
     lo, hi = (base.sig(min(rates)), base.sig(max(rates))) if rates else ("", "")
-    rng = "unestimated" if not rates else lo if lo == hi else f"{lo}{EN_DASH}{hi}"
+    rng = plain("unestimated") if not rates else lo if lo == hi else f"{lo}{EN_DASH}{hi}"
     if _has_one(variants):
         rng += DEGENERATE_MARK
     pooled = f", {POOLED}" if rates else ""
@@ -277,8 +280,8 @@ def _header(r: Mapping[str, object]) -> str:
         return "NA" if _na(v) else str(v)
 
     rate = class_error_value(r["class_error_rate"])
-    if rate is None:
-        error = f"class error {cell('class_error_rate')}"
+    if rate is None:  # NA (M12-04 PR 11c): the flag's plain words
+        error = plain(CE_FLAG)
     else:
         mark = DEGENERATE_MARK if rate == 1 else ""
         n = r.get("class_error_n")
