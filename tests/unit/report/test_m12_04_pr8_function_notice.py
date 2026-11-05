@@ -26,12 +26,11 @@ Interface pinned here (PR 8 test author, beyond the spec text):
 
 from __future__ import annotations
 
-import functools
 import json
 import re
-import tempfile
 from pathlib import Path
 
+import pytest
 from helpers.m12_04_pr2 import flag_tokens, internal_refs, prose_nodes, sim_report, words
 from helpers.m12_04_pr8 import (
     ACADEMIC,
@@ -272,11 +271,10 @@ def _write_events(out: Path, colls: dict[str, tuple[float, int]], light: bool) -
         (out / "logs" / "steps" / "annotate.events.jsonl").unlink(missing_ok=True)
 
 
-@functools.cache
-def _base_run() -> Run:
+@pytest.fixture(scope="module")
+def base_run(tmp_path_factory: pytest.TempPathFactory) -> Run:
     """One fixture P for every Hypothesis example (only the events are rewritten)."""
-    tmp = Path(tempfile.mkdtemp(prefix="gippa-m1204-pr8-"))
-    return function_run(tmp, collections=zero(), n_cog=60)
+    return function_run(tmp_path_factory.mktemp("pr8-base"), collections=zero(), n_cog=60)
 
 
 _COV = st.one_of(st.just((0.0, 0)),
@@ -287,6 +285,7 @@ _COV = st.one_of(st.just((0.0, 0)),
 @given(cog=_COV, go=st.lists(_COV, min_size=4, max_size=4), kegg=st.none() | _COV,
        light=st.booleans())  # fmt: skip
 def test_property_notice_iff_no_collection_has_a_term(
+    base_run: Run,
     cog: tuple[float, int], go: list[tuple[float, int]], kegg: tuple[float, int] | None,
     light: bool,
 ) -> None:  # fmt: skip
@@ -299,7 +298,7 @@ def test_property_notice_iff_no_collection_has_a_term(
     colls = {"cog": cog} | dict(zip(GO, go, strict=True))
     if kegg is not None:
         colls["kegg"] = kegg
-    run = _base_run()
+    run = base_run
     _write_events(run.out, colls, light)
     assert json.loads((run.out / "logs/steps/function.events.jsonl").read_text().splitlines()[1])[
         "data"] == collections_event(colls)  # fmt: skip
