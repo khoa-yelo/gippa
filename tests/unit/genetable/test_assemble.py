@@ -16,8 +16,8 @@ Pinned by the test author (spec gaps, see the hand-back report):
   cog_def=None)`` (keyword) sets ``cog_category``; several COG IDs -> the smallest and its
   category, bare category xrefs (``COG:L``) ignored; no id map -> ``source_id = locus_tag``;
   ``island_id`` / ``replichore`` string and ``replichore_position`` float, all NA in M4.
-- ``detectability_constant`` goes on eligible (non-partial) genes only (M4-13 spec "M4-15 sets
-  it"); ``source_id`` comes from C14 when the id map is given.
+- ``detectability_constant`` is a run flag since 1.1 (ADR-0075, M12-04 PR 11a): no row carries it;
+  the ``detectability`` step logs it once. ``source_id`` comes from C14 when the id map is given.
 """
 
 from __future__ import annotations
@@ -382,15 +382,44 @@ def test_example_8_partial_gene() -> None:
     assert as_list(r["flags"]) == ["partial"]
 
 
-def test_detectability_constant_on_eligible_genes_only() -> None:
+def test_detectability_constant_on_eligible_genes_only(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
+) -> None:
+    """Since 1.1 (ADR-0075) a constant model sets no row flag; the step logs the run flag once."""
+    import logging
+
+    from gippa.config import GippaConfig
+    from gippa.io.work_tables import default_paths
+    from gippa.steps.detectability import run_detectability
+    from gippa.steps.gene_table import run_gene_table
+
+    token = "detectability_constant"
     fr = gt.frames_with()
     fr["genes"].loc[5, "partial"] = True
     fr["layers"].at[5, "flags"] = ["partial"]
     t = gt.build_world(frames=fr, constant=True).assemble()
-    for tg in t["locus_tag"]:
-        flags = as_list(row(t, tg)["flags"])
-        assert ("detectability_constant" in flags) is (tg != tag(5)), (tg, flags)
-    assert as_list(row(t, tag(7))["flags"]) == ["pseudogene", "top3_lt3", "detectability_constant"]
+    assert not any(token in as_list(f) for f in t["flags"])
+    assert as_list(row(t, tag(7))["flags"]) == ["pseudogene", "top3_lt3"]
+    assert as_list(row(t, tag(5))["flags"]) == ["partial"]
+
+    (tmp_path / "db").mkdir()
+    monkeypatch.setenv("GIPPA_DB_DIR", str(tmp_path / "db"))
+    work = tmp_path / "work"
+    work.mkdir()
+    import m4_contract_fixture as mf
+
+    mf.write_work(fr, default_paths(work) | {"preflight": work / "preflight.json"})
+    cfg = GippaConfig(seed=3)
+    run_gene_table(work, cfg)
+    with caplog.at_level(logging.DEBUG, logger="gippa.steps"):
+        out = run_detectability(work, cfg)
+    df = pd.read_parquet(out)
+    assert not any(token in as_list(f) for f in df["flags"])
+    hits = [
+        r for r in caplog.records
+        if isinstance(getattr(r, "data", None), dict) and r.data.get("flag") == token
+    ]  # fmt: skip
+    assert len(hits) == 1, [r.getMessage() for r in caplog.records]
 
 
 # ----------------------------------------------------------------------------- sort order

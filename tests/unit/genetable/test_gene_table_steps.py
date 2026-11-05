@@ -315,7 +315,9 @@ def test_run_functions_write_genetable_files(
     assert pre_df.set_index("locus_tag").loc[tag(3), "source_id"] == "orig_3"  # C14 found
     assert any("layer_missing:cog" in r.getMessage() for r in caplog.records)
 
-    out = run_detectability(work, cfg)
+    caplog.clear()
+    with caplog.at_level(logging.WARNING):
+        out = run_detectability(work, cfg)
     assert out == work / "genetable" / "genes.parquet" and out.is_file()
     _assert_nulls_kept(pre, out)
     df = pd.read_parquet(out)
@@ -326,10 +328,15 @@ def test_run_functions_write_genetable_files(
     rate = float(by.loc[eligible, "detected"].astype(bool).mean())
     assert np.allclose(by.loc[eligible, "p_detect"].astype(float), rate)
     assert pd.isna(by.loc[tag(5), "p_detect"])
-    for t in by.index:
-        flags = as_list(by.loc[t, "flags"])
-        assert ("detectability_constant" in flags) is bool(eligible[t]), (t, flags)
+    # detectability_constant is a run flag since 1.1 (ADR-0075): no row, one log record
+    assert not any("detectability_constant" in as_list(f) for f in by["flags"])
     assert as_list(by.loc[tag(5), "flags"]) == ["partial"]
+    hits = [
+        r for r in caplog.records
+        if isinstance(getattr(r, "data", None), dict)
+        and r.data.get("flag") == "detectability_constant"
+    ]  # fmt: skip
+    assert len(hits) == 1, [r.getMessage() for r in caplog.records]
 
     parts = work / "genetable" / "detection_summary_parts" / "detectability.parquet"
     diag = pd.read_parquet(parts)

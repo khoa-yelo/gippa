@@ -494,6 +494,7 @@
   "finished_at": "2026-01-01T00:00:00+00:00",
   "flags": [
     "cai_reference_missing",
+    "detectability_constant",
     "tu_recal_skipped"
   ],
   "gippa_version": "0.0.1",
