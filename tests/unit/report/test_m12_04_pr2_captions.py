@@ -37,6 +37,11 @@ V17_CAPTION = (
 )
 
 
+#: the index instance of a multi-instance plot (review r1 L2): V03's suffix-``None`` instance,
+#: V13's ``locus`` instance (its suffix-``None`` instance is panel (a))
+INDEX_STEMS = {"V03": "V03_locus", "V13": "V13_novel_orfs_locus"}
+
+
 def _captions() -> dict[str, str]:
     from gippa.report.content import CAPTIONS
 
@@ -96,9 +101,13 @@ def _check_figures(page: Page) -> None:
         assert len(found) == 1, f"{pid}: {len(found)} figcaptions"
         text = words(found[0].text())
         assert text.startswith(QUESTIONS[pid]), f"{pid}: caption {text!r}"
-        assert text.startswith(words(caps[pid])), f"{pid}: caption {text!r}"
         links = [a.attrs.get("href", "") for a in found[0].by_tag("a")]
         assert any(h.startswith("../plots/") for h in links), f"{pid}: links lost: {links}"
+        if found[0].attrs.get("data-stem") == INDEX_STEMS.get(pid):
+            # review r1 L2: the index instance has its own caption
+            assert not text.startswith(words(caps[pid])), f"{pid}: index caption {text!r}"
+            continue
+        assert text.startswith(words(caps[pid])), f"{pid}: caption {text!r}"
         # the links follow the caption
         assert words(found[0].by_tag("a")[0].text()) in text[len(words(caps[pid])) :]
 

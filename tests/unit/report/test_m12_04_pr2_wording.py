@@ -45,7 +45,7 @@ from helpers.report_fixtures import Node, Page, table_rows
 from unit.report.test_m12_04_pr1_fixtures import FIXTURES, build
 
 SIM = ("sim_plots", "sim_empty")
-GLOSSARY = ("FDR", "FWER", "q-value", "local FDR (lfdr)", "O − E", "π₀", "block length (ℓ̂)",
+GLOSSARY = ("FDR", "FWER", "q-value", "local FDR (lfdr)", "O − E", "π₀", "block length (ℓ′)",
             "BB join count")  # fmt: skip
 MORAN_LABEL = "lag-1 Moran's I of the detrended TU scores (used to choose the block length)"
 

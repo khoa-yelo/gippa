@@ -73,12 +73,19 @@ def words(text: str) -> str:
     return " ".join(text.split())
 
 
+#: skip reasons outside ``gippa.viz.words`` that prose must not show either (review r1 L3:
+#: ``gippa.steps.plots.skipped_plots`` gives ``not_registered``)
+EXTRA_TOKENS = ("not_registered",)
+
+
 @functools.cache
 def flag_vocabulary() -> tuple[str, ...]:
-    """Flag and skip tokens with an underscore or a colon (lead decision 1)."""
+    """Flag and skip tokens with an underscore or a colon (lead decision 1), plus
+    ``EXTRA_TOKENS``."""
     from gippa.viz.words import FLAG_TEXT, SCOPED_TEXT, SKIP_TEXT
 
     keys = set(FLAG_TEXT) | set(SKIP_TEXT) | {k for m in SCOPED_TEXT.values() for k in m}
+    keys |= set(EXTRA_TOKENS)
     return tuple(sorted(k for k in keys if "_" in k or ":" in k))
 
 

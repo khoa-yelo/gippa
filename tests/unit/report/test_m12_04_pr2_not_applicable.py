@@ -4,7 +4,8 @@
 Interface assumed (PR 2 test author):
 - a section is inapplicable when its module is off or an input it needs is absent: here
   Variants without ``variants.tsv``, Novel ORFs without ``novel_orfs.tsv``, Operons without
-  ``pairs.tsv`` and ``operon_flags.tsv``, Function with the ``function`` module off;
+  ``pairs.tsv`` and ``operon_flags.tsv``, Function with the ``function`` module off and no
+  drawn instance in any of its plot slots (review r1 M1);
 - ``section#sec-not-applicable`` is the last ``<section>``, headed "Not applicable in this run"
   (the spec's example wording); each entry is an ``<li>`` "<Section heading>: <plain reason>";
 - an inapplicable section is moved, not repeated: no ``<section id="<its id>">`` of its own;
@@ -77,14 +78,25 @@ def test_proteins_only_run_lists_variants(tmp_path: Path) -> None:
     assert not page.root.by_attr("data-plot", "V12"), "V12 still has an inline slot"
 
 
-def test_core_only_run_lists_function_and_bgc(tmp_path: Path) -> None:
-    """``--modules core`` (edge case 3): Function and the BGC content are not applicable."""
+def test_core_only_run_lists_bgc_and_keeps_function(tmp_path: Path) -> None:
+    """``--modules core`` (edge case 3): the BGC content is not applicable; Function stays,
+    because its V08 (COG from the annotation) is drawn (review r1 M1)."""
     page = dress(build("P_core", tmp_path), tmp_path).page()
     entries = _check_entries(page)
     names = [n for n, _ in entries]
+    assert "Function" not in names, names
+    assert section(page, "function") is not None
+    assert any("BGC" in n or "iosynthetic" in n for n, _ in entries), entries
+
+
+def test_core_only_run_without_a_drawn_function_plot_lists_function(tmp_path: Path) -> None:
+    """``--modules core`` with V08 an empty state: nothing of Function is drawn, so it is
+    listed (review r1 M1)."""
+    run = dress(build("P_core", tmp_path), tmp_path, empty={"V08": "No genes"})
+    page = run.page()
+    names = [n for n, _ in _check_entries(page)]
     assert "Function" in names, names
     assert section(page, "function") is None
-    assert any("BGC" in n or "iosynthetic" in n for n, _ in entries), entries
 
 
 @pytest.mark.parametrize("name", ["P", "R", "D", "P_core"])
@@ -96,7 +108,8 @@ def test_entries_are_plain(name: str, tmp_path: Path) -> None:
 # ---------------------------------------------------------------- property
 
 
-def _run(tmp: Path, *, variants: bool, novel: bool, operons: bool, function: bool) -> Run:
+def _run(tmp: Path, *, variants: bool, novel: bool, operons: bool, function: bool,
+         v08_drawn: bool = True) -> Run:  # fmt: skip
     modules = ("core", "mobile", "bgc", "function") if function else ("core", "mobile", "bgc")
     run = fixture_p(tmp, "NA", modules=modules)
     out = run.out
@@ -109,7 +122,7 @@ def _run(tmp: Path, *, variants: bool, novel: bool, operons: bool, function: boo
         write_pairs(out)
         write_operon_flags(out, [0.01])
     write_sensitivity(out, [("islands", "block_x2", 2, 3, 2, 0.6667)])
-    return dress(run, tmp)
+    return dress(run, tmp, None if v08_drawn else {"V08": "No genes"})
 
 
 _FLAGS = st.fixed_dictionaries({k: st.booleans() for k in OPTIONAL})
@@ -117,13 +130,19 @@ _FLAGS = st.fixed_dictionaries({k: st.booleans() for k in OPTIONAL})
 
 @settings(max_examples=16, deadline=None,
           suppress_health_check=[HealthCheck.too_slow])  # fmt: skip
-@given(_FLAGS)
-@example(dict.fromkeys(OPTIONAL, True))
-@example(dict.fromkeys(OPTIONAL, False))
-def test_not_applicable_iff_some_section_is_inapplicable(present: dict[str, bool]) -> None:
+@given(_FLAGS, st.booleans())
+@example(dict.fromkeys(OPTIONAL, True), True)
+@example(dict.fromkeys(OPTIONAL, False), True)
+@example(dict.fromkeys(OPTIONAL, False), False)
+def test_not_applicable_iff_some_section_is_inapplicable(
+    present: dict[str, bool], v08_drawn: bool
+) -> None:
+    """Review r1 M1: Function is inapplicable only with its module off and no drawn plot (V08
+    drawn from the annotation's COG categories keeps it)."""
     with tempfile.TemporaryDirectory() as tmp:
-        page = _run(Path(tmp), **present).page()
-    want = {OPTIONAL[k][1] for k, on in present.items() if not on}
+        page = _run(Path(tmp), **present, v08_drawn=v08_drawn).page()
+    applicable = dict(present, function=present["function"] or v08_drawn)
+    want = {OPTIONAL[k][1] for k, on in applicable.items() if not on}
     entries = _check_entries(page)
     assert {n for n, _ in entries} == want, (present, entries)
     assert len(entries) == len(want), entries
@@ -134,4 +153,5 @@ def test_not_applicable_iff_some_section_is_inapplicable(present: dict[str, bool
         assert not page.root.by_attr("id", "sec-not-applicable")
     for key, (sid, _) in OPTIONAL.items():
         rendered = section(page, sid) is not None
-        assert rendered == present[key], f"{sid}: rendered={rendered}, applicable={present[key]}"
+        on = applicable[key]
+        assert rendered == on, f"{sid}: rendered={rendered}, applicable={on}"

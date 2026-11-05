@@ -73,6 +73,13 @@ def test_stored_report_sections_are_the_13_fixed_ids(fixture: str) -> None:
         assert ids[-1] == "sec-not-applicable", ids
     if "sec-not-applicable" in ids:
         assert ids.index("sec-not-applicable") == len(ids) - 1, ids
+    # review r1 L6: the missing ids are exactly the sections the live page lists
+    from helpers.m12_04_pr2 import not_applicable_entries, sim_report
+
+    heads = {s.heading: s.id for s in SECTIONS}
+    listed = {heads[n] for n, _ in not_applicable_entries(sim_report(fixture)[0]) if n in heads}
+    missing = {s.id for s in SECTIONS} - set(rendered)
+    assert missing == listed, (fixture, sorted(missing), sorted(listed))
 
 
 @pytest.mark.parametrize("fixture", sf.FIXTURES)
