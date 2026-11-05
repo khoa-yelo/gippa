@@ -280,6 +280,13 @@ def test_example_1_dot_matrix_colours() -> None:
     assert BLUE in colours and GREY in colours, colours
 
 
+_n = style.fmt_num  # M12-04 P-18: in-figure numbers keep trailing zeros (0.8 -> "0.80")
+
+
+def _cell(rho: float, lo: float, hi: float) -> str:
+    return f"ρ {_n(rho)} [{_n(lo)}, {_n(hi)}]"
+
+
 def test_example_1_title() -> None:
     """All three pairs share fewer than three measured genes, so every ρ is NA."""
     inst = _plot(vc.example_1())
@@ -290,7 +297,7 @@ def test_title_median_rho_and_plural() -> None:
     genes = _three_full()
     inst = _with_rho(genes, [("A1", "A2", 0.5, 0.2, 0.7), ("A1", "A3", 0.8, 0.6, 0.93),
                              ("A2", "A3", 0.9, 0.8, 0.95)])  # fmt: skip
-    assert inst.title == "8 genes detected in all 3 runs; median pairwise ρ 0.8"
+    assert inst.title == f"8 genes detected in all 3 runs; median pairwise ρ {_n(0.8)}"
 
 
 def test_title_with_no_gene_in_all_runs() -> None:
@@ -308,20 +315,22 @@ def test_title_has_no_expressed_wording() -> None:
 
 def test_example_2_cell_text() -> None:
     inst = _with_rho(_three_full(), [("A1", "A2", 0.8, 0.6, 0.93)])
-    assert "ρ 0.8 [0.6, 0.93]" in _texts(inst.figure)
+    assert _cell(0.8, 0.6, 0.93) in _texts(inst.figure)
 
 
 def test_every_pair_has_its_rho_and_ci_in_the_figure() -> None:
     inst = _with_rho(_three_full(), [("A1", "A2", 0.5, 0.2, 0.7), ("A1", "A3", 0.8, 0.6, 0.93),
                                      ("A2", "A3", 0.9, 0.8, 0.95)])  # fmt: skip
     texts = _texts(inst.figure)
-    for want in ("ρ 0.5 [0.2, 0.7]", "ρ 0.8 [0.6, 0.93]", "ρ 0.9 [0.8, 0.95]"):
+    for want in (_cell(0.5, 0.2, 0.7), _cell(0.8, 0.6, 0.93), _cell(0.9, 0.8, 0.95)):
         assert want in texts, texts
 
 
 def test_negative_rho_is_printed_not_hidden() -> None:
     inst = _with_rho(_three_full(), [("A1", "A2", -0.5, -0.8, -0.1)])
-    assert any(re.fullmatch(r"ρ [-−]0\.5 \[[-−]0\.8, [-−]0\.1\]", t) for t in _texts(inst.figure))
+    texts = _texts(inst.figure)
+    assert _cell(-0.5, -0.8, -0.1) in texts, texts
+    assert any(re.fullmatch(r"ρ −0\.50* \[−0\.80*, −0\.10*\]", t) for t in texts), texts
 
 
 def test_panel_b_stat_rows_copy_compare_abundance() -> None:

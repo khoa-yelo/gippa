@@ -433,10 +433,17 @@ def test_families_are_drawn_in_spec_order_not_rank_order(tmp_path: Path, cfg: Gi
 # --- titles (decision 2, 7) -----------------------------------------------------------------------
 
 
+def _cal_title(slope: float | None, intercept: float | None, brier: float | None) -> str:
+    """The V18 title, its numbers through fmt_num (M12-04 P-18: trailing zeros, Unicode minus)."""
+    n = style.fmt_num
+    return (f"Detectability calibration slope {n(slope)} (intercept {n(intercept)}), "
+            f"Brier {n(brier)}")  # fmt: skip
+
+
 def test_na_slope_prints_na_not_nan(tmp_path: Path, cfg: GippaConfig) -> None:
     summary = [*_bins([(0.1, 0.12, 50), (0.6, 0.55, 50)]), *_overall(None, 0.02, 0.11)]
     inst = _render(_out(tmp_path, detection_summary=summary), cfg)
-    assert inst.title == "Detectability calibration slope NA (intercept 0.02), Brier 0.11"
+    assert inst.title == _cal_title(None, 0.02, 0.11)
     corner = " ".join(_texts(_ax(inst, "a")))
     assert "slope NA" in corner
     assert "nan" not in corner.lower()
@@ -538,7 +545,7 @@ def test_section_filter_keeps_other_sections_out(tmp_path: Path, cfg: GippaConfi
     assert _num(first.iloc[0]["x"]) == pytest.approx(0.1)
     slope = a[a["metric"].astype(str) == "calibration_slope"]
     assert len(slope) == 1 and _num(slope.iloc[0]["value"]) == pytest.approx(0.97)
-    assert inst.title == "Detectability calibration slope 0.97 (intercept 0.02), Brier 0.11"
+    assert inst.title == _cal_title(0.97, 0.02, 0.11)
 
 
 # --- exact bin rule -------------------------------------------------------------------------------
