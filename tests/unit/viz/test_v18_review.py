@@ -240,16 +240,19 @@ def _b1_out(tmp: Path) -> Path:
     regions = [_region(_exact(p), i=i) for i, p in enumerate(B1_PS)]
     regions.append(_region(None, i=len(B1_PS)))  # NaN: missing, not outside
     regions.append(_region(0.3, "hl_shift", i=99))  # a clean family next to it
+    # M12-04 P-10: 10 tests per family so both are drawn (8 more in bin 10, 9 more hl_shift)
+    regions += [_region(0.52, i=10 + j) for j in range(8)]
+    regions += [_region(0.3, "hl_shift", i=100 + j) for j in range(9)]
     return _out(tmp, regions_stats=regions)
 
 
 def test_b1_outside_values_are_not_in_the_bars(tmp_path: Path, cfg: GippaConfig) -> None:
     inst = _render(_b1_out(tmp_path), cfg)
     counts = _family_counts(inst, "regions_stats", "o_minus_e")
-    assert counts == {k: {0: 1, 19: 1}.get(k, 0) for k in range(20)}, counts
+    assert counts == {k: {0: 1, 10: 8, 19: 1}.get(k, 0) for k in range(20)}, counts
     ax = _ax(inst, "b:regions_stats / o_minus_e")
-    assert _bar_counts(ax) == {0: 1.0, 19: 1.0}
-    assert "n = 2" in ax.get_title()
+    assert _bar_counts(ax) == {0: 1.0, 10: 8.0, 19: 1.0}
+    assert "n = 10" in ax.get_title()
 
 
 def test_b1_one_n_outside_row_per_affected_family(tmp_path: Path, cfg: GippaConfig) -> None:
@@ -275,7 +278,8 @@ def test_b1_histogram_title_counts_outside(tmp_path: Path, cfg: GippaConfig) -> 
 
 
 def test_b1_no_outside_row_when_every_p_is_in_range(tmp_path: Path, cfg: GippaConfig) -> None:
-    regions = [_region(p, i=i) for i, p in enumerate([0.0, 0.5, 1.0])]
+    ps = [0.0, 0.5, 1.0, *[0.52] * 7]  # 10 tests: drawn (M12-04 P-10)
+    regions = [_region(p, i=i) for i, p in enumerate(ps)]
     inst = _render(_out(tmp_path, regions_stats=regions), cfg)
     assert len(_outside_rows(inst)) == 0
     assert "outside" not in _ax(inst, "b:regions_stats / o_minus_e").get_title()
@@ -302,6 +306,8 @@ def test_b1_counts_are_per_family(tmp_path: Path, cfg: GippaConfig) -> None:
         _autocorr(_exact(-0.1), "morans_i", "tu_block", 1),
         _autocorr(_exact(math.inf), "morans_i", "tu_block", 2),
         _autocorr(0.6, "morans_i", "tu_block", 3),
+        # 10 tests so the tu_block family is drawn (M12-04 P-10)
+        *(_autocorr(0.6, "morans_i", "tu_block", lag) for lag in range(4, 11)),
     ]
     inst = _render(_out(tmp_path, autocorrelation=acf), cfg)
     got = {
@@ -355,7 +361,7 @@ def test_property_b1_bars_plus_outside_is_every_non_nan(ps: list[float], seed: i
 # --- lead decision 5: top-16 tie-break -----------------------------------------------------------
 
 
-def _seventeen_equal(size: int = 2) -> tuple[dict[str, list[dict]], list[str]]:
+def _seventeen_equal(size: int = 10) -> tuple[dict[str, list[dict]], list[str]]:
     """17 families of equal size, listed in spec table order then name."""
     tables: dict[str, list[dict]] = {
         "regions_stats": [],
@@ -402,7 +408,8 @@ def test_top16_ties_name_order_within_a_table(tmp_path: Path, cfg: GippaConfig) 
     """17 equal families inside one table: the largest name is dropped."""
     names = [f"c{k:02d}" for k in range(17)]
     random.Random(3).shuffle(names)
-    gsea = [_gsea(0.5, c, i) for i, c in enumerate(names)]
+    # 10 tests each: every family is drawable (M12-04 P-10)
+    gsea = [_gsea(0.5, c, 10 * i + j) for i, c in enumerate(names) for j in range(10)]
     inst = _render(_out(tmp_path, enrichment_gsea=gsea), cfg)
     assert set(_hist_labels(inst)) == {f"enrichment_gsea / c{k:02d}" for k in range(16)}
 
@@ -412,10 +419,11 @@ def test_top16_ties_name_order_within_a_table(tmp_path: Path, cfg: GippaConfig) 
 
 def test_families_are_drawn_in_spec_order_not_rank_order(tmp_path: Path, cfg: GippaConfig) -> None:
     tables = {
-        "regions_stats": [_region(0.1, i=0)],
-        "autocorrelation": [_autocorr(0.2, "morans_i", "gene_label", k) for k in range(1, 4)],
-        "enrichment_gsea": [_gsea(0.5, "kegg", i) for i in range(6)]
-        + [_gsea(0.5, "cog", 10 + i) for i in range(2)],
+        # sizes 10, 12, 15, 11 (M12-04 P-10: at least 10); rank order differs from spec order
+        "regions_stats": [_region(0.1, i=i) for i in range(10)],
+        "autocorrelation": [_autocorr(0.2, "morans_i", "gene_label", k) for k in range(1, 13)],
+        "enrichment_gsea": [_gsea(0.5, "kegg", i) for i in range(15)]
+        + [_gsea(0.5, "cog", 20 + i) for i in range(11)],
     }
     inst = _render(_out(tmp_path, **tables), cfg)
     want = [
@@ -456,7 +464,8 @@ def test_na_intercept_prints_na(tmp_path: Path, cfg: GippaConfig) -> None:
 
 
 def test_absent_detection_summary_title(tmp_path: Path, cfg: GippaConfig) -> None:
-    regions = [_region(0.2, i=0), _region(0.6, "hl_shift", i=1)]
+    regions = [_region(0.2, i=i) for i in range(10)]
+    regions += [_region(0.6, "hl_shift", i=10 + i) for i in range(10)]  # drawn (M12-04 P-10)
     inst = _render(_out(tmp_path, regions_stats=regions), cfg)
     assert inst.title == "Detectability not available; 2 test families shown"
 
@@ -566,7 +575,9 @@ def test_exact_bin_rule_near_edges(tmp_path: Path, cfg: GippaConfig, p: str, k: 
     import gippa.viz.diagnostics as diag
 
     assert diag.p_bin(float(p)) == k
-    inst = _render(_out(tmp_path, regions_stats=[_region(p)]), cfg)
+    # nine more p in bin 0 so the family is drawn (M12-04 P-10: at least 10 tests)
+    regions = [_region(p), *(_region(0.01, i=i) for i in range(1, 10))]
+    inst = _render(_out(tmp_path, regions_stats=regions), cfg)
     counts = _family_counts(inst, "regions_stats", "o_minus_e")
-    assert counts == {j: int(j == k) for j in range(20)}, counts
-    assert _bar_counts(_ax(inst, "b:regions_stats / o_minus_e")) == {k: 1.0}
+    assert counts == {j: {0: 9, k: 1}.get(j, 0) for j in range(20)}, counts
+    assert _bar_counts(_ax(inst, "b:regions_stats / o_minus_e")) == {0: 9.0, k: 1.0}
