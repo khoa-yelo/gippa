@@ -120,31 +120,15 @@
   ],
   [
    "h2",
-   "Peptide mapping"
+   "Mapping"
   ],
   [
    "div",
    "plot:V05"
   ],
   [
-   "svg",
-   null
-  ],
-  [
-   "figure",
-   "V05_mapping_sankey"
-  ],
-  [
    "div",
    "plot:V06"
-  ],
-  [
-   "svg",
-   null
-  ],
-  [
-   "figure",
-   "V06_mapping_fdr"
   ],
   [
    "section",
@@ -163,14 +147,6 @@
    "plot:V07"
   ],
   [
-   "svg",
-   null
-  ],
-  [
-   "figure",
-   "V07_obs_vs_exp"
-  ],
-  [
    "div",
    "plot:V18"
   ],
@@ -185,14 +161,6 @@
   [
    "figure",
    "V18_stat_diagnostics"
-  ],
-  [
-   "h3",
-   "genes.tsv (first 0 rows; full table)"
-  ],
-  [
-   "h3",
-   "detection_summary.tsv (first 0 rows; full table)"
   ],
   [
    "section",
@@ -223,48 +191,12 @@
    "plot:V02"
   ],
   [
-   "svg",
-   null
-  ],
-  [
-   "figure",
-   "V02_abundance_landscape"
-  ],
-  [
    "div",
    "plot:V10"
   ],
   [
-   "svg",
-   null
-  ],
-  [
-   "figure",
-   "V10_correlogram"
-  ],
-  [
    "div",
    "plot:V03"
-  ],
-  [
-   "svg",
-   null
-  ],
-  [
-   "figure",
-   "V03_locus"
-  ],
-  [
-   "h3",
-   "islands.tsv (first 0 rows; full table)"
-  ],
-  [
-   "h3",
-   "regions_stats.tsv (first 0 rows; full table)"
-  ],
-  [
-   "h3",
-   "autocorrelation.tsv (first 0 rows; full table)"
   ],
   [
    "section",
@@ -283,22 +215,6 @@
    "plot:V11"
   ],
   [
-   "svg",
-   null
-  ],
-  [
-   "figure",
-   "V11_operon_pairs"
-  ],
-  [
-   "h3",
-   "pairs.tsv (first 0 rows; full table)"
-  ],
-  [
-   "h3",
-   "operon_flags.tsv (first 0 rows; full table)"
-  ],
-  [
    "section",
    "variants"
   ],
@@ -313,14 +229,6 @@
   [
    "div",
    "plot:V12"
-  ],
-  [
-   "svg",
-   null
-  ],
-  [
-   "figure",
-   "V12_variants"
   ],
   [
    "section",
@@ -339,18 +247,6 @@
    "plot:V13"
   ],
   [
-   "svg",
-   null
-  ],
-  [
-   "figure",
-   "V13_novel_orfs"
-  ],
-  [
-   "h3",
-   "novel_orfs.tsv (first 0 rows; full table)"
-  ],
-  [
    "section",
    "function"
   ],
@@ -367,24 +263,8 @@
    "plot:V08"
   ],
   [
-   "svg",
-   null
-  ],
-  [
-   "figure",
-   "V08_cog_abundance"
-  ],
-  [
    "div",
    "plot:V14"
-  ],
-  [
-   "svg",
-   null
-  ],
-  [
-   "figure",
-   "V14_enrichment"
   ],
   [
    "section",
@@ -403,14 +283,6 @@
    "plot:V15"
   ],
   [
-   "svg",
-   null
-  ],
-  [
-   "figure",
-   "V15_determinants"
-  ],
-  [
    "section",
    "sensitivity"
   ],
@@ -423,10 +295,6 @@
    "Sensitivity"
   ],
   [
-   "h3",
-   "sensitivity.tsv (first 0 rows; full table)"
-  ],
-  [
    "section",
    "methods"
   ],
@@ -437,6 +305,10 @@
   [
    "h2",
    "Methods"
+  ],
+  [
+   "h3",
+   "Glossary"
   ],
   [
    "h3",
@@ -580,7 +452,7 @@
   ],
   [
    "h2",
-   "Peptide mapping"
+   "Mapping"
   ],
   [
    "div",
@@ -1133,6 +1005,10 @@
   [
    "h2",
    "Methods"
+  ],
+  [
+   "h3",
+   "Glossary"
   ],
   [
    "h3",
