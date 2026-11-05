@@ -2,8 +2,8 @@
 
 The example is a cut-down subset of the M10 pilot (validation/pilot/README.md, pass 3): E. coli
 Nissle 1917 (GCF_021559835.1, chromosome NZ_CP058217.1), PXD078459 runs WT_1-WT_3. Nothing is
-re-searched. The script subsets the pilot's existing outputs to one contiguous region and writes,
-under OUT/<name>/:
+re-searched. The script subsets the pilot's existing outputs to one contiguous region and writes
+the release tree OUT/<name>/gippa-example-<X.Y>/ (spec M12-01 section 2 > Layout):
 
     genome/<name>.fna.gz          the region as one linear contig (no topology tag)
     A_diann/report.parquet        DIA-NN 2.3.1 report rows whose proteins all lie in the region
@@ -12,7 +12,15 @@ under OUT/<name>/:
     C_cascadia/WT_{1,2,3}.ssl     Cascadia rows whose peptide occurs in the region's six frames
     D_generic/peptides.tsv        a generic peptide table, peptide level, built from route A's rows
     SELECTION.json                the rule, the counts and the sha256 of every source and output
-    bundles/<route>.tar.gz        genome + one route's files (+ SELECTION.json), for sizing
+    README.md, PROVENANCE.md, LICENSE-DATA.md, bundle.json, CHECKSUMS.sha256, expected/ (optional)
+
+then packs it as BUNDLE_OUT/gippa-example-<X.Y>.tar.gz (deterministic: sorted members, mtime,
+uid and gid 0, empty owner names, modes 0644/0755, gzip without name and mtime) and prints the
+archive's sha256 and size, its db_sources.yaml row and its validation/example/bundles.tsv row.
+Sizing tars per route stay in OUT/<name>/bundles/, outside the release tree.
+
+The tree is built in a staging dir next to it and replaces the old tree only after the archive is
+released; a failed or refused build leaves the old tree, the old archive and no partial file.
 
 Selection rule (recorded verbatim in SELECTION.json):
 
@@ -26,7 +34,9 @@ Selection rule (recorded verbatim in SELECTION.json):
   proteome search; they are not recomputed for the subset.
 * Route B: the protein groups of route A's target rows with a non-missing, non-zero PG.MaxLFQ;
   value = median over runs of PG.MaxLFQ (the `gippa convert --abundance-out` rule). A group "A;B" is
-  written as one row per member ID; the FASTA holds each member's sequence from the strain database.
+  written as one row per member ID; a protein in several groups is written once, with the value of
+  the first of its groups in sorted order. The FASTA holds each written protein's sequence from the
+  strain database (a protein missing from it fails the build).
 * Route C: a Cascadia row is kept iff its stripped sequence (I and L equated) occurs as an exact
   substring of a stop-free stretch of the region's six-frame translation (genetic code 11). The
   `file` column is reduced to the mzML base name (the run name is its stem).
@@ -34,12 +44,24 @@ Selection rule (recorded verbatim in SELECTION.json):
   pep = min PEP, intensity = sum of Precursor.Normalised (targets), protein_ids = the union,
   is_decoy = all rows decoy; modified_peptide = the first Modified.Sequence in ProForma
   (`(UniMod:n)` -> `[UNIMOD:n]`). Columns: peptide, modified_peptide, protein_ids, q_value, pep,
-  is_decoy, intensity, run.
+  is_decoy, intensity, run. Numbers keep full precision in every table.
 
-Usage (venv python, PYTHONPATH=<checkout>/src; small, runs in seconds):
+* Scrubbing (R12): the `.ssl` `file` column and every DIA-NN text column holding an absolute
+  path are reduced to base names; SELECTION.json lists the rewritten columns. No other value is
+  changed. The build fails if any bundle file (a cell, parquet metadata or an `expected/` file)
+  still holds a personal or build path.
+* No empty route: the build fails if any route keeps zero rows or zero proteins, or if route A
+  keeps no decoy.
 
-    python scripts/example/build_example.py --start 1965000 --end 2065000 --name nissle_r100k \
-        --out $GIPPA_ROOT/example
+Usage (venv python, PYTHONPATH=<checkout>/src; small, runs in seconds). Defaults: region
+NZ_CP058217.1:1965001-2165000, --name nissle_r200k, --out and --bundle-out $GIPPA_ROOT/example,
+bundle version = the installed GIPPA MAJOR.MINOR. A checkout with uncommitted changes fails
+unless --allow-dirty (the commit is then recorded as <sha>-dirty). --check rebuilds in a
+temporary dir and compares the archive with its validation/example/bundles.tsv row; it writes
+nothing to --out or --bundle-out:
+
+    python scripts/example/build_example.py [--expected DIR] [--bundle-out DIR] [--allow-dirty]
+    python scripts/example/build_example.py --check [--bundles-tsv TSV] [--expected DIR]
 """
 
 from __future__ import annotations
@@ -48,13 +70,21 @@ import argparse
 import csv
 import gzip
 import hashlib
+import importlib.util
 import io
 import json
 import os
 import re
+import shutil
+import subprocess
+import sys
 import tarfile
-from collections.abc import Iterable
+import tempfile
+from collections.abc import Iterable, Mapping
+from importlib.resources import files as package_files
 from pathlib import Path
+from types import ModuleType
+from typing import Any
 
 import pandas as pd
 import pyarrow as pa
@@ -62,6 +92,60 @@ import pyarrow.parquet as pq
 
 CHROM = "NZ_CP058217.1"
 RUNS = ("WT_1", "WT_2", "WT_3")
+START, END, NAME = 1_965_000, 2_165_000, "nissle_r200k"
+HERE = Path(__file__).resolve().parent
+REPO = HERE.parents[1]
+BUNDLES_TSV = REPO / "validation" / "example" / "bundles.tsv"
+_ABS = re.compile(r"^(/|[A-Za-z]:[\\/]|\\\\)")  # POSIX, Windows drive or UNC
+# a personal or cluster path anywhere in a value (R12); URLs do not match (a word char precedes)
+_PERSONAL = re.compile(
+    r"(?<![\w.~-])/(?:home|Users|scratch|farmshare|oak|gpfs|mnt|media|private|tmp|var/folders)/"
+    r"|[A-Za-z]:\\Users\\"
+)
+_GIT_ENV = ("GIT_DIR", "GIT_WORK_TREE", "GIT_INDEX_FILE")
+
+# Static digests for PROVENANCE.md (M3): (label, path under $GIPPA_ROOT or the checkout, sha256).
+# The file's own sha256 is used where it exists; the pinned value otherwise.
+STATIC_DIGESTS: dict[str, tuple[str, str, str]] = {
+    "diann_image": (
+        "diann_2.3.1.sif",
+        "",  # not under $GIPPA_ROOT/pilot; validation/pilot/diann_image.sha256
+        "1946452d56d2fb0f66e05ced473df88e53484e28040f1ecbd83c4a43405a6381",
+    ),
+    "diann_cfg": (
+        "validation/pilot/diann_A2.cfg",
+        "repo:validation/pilot/diann_A2.cfg",
+        "c0d145e87e582e450295517ac393d2c86093587605dd3da66c6f6a923c1f98e4",
+    ),
+    "a2_abundance": (
+        "pilot/pass3/inputs/a2_abundance.tsv.gz",
+        "root:pilot/pass3/inputs/a2_abundance.tsv.gz",
+        "3970344b9c0edc0fcf756b267063a1d1c30c05f6b6bdb6654d973eae1e6f888e",
+    ),
+    "cascadia_weights": (
+        "cascadia_0.0.7.ckpt",
+        "",  # $GIPPA_DB_DIR/cascadia; validation/pilot/a3_assets.tsv
+        "0f5e91413c716b22019699c8cb25655216f9c96d0f2aeb6ec42084bb65652192",
+    ),
+}
+
+
+class BuildError(Exception):
+    """The inputs cannot give a valid bundle (rule 7, a leak, an existing different archive)."""
+
+
+def _load_text() -> ModuleType:
+    """``bundle_text.py`` next to this script (loaded by path: scripts/ is not a package)."""
+    spec = importlib.util.spec_from_file_location(
+        "gippa_example_bundle_text", HERE / "bundle_text.py"
+    )
+    assert spec is not None and spec.loader is not None
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod
+
+
+T = _load_text()
 
 
 def _root() -> Path:
@@ -90,9 +174,13 @@ def sha256(path: Path) -> str:
 
 def read_fasta(path: Path) -> dict[str, str]:
     out: dict[str, str] = {}
-    opener = gzip.open if path.suffix == ".gz" else open
-    name, seq = None, []
-    with opener(path, "rt") as fh:
+    name: str | None = None
+    seq: list[str] = []
+    with (
+        gzip.open(path, "rt", encoding="utf-8")
+        if path.suffix == ".gz"
+        else path.open(encoding="utf-8")
+    ) as fh:
         for line in fh:
             line = line.rstrip("\n")
             if line.startswith(">"):
@@ -112,7 +200,7 @@ def write_fasta(path: Path, records: Iterable[tuple[str, str]], width: int = 60)
         buf.write(f">{name}\n")
         for i in range(0, len(seq), width):
             buf.write(seq[i : i + width] + "\n")
-    data = buf.getvalue().encode()
+    data = buf.getvalue().encode("utf-8")
     if path.suffix == ".gz":
         # mtime=0 and no file name: byte-identical rebuilds
         with (
@@ -152,7 +240,7 @@ def strip_mods(seq: str) -> str:
 
 
 def region_proteins(db_map: Path, start: int, end: int) -> pd.DataFrame:
-    m = pd.read_csv(db_map, sep="\t", dtype={"db_id": str})
+    m = pd.read_csv(db_map, sep="\t", dtype={"db_id": str}, encoding="utf-8")
     inside = (m["contig"] == CHROM) & (m["start"] - 1 >= start) & (m["end"] <= end)
     return m[inside].reset_index(drop=True)
 
@@ -181,16 +269,21 @@ def subset_diann(report: Path, keep_ids: set[str]) -> tuple[pa.Table, dict[str, 
     return sub, counts
 
 
-def abundance(sub: pd.DataFrame) -> pd.DataFrame:
+def abundance(sub: pd.DataFrame) -> tuple[pd.DataFrame, int]:
+    """Route B: one row per protein (first group in sorted order wins); (table, number of
+    proteins that sit in more than one group)."""
     t = sub[(sub["Decoy"] == 0)]
     t = t[t["PG.MaxLFQ"].notna() & (t["PG.MaxLFQ"] > 0)]
     per_run = t.groupby(["Protein.Group", "Run"])["PG.MaxLFQ"].first().reset_index()
     med = per_run.groupby("Protein.Group")["PG.MaxLFQ"].median()
-    rows = []
+    value: dict[str, float] = {}
+    groups: dict[str, int] = {}
     for group, v in sorted(med.items()):
         for pid in str(group).split(";"):
-            rows.append((pid, float(v)))
-    return pd.DataFrame(rows, columns=["protein_id", "maxlfq"])
+            value.setdefault(pid, float(v))
+            groups[pid] = groups.get(pid, 0) + 1
+    frame = pd.DataFrame(list(value.items()), columns=["protein_id", "maxlfq"])
+    return frame, sum(1 for n in groups.values() if n > 1)
 
 
 def generic_table(sub: pd.DataFrame) -> pd.DataFrame:
@@ -224,7 +317,7 @@ def generic_table(sub: pd.DataFrame) -> pd.DataFrame:
 
 
 def subset_ssl(path: Path, frames_il: list[str]) -> tuple[list[dict[str, str]], list[str], int]:
-    with path.open() as fh:
+    with path.open(encoding="utf-8", newline="") as fh:
         reader = csv.DictReader(fh, delimiter="\t")
         header = list(reader.fieldnames or [])
         rows = list(reader)
@@ -239,34 +332,237 @@ def subset_ssl(path: Path, frames_il: list[str]) -> tuple[list[dict[str, str]], 
 
 
 def write_tsv_rows(path: Path, header: list[str], rows: list[dict[str, str]]) -> None:
-    with path.open("w", newline="") as fh:
+    with path.open("w", encoding="utf-8", newline="") as fh:
         w = csv.DictWriter(fh, fieldnames=header, delimiter="\t", lineterminator="\n")
         w.writeheader()
         w.writerows(rows)
 
 
-def deterministic_tar(out: Path, base: Path, members: list[Path]) -> None:
-    with (
-        out.open("wb") as raw,
-        gzip.GzipFile(fileobj=raw, mode="wb", mtime=0, filename="") as gz,
-        tarfile.open(fileobj=gz, mode="w", format=tarfile.PAX_FORMAT) as tar,
-    ):
-        for m in sorted(members):
-            info = tar.gettarinfo(str(m), arcname=str(m.relative_to(base.parent)))
-            info.mtime, info.uid, info.gid, info.uname, info.gname = 0, 0, 0, "", ""
-            info.mode = 0o644
-            with m.open("rb") as fh:
-                tar.addfile(info, fh)
+def write_table(frame: pd.DataFrame, path: Path) -> None:
+    """A TSV with full float precision (``repr``: every value round-trips)."""
+    frame.to_csv(path, sep="\t", index=False, lineterminator="\n", encoding="utf-8")
 
 
-def build(start: int, end: int, name: str, out_root: Path, root: Path) -> dict[str, object]:
+def scrub_paths(t: pa.Table) -> tuple[pa.Table, list[str]]:
+    """Rule 8: every text column holding an absolute path, with each such value reduced to its
+    base name (``/`` or backslash separated); the names of the rewritten columns."""
+    rewritten = []
+    for i, field in enumerate(t.schema):
+        if not (pa.types.is_string(field.type) or pa.types.is_large_string(field.type)):
+            continue
+        vals = t.column(i).to_pylist()
+        if not any(isinstance(v, str) and _ABS.match(v) for v in vals):
+            continue
+        new = [re.split(r"[\\/]", v)[-1] if isinstance(v, str) and _ABS.match(v) else v
+               for v in vals]  # fmt: skip
+        t = t.set_column(i, field, pa.array(new, type=field.type))
+        rewritten.append(field.name)
+    return t, rewritten
+
+
+def _leaks(text: str, literals: Iterable[str]) -> bool:
+    return bool(_PERSONAL.search(text)) or any(lit and lit in text for lit in literals)
+
+
+def personal_paths(top: Path, literals: Iterable[str | Path]) -> list[str]:
+    """R12 leak guard: ``<file> (<where>)`` for every bundle file holding a personal or build
+    path (a parquet cell or metadata entry, a gzipped or plain text file). Values are not
+    reported."""
+    lits = [str(x) for x in literals if str(x) not in ("", "/", ".")]
+    hits: list[str] = []
+    for p in sorted(top.rglob("*")):
+        if not p.is_file():
+            continue
+        rel = p.relative_to(top).as_posix()
+        if p.suffix == ".parquet":
+            t = pq.read_table(p)
+            for name in t.column_names:
+                vals = t.column(name).to_pylist()
+                if any(isinstance(v, str) and _leaks(v, lits) for v in vals):
+                    hits.append(f"{rel} (column {name})")
+            meta = pq.ParquetFile(p).metadata.metadata or {}
+            for k, v in sorted(meta.items()):
+                if k == b"ARROW:schema":
+                    continue
+                if any(_leaks(x.decode("utf-8", "replace"), lits) for x in (k, v)):
+                    hits.append(f"{rel} (parquet metadata {k.decode('utf-8', 'replace')})")
+            continue
+        raw = p.read_bytes()
+        if p.suffix == ".gz":
+            raw = gzip.decompress(raw)
+        if _leaks(raw.decode("utf-8", "replace"), lits):
+            hits.append(rel)
+    return hits
+
+
+def bundle_version(installed: str) -> str:
+    """The bundle version: the ``MAJOR.MINOR`` of the installed GIPPA."""
+    m = re.match(r"(\d+)\.(\d+)", installed)
+    if m is None:
+        raise BuildError(f"cannot read the GIPPA version {installed!r}")
+    return f"{m.group(1)}.{m.group(2)}"
+
+
+def _git(*args: str) -> subprocess.CompletedProcess[str] | None:
+    env = {k: v for k, v in os.environ.items() if k not in _GIT_ENV}
+    try:
+        return subprocess.run(["git", "-C", str(HERE), *args], capture_output=True, text=True,
+                              check=False, timeout=60, env=env, encoding="utf-8")  # fmt: skip
+    except (OSError, subprocess.SubprocessError):
+        return None
+
+
+def git_state() -> tuple[str, bool | None]:
+    """(HEAD sha, dirty) of the checkout holding this script; ("", None) outside a checkout.
+    Dirty = a tracked change or an untracked file other than Python byte code."""
+    head = _git("rev-parse", "HEAD")
+    if head is None or head.returncode != 0:
+        return "", None
+    status = _git("status", "--porcelain")
+    if status is None or status.returncode != 0:
+        return head.stdout.strip(), None
+    changed = [ln for ln in status.stdout.splitlines()
+               if ln.strip() and "__pycache__" not in ln and not ln.endswith(".pyc")]  # fmt: skip
+    return head.stdout.strip(), bool(changed)
+
+
+def build_commit(allow_dirty: bool) -> str:
+    """The commit recorded in the bundle: ``<sha>``, or ``<sha>-dirty`` with ``--allow-dirty``."""
+    sha, dirty = git_state()
+    if dirty is None:
+        if not allow_dirty:
+            raise BuildError(f"{HERE} is not in a git checkout, so it cannot be proven clean "
+                             "(not dirty); pass --allow-dirty to build anyway")  # fmt: skip
+        return f"{sha}-dirty" if sha else "unknown-dirty"
+    if dirty:
+        if not allow_dirty:
+            raise BuildError(
+                "the checkout is dirty (uncommitted changes); commit them or pass "
+                "--allow-dirty (the commit is then recorded as <sha>-dirty)"
+            )
+        return f"{sha}-dirty"
+    return sha
+
+
+def routes() -> list[dict[str, Any]]:
+    """``gippa/data/example_routes.yaml`` (the single source of the route commands)."""
+    import yaml
+
+    text = package_files("gippa.data").joinpath("example_routes.yaml").read_text(encoding="utf-8")
+    out: list[dict[str, Any]] = yaml.safe_load(text)["routes"]
+    return out
+
+
+def route_paths(rs: Iterable[Mapping[str, Any]]) -> set[str]:
+    return {p for r in rs for c in r["commands"] for p in re.findall(r"\{dir\}/(\S+)", str(c))}
+
+
+def _tar_info(name: str, path: Path) -> tarfile.TarInfo:
+    info = tarfile.TarInfo(name)
+    info.mtime, info.uid, info.gid, info.uname, info.gname = 0, 0, 0, "", ""
+    if path.is_dir():
+        info.type, info.mode = tarfile.DIRTYPE, 0o755
+    else:
+        info.size, info.mode = path.stat().st_size, 0o644
+    return info
+
+
+def deterministic_tar(out: Path, base: Path, members: Iterable[Path]) -> None:
+    """``members`` (files or directories, no symlinks) as ``out``, named relative to
+    ``base.parent``: sorted, mtime/uid/gid 0, empty owners, modes 0644/0755, gzip with no file
+    name and mtime 0. Written to ``out.partial`` first, then renamed."""
+    named = sorted((m.relative_to(base.parent).as_posix(), m) for m in members)
+    bad = [n for n, m in named if m.is_symlink() or not (m.is_file() or m.is_dir())]
+    if bad:
+        raise BuildError(f"not a regular file or directory: {bad}")
+    tmp = out.with_name(out.name + ".partial")
+    out.parent.mkdir(parents=True, exist_ok=True)
+    try:
+        with (
+            tmp.open("wb") as raw,
+            gzip.GzipFile(fileobj=raw, mode="wb", mtime=0, filename="") as gz,
+            tarfile.open(fileobj=gz, mode="w", format=tarfile.PAX_FORMAT) as tar,
+        ):
+            for name, m in named:
+                info = _tar_info(name, m)
+                if m.is_dir():
+                    tar.addfile(info)
+                else:
+                    with m.open("rb") as fh:
+                        tar.addfile(info, fh)
+        os.replace(tmp, out)
+    finally:
+        tmp.unlink(missing_ok=True)
+
+
+def checksums(top: Path) -> str:
+    """``sha256sum`` lines of every file under ``top`` but ``CHECKSUMS.sha256``, sorted by path."""
+    rels = sorted(p.relative_to(top).as_posix() for p in top.rglob("*") if p.is_file())
+    return "".join(f"{sha256(top / r)}  {r}\n" for r in rels if r != "CHECKSUMS.sha256")
+
+
+def _check_routes(a: Mapping[str, Any], c: Mapping[str, Mapping[str, int]], n_b: int, n_d: int,
+                  n_prot: int) -> None:  # fmt: skip
+    """Rule 7: no empty route, and route A keeps a decoy."""
+    empty = [k for k, n in (("region proteins", n_prot), ("A rows", a["target_rows_kept"]),
+                            ("A decoys", a["decoy_rows_kept"]), ("B proteins", n_b),
+                            ("D rows", n_d)) if n == 0]  # fmt: skip
+    empty += [f"C rows of {r}" for r, v in c.items() if v["rows_kept"] == 0]
+    if empty:
+        raise BuildError("empty route (rule 7): " + ", ".join(empty))
+
+
+def _rel(path: Path, root: Path) -> str:
+    """A source path relative to ``$GIPPA_ROOT``, lexically (R12: no absolute path and no
+    ``..`` in the bundle). A source that resolves outside ``$GIPPA_ROOT`` (a symlink) fails."""
+    rel = path.relative_to(root).as_posix()
+    if not path.exists():
+        raise BuildError(f"source $GIPPA_ROOT/{rel} does not exist")
+    if not path.resolve().is_relative_to(root.resolve()):
+        raise BuildError(f"source $GIPPA_ROOT/{rel} resolves outside $GIPPA_ROOT (a symlink?); "
+                         "copy the pilot under $GIPPA_ROOT")  # fmt: skip
+    return rel
+
+
+def static_digests(root: Path) -> dict[str, dict[str, str]]:
+    """PROVENANCE.md's tool and table digests: the file's sha256 where it exists under
+    ``$GIPPA_ROOT`` (``root:``) or the checkout (``repo:``), the pinned value otherwise."""
+    out: dict[str, dict[str, str]] = {}
+    for key, (label, where, pinned) in STATIC_DIGESTS.items():
+        digest = pinned
+        if where:
+            kind, rel = where.split(":", 1)
+            p = (root if kind == "root" else REPO) / rel
+            if p.is_file():
+                digest = sha256(p)
+                if digest != pinned:
+                    print(f"build_example: warning: {label} sha256 differs from the pinned value",
+                          file=sys.stderr)  # fmt: skip
+        out[key] = {"label": label, "sha256": digest}
+    return out
+
+
+def build(
+    start: int, end: int, name: str, stage: Path, root: Path, *, version: str, commit: str,
+    expected: Path | None = None, expected_commit: str = "",
+) -> dict[str, Any]:  # fmt: skip
+    """The release tree ``stage/gippa-example-<version>/`` and the per-route sizing tars in
+    ``stage/bundles/`` (``stage`` must not exist); returns the counts and the tree."""
+    import gippa
+
     src = sources(root)
-    out = out_root / name
-    for sub in ("genome", "A_diann", "B_proteins", "C_cascadia", "D_generic", "bundles"):
-        (out / sub).mkdir(parents=True, exist_ok=True)
+    src_rel = {k: _rel(v, root) for k, v in src.items()}  # before anything is read (L2)
+    out = stage / f"gippa-example-{version}"
+    for sub in ("genome", "A_diann", "B_proteins", "C_cascadia", "D_generic"):
+        (out / sub).mkdir(parents=True)
+    (stage / "bundles").mkdir()
 
     genome = read_fasta(src["genome"])
+    if CHROM not in genome:
+        raise BuildError(f"{CHROM} is not in $GIPPA_ROOT/{src_rel['genome']}")
     chrom = genome[CHROM].upper()
+    if end > len(chrom):
+        raise BuildError(f"--end {end} is beyond {CHROM} ({len(chrom)} bp)")
     region_nt = chrom[start:end]
     contig = f"nissle1917_{CHROM.replace('.', '_')}_{start}_{end}"
     g_path = out / "genome" / f"{name}.fna.gz"
@@ -277,15 +573,20 @@ def build(start: int, end: int, name: str, out_root: Path, root: Path) -> dict[s
 
     # Route A
     sub_t, a_counts = subset_diann(src["diann_report"], keep_ids)
+    sub_t, a_scrubbed = scrub_paths(sub_t)
     a_path = out / "A_diann" / "report.parquet"
     pq.write_table(sub_t, a_path, compression="zstd")
     sub = sub_t.to_pandas()
     db = read_fasta(src["strain_db"])
 
     # Route B
-    ab = abundance(sub)
+    ab, n_shared = abundance(sub)
+    missing = [pid for pid in ab["protein_id"] if pid not in db]
+    if missing:
+        raise BuildError(f"route B proteins missing from $GIPPA_ROOT/{src_rel['strain_db']}: "
+                         + ", ".join(missing))  # fmt: skip
     ab_path = out / "B_proteins" / "abundance.tsv"
-    ab.to_csv(ab_path, sep="\t", index=False, lineterminator="\n", float_format="%.6g")
+    write_table(ab, ab_path)
     f_path = out / "B_proteins" / "proteins.faa"
     write_fasta(f_path, [(pid, db[pid]) for pid in ab["protein_id"]])
 
@@ -300,20 +601,48 @@ def build(start: int, end: int, name: str, out_root: Path, root: Path) -> dict[s
     # Route D
     gen = generic_table(sub)
     d_path = out / "D_generic" / "peptides.tsv"
-    gen.to_csv(d_path, sep="\t", index=False, lineterminator="\n", float_format="%.6g")
+    write_table(gen, d_path)
+    _check_routes(a_counts, c_counts, len(ab), len(gen), len(prot))
 
     targets = sub[sub["Decoy"] == 0]
-    sel: dict[str, object] = {
-        "name": name,
-        "region": {
-            "contig": CHROM,
-            "start_0based": start,
-            "end_exclusive": end,
-            "length_bp": end - start,
-            "one_based_closed": f"{CHROM}:{start + 1}-{end}",
-            "output_contig_id": contig,
-            "topology": "linear (no tag)",
+    region = {
+        "contig": CHROM,
+        "start_0based": start,
+        "end_exclusive": end,
+        "length_bp": end - start,
+        "one_based_closed": f"{CHROM}:{start + 1}-{end}",
+        "output_contig_id": contig,
+        "topology": "linear (no tag)",
+    }
+    counts: dict[str, Any] = {
+        "region_proteins": len(prot),
+        "region_proteins_cds": int((prot["kind"] == "cds").sum()),
+        "region_proteins_sorf": int((prot["kind"] == "sorf").sum()),
+        "A": {
+            **a_counts,
+            "distinct_target_peptides": int(targets["Stripped.Sequence"].nunique()),
+            "distinct_target_peptides_q01": int(
+                targets.loc[targets["Global.Q.Value"] <= 0.01, "Stripped.Sequence"].nunique()
+            ),
+            "proteins_with_rows": len(
+                {p for x in targets["Protein.Ids"] for p in str(x).split(";")}
+            ),
+            "rows_per_run": {k: int(v) for k, v in sub["Run"].value_counts().sort_index().items()},
         },
+        "B": {
+            "abundance_rows": len(ab),
+            "fasta_records": len(ab),
+            "proteins_in_several_groups": n_shared,
+        },
+        "C": c_counts,
+        "D": {"rows": len(gen), "decoy_rows": int((gen["is_decoy"] == "true").sum())},
+    }
+    rewritten = {"A_diann/report.parquet": a_scrubbed, "C_cascadia/*.ssl": ["file"]}
+    rewritten = {k: v for k, v in rewritten.items() if v}
+    src_meta = {k: {"path": src_rel[k], "sha256": sha256(v)} for k, v in src.items()}
+    sel: dict[str, Any] = {
+        "name": name,
+        "region": region,
         "rule": __doc__.split("Selection rule (recorded verbatim in SELECTION.json):")[1]
         .split("Usage")[0]
         .strip(),
@@ -322,70 +651,206 @@ def build(start: int, end: int, name: str, out_root: Path, root: Path) -> dict[s
             "whole-proteome A2 search (4,685 strain proteins + contaminants, three runs); Cascadia "
             "scores are per spectrum. Nothing was re-searched or re-scored for the subset."
         ),
-        "counts": {
-            "region_proteins": len(prot),
-            "region_proteins_cds": int((prot["kind"] == "cds").sum()),
-            "region_proteins_sorf": int((prot["kind"] == "sorf").sum()),
-            "A": {
-                **a_counts,
-                "distinct_target_peptides": int(targets["Stripped.Sequence"].nunique()),
-                "distinct_target_peptides_q01": int(
-                    targets.loc[targets["Global.Q.Value"] <= 0.01, "Stripped.Sequence"].nunique()
-                ),
-                "proteins_with_rows": len(
-                    {p for x in targets["Protein.Ids"] for p in str(x).split(";")}
-                ),
-                "rows_per_run": {
-                    k: int(v) for k, v in sub["Run"].value_counts().sort_index().items()
-                },
-            },
-            "B": {"abundance_rows": len(ab), "fasta_records": len(ab)},
-            "C": c_counts,
-            "D": {
-                "rows": len(gen),
-                "decoy_rows": int((gen["is_decoy"] == "true").sum()),
-            },
-        },
-        "sources": {k: {"path": str(v), "sha256": sha256(v)} for k, v in src.items()},
+        "counts": counts,
+        "rewritten_columns": rewritten,
+        "sources": src_meta,
+        "sources_relative_to": "$GIPPA_ROOT",
     }
-    routes = {
+    route_files = {
         "A_diann": [a_path],
         "B_proteins": [f_path, ab_path],
         "C_cascadia": [out / "C_cascadia" / f"{r}.ssl" for r in RUNS],
         "D_generic": [d_path],
     }
-    files = [g_path, *(p for ps in routes.values() for p in ps)]
+    data_files = [g_path, *(p for ps in route_files.values() for p in ps)]
     sel["outputs"] = {
-        str(p.relative_to(out)): {"bytes": p.stat().st_size, "sha256": sha256(p)} for p in files
+        p.relative_to(out).as_posix(): {"bytes": p.stat().st_size, "sha256": sha256(p)}
+        for p in data_files
     }
     sel_path = out / "SELECTION.json"
-    sel_path.write_text(json.dumps(sel, indent=2) + "\n")
+    sel_path.write_text(json.dumps(sel, indent=2) + "\n", encoding="utf-8")
+
+    rs = routes()
+    absent = sorted(r for r in route_paths(rs) if not (out / r).is_file())
+    if absent:
+        print(f"build_example: warning: example_routes.yaml names files this build did not write "
+              f"(--name {name}?): {absent}", file=sys.stderr)  # fmt: skip
+    if expected is not None:
+        for p in sorted(expected.rglob("*")):
+            if p.is_file() and not p.is_symlink():
+                dest = out / "expected" / p.relative_to(expected)
+                dest.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copyfile(p, dest)
+    installed = str(gippa.__version__)
+    exp_note = (f"from {expected_commit or 'an unrecorded commit'}" if expected is not None
+                else "not included in this build")  # fmt: skip
+    (out / "README.md").write_text(T.readme(version, region["one_based_closed"],
+                                            region["length_bp"], rs, expected is not None),
+                                   encoding="utf-8")  # fmt: skip
+    (out / "PROVENANCE.md").write_text(T.provenance(
+        version, region, src_meta, counts,
+        {"commit": commit, "gippa_version": installed, "expected": exp_note}, rewritten,
+        static_digests(root),
+    ), encoding="utf-8")  # fmt: skip
+    (out / "LICENSE-DATA.md").write_text(T.LICENSE_DATA, encoding="utf-8")
+    meta = {
+        "bundle_version": version,
+        "gippa_version": installed,
+        "build_commit": commit,
+        "expected_commit": expected_commit if expected is not None else None,
+        "region": region["one_based_closed"],
+        "region_0based_half_open": [CHROM, start, end],
+        "name": name,
+        "counts": counts,
+        "tools": T.TOOLS,
+        "routes": [r["id"] for r in rs],
+    }
+    (out / "bundle.json").write_text(json.dumps(meta, indent=2, sort_keys=True) + "\n",
+                                     encoding="utf-8")  # fmt: skip
+    (out / "CHECKSUMS.sha256").write_text(checksums(out), encoding="utf-8")
+
+    leaks = personal_paths(out, [root, root.resolve(), Path.home(), stage.resolve()])
+    if leaks:
+        raise BuildError("personal or build path in the bundle (R12): " + "; ".join(leaks))
+
     sizes: dict[str, int] = {}
-    for route, ps in routes.items():
-        tar = out / "bundles" / f"{name}_{route}.tar.gz"
+    for route, ps in route_files.items():
+        tar = stage / "bundles" / f"{name}_{route}.tar.gz"
         deterministic_tar(tar, out, [g_path, sel_path, *ps])
         sizes[route] = tar.stat().st_size
-    allp = out / "bundles" / f"{name}_all.tar.gz"
-    deterministic_tar(allp, out, [sel_path, *files])
-    sizes["all"] = allp.stat().st_size
-    (out / "bundles" / "sizes.json").write_text(json.dumps(sizes, indent=2) + "\n")
-    return {"selection": sel["counts"], "bundle_bytes": sizes}
+    (stage / "bundles" / "sizes.json").write_text(json.dumps(sizes, indent=2) + "\n",
+                                                  encoding="utf-8")  # fmt: skip
+    return {"selection": counts, "route_bytes": sizes, "tree": out}
+
+
+def pack(top: Path, out: Path) -> tuple[str, int, int]:
+    """``top`` as the archive ``out``; (sha256, size, file count)."""
+    members = [top, *top.rglob("*")]
+    deterministic_tar(out, top, members)
+    return sha256(out), out.stat().st_size, sum(1 for m in members if m.is_file())
+
+
+def release(top: Path, archive: Path, force: bool) -> tuple[str, int, int]:
+    """Pack ``top`` as ``archive`` (left read-only); (sha256, size, file count). An existing
+    archive with other content is kept unless ``force``."""
+    tmp = archive.with_name(archive.name + ".new")
+    try:
+        digest, size, n_files = pack(top, tmp)
+        if archive.exists() and not force and sha256(archive) != digest:
+            raise BuildError(f"{archive} exists with another sha256; remove it or pass --force")
+        os.replace(tmp, archive)
+    finally:
+        tmp.unlink(missing_ok=True)
+    archive.chmod(0o444)
+    return digest, size, n_files
+
+
+def install(stage: Path, work: Path, version: str) -> None:
+    """Move the staged tree and sizing tars to ``work/`` (after the release succeeded)."""
+    work.mkdir(parents=True, exist_ok=True)
+    for part in (f"gippa-example-{version}", "bundles"):
+        dest = work / part
+        if dest.exists():
+            old = work / f"{part}.partial-old-{os.getpid()}"
+            os.replace(dest, old)
+            shutil.rmtree(old)
+        os.replace(stage / part, dest)
+
+
+def recorded_row(tsv: Path, version: str) -> dict[str, str]:
+    """The ``bundles.tsv`` row of ``version``."""
+    if not tsv.is_file():
+        raise BuildError(f"--bundles-tsv {tsv}: no such file")
+    with tsv.open(encoding="utf-8", newline="") as fh:
+        rows = [r for r in csv.DictReader(fh, delimiter="\t") if r.get("version") == version]
+    if len(rows) != 1:
+        raise BuildError(f"{tsv}: {len(rows)} rows for version {version}, need exactly 1")
+    if not rows[0].get("sha256"):
+        raise BuildError(f"{tsv}: the {version} row has no sha256")
+    return rows[0]
+
+
+def check(a: argparse.Namespace, root: Path, version: str, commit: str) -> int:
+    """``--check``: rebuild in a temporary dir and compare with the ``bundles.tsv`` row."""
+    row = recorded_row(a.bundles_tsv or BUNDLES_TSV, version)
+    want = row["sha256"].removeprefix("sha256:")
+    with tempfile.TemporaryDirectory(prefix="gippa-example-check-") as tmp:
+        stage = Path(tmp) / "stage"
+        res = build(a.start, a.end, a.name, stage, root, version=version, commit=commit,
+                    expected=a.expected, expected_commit=a.expected_commit)  # fmt: skip
+        digest, size, _ = pack(res["tree"], Path(tmp) / T.archive_name(version))
+    if row.get("build_commit") and row["build_commit"] != commit:
+        print(f"build_example: note: bundles.tsv records build_commit {row['build_commit']}, "
+              f"this checkout is {commit}", file=sys.stderr)  # fmt: skip
+    problems = []
+    if digest != want:
+        problems.append(f"sha256 mismatch: rebuilt {digest}, bundles.tsv {want}")
+    if row.get("size_bytes") and row["size_bytes"] != str(size):
+        problems.append(f"size mismatch: rebuilt {size}, bundles.tsv {row['size_bytes']}")
+    if problems:
+        print("build_example: --check failed: " + "; ".join(problems), file=sys.stderr)
+        return 1
+    print(f"--check ok: gippa-example-{version} sha256 {digest}, {size} bytes")
+    return 0
 
 
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
-    ap.add_argument(
-        "--start", type=int, required=True, help="0-based region start on NZ_CP058217.1"
-    )
-    ap.add_argument("--end", type=int, required=True, help="exclusive region end")
-    ap.add_argument("--name", required=True)
-    ap.add_argument("--out", type=Path, default=None, help="default $GIPPA_ROOT/example")
+    ap.add_argument("--start", type=int, default=START,
+                    help=f"0-based region start on {CHROM} (default {START})")  # fmt: skip
+    ap.add_argument("--end", type=int, default=END, help=f"exclusive region end (default {END})")
+    ap.add_argument("--name", default=NAME, help=f"default {NAME}")
+    ap.add_argument("--out", type=Path, default=None, help="work dir; default $GIPPA_ROOT/example")
+    ap.add_argument("--bundle-out", type=Path, default=None,
+                    help="where the archive goes; default $GIPPA_ROOT/example")  # fmt: skip
+    ap.add_argument("--expected", type=Path, default=None,
+                    help="copy DIR/* into the bundle's expected/ (none without it)")  # fmt: skip
+    ap.add_argument("--expected-commit", default="", help="the commit that produced --expected")
+    ap.add_argument("--force", action="store_true", help="replace an archive with another sha256")
+    ap.add_argument("--allow-dirty", action="store_true",
+                    help="build from a dirty checkout (records <sha>-dirty)")  # fmt: skip
+    ap.add_argument("--check", action="store_true",
+                    help="rebuild in a temporary dir and compare with the bundles.tsv row; "
+                         "writes nothing to --out or --bundle-out")  # fmt: skip
+    ap.add_argument("--bundles-tsv", type=Path, default=None,
+                    help="--check reads it (default validation/example/bundles.tsv)")  # fmt: skip
     a = ap.parse_args(argv)
     if not 0 <= a.start < a.end:
         ap.error("need 0 <= start < end")
+    if a.expected is not None and not a.expected.is_dir():
+        ap.error(f"--expected {a.expected}: not a directory")
+    import gippa
+
     root = _root()
-    res = build(a.start, a.end, a.name, a.out or root / "example", root)
-    print(json.dumps(res, indent=2))
+    stage: Path | None = None
+    try:
+        version = bundle_version(str(gippa.__version__))
+        commit = build_commit(a.allow_dirty)
+        if a.check:
+            return check(a, root, version, commit)
+        out_root = a.out or root / "example"
+        work = out_root / a.name
+        out_root.mkdir(parents=True, exist_ok=True)
+        stage = Path(tempfile.mkdtemp(prefix=f".{a.name}.partial-", dir=out_root))
+        shutil.rmtree(stage)  # build() creates it
+        res = build(a.start, a.end, a.name, stage, root, version=version, commit=commit,
+                    expected=a.expected, expected_commit=a.expected_commit)  # fmt: skip
+        archive = (a.bundle_out or root / "example") / T.archive_name(version)
+        digest, size, n_files = release(res["tree"], archive, a.force)
+        install(stage, work, version)
+    except BuildError as exc:
+        print(f"build_example: {exc}", file=sys.stderr)
+        return 1
+    finally:
+        if stage is not None and stage.exists():
+            shutil.rmtree(stage)
+    job = os.environ.get("SLURM_JOB_ID", "")
+    print(json.dumps({"selection": res["selection"], "route_bytes": res["route_bytes"]}, indent=2))
+    print(f"\narchive: {archive}\nsha256: {digest}\nsize_bytes: {size}\nfiles: {n_files}")
+    print("\n# db_sources.yaml row\n" + T.db_sources_row(version, digest, size, job))
+    print("\n# validation/example/bundles.tsv row\n" + "\t".join(T.TSV_COLUMNS))
+    print(T.bundles_tsv_row(version, digest, size, commit, job,
+                            a.expected_commit if a.expected is not None else ""))  # fmt: skip
     return 0
 
 
