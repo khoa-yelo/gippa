@@ -260,6 +260,7 @@ def test_example4_genes(tables_md: str) -> None:
     assert _rows(body)[0][0] == "locus_tag"
 
 
+# §9.4 scope Gene; detectability_constant is a run flag since 1.1 (ADR-0075)
 GENE_FLAGS_94 = [
     "partial",
     "crosses_origin",
@@ -274,7 +275,6 @@ GENE_FLAGS_94 = [
     "nterm_extension_evidence",
     "cai_reference",
     "top3_lt3",
-    "detectability_constant",
     "abundance_not_explained_by_sequence",
 ]
 

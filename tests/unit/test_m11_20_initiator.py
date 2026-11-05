@@ -556,7 +556,7 @@ def test_peptide_hits_schema_accepts_initiator_m_and_version_bumps() -> None:
     assert re.fullmatch(pattern, "initiator_m;origin_spanning")
     assert re.fullmatch(pattern, "initiator_m")
     major, minor = (int(x) for x in schemas.OUTPUT_SCHEMA_VERSION.split("."))
-    assert (major, minor) == (1, 2)  # one additive minor bump over 1.1 (M11-16)
+    assert (major, minor) == (1, 3)  # 1.2 added initiator_m; 1.3 is the 1.1 outputs revision
     pkg = json.loads((Path(schemas.__file__).parent / "datapackage.json").read_text())
     assert pkg["output_schema_version"] == schemas.OUTPUT_SCHEMA_VERSION
 

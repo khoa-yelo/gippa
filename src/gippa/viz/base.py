@@ -21,7 +21,7 @@ import numpy as np
 import pandas as pd
 from matplotlib.figure import Figure
 
-from gippa.viz.style import new_figure
+from gippa.viz.style import fmt_pct, new_figure
 
 if TYPE_CHECKING:
     from gippa.config import GippaConfig
@@ -40,6 +40,8 @@ class Instance:
     data: pd.DataFrame
     title: str
     coords: tuple[str, ...] = ()
+    #: an empty-state figure (``empty_state``): no data to draw
+    empty: bool = False
 
 
 @dataclass(frozen=True)
@@ -152,7 +154,7 @@ def empty_state(
     ax.set_axis_off()
     ax.text(0.5, 0.5, message, ha="center", va="center", transform=ax.transAxes, color="#555555")
     data = pd.DataFrame({c: pd.Series([], dtype=object) for c in columns}, columns=list(columns))
-    return Instance(suffix=None, figure=fig, data=data, title=message)
+    return Instance(suffix=None, figure=fig, data=data, title=message, empty=True)
 
 
 def binned(
@@ -180,14 +182,8 @@ def bin_edges(length: int, n: int) -> np.ndarray:
     return (np.arange(n + 1, dtype=np.int64) * np.int64(length)) // np.int64(n)
 
 
-def title_pct(n: int, d: int) -> str:
-    """``n / d`` as a whole percent for titles (``"12 %"``); ``d == 0`` -> ``"NA"``."""
-    if d == 0:
-        return "NA"
-    pct = int(100 * n / d + 0.5)
-    if 0 < n < d:  # never round a partial share to 0 % or 100 %
-        pct = min(max(pct, 1), 99)
-    return f"{pct} %"
+#: the 1.0 name of ``style.fmt_pct``
+title_pct = fmt_pct
 
 
 def plural(n: int, word: str) -> str:

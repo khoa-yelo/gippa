@@ -64,8 +64,8 @@ nextflow_pipeline {
             assert cin.any { it[0] == 'tier_summary' && it[1].endsWith('tier.parquet') } : "tier_summary not wired (M4-20 decision 3, MVP-02): ${cin}"
             assert cin.findAll { new File(it[1]).name == 'genes.parquet' }.size() == 2 : "gene_table and C2 genes both expected: ${cin}"
 
-            ['genetable/genes_pre.parquet', 'genetable/genes.parquet',
-             'genetable/detection_summary_parts/detectability.parquet', 'tables/regions_stats.tsv',
+            ['intermediate/genetable/genes_pre.parquet', 'intermediate/genetable/genes.parquet',
+             'intermediate/genetable/detection_summary_parts/detectability.parquet', 'tables/regions_stats.tsv',
              'tables/detection_summary.tsv', 'tables/sensitivity.tsv'].each { f ->
                 assert new File("${outputDir}/${f}").isFile() : "${f} not published"
             }
@@ -122,7 +122,7 @@ nextflow_pipeline {
                 }
             }
 
-            ['genetable/genes.parquet', 'tables/regions_stats.tsv', 'tables/detection_summary.tsv',
+            ['intermediate/genetable/genes.parquet', 'tables/regions_stats.tsv', 'tables/detection_summary.tsv',
              'tables/sensitivity.tsv'].each { f ->
                 assert new File("${outputDir}/${f}").isFile() : "${f} not published"
             }
@@ -186,7 +186,9 @@ nextflow_pipeline {
             ['gene_table', 'detectability', 'context_stats', 'sensitivity'].each { s ->
                 assert H.stepCount(workflow.trace, s) == 0 : "${s} ran without peptides: ${H.names(workflow.trace)}"
             }
-            assert !new File("${outputDir}/genetable").exists() : "genetable/ published without peptides"
+            ['genetable', 'intermediate/genetable'].each { d ->
+                assert !new File("${outputDir}/${d}").exists() : "${d}/ published without peptides"
+            }
             assert !new File("${outputDir}/tables").exists() : "tables/ published without peptides"
         }
     }

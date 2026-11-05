@@ -41,6 +41,8 @@ RUN_FLAGS: frozenset[str] = frozenset({
     "no_eligible_genes", "p_detect_clipped", "null_degenerate", "tu_recal_reduced",
     # beyond §9.4, accepted by Khoa (ADR-0041)
     "input_prefiltered", "cai_reference_missing", "no_detection_limit_model", "uncalibrated:",
+    # moved from the Gene to the Run row in 1.1 (ADR-0075)
+    "detectability_constant",
     # M12-04 PR 9 (ADR-0075)
     "foreign_protein_ids",
 })  # fmt: skip

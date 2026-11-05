@@ -164,8 +164,9 @@ def run_gippa(res: Any, peptides: Path, out: Path, seed: int, sets: Sequence[str
     if r.exit_code != 0:
         raise RuntimeError(f"gippa run exit {r.exit_code}: {r.output[-3000:]}")
     side_path = out / "work" / "novel_class_fdr"
-    if not side_path.exists():
-        side_path = out / "novel" / "novel_class_fdr.parquet"
+    for rel in ("intermediate/novel", "novel"):  # 1.1 (M12-04 PR 12), then 1.0
+        if not side_path.exists():
+            side_path = out / rel / "novel_class_fdr.parquet"
     if not side_path.exists():
         raise FileNotFoundError(f"no novel_class_fdr side table under {out} (M7-11b, #256)")
     return NovelRun(out, _tsv(out / "tables" / "novel_orfs.tsv"), pd.read_parquet(side_path))

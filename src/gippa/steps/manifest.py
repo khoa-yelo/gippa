@@ -18,6 +18,7 @@ import gippa
 from gippa.config import GippaConfig
 from gippa.data import calibration
 from gippa.io import manifest_sources as ms
+from gippa.io.run_view import out_file
 from gippa.manifest import ManifestSources, build_manifest, provenance_core
 from gippa.runner.local import TAIL_STEPS
 from gippa.runner.nextflow import _step_name, _task_dir
@@ -107,8 +108,7 @@ def _content_files(outdir: Path) -> dict[str, Any]:
     """The published 03c sources (``gippa.runner.local.publish`` names; Nextflow publishDir)."""
     return {
         "sensitivity": ms.read_sensitivity(outdir / "tables" / "sensitivity.tsv"),
-        "island_diagnostics": ms.read_island_diagnostics(
-            outdir / "context" / "island_diagnostics.parquet"),
+        "island_diagnostics": ms.read_island_diagnostics(out_file(outdir, "island_diagnostics")),
         "detection_tier": ms.read_detection_tier(outdir / "tables"),
     }  # fmt: skip
 

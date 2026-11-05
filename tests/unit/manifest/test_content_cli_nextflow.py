@@ -7,8 +7,8 @@ The fake ``nextflow`` (as ``test_manifest_cli_nextflow.py``) exits ``$FAKE_NF_RC
 ``$FAKE_NF_TRACE`` to the ``-with-trace`` path, publishes ``$FAKE_NF_STEP_EVENTS`` as
 ``OUT/logs/steps/context_stats.events.jsonl`` (what the CONTEXT_STATS ``GIPPA_STEP`` task
 publishes; ``append_step_events`` copies it into ``OUT/logs/events.jsonl``) and copies the tree
-``$FAKE_NF_FILES`` into ``OUT`` (the published ``context/island_diagnostics.parquet`` and
-``tables/sensitivity.tsv``, the ``GIPPA_STEP`` publishDir names). The step events file is the
+``$FAKE_NF_FILES`` into ``OUT`` (``intermediate/context/island_diagnostics.parquet``, M12-04 PR 12,
+and ``tables/sensitivity.tsv``, the ``GIPPA_STEP`` publishDir names). The step events file is the
 lines a fixed ``gippa _step context_stats`` would write: the real ``multiple_oric`` event,
 captured through ``gippa.cli._record_step_events``, plus an ``operons.missed_operons`` line with
 the ``-Infinity`` token a pre-fix task wrote, and a ``mapping.search_db_resolved`` line. Nothing
@@ -136,7 +136,7 @@ def nf(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> dict[str, Path]:
     proteins.write_text("".join(f">prot{i}\nM{''.join(rng.choice(aa) for _ in range(150))}\n"
                                 for i in range(3)))  # fmt: skip
     files = tmp_path / "published"
-    _write_diag(files / "context" / "island_diagnostics.parquet")
+    _write_diag(files / "intermediate" / "context" / "island_diagnostics.parquet")
     (files / "tables").mkdir(parents=True)
     (files / "tables" / "sensitivity.tsv").write_text(SENS_TSV)
     task = tmp_path / "tasks" / "cs"
@@ -221,12 +221,35 @@ def test_oriter_event_in_run_events_and_manifest(ok: Path) -> None:
     assert o == ori[0]["data"]
 
 
-def test_context_replicons_equal_the_published_parquet(ok: Path) -> None:
-    p = ok / "context" / "island_diagnostics.parquet"
-    assert p.is_file()
-    want = [{k: (None if isinstance(v, float) and math.isnan(v) else v) for k, v in r.items()}
+def _replicons(p: Path) -> list[dict[str, Any]]:
+    return [{k: (None if isinstance(v, float) and math.isnan(v) else v) for k, v in r.items()}
             for r in pq.read_table(p).to_pylist()]  # fmt: skip
+
+
+def test_context_replicons_equal_the_published_parquet(ok: Path) -> None:
+    p = ok / "intermediate" / "context" / "island_diagnostics.parquet"
+    assert p.is_file()
+    assert not (ok / "context").exists()
+    want = _replicons(p)
+    assert want
     assert _manifest(ok)["context"]["replicons"] == want
+
+
+def test_context_replicons_from_a_1_0_location(nf: dict[str, Path], tmp_path: Path) -> None:
+    """M12-04 PR 12: a tree with the diagnostics at the 1.0 path ``context/`` (the ``_FALLBACK``
+    of ``island_diagnostics``) still fills ``context.replicons``."""
+    files = nf["files"]
+    old = files / "context"
+    (files / "intermediate" / "context").rename(old)
+    (files / "intermediate").rmdir()
+    out = tmp_path / "OUT"
+    code, log = _run(nf, out)
+    assert code == ExitCode.SUCCESS, log
+    p = out / "context" / "island_diagnostics.parquet"
+    assert p.is_file() and not (out / "intermediate" / "context").exists()
+    want = _replicons(p)
+    assert want
+    assert _manifest(out)["context"]["replicons"] == want
 
 
 def test_operons_minus_infinity_from_a_task_becomes_null(ok: Path) -> None:

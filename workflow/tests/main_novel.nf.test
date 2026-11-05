@@ -61,7 +61,7 @@ nextflow_pipeline {
             assert H.count(workflow.trace, 'PROMOTECH') == 1 : "first-round Promotech ran more than once: ${ran()}"
 
             ['tables/novel_orfs.tsv', 'tables/novel_orfs.gff3', 'tables/novel_orfs.faa',
-             'tables/annotation_patch.gff3', 'genetable/genes.parquet'].each { f ->
+             'tables/annotation_patch.gff3', 'intermediate/genetable/genes.parquet'].each { f ->
                 assert new File("${outputDir}/${f}").isFile() : "${f} not published"
             }
         }

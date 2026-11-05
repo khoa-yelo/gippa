@@ -1,9 +1,10 @@
 """``genes.tsv`` assembly: one row per C2 gene (docs/specs/M4-15-gene-table-assembly.md).
 
-GIPPA_SPEC.md §7.3 (one gene table), §9.3 column groups in order, §9.4 Gene flags (closed
-vocabulary), §6.5 sort order. Inputs are the M4-06 contract tables (``M4Inputs``) and the outputs of
-M4-10 (covariates), M4-11 (evidence), M4-12 (detection), M4-13 (detectability, optional: ``None``
-leaves ``p_detect`` NA) and M4-14 (abundance). The frame holds the internal representation:
+GIPPA_SPEC.md §7.3 (one gene table), §9.3 columns, §9.4 Gene flags (closed vocabulary), §6.5 sort
+order; the column groups follow ADR-0075 (docs/specs/M12-04-outputs-revision.md § 5.2). Inputs
+are the M4-06 contract tables (``M4Inputs``) and the outputs of M4-10 (covariates), M4-11
+(evidence), M4-12 (detection), M4-13 (detectability, optional: ``None`` leaves ``p_detect`` NA)
+and M4-14 (abundance). The frame holds the internal representation:
 0-based half-open coordinates, Python lists in list columns, ``None``/NaN/``<NA>`` for missing;
 ``gippa.io.genes_tsv`` converts it for the TSV. Lead decisions 4, 5, 9: ``gc_local_dev`` copied from
 C6 when present; ``cog_category`` from the COG 2020 table (``cog_def``, else NA); several COG IDs ->
@@ -44,30 +45,32 @@ _LAYER_VALUES = (
     "cai", "tai", "enc", "fop", "gc3", "cpb", "at_2_10", "rare_codons_2_10",
 )  # fmt: skip
 _PROTEIN = ("mw_da", "pi", "gravy", "tm_segments", "n_observable_peptides")
-_DETECTION = ("detected", "detection_tier", "detection_status", "gene_q_value")
+_DETECTION = ("detected", "detection_status", "detection_tier", "gene_q_value")
 _EVIDENCE = (
     "detected_2pep", "n_peptides_unique", "n_peptides_multi_identical", "n_peptides_shared",
     "n_peptides_tolerant", "coverage_frac", "best_peptide_q",
 )  # fmt: skip
 _ABUNDANCE = (
-    "abundance_raw", "abundance_log2", "abundance_imputed", "imputation_policy", "abundance_type",
-    "abundance_scale", "top3_log2",
+    "abundance_log2", "abundance_raw", "top3_log2", "abundance_imputed", "abundance_type",
+    "abundance_scale", "imputation_policy",
 )  # fmt: skip
 _FUNCTION = ("cog_id", "cog_category", "go_terms", "kegg_ko", "ec")
 
-#: §9.3 ``tables/genes.tsv`` columns in order (identity, context, regulatory and sequence features,
-#: evidence, abundance, function, flags).
+#: ``tables/genes.tsv`` columns in order, in the groups identity, detection, abundance, function,
+#: context, features, flags (ADR-0075; docs/specs/M12-04-outputs-revision.md § 5.2). The writer,
+#: the reader, the Parquet intermediates and ``genes.schema.json`` all use this order.
 GENES_COLUMNS: tuple[str, ...] = (
-    *_IDENTITY, *_CONTEXT, *_LAYER_VALUES, *_PROTEIN, *_DETECTION, *_EVIDENCE, "p_detect",
-    *_ABUNDANCE, *_FUNCTION, "annotation_source", "flags",
+    *_IDENTITY, *_DETECTION, *_EVIDENCE, "p_detect", *_ABUNDANCE, *_FUNCTION, "annotation_source",
+    *_CONTEXT, *_LAYER_VALUES, *_PROTEIN, "flags",
 )  # fmt: skip
 
-#: §9.4 flags of scope Gene, in vocabulary order.
+#: §9.4 flags of scope Gene, in vocabulary order. ``detectability_constant`` is a run flag since
+#: 1.1 (ADR-0075; ``gippa.manifest.RUN_FLAGS``).
 GENE_FLAGS: tuple[str, ...] = (
     "partial", "crosses_origin", "pseudogene", "multi_identical", "shared_evidence",
     "two_proteins_one_gene", "cross_strain_protein", "imputed_abundance", "tolerant_evidence",
     "strain_difference", "nterm_extension_evidence", "cai_reference", "top3_lt3",
-    "detectability_constant", "abundance_not_explained_by_sequence",
+    "abundance_not_explained_by_sequence",
 )  # fmt: skip
 _FLAG_RANK = {f: i for i, f in enumerate(GENE_FLAGS)}
 
@@ -205,8 +208,8 @@ def assemble_genes(
     """The §9.3 gene table (columns ``GENES_COLUMNS``), one row per C2 gene, §6.5-sorted.
 
     Inputs are matched by ``locus_tag`` (their row order does not matter). ``detectability`` None
-    leaves ``p_detect`` NA and sets no ``detectability_constant`` flag; with ``constant`` set, the
-    flag goes on eligible (non-partial) genes.
+    leaves ``p_detect`` NA. A constant model sets no row flag: ``detectability_constant`` is a run
+    flag (ADR-0075), logged by the ``detectability`` step.
     """
     genes = inputs.genes.iloc[_sort_order(inputs.genes, inputs.replicons["contig"].astype(str))]
     tags = pd.Index(genes["locus_tag"].astype(str).to_numpy())
@@ -241,8 +244,6 @@ def assemble_genes(
                                           dtype=object)  # fmt: skip
     ev_flags = _by_tag(evidence, tags, ["evidence_flags"])["evidence_flags"]
     ab_flags = _by_tag(abundance.table, tags, ["abundance_flags"])["abundance_flags"]
-    constant = detectability is not None and detectability.constant
-    partial = g["partial"].astype(bool)
     cols["flags"] = pd.Series(
         [
             gene_flags(
@@ -250,10 +251,9 @@ def assemble_genes(
                     "layers": _as_list(a),
                     "evidence": _as_list(b),
                     "abundance": _as_list(c),
-                    "detectability": ["detectability_constant"] if constant and not pa else [],
                 }
             )
-            for a, b, c, pa in zip(lay["flags"], ev_flags, ab_flags, partial, strict=True)
+            for a, b, c in zip(lay["flags"], ev_flags, ab_flags, strict=True)
         ],
         index=tags,
         dtype=object,
