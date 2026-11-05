@@ -1,32 +1,32 @@
 section	group_type	group	metric	value	ci_low	ci_high	n	flags
-tier	q_threshold	0.001	fdr	1.1638394638519894e-05	NA	NA	NA	
-tier	q_threshold	0.001	fdr_2pep	2.909503048010043e-09	NA	NA	NA	
-tier	q_threshold	0.001	fp	0.000989263544274191	NA	NA	NA	
+tier	q_threshold	0.001	fdr	1.16384e-05	NA	NA	NA	
+tier	q_threshold	0.001	fdr_2pep	2.9095e-09	NA	NA	NA	
+tier	q_threshold	0.001	fp	0.000989264	NA	NA	NA	
 tier	q_threshold	0.001	n_detected	85	NA	NA	NA	
 tier	q_threshold	0.001	n_genes	85	NA	NA	NA	
-tier	q_threshold	0.005	fdr	1.1638394638519894e-05	NA	NA	NA	
-tier	q_threshold	0.005	fdr_2pep	2.909503048010043e-09	NA	NA	NA	
-tier	q_threshold	0.005	fp	0.000989263544274191	NA	NA	NA	
+tier	q_threshold	0.005	fdr	1.16384e-05	NA	NA	NA	
+tier	q_threshold	0.005	fdr_2pep	2.9095e-09	NA	NA	NA	
+tier	q_threshold	0.005	fp	0.000989264	NA	NA	NA	
 tier	q_threshold	0.005	n_detected	85	NA	NA	NA	
 tier	q_threshold	0.005	n_genes	85	NA	NA	NA	
-tier	q_threshold	0.01	fdr	1.1638394638519894e-05	NA	NA	NA	
-tier	q_threshold	0.01	fdr_2pep	2.909503048010043e-09	NA	NA	NA	
-tier	q_threshold	0.01	fp	0.000989263544274191	NA	NA	NA	
+tier	q_threshold	0.01	fdr	1.16384e-05	NA	NA	NA	
+tier	q_threshold	0.01	fdr_2pep	2.9095e-09	NA	NA	NA	
+tier	q_threshold	0.01	fp	0.000989264	NA	NA	NA	
 tier	q_threshold	0.01	n_detected	85	NA	NA	NA	
 tier	q_threshold	0.01	n_genes	85	NA	NA	NA	
-tier	q_threshold	0.02	fdr	1.1638394638519894e-05	NA	NA	NA	
-tier	q_threshold	0.02	fdr_2pep	2.909503048010043e-09	NA	NA	NA	
-tier	q_threshold	0.02	fp	0.000989263544274191	NA	NA	NA	
+tier	q_threshold	0.02	fdr	1.16384e-05	NA	NA	NA	
+tier	q_threshold	0.02	fdr_2pep	2.9095e-09	NA	NA	NA	
+tier	q_threshold	0.02	fp	0.000989264	NA	NA	NA	
 tier	q_threshold	0.02	n_detected	85	NA	NA	NA	
 tier	q_threshold	0.02	n_genes	85	NA	NA	NA	
-tier	q_threshold	0.05	fdr	1.1638394638519894e-05	NA	NA	NA	
-tier	q_threshold	0.05	fdr_2pep	2.909503048010043e-09	NA	NA	NA	
-tier	q_threshold	0.05	fp	0.000989263544274191	NA	NA	NA	
+tier	q_threshold	0.05	fdr	1.16384e-05	NA	NA	NA	
+tier	q_threshold	0.05	fdr_2pep	2.9095e-09	NA	NA	NA	
+tier	q_threshold	0.05	fp	0.000989264	NA	NA	NA	
 tier	q_threshold	0.05	n_detected	85	NA	NA	NA	
 tier	q_threshold	0.05	n_genes	85	NA	NA	NA	
-tier	q_threshold	0.1	fdr	1.1638394638519894e-05	NA	NA	NA	
-tier	q_threshold	0.1	fdr_2pep	2.909503048010043e-09	NA	NA	NA	
-tier	q_threshold	0.1	fp	0.000989263544274191	NA	NA	NA	
+tier	q_threshold	0.1	fdr	1.16384e-05	NA	NA	NA	
+tier	q_threshold	0.1	fdr_2pep	2.9095e-09	NA	NA	NA	
+tier	q_threshold	0.1	fp	0.000989264	NA	NA	NA	
 tier	q_threshold	0.1	n_detected	85	NA	NA	NA	
 tier	q_threshold	0.1	n_genes	85	NA	NA	NA	
 tier	tier	mayu	decoy_paired_share	1	NA	NA	NA	
@@ -36,86 +36,86 @@ tier	tier	mayu	n_decoys_unpaired	0	NA	NA	NA
 tier	tier	mayu	n_detected	85	NA	NA	NA	
 tier	tier	mayu	n_detected_2pep	83	NA	NA	NA	
 tier	tier	mayu	q_floor	NA	NA	NA	NA	
-basic	cog_category	none	expected	85.00000000000003	NA	NA	87	
+basic	cog_category	none	expected	85	NA	NA	87	
 basic	cog_category	none	n_detected	85	NA	NA	87	
 basic	cog_category	none	n_genes	87	NA	NA	87	
 basic	cog_category	none	n_tu	61	NA	NA	87	
-basic	cog_category	none	o_minus_e	-2.842170943040401e-14	-3.023563218390806	2.137931034482756	87	ci_few_units
-basic	cog_category	none	o_over_e	0.9999999999999997	NA	NA	87	
-basic	cog_category	none	pct_detected	97.70114942528735	NA	NA	87	
-basic	feature_class	cds	expected	80.11494252873564	NA	NA	82	
+basic	cog_category	none	o_minus_e	-2.84217e-14	-3.02356	2.13793	87	ci_few_units
+basic	cog_category	none	o_over_e	1	NA	NA	87	
+basic	cog_category	none	pct_detected	97.7011	NA	NA	87	
+basic	feature_class	cds	expected	80.1149	NA	NA	82	
 basic	feature_class	cds	n_detected	82	NA	NA	82	
 basic	feature_class	cds	n_genes	82	NA	NA	82	
 basic	feature_class	cds	n_tu	56	NA	NA	82	
-basic	feature_class	cds	o_minus_e	1.8850574712643606	1.632183908045975	2.2068965517241352	82	ci_few_units
-basic	feature_class	cds	o_over_e	1.0235294117647058	NA	NA	82	
+basic	feature_class	cds	o_minus_e	1.88506	1.63218	2.2069	82	ci_few_units
+basic	feature_class	cds	o_over_e	1.02353	NA	NA	82	
 basic	feature_class	cds	pct_detected	100	NA	NA	82	
-basic	feature_class	hypothetical	expected	84.02298850574715	NA	NA	86	
+basic	feature_class	hypothetical	expected	84.023	NA	NA	86	
 basic	feature_class	hypothetical	n_detected	84	NA	NA	86	
 basic	feature_class	hypothetical	n_genes	86	NA	NA	86	
 basic	feature_class	hypothetical	n_tu	60	NA	NA	86	
-basic	feature_class	hypothetical	o_minus_e	-0.02298850574715061	-3.13793103448276	2.1379310344827562	86	ci_few_units
-basic	feature_class	hypothetical	o_over_e	0.9997264021887822	NA	NA	86	
-basic	feature_class	hypothetical	pct_detected	97.67441860465117	NA	NA	86	
-basic	feature_class	pseudogene	expected	1.9540229885057472	NA	NA	2	
+basic	feature_class	hypothetical	o_minus_e	-0.0229885	-3.13793	2.13793	86	ci_few_units
+basic	feature_class	hypothetical	o_over_e	0.999726	NA	NA	86	
+basic	feature_class	hypothetical	pct_detected	97.6744	NA	NA	86	
+basic	feature_class	pseudogene	expected	1.95402	NA	NA	2	
 basic	feature_class	pseudogene	n_detected	0	NA	NA	2	
 basic	feature_class	pseudogene	n_genes	2	NA	NA	2	
 basic	feature_class	pseudogene	n_tu	2	NA	NA	2	
-basic	feature_class	pseudogene	o_minus_e	-1.9540229885057472	-1.9540229885057472	-1.9540229885057472	2	ci_few_units
+basic	feature_class	pseudogene	o_minus_e	-1.95402	-1.95402	-1.95402	2	ci_few_units
 basic	feature_class	pseudogene	o_over_e	0	NA	NA	2	
 basic	feature_class	pseudogene	pct_detected	0	NA	NA	2	
-basic	feature_class	sorf	expected	2.931034482758621	NA	NA	3	
+basic	feature_class	sorf	expected	2.93103	NA	NA	3	
 basic	feature_class	sorf	n_detected	3	NA	NA	3	
 basic	feature_class	sorf	n_genes	3	NA	NA	3	
 basic	feature_class	sorf	n_tu	3	NA	NA	3	
-basic	feature_class	sorf	o_minus_e	0.068965517241379	0.06896551724137923	0.06896551724137923	3	ci_few_units
-basic	feature_class	sorf	o_over_e	1.0235294117647058	NA	NA	3	
+basic	feature_class	sorf	o_minus_e	0.0689655	0.0689655	0.0689655	3	ci_few_units
+basic	feature_class	sorf	o_over_e	1.02353	NA	NA	3	
 basic	feature_class	sorf	pct_detected	100	NA	NA	3	
-basic	replicon	chr1	expected	83.04597701149427	NA	NA	85	
+basic	replicon	chr1	expected	83.046	NA	NA	85	
 basic	replicon	chr1	n_detected	83	NA	NA	85	
 basic	replicon	chr1	n_genes	85	NA	NA	85	
 basic	replicon	chr1	n_tu	60	NA	NA	85	
-basic	replicon	chr1	o_minus_e	-0.0459770114942728	-3.1379310344827607	2.069540229885055	85	ci_few_units
-basic	replicon	chr1	o_over_e	0.9994463667820067	NA	NA	85	
-basic	replicon	chr1	pct_detected	97.6470588235294	NA	NA	85	
-basic	replicon	plasmid_1	expected	1.9540229885057472	NA	NA	2	
+basic	replicon	chr1	o_minus_e	-0.045977	-3.13793	2.06954	85	ci_few_units
+basic	replicon	chr1	o_over_e	0.999446	NA	NA	85	
+basic	replicon	chr1	pct_detected	97.6471	NA	NA	85	
+basic	replicon	plasmid_1	expected	1.95402	NA	NA	2	
 basic	replicon	plasmid_1	n_detected	2	NA	NA	2	
 basic	replicon	plasmid_1	n_genes	2	NA	NA	2	
 basic	replicon	plasmid_1	n_tu	1	NA	NA	2	
-basic	replicon	plasmid_1	o_minus_e	0.04597701149425282	0.04597701149425282	0.04597701149425282	2	ci_few_units
-basic	replicon	plasmid_1	o_over_e	1.0235294117647058	NA	NA	2	
+basic	replicon	plasmid_1	o_minus_e	0.045977	0.045977	0.045977	2	ci_few_units
+basic	replicon	plasmid_1	o_over_e	1.02353	NA	NA	2	
 basic	replicon	plasmid_1	pct_detected	100	NA	NA	2	
-detectability	bin	1	mean_p	0.9770114942528737	NA	NA	NA	
+detectability	bin	1	mean_p	0.977011	NA	NA	NA	
 detectability	bin	1	n	9	NA	NA	NA	
 detectability	bin	1	observed_rate	1	NA	NA	NA	
-detectability	bin	10	mean_p	0.9770114942528736	NA	NA	NA	
+detectability	bin	10	mean_p	0.977011	NA	NA	NA	
 detectability	bin	10	n	8	NA	NA	NA	
 detectability	bin	10	observed_rate	1	NA	NA	NA	
-detectability	bin	2	mean_p	0.9770114942528737	NA	NA	NA	
+detectability	bin	2	mean_p	0.977011	NA	NA	NA	
 detectability	bin	2	n	9	NA	NA	NA	
-detectability	bin	2	observed_rate	0.8888888888888888	NA	NA	NA	
-detectability	bin	3	mean_p	0.9770114942528737	NA	NA	NA	
+detectability	bin	2	observed_rate	0.888889	NA	NA	NA	
+detectability	bin	3	mean_p	0.977011	NA	NA	NA	
 detectability	bin	3	n	9	NA	NA	NA	
 detectability	bin	3	observed_rate	1	NA	NA	NA	
-detectability	bin	4	mean_p	0.9770114942528737	NA	NA	NA	
+detectability	bin	4	mean_p	0.977011	NA	NA	NA	
 detectability	bin	4	n	9	NA	NA	NA	
 detectability	bin	4	observed_rate	1	NA	NA	NA	
-detectability	bin	5	mean_p	0.9770114942528737	NA	NA	NA	
+detectability	bin	5	mean_p	0.977011	NA	NA	NA	
 detectability	bin	5	n	9	NA	NA	NA	
-detectability	bin	5	observed_rate	0.8888888888888888	NA	NA	NA	
-detectability	bin	6	mean_p	0.9770114942528737	NA	NA	NA	
+detectability	bin	5	observed_rate	0.888889	NA	NA	NA	
+detectability	bin	6	mean_p	0.977011	NA	NA	NA	
 detectability	bin	6	n	9	NA	NA	NA	
 detectability	bin	6	observed_rate	1	NA	NA	NA	
-detectability	bin	7	mean_p	0.9770114942528737	NA	NA	NA	
+detectability	bin	7	mean_p	0.977011	NA	NA	NA	
 detectability	bin	7	n	9	NA	NA	NA	
 detectability	bin	7	observed_rate	1	NA	NA	NA	
-detectability	bin	8	mean_p	0.9770114942528736	NA	NA	NA	
+detectability	bin	8	mean_p	0.977011	NA	NA	NA	
 detectability	bin	8	n	8	NA	NA	NA	
 detectability	bin	8	observed_rate	1	NA	NA	NA	
-detectability	bin	9	mean_p	0.9770114942528736	NA	NA	NA	
+detectability	bin	9	mean_p	0.977011	NA	NA	NA	
 detectability	bin	9	n	8	NA	NA	NA	
 detectability	bin	9	observed_rate	1	NA	NA	NA	
-detectability	overall	all	brier	0.022460034350640784	NA	NA	NA	
+detectability	overall	all	brier	0.02246	NA	NA	NA	
 detectability	overall	all	calibration_intercept	NA	NA	NA	NA	
 detectability	overall	all	calibration_slope	NA	NA	NA	NA	
 detectability	overall	all	detectability_constant	1	NA	NA	NA	
@@ -130,7 +130,7 @@ qc	placement_kind	frameshift	n_peptides	0	NA	NA	1651
 qc	placement_kind	tolerant	n_peptides	0	NA	NA	1651	
 qc	run	all	contaminant_peptides	0	NA	NA	NA	
 qc	run	all	contaminant_proteins	0	NA	NA	NA	
-qc	run	all	engine_protein_mismatch_rate	0.0006056935190793458	NA	NA	1651	
+qc	run	all	engine_protein_mismatch_rate	0.000605694	NA	NA	1651	
 qc	run	all	genome_inconsistent_rate	NA	NA	NA	NA	
 qc	run	all	id_mixups	0	NA	NA	0	
 qc	run	all	unmapped_peptides	17	NA	NA	NA	

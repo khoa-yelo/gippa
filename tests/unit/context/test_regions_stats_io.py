@@ -157,6 +157,8 @@ def test_writer_header_and_one_based_coordinates(tmp_path: Path) -> None:
 
 
 def test_writer_na_and_flags(tmp_path: Path) -> None:
+    from gippa.io.tsv import format_value
+
     df = sd.table(sd.mixed_genome(), sd.depth_frame({"chr1": 40.0, "p1": 160.0}))
     _, rows = _written(tmp_path, df)
     pl = [r for r in rows if r["region_type"] == "plasmid"]
@@ -174,7 +176,8 @@ def test_writer_na_and_flags(tmp_path: Path) -> None:
             if sd.na(src[c]):
                 assert r[c] is None, c
             else:
-                assert float(str(r[c])) == pytest.approx(float(src[c]), rel=1e-12, abs=1e-12), c
+                # M12-04 PR 9: number cells are written %.6g (format_value), exactly
+                assert r[c] == format_value(float(src[c])), c
 
 
 def test_writer_empty_table_is_header_only(tmp_path: Path) -> None:

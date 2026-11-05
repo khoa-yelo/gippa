@@ -1,10 +1,10 @@
 region_id	region_type	subset	contig	start	end	n_genes	n_eligible	observed	expected	o_minus_e	o_over_e	hl_shift_log2	stat	effect	ci_low	ci_high	p_value	q_value	method	null_model	n_perm	label	flags
-prophage_1	prophage	all	chr1	36616	48615	11	11	11	10.747126436781612	0.2528735632183905	1.0235294117647056	-0.22334759991073683	o_minus_e	0.2528735632183905	0.2528735632183905	0.2528735632183905	1	1	circular_shift_o_minus_e	circular_shift	84	NA	NA
-prophage_1	prophage	all	chr1	36616	48615	11	11	11	10.747126436781612	0.2528735632183905	1.0235294117647056	-0.22334759991073683	hl_shift	-0.22334759991073683	-2.1545777350131887	2.0559145672867234	0.7529411764705882	0.7529411764705882	circular_shift_hodges_lehmann	circular_shift	84	NA	NA
-prophage_1	prophage	cargo	chr1	36616	48615	11	11	11	10.747126436781612	0.2528735632183885	1.0235294117647056	NA	o_minus_e	0.2528735632183885	NA	NA	NA	NA	descriptive	none	0	descriptive	descriptive
+prophage_1	prophage	all	chr1	36616	48615	11	11	11	10.7471	0.252874	1.02353	-0.223348	o_minus_e	0.252874	0.252874	0.252874	1	1	circular_shift_o_minus_e	circular_shift	84	NA	NA
+prophage_1	prophage	all	chr1	36616	48615	11	11	11	10.7471	0.252874	1.02353	-0.223348	hl_shift	-0.223348	-2.15458	2.05591	0.752941	0.752941	circular_shift_hodges_lehmann	circular_shift	84	NA	NA
+prophage_1	prophage	cargo	chr1	36616	48615	11	11	11	10.7471	0.252874	1.02353	NA	o_minus_e	0.252874	NA	NA	NA	NA	descriptive	none	0	descriptive	descriptive
 plasmid_1	plasmid	all	plasmid_1	1	8000	2	2	NA	NA	NA	NA	NA	o_minus_e	NA	NA	NA	NA	NA	replicon_contrast	none	0	dosage_plus_regulation	small_region;dosage_plus_regulation
 plasmid_1	plasmid	all	plasmid_1	1	8000	2	2	NA	NA	NA	NA	NA	hl_shift	NA	NA	NA	NA	NA	replicon_contrast	none	0	dosage_plus_regulation	small_region;dosage_plus_regulation
-bgc_1	bgc	all	chr1	25380	35379	9	9	9	8.793103448275863	0.20689655172413768	1.0235294117647058	0.9213074525406126	o_minus_e	0.20689655172413768	0.20689655172413768	0.20689655172413768	1	1	circular_shift_o_minus_e	circular_shift	84	NA	NA
-bgc_1	bgc	all	chr1	25380	35379	9	9	9	8.793103448275863	0.20689655172413768	1.0235294117647058	0.9213074525406126	hl_shift	0.9213074525406126	-1.1185428971840854	2.677593408585552	0.2235294117647059	0.2235294117647059	circular_shift_hodges_lehmann	circular_shift	84	NA	NA
+bgc_1	bgc	all	chr1	25380	35379	9	9	9	8.7931	0.206897	1.02353	0.921307	o_minus_e	0.206897	0.206897	0.206897	1	1	circular_shift_o_minus_e	circular_shift	84	NA	NA
+bgc_1	bgc	all	chr1	25380	35379	9	9	9	8.7931	0.206897	1.02353	0.921307	hl_shift	0.921307	-1.11854	2.67759	0.223529	0.223529	circular_shift_hodges_lehmann	circular_shift	84	NA	NA
 crispr_1	crispr	all	chr1	62388	62799	0	0	NA	NA	NA	NA	NA	o_minus_e	NA	NA	NA	NA	NA	circular_shift_o_minus_e	circular_shift	0	NA	small_region;few_shifts
 crispr_1	crispr	all	chr1	62388	62799	0	0	NA	NA	NA	NA	NA	hl_shift	NA	NA	NA	NA	NA	circular_shift_hodges_lehmann	circular_shift	0	NA	small_region;few_shifts

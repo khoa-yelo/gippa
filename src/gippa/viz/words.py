@@ -157,6 +157,8 @@ FLAG_TEXT: Mapping[str, str] = MappingProxyType(
         "operon_source_distance_model": "operons from the distance model",
         "input_prefiltered": "input was filtered before GIPPA",
         "cai_reference_missing": "no reference gene set for codon adaptation",
+        "foreign_protein_ids": "proteins come from a related annotation; identical matches are not "
+        "flagged per gene",
         "layer_missing:": "the {} layer was not computed",
         "layer_missing:abundance": "abundance not available",
         "layer_missing:antismash": "biosynthetic gene clusters not predicted",

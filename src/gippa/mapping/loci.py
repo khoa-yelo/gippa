@@ -509,10 +509,25 @@ def annotate_peptide_hits(
 # ---------------------------------------------------------------- protein rows
 
 
+#: Run flag: at least one protein hit's ``protein_id`` is not a locus tag of the model.
+FOREIGN_PROTEIN_IDS = "foreign_protein_ids"
+
+
+def has_foreign_protein_ids(rows: pd.DataFrame, gm: GeneModel) -> bool:
+    """True when a protein row's ``protein_id`` is not a locus tag of the model, whatever its
+    ``class`` (the run flag :data:`FOREIGN_PROTEIN_IDS`; M12-04 PR 9)."""
+    if not len(rows):
+        return False
+    tags = {g.locus_tag for g in gm.genes}
+    return any(p not in tags for p in rows["protein_id"].astype(str))
+
+
 def annotate_protein_hits(rows: pd.DataFrame, gm: GeneModel) -> pd.DataFrame:
     """Add gene flags ``cross_strain_protein`` and ``two_proteins_one_gene`` to protein rows.
 
-    ``cross_strain_protein``: ``protein_id`` is not a locus tag of the model;
+    ``cross_strain_protein``: ``protein_id`` is not a locus tag of the model and ``class`` is not
+    ``identical`` (an identical match from a related annotation makes no cross-strain claim;
+    M12-04 PR 9, the run flag :data:`FOREIGN_PROTEIN_IDS` records the foreign IDs instead);
     ``two_proteins_one_gene``: every row of a gene assigned >= 2 distinct input proteins.
     """
     df = rows.copy()
@@ -520,15 +535,16 @@ def annotate_protein_hits(rows: pd.DataFrame, gm: GeneModel) -> pd.DataFrame:
     pids = df["protein_id"].astype(str).tolist() if n else []
     genes = df["gene"].tolist() if n else []
     in_flags = df["flags"].tolist() if "flags" in df.columns else [None] * n
+    classes = df["class"].tolist() if n and "class" in df.columns else [None] * n
     tags = {g.locus_tag for g in gm.genes}
     per_gene: dict[str, set[str]] = {}
     for p, g in zip(pids, genes, strict=True):
         if g is not None and not pd.isna(g):
             per_gene.setdefault(str(g), set()).add(p)
     out: list[str] = []
-    for p, g, f in zip(pids, genes, in_flags, strict=True):
+    for p, g, f, c in zip(pids, genes, in_flags, classes, strict=True):
         fl = _split_flags(f)
-        if p not in tags:
+        if p not in tags and c != "identical":
             fl.add("cross_strain_protein")
         if g is not None and not pd.isna(g) and len(per_gene[str(g)]) >= 2:
             fl.add("two_proteins_one_gene")
