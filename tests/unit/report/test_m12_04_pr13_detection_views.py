@@ -14,6 +14,19 @@
 - ``detection_summary`` absent: both views are omitted. No new table file is written; the long
   file is unchanged.
 
+Review r1 (lead decisions, binding):
+- L1: the tier view drops a column that is NA on every row (``decoy_picked`` writes
+  ``n_detected`` and ``fdr`` only: ``q | detected | FDR``);
+- L2: ``protein_list`` shows ``tier | detected`` only; ``two_peptide`` adds
+  ``detected with ≥ 2 peptides`` (``n_detected_2pep``);
+- L3: the section's ``<a href="../tables/detection_summary.tsv">`` resolves from ``OUT/report/``;
+- L4: only ``section = tier, group_type = q_threshold`` rows make tier rows and only
+  ``section = basic, metric = o_over_e`` rows make O/E rows (distractors in ``other_rows``);
+- L5: a non-numeric or non-finite ``q_threshold`` group (``nan``, ``inf``, ``-inf``) sorts after
+  every finite one and leaves the finite ones ascending;
+- M3: an unreadable long file (garbage bytes, a wrong header, ``value = abc``) builds the page with
+  no view and a ``<p class="note">`` naming ``detection_summary.tsv``.
+
 Interface pinned here (PR 13 test author, beyond the spec text):
 - the views are ``<table data-view="detection-tier">`` and ``<table data-view="detection-oe">``
   inside ``<section id="detection">``; neither carries ``data-table`` (they are no table file),
@@ -109,8 +122,16 @@ def basic_rows(oe: Mapping[tuple[str, str], float]) -> list[dict[str, Any]]:
     return rows
 
 
+#: distractor groups (upper case and ``_``: the property's drawn groups are ``[a-z]{3,8}``)
+OTHER_SECTION_OE = "X_other_section"
+LONELY_GROUP = "X_no_oe"
+BASIC_Q = "0.5"
+
+
 def other_rows() -> list[dict[str, Any]]:
-    """``detectability`` and ``qc`` rows: neither view shows them."""
+    """``detectability`` and ``qc`` rows and the review r1 L4 distractors: neither view shows
+    them (an ``o_over_e`` row outside ``basic``, a ``q_threshold`` row in ``basic``, a ``basic``
+    group without ``o_over_e``)."""
     rows = [
         _row("detectability", "bin", str(b), m, v)
         for b in range(3)
@@ -119,8 +140,17 @@ def other_rows() -> list[dict[str, Any]]:
     rows += [_row("detectability", "overall", "all", "calibration_slope", 0.97),
              _row("detectability", "overall", "all", "brier", 0.18),
              _row("qc", "run", "run", "unmapped_peptides", 3),
-             _row("qc", "unmapped_reason", "no_hit", "n_peptides", 3)]  # fmt: skip
+             _row("qc", "unmapped_reason", "no_hit", "n_peptides", 3),
+             _row("detectability", "replicon", OTHER_SECTION_OE, "o_over_e", 9.75),
+             _row("basic", "q_threshold", BASIC_Q, "n_detected", 777),
+             _row("basic", "q_threshold", BASIC_Q, "fdr", 0.333),
+             _row("basic", "replicon", LONELY_GROUP, "n_genes", 5, n=5),
+             _row("basic", "replicon", LONELY_GROUP, "n_detected", 2, n=5),
+             _row("basic", "replicon", LONELY_GROUP, "expected", 3.0, n=5)]  # fmt: skip
     return rows
+
+
+DISTRACTORS = frozenset({OTHER_SECTION_OE, LONELY_GROUP, BASIC_Q, "777", "9.8", "0.33"})
 
 
 def write_summary(out: Path, rows: Sequence[Mapping[str, Any]]) -> Path:
@@ -186,22 +216,29 @@ def shown(metric: str, value: Any) -> str:
     return fmt_num(int(v)) if metric in COUNTS and v.is_integer() else fmt_num(v)
 
 
-def expected_tier(frame: Any) -> list[list[str]]:
-    """The tier view's rows from the long file: ascending ``q_threshold``, ``TIER_METRICS``."""
+def expected_grid(frame: Any) -> tuple[list[str], list[list[str]]]:
+    """The tier view from the long file: ascending ``q_threshold``, ``TIER_METRICS``, a column
+    that is NA on every row dropped (review r1 L1)."""
     curve = frame[(frame["section"].astype(str) == "tier")
                   & (frame["group_type"].astype(str) == "q_threshold")]  # fmt: skip
     groups = sorted(set(curve["group"].astype(str)), key=float)
-    out = []
+    full = []
     for g in groups:
         sub = curve[curve["group"].astype(str) == g]
         by = dict(zip(sub["metric"].astype(str), sub["value"], strict=True))
-        out.append([g, *(shown(m, by.get(m)) for m in TIER_METRICS)])
-    return out
+        full.append([g, *(shown(m, by.get(m)) for m in TIER_METRICS)])
+    keep = [0] + [k for k in range(1, len(TIER_HEADER)) if any(r[k] != "NA" for r in full)]
+    return [TIER_HEADER[k] for k in keep], [[r[k] for k in keep] for r in full]
+
+
+def expected_tier(frame: Any) -> list[list[str]]:
+    return expected_grid(frame)[1]
 
 
 def expected_oe(frame: Any) -> list[tuple[str, str]]:
-    """``(group, O/E text)`` of every ``o_over_e`` row."""
-    oe = frame[frame["metric"].astype(str) == "o_over_e"]
+    """``(group, O/E text)`` of every ``o_over_e`` row of the ``basic`` section."""
+    oe = frame[(frame["metric"].astype(str) == "o_over_e")
+               & (frame["section"].astype(str) == "basic")]  # fmt: skip
     return [(str(g), shown("o_over_e", v)) for g, v in zip(oe["group"], oe["value"], strict=True)]
 
 
@@ -257,11 +294,11 @@ def test_decoy_picked_tier_view(tmp_path: Path) -> None:
     }
     write_summary(run.out, [*tier_rows("decoy_picked", 92, 80), *curve_rows(curve)])
     header, rows = grid(view(run.page(), TIER_VIEW))
-    assert [r[0] for r in rows] == list(curve)
-    assert column(header, rows, "detected") == [str(90 + k) for k in range(6)]
     from gippa.viz.style import fmt_num
 
-    assert column(header, rows, "FDR") == [fmt_num(0.0005 * (k + 1)) for k in range(6)]
+    # review r1 L1: genes, FDR (2-pep) and FP are NA on every row, so they are dropped
+    assert header == ["q", "detected", "FDR"]
+    assert rows == [[q, str(90 + k), fmt_num(0.0005 * (k + 1))] for k, q in enumerate(curve)]
 
 
 # ---------------------------------------------------------------- the detectability view
@@ -280,6 +317,30 @@ def test_oe_view_one_row_per_group(tmp_path: Path) -> None:
         assert text in hits[0], f"{group}: O/E {text!r} not in {hits[0]}"
     flat = {c for r in rows for c in r}
     assert not {"no_hit", "unmapped_reason", "calibration_slope", "brier"} & flat
+    assert not DISTRACTORS & flat, DISTRACTORS & flat
+
+
+def test_views_ignore_the_distractors(tmp_path: Path) -> None:
+    """Review r1 L4: an ``o_over_e`` row outside ``basic``, a ``q_threshold`` row in ``basic``
+    and a ``basic`` group without ``o_over_e`` are in no view."""
+    page = fixture_p(tmp_path).page()
+    for name in (TIER_VIEW, OE_VIEW):
+        _, rows = grid(view(page, name))
+        flat = {c for r in rows for c in r}
+        assert not DISTRACTORS & flat, (name, DISTRACTORS & flat)
+    _, tier = grid(view(page, TIER_VIEW))
+    assert [r[0] for r in tier] == list(P_CURVE)
+
+
+def test_full_table_link_resolves(tmp_path: Path) -> None:
+    """Review r1 L3: the section links the long file; the link resolves from ``OUT/report/``."""
+    run = fixture_p(tmp_path)
+    links = [a.attrs["href"] for a in run.page().section("detection").by_tag("a")
+             if a.attrs.get("href", "").endswith("detection_summary.tsv")]  # fmt: skip
+    assert links == ["../tables/detection_summary.tsv"], links
+    target = (run.out / "report" / links[0]).resolve()
+    assert target == (run.out / "tables" / "detection_summary.tsv").resolve()
+    assert target.is_file()
 
 
 def test_oe_view_values(tmp_path: Path) -> None:
@@ -321,6 +382,25 @@ def test_no_new_table_file_and_long_file_unchanged(tmp_path: Path) -> None:
 # ---------------------------------------------------------------- edge cases
 
 
+def test_protein_list_view_is_tier_and_detected(tmp_path: Path) -> None:
+    """Review r1 L2: ``protein_list`` has no peptide counts: ``tier | detected`` only."""
+    run = build("R", tmp_path)
+    write_summary(run.out, tier_rows("protein_list", 106, 0))
+    header, rows = grid(view(run.page(), TIER_VIEW))
+    assert header == ["tier", "detected"]
+    assert rows == [["protein_list", "106"]]
+
+
+def test_two_peptide_view_keeps_the_2pep_count(tmp_path: Path) -> None:
+    """Review r1 L2: ``two_peptide`` keeps ``n_detected_2pep`` (values differ on purpose, so a
+    swapped column shows)."""
+    run = build("D", tmp_path)
+    write_summary(run.out, tier_rows("two_peptide", 5, 4))
+    header, rows = grid(view(run.page(), TIER_VIEW))
+    assert header == ["tier", "detected", "detected with ≥ 2 peptides"]
+    assert rows == [["two_peptide", "5", "4"]]
+
+
 @pytest.mark.parametrize(("name", "tier", "n_detected", "n_2pep"),
                          [("R", "protein_list", 106, 0), ("D", "two_peptide", 4, 4)])  # fmt: skip
 def test_count_only_tiers_show_counts_only(
@@ -353,6 +433,52 @@ def test_header_only_detection_summary_gives_no_tier_row(tmp_path: Path) -> None
     for t in views(page, TIER_VIEW) + views(page, OE_VIEW):
         _, rows = grid(t)
         assert not [r for r in rows if r and r[0] in P_CURVE], rows
+
+
+def _break(path: Path, how: str) -> None:
+    if how == "garbage":
+        path.write_bytes(b"\x00\xff\xfe not a table \x01\x02\n\x9c\x80")
+        return
+    lines = path.read_text(encoding="utf-8").splitlines(keepends=True)
+    if how == "header":
+        lines[0] = lines[0].replace("metric", "zzmetric", 1)
+    else:  # value = abc on every body row
+        k = lines[0].rstrip("\n").split("\t").index("value")
+        for i in range(1, len(lines)):
+            cells = lines[i].rstrip("\n").split("\t")
+            cells[k] = "abc"
+            lines[i] = "\t".join(cells) + "\n"
+    path.write_text("".join(lines), encoding="utf-8")
+
+
+@pytest.mark.parametrize("how", ["garbage", "header", "value_abc"])
+def test_unreadable_detection_summary_is_a_note(tmp_path: Path, how: str) -> None:
+    """Review r1 M3: the page builds, no view is shown and a note names the file."""
+    run = fixture_p(tmp_path)
+    _break(run.out / "tables" / "detection_summary.tsv", how)
+    page = run.page()  # must not raise
+    assert not [t for t in page.root.by_tag("table") if "data-view" in t.attrs]
+    notes = [" ".join(n.text().split()) for n in page.section("detection").iter()
+             if "note" in n.attrs.get("class", "").split()]  # fmt: skip
+    assert [n for n in notes if "detection_summary.tsv" in n], notes
+
+
+@pytest.mark.parametrize("odd", ["nan", "NaN", "inf", "-inf"])
+@pytest.mark.parametrize("seed", range(4))
+def test_non_finite_threshold_sorts_last(tmp_path: Path, odd: str, seed: int) -> None:
+    """Review r1 L5: a ``q_threshold`` group that is no finite number sorts after the finite
+    ones, which stay ascending, whatever the file order."""
+    run = build("P", tmp_path)
+    curve = {q: {"n_detected": 10 + k, "n_genes": 20 + k}
+             for k, q in enumerate(("0.001", "0.005", "0.01", "0.05", "0.1"))}  # fmt: skip
+    rows = [*curve_rows(curve), _row("tier", "q_threshold", odd, "n_detected", 1),
+            _row("tier", "q_threshold", odd, "n_genes", 2)]  # fmt: skip
+    random.Random(seed).shuffle(rows)
+    write_summary(run.out, rows)
+    _, body = grid(view(run.page(), TIER_VIEW))
+    assert len(body) == len(curve) + 1, body
+    assert [r[0] for r in body[:-1]] == list(curve), body
+    assert body[-1][1:3] == ["1", "2"], body
 
 
 # ---------------------------------------------------------------- property
@@ -396,8 +522,8 @@ def test_property_views_pivot_the_long_file(
     case: tuple[list[dict[str, Any]], list[tuple[str, str]]],
 ) -> None:
     """For any long file (rows in any order, distractor sections included): the tier view is
-    one row per distinct threshold, ascending, values through ``fmt_num``; the O/E view has one
-    row per ``o_over_e`` group."""
+    one row per distinct threshold, ascending, values through ``fmt_num``, all-NA columns
+    dropped; the O/E view has one row per ``o_over_e`` group of ``basic``."""
     from gippa.io.run_view import RunView
     from gippa.report.build import build_report
 
@@ -409,8 +535,7 @@ def test_property_views_pivot_the_long_file(
         page = parse(build_report(RunView.from_outdir(out), {}, {}, cfg()))
         frame = summary_values(out)
         header, body = grid(view(page, TIER_VIEW))
-        assert header == TIER_HEADER
-        assert body == expected_tier(frame)
+        assert (header, body) == expected_grid(frame)
         if groups:
             _, oe_rows = grid(view(page, OE_VIEW))
             assert len(oe_rows) == len(groups)

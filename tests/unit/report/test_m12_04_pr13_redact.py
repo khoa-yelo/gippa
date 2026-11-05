@@ -11,13 +11,21 @@ Interface pinned here (PR 13 test author, beyond the spec text):
 - ``gippa.report.content.redact_command_line(args: Sequence[str], outdir: str) -> str``: pure;
   the manifest's ``command_line`` joined by single spaces, redacted. The path forms are those of
   the default rule (a whole token, after the last ``=``, an item of a comma list, attached to a
-  short option ``-o/x``); a path under ``outdir`` becomes ``<outdir>/<relative>`` (``<outdir>``
-  for the outdir itself); the profile value follows ``--profile`` as the next token or after
-  ``--profile=``; relative arguments are unchanged;
+  short option ``-o/x``) and, review r1 M1, every ``/`` that starts a path inside a ``--set``
+  YAML value: after ``=`` (the first one: ``--set=key=/home/x=y/z`` is the path
+  ``/home/x=y/z``), ``[``, ``,``, ``{``, a space, a quote or ``:`` (``k=x:/a/b``); the path runs
+  to the next ``,``, ``]``, ``}``, quote, whitespace or the end, and the brackets, braces and
+  quotes around it are kept. A path under ``outdir`` becomes ``<outdir>/<relative>``
+  (``<outdir>`` for the outdir itself), any other ``<input>/<last component>``; the profile
+  value follows ``--profile`` as the next token or after ``--profile=``; relative arguments are
+  unchanged. The default (non-redact) rule is unchanged;
 - ``gippa.report.build.build_report(..., redact=True)`` shows that string in the provenance
   ``command line`` row (``<table data-table-provenance="run">``); ``redact`` defaults to False
   and the default page is byte-identical to a build without the keyword;
-- ``gippa report OUT --redact`` writes ``OUT/report/report.html`` redacted.
+- ``gippa report OUT --redact`` writes ``OUT/report/report.html`` redacted;
+- review r1: under ``redact`` no ``<p class="note">`` of the page (an unreadable table, e.g.
+  ``detection_summary.tsv: could not be read: …``) holds an absolute path; it still starts with
+  ``<file>: could not be read:``. Without ``redact`` the note is unchanged.
 
 AC 13.2 reading: "a path component" is a directory component of an absolute input path (the
 basename is kept on purpose, after ``<input>/``).
@@ -44,9 +52,10 @@ PEPTIDES = "/zzhome/zzuser/zzdata/report.pr_matrix.tsv"
 PROFILE = "zzsitecluster,apptainer"
 PROFILE_NAMES = ("zzsitecluster", "apptainer")
 
-#: an absolute path in a rendered command line: one starting a token, following ``=`` or ``,``,
-#: or attached to a short option (``-o/x``); ``<input>/x`` and ``<outdir>/x`` are not
-ABS = re.compile(r"(?:^|[\s=,])/|(?:^|\s)-[A-Za-z]/")
+#: an absolute path in a rendered command line: one starting a token, following ``=``, ``,``,
+#: ``[``, ``{``, a quote or ``:``, or attached to a short option (``-o/x``); ``<input>/x`` and
+#: ``<outdir>/x`` are not
+ABS = re.compile(r"(?:^|[\s=,\[{'\":])/|(?:^|\s)-[A-Za-z]/")
 
 
 def redact(args: Sequence[str], outdir: str = OUTDIR) -> str:
@@ -86,6 +95,17 @@ def test_spec_example() -> None:
         (["-o/zzhome/zzuser/x"], "-o<input>/x"),
         # a sibling with the same string prefix is not under the outdir
         (["--genome", OUTDIR + "x/y.fa"], "--genome <input>/y.fa"),
+        # review r1 M1: paths inside ``--set`` YAML values
+        (["--set", "k=[/a/b,/c/d]"], "--set k=[<input>/b,<input>/d]"),
+        (["--set", "k='/a/b'"], "--set k='<input>/b'"),
+        (["--set", 'k="/a/b"'], '--set k="<input>/b"'),
+        (["--set", "k={d: /a/b}"], "--set k={d: <input>/b}"),
+        (["--set", "k=x:/a/b"], "--set k=x:<input>/b"),
+        (["--set=key=/home/x=y/z"], "--set=key=<input>/z"),
+        (["--set", f"k=[{OUTDIR}/t/x.tsv,/a/b]"], "--set k=[<outdir>/t/x.tsv,<input>/b]"),
+        (["--set", f"k='{OUTDIR}'"], "--set k='<outdir>'"),
+        (["--set", f"k={{d: {OUTDIR}/t}}"], "--set k={d: <outdir>/t}"),
+        ([f"--set=k={OUTDIR}/x=y/z"], "--set=k=<outdir>/x=y/z"),
     ],
 )
 def test_redacted_forms(args: list[str], shown: str) -> None:
@@ -208,6 +228,46 @@ def test_manifest_without_command_line_has_nothing_to_rewrite(tmp_path: Path, dr
     assert command_row(red) == command_row(plain)
 
 
+def _notes(html: str) -> list[str]:
+    return [" ".join(n.text().split()) for n in parse(html).root.iter()
+            if "note" in n.attrs.get("class", "").split()]  # fmt: skip
+
+
+def _broken_summary(out: Path) -> Path:
+    """A ``detection_summary.tsv`` whose header lacks ``metric``: the reader's error message
+    names the file by its absolute path."""
+    from helpers.viz_out_tree import write_schema_table
+
+    path = out / "tables" / "detection_summary.tsv"
+    write_schema_table(path, "detection_summary",
+                       [{"section": "tier", "group_type": "tier", "group": "mayu",
+                         "metric": "n_detected", "value": 3}])  # fmt: skip
+    text = path.read_text(encoding="utf-8")
+    path.write_text(text.replace("metric", "zzmetric", 1), encoding="utf-8")
+    return path
+
+
+def test_unreadable_table_note_is_redacted(tmp_path: Path) -> None:
+    """Review r1: ``detection_summary.tsv: could not be read: …`` under ``redact`` holds no
+    absolute path (neither the outdir nor any other); without ``redact`` it is unchanged (the
+    reader's message, the absolute path included)."""
+    out = _out(tmp_path, LINE)
+    path = _broken_summary(out)
+    plain, red = _notes(_page(out)), _notes(_page(out, redact=True))
+    prefix = "detection_summary.tsv: could not be read:"
+    assert [n for n in plain if n.startswith(prefix)] == [
+        f"{prefix} ValueError: table detection_summary ({path}): schema column 'metric' is missing"
+    ]
+    mine = [n for n in red if n.startswith(prefix)]
+    assert len(mine) == 1, red
+    for note in red:
+        assert str(tmp_path) not in note and str(out) not in note, note
+        assert not re.search(r"(?:^|[\s=,(\[{'\":])/", note), note
+    assert [n for n in plain if not n.startswith(prefix)] == [
+        n for n in red if not n.startswith(prefix)
+    ]
+
+
 # ---------------------------------------------------------------- the CLI
 
 
@@ -263,17 +323,33 @@ _SEG = st.text(alphabet="abcdefgxyz0123456789_.-", min_size=1, max_size=8).filte
 )
 
 
+#: the ``--set`` YAML forms of review r1 M1: ``{p}`` is the path, ``{r}`` a relative item
+_SET_FORMS = {
+    "list": "k=[{r},{p}]",
+    "list_first": "k=[{p},{r}]",
+    "squote": "k='{p}'",
+    "dquote": 'k="{p}"',
+    "brace": "k={{d: {p}}}",
+    "colon": "k=x:{p}",
+}
+
+
 @st.composite
-def _abs_arg(draw: st.DrawFn) -> tuple[str, str]:
-    """``(token, the absolute path inside it)`` in one of the path forms."""
+def _abs_arg(draw: st.DrawFn) -> tuple[str, str, str]:
+    """``(token, the absolute path inside it, the token redacted)`` in one of the path forms."""
     under = draw(st.booleans())
     segs = draw(st.lists(_SEG, min_size=1, max_size=4))
-    path = "/".join([OUTDIR if under else "/zzhome/zzuser", *segs])
     rel = draw(_SEG)
-    form = draw(st.sampled_from(["bare", "eq", "set_eq", "comma", "short"]))
-    token = {"bare": path, "eq": f"--genome={path}", "set_eq": f"--set=k={path}",
-             "comma": f"{rel},{path}", "short": f"-o{path}"}[form]  # fmt: skip
-    return token, path
+    path = "/".join([OUTDIR if under else "/zzhome/zzuser", *segs])
+    form = draw(st.sampled_from(["bare", "eq", "set_eq", "comma", "short", "eq_in_path",
+                                 *_SET_FORMS]))  # fmt: skip
+    if form == "eq_in_path":  # ``--set=key=/home/x=y/z``: the path is ``/home/x=y/z``
+        path = f"{path}=y/{rel}"
+    shown = ("<outdir>/" + path[len(OUTDIR) + 1 :] if under
+             else "<input>/" + PurePosixPath(path).name)  # fmt: skip
+    fmt = {"bare": "{p}", "eq": "--genome={p}", "set_eq": "--set=k={p}", "comma": "{r},{p}",
+           "short": "-o{p}", "eq_in_path": "--set=key={p}", **_SET_FORMS}[form]  # fmt: skip
+    return fmt.format(p=path, r=rel), path, fmt.format(p=shown, r=rel)
 
 
 @settings(max_examples=150, deadline=None)
@@ -281,18 +357,20 @@ def _abs_arg(draw: st.DrawFn) -> tuple[str, str]:
        profile=st.lists(st.from_regex(r"zz[a-z]{3,8}", fullmatch=True), min_size=1, max_size=3),
        eq=st.booleans())  # fmt: skip
 def test_property_nothing_local_survives(
-    parts: list[tuple[str, str]], profile: list[str], eq: bool
+    parts: list[tuple[str, str, str]], profile: list[str], eq: bool
 ) -> None:
     """No absolute path, no directory component of one, no profile name; each path's basename
-    stays."""
+    stays; the line is exactly the tokens with each path rewritten in place (review r1 M1)."""
     value = ",".join(profile)
     prof = [f"--profile={value}"] if eq else ["--profile", value]
-    got = redact([*prof, *(t for t, _ in parts)])
+    got = redact([*prof, *(t for t, _, _ in parts)])
+    shown_prof = "--profile=<profile>" if eq else "--profile <profile>"
+    assert got == " ".join(["gippa run", shown_prof, *(e for _, _, e in parts)])
     assert not ABS.search(got), got
     # the local prefixes (the drawn segments use none of their letters h, l, m, o, r, s, u, A)
     for comp in dir_components(OUTDIR + "/x", "/zzhome/zzuser/x"):
         assert f"/{comp}" not in got and (comp == "A" or comp not in got), (comp, got)
-    for _, path in parts:
+    for _, path, _ in parts:
         assert PurePosixPath(path).name in got
     assert not [p for p in profile if p in got], got
     assert "<profile>" in got

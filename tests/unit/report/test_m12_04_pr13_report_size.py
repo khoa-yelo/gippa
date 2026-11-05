@@ -16,7 +16,9 @@ Interface pinned here (PR 13 test author, beyond the spec text):
 - a linked view: an ``<img>`` in the V13 slot (``data-plot="V13"``) whose ``src`` is relative
   (no scheme, no leading ``/``), ends in ``plots/<stem>.svg`` and resolves from ``OUT/report/``
   to the file; an ``<a href>`` to the same target exists in the slot; the SVG text is not in the
-  page. Other plots (here V17) stay inlined.
+  page. Other plots (here V17) stay inlined;
+- review r1 M2: the main V13 plot (``V13_novel_orfs``) is no locus view: it stays inlined and no
+  ``<img>`` ``src`` names ``V13_novel_orfs.svg``.
 """
 
 from __future__ import annotations
@@ -92,6 +94,13 @@ def assert_linked(html: str, out: Path) -> None:
     assert "q" * 100_000 not in html
 
 
+def assert_main_v13_inlined(html: str) -> None:
+    """Review r1 M2: the main V13 plot stays inlined, never an ``<img>``."""
+    assert inlined(html, MAIN_V13), f"{MAIN_V13} is not inlined"
+    srcs = [n.attrs.get("src", "") for n in parse(html).root.by_tag("img")]
+    assert not [s for s in srcs if s.endswith(f"{MAIN_V13}.svg")], srcs
+
+
 # ---------------------------------------------------------------- the constant
 
 
@@ -114,6 +123,7 @@ def test_ac_13_3_large_svgs_are_linked(tmp_path: Path) -> None:
     out = _out(tmp_path, int(10.5 * MB))
     html = _html(out)
     assert_linked(html, out)
+    assert_main_v13_inlined(html)
     assert inlined(html, V17)
     assert len(html.encode("utf-8")) < REPORT_LINK_THRESHOLD
 
@@ -152,6 +162,7 @@ def test_patched_threshold_links_moderate_svgs(
     monkeypatch.setattr(build, "REPORT_LINK_THRESHOLD", 300_000)
     html = _html(out)
     assert_linked(html, out)
+    assert_main_v13_inlined(html)
     assert inlined(html, V17)
 
 
