@@ -11,14 +11,14 @@ docs/specs/M7-11b-class-fdr-wiring.md, lead decisions 1–7.
 The block below is copied into the run report's Methods section by `scripts/dev/sync_report_snippets.py` (plain paragraphs and lists only).
 
 <!-- report:begin -->
-Peptides placed outside annotated genes define candidate open reading frames in
-four classes: intergenic, out of frame inside a gene, antisense, and N-terminal extension. Novel
-peptides have a lower prior than annotated ones, so the error is estimated within each class and
-never pooled: database peptides compete with class-matched decoy ORFs, and de novo peptides use
-their genome decoy hits. An ORF is called when its class q-value is at most 0.01 by default and it
-meets its class rules. Without decoys, at least two distinct peptides are required and no FDR is
-given. For de novo ORFs the ORF q-value is the smallest peptide q-value, which can understate the
-ORF-level error.
+Peptides outside annotated genes define candidate open reading frames in
+seven classes; four get a class FDR: intergenic, out-of-frame in a gene, antisense, and
+N-terminal extension. Novel peptides have a lower prior than annotated ones, so error is
+estimated within each class and never pooled: database peptides compete with class-matched decoy
+ORFs, de novo peptides use their genome decoy hits. An ORF is called when its class q-value is at
+most 0.01 by default and meets its class rules. In the other classes, or a class whose FDR
+cannot be estimated, an ORF needs at least two distinct peptides and carries no FDR. For de novo
+ORFs the ORF q-value is the smallest peptide q-value, which can understate ORF-level error.
 <!-- report:end -->
 
 ## Class FDR

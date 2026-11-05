@@ -13,8 +13,8 @@ One block per detection tier; the report shows the run's.
 <!-- report:begin decoy_picked -->
 The input carries decoy peptides, and enough of them (80 % by default) pair with a
 gene. For each gene, the best accepted target peptide competes with the best paired decoy: the
-better one wins, and a tie goes to the decoy. The gene q-value is the picked FDR, decoy wins
-scaled up by the share of decoys that paired, plus one, over target wins. A gene is detected when
+better one wins, and a tie goes to the decoy. The gene q-value is the picked FDR: decoy wins
+divided by the share of decoys that paired, plus one, over target wins. A gene is detected when
 its q-value is at most the identification level (0.01 by default). The plus one sets a floor: no
 q-value is below 1 over the number of genes won by a target, so a run with few such genes may
 detect none.

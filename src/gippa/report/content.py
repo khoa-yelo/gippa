@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import math
 import re
-from collections.abc import Mapping
+from collections.abc import Collection, Mapping
 from importlib import resources
 from pathlib import PurePosixPath
 from typing import Any
@@ -430,6 +430,15 @@ METHOD_TOPICS: Mapping[str, tuple[str, tuple[str, ...], tuple[str, ...]]] = {
                  ("enrichment_detection", "enrichment_gsea", "category_summary")),
     "determinants": ("Determinants", ("determinants",), ("determinants_model",)),
 }  # fmt: skip
+#: methods topic -> the report section it belongs to (``gippa.report.build.SECTIONS``): a note
+#: whose section is not applicable to the run is not shown (M12-04 PR 3 review r1 M1)
+TOPIC_SECTION: Mapping[str, str] = {
+    "placement-fdr": "mapping", "denovo-precision": "mapping", "abundance": "detection",
+    "operons": "operons", "islands": "genome-context", "variants": "variants",
+    "novel-orfs": "novel-orfs", "function": "function", "determinants": "determinants",
+}  # fmt: skip
+#: topics that need a finite ``abundance_log2`` (review r1 M1)
+NEEDS_ABUNDANCE = frozenset({"abundance", "operons", "determinants"})
 #: detection tier -> the heading of its methods snippet
 TIER_TITLES: Mapping[str, str] = {
     "decoy_picked": "Detection tier: picked decoys",
@@ -482,21 +491,33 @@ def _has_abundance(view: RunView) -> bool:
     return bool(vals.map(lambda v: math.isfinite(float(v))).any())
 
 
-def methods_snippets(view: RunView, doc: Mapping[str, Any] | None) -> list[dict[str, Any]]:
-    """The Methods section's snippets (R-07): the run's tier, then each topic of
-    ``METHOD_TOPICS`` whose step ran (the manifest's ``steps``; a run without them: whose table
-    is present). De novo precision also needs de novo peptides and abundance a finite
-    ``abundance_log2``. Each: ``topic`` (the snippet's file stem), ``title``, ``body`` and
-    ``link`` (its methods page)."""
+def has_rows(view: RunView, key: str) -> bool:
+    """Whether the run wrote table ``key`` with at least one row (an unreadable one: no)."""
+    frame = _safe(view, key) if view.has(key) else None
+    return frame is not None and len(frame) > 0
+
+
+def methods_snippets(
+    view: RunView, doc: Mapping[str, Any] | None, off: Collection[str] = ()
+) -> list[dict[str, Any]]:
+    """The Methods section's snippets (R-07): the run's tier (always), then each topic of
+    ``METHOD_TOPICS`` whose step ran (the manifest's ``steps``, not failed; a run without them:
+    one of whose tables has a row) and whose section (``TOPIC_SECTION``) is not in ``off``, the
+    not-applicable section ids of ``gippa.report.build.not_applicable``. De novo precision also
+    needs de novo peptides, and the ``NEEDS_ABUNDANCE`` topics a finite ``abundance_log2``. Each:
+    ``topic`` (the snippet's file stem), ``title``, ``body`` and ``link`` (its methods page)."""
     ran = _steps_run(doc)
     tier = _run_tier(view, doc) or ""
     picked = [(f"detection-tiers.{tier}", TIER_TITLES[tier])] if tier in TIER_TITLES else []
-    checks = {"denovo-precision": _has_denovo, "abundance": _has_abundance}
+    abundance = _has_abundance(view)
     for topic, (title, steps, tables) in METHOD_TOPICS.items():
         shown = (any(s in ran for s in steps) if ran is not None
-                 else any(view.has(t) for t in tables))  # fmt: skip
-        if shown and checks.get(topic, lambda _v: True)(view):
-            picked.append((topic, title))
+                 else any(has_rows(view, t) for t in tables))  # fmt: skip
+        if (not shown or TOPIC_SECTION.get(topic) in off
+                or (topic in NEEDS_ABUNDANCE and not abundance)
+                or (topic == "denovo-precision" and not _has_denovo(view))):  # fmt: skip
+            continue
+        picked.append((topic, title))
     out = []
     for stem, title in picked:
         body = _snippet(stem)

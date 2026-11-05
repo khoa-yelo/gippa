@@ -10,13 +10,14 @@ the genome" and step 4, §8.1, §8.4, §9.3, §9.4; issue M3-11; ADR-0010).
 The block below is copied into the run report's Methods section by `scripts/dev/sync_report_snippets.py` (plain paragraphs and lists only).
 
 <!-- report:begin -->
-De novo peptides are binned by score decile. In each bin, the share that
-matches the genome's six-frame translation exactly is compared with the share that matches a
-shuffled decoy, and with the share of confidently identified reference peptides that match the
-genome (assumed to be 0.99 when no reference peptides are given). From these shares, the estimate
-is the fraction of distinct de novo peptides in the bin that are correct, with a bootstrap
-interval. One minus its lower bound is each peptide's prior chance of being wrong in the placement
-FDR. A bin whose target and decoy match rates are too close is not reported.
+De novo peptides are binned by score decile and split into length classes. In
+each, the share matching the genome's six-frame translation exactly is compared with the share
+matching a shuffled decoy and with the share of confidently identified reference peptides of that
+class matching the genome (0.99 when none are given). A length class is left out of a bin when its
+reference match rate is less than 0.05 above the decoy match rate; a bin with no class left has no
+estimate. Otherwise the estimate is the fraction of distinct de novo peptides in the bin that are
+correct, with a bootstrap interval. One minus its lower bound is each peptide's prior error in
+the placement FDR.
 <!-- report:end -->
 
 ## Estimand (ADR-0019 decision 5)

@@ -133,21 +133,13 @@ def not_applicable(
             out.append((s.id, s.heading, plain(f"module_off:{mod}")))
         elif needs and not any(view.has(k) for k in needs):
             reason = plain(f"input_absent:{needs[0]}")
-            if s.id in _NEEDS_PEPTIDES and not _has_rows(view, "peptide_hits"):
+            if s.id in _NEEDS_PEPTIDES and not content.has_rows(view, "peptide_hits"):
                 reason += f" ({_NEEDS_PEPTIDES[s.id]} needs peptides)"
             out.append((s.id, s.heading, reason))
     if "bgc" in off:
         out.append(("", "Biosynthetic gene clusters (BGC)", "not searched, so no BGC regions "
                     "or BGC locus views (" + plain("module_off:bgc") + ")"))  # fmt: skip
     return out
-
-
-def _has_rows(view: RunView, key: str) -> bool:
-    try:
-        frame = view.table(key) if view.has(key) else None
-    except Exception:
-        return False
-    return frame is not None and len(frame) > 0
 
 
 def _plot_slot(
@@ -507,7 +499,7 @@ def build_report(
         toc=head.toc(view, entries), not_applicable=[(n, r) for _, n, r in absent],
         not_applicable_heading=NOT_APPLICABLE, glossary=content.GLOSSARY,
         provenance=content.provenance(view, doc, note), extras=content.extras(view, doc),
-        warnings=content.summary_warnings(view), snippets=content.methods_snippets(view, doc),
+        warnings=content.summary_warnings(view), snippets=content.methods_snippets(view, doc, off),
         code_note=content.genetic_code_note(table),
         code_methods=content.genetic_code_methods(table),
         licence_notes=content.licence_notes(doc),

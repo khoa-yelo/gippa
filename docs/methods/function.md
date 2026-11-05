@@ -21,8 +21,9 @@ and its detection probability comes from the detectability model. The p-value is
 law of detected TUs in the category given the run's total, with Benjamini-Hochberg q per
 collection and direction; for GO over-representation, TUs of significant child terms are removed
 from their parents first. The effect is detected minus expected TUs. These p-values are not
-calibrated and are not discovery claims. The category summary compares detected and expected
-genes, with a TU-block bootstrap interval.
+calibrated and are not discovery claims. Gene-set enrichment analysis (GSEA) asks whether a
+category's TUs rank high or low by mean log2 abundance. The category summary compares detected and
+expected genes.
 <!-- report:end -->
 
 ## Wallenius ORA

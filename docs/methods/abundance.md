@@ -12,14 +12,14 @@ rank-based statistics, TU-block resampling and the `basic`/`full` sensitivity re
 The block below is copied into the run report's Methods section by `scripts/dev/sync_report_snippets.py` (plain paragraphs and lists only).
 
 <!-- report:begin -->
-Gene abundance is the relative molar amount of each gene's protein in this sample,
-known only up to one constant per run: ratios and ranks between genes carry meaning, absolute
-values do not, and runs cannot be compared without normalisation. With peptide intensities, the
-default is iBAQ, the summed intensity of a gene's quantified peptides divided by its number of
-theoretically observable peptides (Top3, the mean of the three largest intensities, is the
-alternative). Otherwise a supplied protein table is used. Values are log2. A detected gene without
-a quantified value is filled with the run median by default; a gene that is never detected is
-never filled.
+Gene abundance is the amount of each gene's protein in this sample, known only
+up to one constant per run: ratios and ranks carry meaning, absolute values do not.
+With peptide intensities it is molar: by default iBAQ, the summed intensity of a gene's quantified
+peptides divided by its number of theoretically observable peptides, or Top3, the mean of the
+three largest intensities. Otherwise a supplied protein table is used; it counts as molar only when
+declared iBAQ or Top3, else its values are relative and the abundance tests that need molar values
+are not estimated. Values are log2. A detected gene without a quantified value is filled with the
+run median by default; an undetected gene is never filled.
 <!-- report:end -->
 
 ## What is estimated

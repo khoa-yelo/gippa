@@ -13,7 +13,8 @@ context. An elastic net and LightGBM are fitted with cross-validation over trans
 The elastic net's drop in R² when a block is removed is the primary attribution; SHAP values
 describe the LightGBM fit only. Permuting whole transcription units gives a p-value for the model
 R², which is uncalibrated and not a discovery claim. Genes whose abundance lies more than two SD
-from the prediction are flagged. With fewer than 100 genes, no model is fitted.
+from the prediction are flagged. The model needs at least 100 genes with measured abundance in at
+least 25 transcription units; otherwise none is fitted.
 <!-- report:end -->
 
 ## Features
