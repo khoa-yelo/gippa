@@ -49,14 +49,23 @@ def isSupport(String item) { item.tokenize('=')[0].endsWith('_support') }
 // The <x>_support directory of a `support` emission (one file or a list of its support/ files).
 def supportDir(fs) { (fs instanceof List ? fs[0] : fs).parent.parent }
 
+// The published top-level names of OUT/ (gippa.runner.local.PUBLISHED_TOP); every other task
+// output is a step intermediate, published under intermediate/.
+def publishedTop() {
+    ['README.txt', 'run_manifest.json', 'resolved_config.yaml', 'preflight', 'annotation', 'mapping',
+     'tables', 'plots', 'report', 'schemas', 'logs'] as Set
+}
+
 // OUT-relative publish path of a task output: null for versions.yml, work/<file> and a support
 // directory itself; OUT/plots/support/<file> for a support file; logs/steps/<step>.events.jsonl
-// for the step's event log; else the output's own path.
+// for the step's event log; the output's own path when its first component is a published name;
+// else intermediate/<path>.
 def publishAs(String step, String fn) {
     def parts = fn.tokenize('/')
     if (fn == 'versions.yml' || fn.startsWith('work/')) return null
     if (parts[0].endsWith('_support')) return parts.size() == 3 && parts[1] == 'support' ? "plots/support/${parts[2]}" : null
-    return fn == 'logs/events.jsonl' ? "logs/steps/${step}.events.jsonl" : fn
+    if (fn == 'logs/events.jsonl') return "logs/steps/${step}.events.jsonl"
+    return parts[0] in publishedTop() ? fn : "intermediate/${fn}"
 }
 
 process GIPPA_STEP {

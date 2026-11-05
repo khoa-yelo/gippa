@@ -9,6 +9,7 @@ data behind it. Each table's columns, types, units and constraints are in the
 
 ```text
 OUT/
+├── README.txt                 a short guide to this folder: what each entry holds
 ├── run_manifest.json          versions, database versions and checksums, parameters,
 │                              input SHA-256, seeds, per-step time and peak memory
 ├── resolved_config.yaml       the configuration the run used
@@ -32,12 +33,24 @@ OUT/
 ├── plots/                     Vnn_<name>.svg|png|pdf, data/Vnn_<name>.tsv, support/*.tsv
 ├── report/                    report.html (self-contained)
 ├── schemas/datapackage.json   Frictionless descriptor of every published table
-└── logs/                      events.jsonl, trace.tsv, timeline.html, nf_report.html, <step>.log
+├── logs/                      events.jsonl, trace.tsv, timeline.html, nf_report.html, <step>.log
+├── intermediate/              files passed between steps (codon.parquet, genetable/, context/,
+│                              novel/, windows/, ...); not results
+└── work/                      the workflow engine's working files; needed only to resume a run
 ```
 
-Some files sit outside this list. `genetable/`, `context/` and `novel/` hold Parquet
-intermediates that later steps and `gippa report` read. `work/` is Nextflow's work directory. These
-are not part of the published table set, and their layout may change between versions.
+`README.txt` lists the entries a run left, each with one sentence, so a folder copied without
+this page still explains itself. A failed run writes it too.
+
+`intermediate/` holds the files steps pass to each other, such as the Parquet gene table that
+`gippa report` reads. They are not part of the published table set, and their layout may change
+between versions. `work/` is Nextflow's work directory; delete it once you no longer need
+`--resume`.
+
+Output folders of GIPPA 1.0 kept these intermediates at the top level (`codon.parquet`,
+`genetable/`, `context/`, `novel/`, ...). `gippa report` and `gippa compare` still read such folders.
+A `--resume` into one leaves the old files in place and logs one warning with their count; you can
+remove them.
 
 Optional modules that are switched off write no files. `run_manifest.json` lists them under
 `modules_off` (`mobile`, `bgc`, `function`). The `function` module writes `category_summary.tsv`,

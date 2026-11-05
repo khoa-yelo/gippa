@@ -648,6 +648,7 @@ def run(
     from gippa.io.manifest_sources import rotate_events
 
     rotate_events(outdir.absolute() / "logs")  # one events.jsonl per run (MVP-03 D-B step 1)
+    _legacy_warning(outdir.absolute())
     if minimal_set:  # Q-L25: the auto core,function notice is recorded in the manifest (B6)
         from gippa.io.events import append_event, event_record
 
@@ -786,6 +787,47 @@ def _finalize(outdir: Path) -> None:
 
 
 def _run_tail(outdir: Path, base: dict[str, Any], code: int, **kw: Any) -> int:
+    """:func:`_tail` (manifest, report), then ``OUT/README.txt`` for whatever the run left, also
+    after a failed run. :func:`_tail` writes it before the report re-render too, so after a
+    re-render that changed no top-level entry nothing outside ``logs/`` is rewritten."""
+    rc = _tail(outdir, base, code, **kw)
+    _write_readme(outdir)
+    return rc
+
+
+def _write_readme(outdir: Path) -> None:
+    """``OUT/README.txt`` (``gippa.io.out_readme``) unless it already holds that text; an error
+    is only reported."""
+    from gippa.io.out_readme import README, render_readme, write_readme
+
+    path = outdir.absolute() / README
+    try:
+        if not path.is_file() or path.read_bytes() != render_readme(path.parent).encode("ascii"):
+            write_readme(path.parent)
+    except OSError as exc:
+        click.echo(f"gippa run: README.txt was not written ({exc})", err=True)
+
+
+def _legacy_warning(outdir: Path) -> None:
+    """One ``outputs.legacy_intermediates`` WARNING event when ``OUT/`` holds top-level step
+    intermediates of an earlier version (a ``--resume`` into a 1.0 directory); they are kept."""
+    from gippa.io.out_readme import count_files, legacy_entries
+
+    names = legacy_entries(outdir)
+    if not names:
+        return
+    from gippa.io.events import append_event, event_record
+
+    n_files = count_files(outdir, names)
+    data = {"count": len(names), "files": n_files,
+            "message": f"{len(names)} top-level entries from an earlier GIPPA version (step "
+                       "intermediates, now written under intermediate/) were left in place; they "
+                       "can be removed"}  # fmt: skip
+    append_event(outdir / "logs", event_record("outputs", "legacy_intermediates", data, "WARNING"))
+    click.echo(f"gippa run: warning: {data['message']}", err=True)
+
+
+def _tail(outdir: Path, base: dict[str, Any], code: int, **kw: Any) -> int:
     """The run tail (MVP-03 D-B steps 5-6): the manifest, even after a failed step (with one
     warning line when the operons came from the distance model, M11-14d), then the
     ``report.html`` re-render when the manifest says ``completed`` (M9-16b, ADR-0040 amendment
@@ -814,6 +856,7 @@ def _run_tail(outdir: Path, base: dict[str, Any], code: int, **kw: Any) -> int:
         return int(code)
     from gippa.steps import plots as P
 
+    _write_readme(outdir)  # report/report.html is the in-graph page, replaced in place below
     try:  # the page reads the manifest just written (M9-16b); nothing writes OUT/ after it
         P.rerender_report(outdir, base["cfg"])
     except Exception:
