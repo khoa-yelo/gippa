@@ -58,7 +58,8 @@ from gippa.viz import base, style
 from gippa.viz.base import Instance, Skip
 from gippa.viz.locus import render_locus, select_loci
 
-COLUMNS = ["track", "id", "contig", "start", "end", "strand", "value", "category"]
+#: M12-04 P-01 appends ``fill``, the drawn face colour of each row
+COLUMNS = ["track", "id", "contig", "start", "end", "strand", "value", "category", "fill"]
 CIVIDIS = matplotlib.colormaps["cividis"]
 SCALE = (18.0, 24.0)
 
@@ -222,7 +223,7 @@ def test_data_columns_suffix_title_and_coords(tmp_path: Path, cfg: GippaConfig) 
     assert list(inst.data.columns) == COLUMNS
     assert inst.suffix == "prophage_1"
     assert inst.title == lo.label
-    assert inst.title == "prophage_1: 12 % detected vs 31 % expected (q = 0.003)"
+    assert inst.title == f"prophage_1: 12 % detected vs 31 % expected ({style.q_equals(0.003)})"
     assert " ".join(inst.title.split()) in [" ".join(t.split()) for t in _texts(inst.figure)]
     assert "start" in inst.coords
     assert "end" not in inst.coords
@@ -251,8 +252,10 @@ def test_gene_rows_carry_strand_abundance_and_status(tmp_path: Path, cfg: GippaC
     tsv = (tmp_path / "plots" / "data" / "V03_locus_prophage_1.tsv").read_text(encoding="utf-8")
     lines = tsv.splitlines()
     assert lines[0] == "\t".join(COLUMNS)
-    assert "gene\tG1\tchr1\t10101\t11000\t+\t21\tdetected" in lines
-    assert "gene\tG2\tchr1\t11101\t11900\t-\tNA\tnot_detected" in lines
+    rows = [line.rsplit("\t", 1)[0] for line in lines[1:]]  # without the trailing fill
+    assert "gene\tG1\tchr1\t10101\t11000\t+\t21\tdetected" in rows
+    assert "gene\tG2\tchr1\t11101\t11900\t-\tNA\tnot_detected" in rows
+    assert "gene\tG2\tchr1\t11101\t11900\t-\tNA\tnot_detected\twhite" in lines
 
 
 # --- example 4: origin crossing ----------------------------------------------------------------
@@ -408,10 +411,16 @@ def test_the_scale_argument_sets_the_colour(tmp_path: Path, cfg: GippaConfig) ->
     assert _rgb(CIVIDIS(1.0)) not in fills
 
 
-def test_undetected_gene_is_grey(tmp_path: Path, cfg: GippaConfig) -> None:
+def test_undetected_gene_is_white_and_hatched(tmp_path: Path, cfg: GippaConfig) -> None:
+    """M12-04 P-01: not detected is ``style.LOCUS_UNDETECTED`` (white, grey edge, hatched)."""
+    und = style.LOCUS_UNDETECTED
     inst = _render(_one_gene_out(tmp_path, status="not_detected"), cfg, "prophage_1")
-    fills = {_rgb(f[0]) for f in _opaque(_axes(inst.figure, "genes"))}
-    assert _rgb(mcolors.to_rgba("#BBBBBB")) in fills
+    opaque = _opaque(_axes(inst.figure, "genes"))
+    fills = {_rgb(f[0]) for f in opaque}
+    want = (_rgb(mcolors.to_rgba(und["facecolor"])), _rgb(mcolors.to_rgba(und["edgecolor"])),
+            und["hatch"])  # fmt: skip
+    assert want in {(_rgb(f), _rgb(e) if e else None, h) for f, e, h in opaque}, opaque
+    assert _rgb(mcolors.to_rgba("#BBBBBB")) not in fills
     assert not fills & LUT
 
 

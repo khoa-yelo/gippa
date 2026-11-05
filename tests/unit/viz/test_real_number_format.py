@@ -264,8 +264,9 @@ def test_v03_index_rounds_the_error_column_text(tmp_path: Path, cfg: GippaConfig
     assert bad == [], bad
 
 
-def test_v03_tiny_q_prints_in_scientific_notation(tmp_path: Path, cfg: GippaConfig) -> None:
-    """#322 B1: an analytic region q far below 1e-12 must not print a run of zeros."""
+def test_v03_tiny_q_prints_below_the_floor(tmp_path: Path, cfg: GippaConfig) -> None:
+    """#322 B1: an analytic region q far below 1e-12 must not print a run of zeros; since
+    M12-04 P-18 it reads ``q < 0.001`` (``fmt_q``)."""
     import gippa.viz.locus  # noqa: F401  (registers V03)
 
     out = vl.build_out(
@@ -277,7 +278,8 @@ def test_v03_tiny_q_prints_in_scientific_notation(tmp_path: Path, cfg: GippaConf
     result = base.registered()["V03"].fn(RunView.from_outdir(out), cfg)
     assert not isinstance(result, Skip), result
     (inst,) = [i for i in result if i.suffix == "prophage_1"]
-    assert "(q = 3.2e-15)" in inst.title, inst.title
+    assert f"({style.q_equals(3.2e-15)})" in inst.title, inst.title
+    assert "(q < 0.001)" in inst.title, inst.title
 
 
 # --------------------------------------------------------------------- V13 locus label
