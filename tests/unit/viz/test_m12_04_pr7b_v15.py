@@ -28,8 +28,9 @@ Interface assumed beyond the spec text (PR 7b test author):
 - The banner is a ``Text`` artist anywhere in the figure; whitespace (line wrapping) is ignored
   when matching texts.
 - A run without abundance (univariate-only ``determinants_model``, no attribution rows, no
-  support files) returns an empty state or a ``Skip``; either way no "not available (no
-  determinants_pd support file)" text (the empty-state wording itself is PR 4's).
+  support files) returns an empty state, never a ``Skip`` (review round 1, lead decision), and
+  no "not available (no determinants_pd support file)" text; its title is pinned in
+  ``test_m12_04_pr7b_review1.py``.
 """
 
 from __future__ import annotations
@@ -370,8 +371,7 @@ def test_edge_no_abundance_has_no_not_available_panels(tmp_path: Path, cfg: Gipp
     """Run C (no abundance): univariate-only rows, no predictions, no support files."""
     out = vd.build_out(tmp_path, model=vd.univariate_rows(), attribution=[], support=False)
     result = _result(out, cfg)
-    if isinstance(result, Skip):
-        return
+    assert not isinstance(result, Skip), result  # review r1 item 2: an empty state, not a skip
     assert len(result) == 1
     inst = result[0]
     assert inst.empty, _texts(inst.figure)
