@@ -270,9 +270,22 @@ def _add_determinant_nulls(out: Path) -> None:
                for b in range(1, 200)])  # fmt: skip
 
 
-def _bad_tokens(inst: Instance) -> list[str]:
+def _region_ids(out: Path) -> set[str]:
+    """The run's own region IDs (``annotation/regions.tsv``, ``tables/regions_stats.tsv``):
+    identifiers from the data, which V18 text may show (lead, review round 1)."""
+    ids: set[str] = set()
+    for rel in ("annotation/regions.tsv", "tables/regions_stats.tsv"):
+        if (out / rel).is_file():
+            ids |= {r["region_id"] for r in h5.read_table(out, rel) if r.get("region_id")}
+    return ids
+
+
+def _bad_tokens(inst: Instance, out: Path) -> list[str]:
+    """Texts with an ADR number or a ``\\w+_\\w+`` token that is not one of the run's region IDs."""
+    allowed = _region_ids(out)
     found = [inst.title, *h.texts(inst.figure)]
-    return [t for t in found if RAW_TOKEN.search(t) or ADR.search(t)]
+    raw = [t for t in found if any(m not in allowed for m in RAW_TOKEN.findall(t))]
+    return raw + [t for t in found if ADR.search(t) and t not in raw]
 
 
 def test_v18_hand_fixture_has_no_raw_token_or_adr(tmp_path: Path, cfg: GippaConfig) -> None:
@@ -280,12 +293,14 @@ def test_v18_hand_fixture_has_no_raw_token_or_adr(tmp_path: Path, cfg: GippaConf
                     n_pairs=12)  # fmt: skip
     h.add_island_nulls(out)
     _add_determinant_nulls(out)
-    assert _bad_tokens(_render("V18", out, cfg)) == []
+    assert _bad_tokens(_render("V18", out, cfg), out) == []
 
 
 def test_v18_sim_plots_has_no_raw_token_or_adr(tmp_path: Path) -> None:
-    inst = h5.only(h5.render(h5.sim_copy(tmp_path), ["V18"]), "V18")
-    assert _bad_tokens(inst) == []
+    out = h5.sim_copy(tmp_path)
+    inst = h5.only(h5.render(out, ["V18"]), "V18")
+    assert "prophage_1" in _region_ids(out)
+    assert _bad_tokens(inst, out) == []
 
 
 def test_uncalibrated_note_has_no_adr() -> None:
