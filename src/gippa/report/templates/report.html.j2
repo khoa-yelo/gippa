@@ -93,8 +93,11 @@
 {% elif i.svg is not none %}
 {{ i.svg }}
 {% endif %}
-<figcaption class="links">{{ i.stem }}{% for label, href in i.links %} <a href="{{ href }}">{{ label }}</a>{% endfor %}</figcaption>
+<figcaption class="links" data-stem="{{ i.stem }}">{{ i.caption }}{% for label, href in i.links %} <a href="{{ href }}">{{ label }}</a>{% endfor %}</figcaption>
 </figure>
+{% endfor %}
+{% for n in p.notices %}
+<p class="notice">{{ n }}</p>
 {% endfor %}
 {% if p.note %}
 <p class="note">{{ p.pid }}: {{ p.note }}</p>
@@ -106,6 +109,10 @@
 <p class="note">{{ t.error }}</p>
 {% elif t.absent %}
 <p class="note">{{ t.name }}: not produced in this run.</p>
+{% elif t.sentence %}
+<p class="note" data-table-none="{{ t.key }}">{{ t.sentence }} (<a href="{{ t.href }}">full table</a>)</p>
+{% elif t.none %}
+<p class="note" data-table-none="{{ t.key }}">{{ t.name }}: none (<a href="{{ t.href }}">full table</a>)</p>
 {% elif t.groups %}
 {% for family, rows in t.groups %}
 <h3>{{ t.name }}: {{ family }} ({{ rows | length }} rows; <a href="{{ t.href }}">full table</a>)</h3>
@@ -136,8 +143,10 @@
 {% endif %}
 {% endfor %}
 {% for x in extras.get(s.id, []) %}
-{% if x.rows is defined %}
-<p>{{ x.caption }}:</p>
+{% if x.rows is defined and not x.rows %}
+<p class="note">{{ x.caption }}: none.</p>
+{% elif x.rows is defined %}
+<p>{{ x.caption }}{% if x.link %} (<a href="{{ x.link }}">methods note</a>){% endif %}:</p>
 <div class="table-wrap">
 <table data-table="{{ x.key }}">
 <thead><tr>{% for h in x.header %}<th>{{ h }}</th>{% endfor %}</tr></thead>
@@ -149,15 +158,21 @@
 </table>
 </div>
 {% else %}
-<p class="caveat">{{ x.text }}</p>
+<p class="{{ x.cls or 'caveat' }}">{{ x.text }}{% if x.link %} (<a href="{{ x.link }}">methods note</a>){% endif %}</p>
 {% endif %}
 {% endfor %}
 {% if s.id == "methods" %}
 <p>{{ code_methods }}</p>
-<p>The methods notes below are generated from the GIPPA {{ version }} documentation (docs/methods).</p>
 {% if licence_notes %}
 <p class="licence-notes">Licence notes: {{ licence_notes | join("; ") }}</p>
 {% endif %}
+<h3>Glossary</h3>
+<dl id="glossary">
+{% for term, text in glossary %}
+<dt>{{ term }}</dt>
+<dd>{{ text }}</dd>
+{% endfor %}
+</dl>
 {% for topic, body in snippets %}
 <div class="snippet" data-topic="{{ topic }}">
 <h3>{{ topic }}</h3>
@@ -178,6 +193,7 @@
 </table>
 {% endif %}
 <p>Resolved configuration SHA-256: {{ provenance.config or "not available" }}</p>
+{% if provenance.inputs %}
 <table data-table-provenance="inputs">
 <thead><tr><th>file</th><th>role</th><th>SHA-256</th></tr></thead>
 <tbody>
@@ -186,7 +202,13 @@
 {% endfor %}
 </tbody>
 </table>
+{% else %}
+<p>Inputs: none recorded.</p>
+{% endif %}
 {% if provenance.tools is defined %}
+{% if not provenance.tools %}
+<p>Tools: none recorded in run_manifest.json.</p>
+{% else %}
 <table data-table-provenance="tools">
 <thead><tr><th>tool</th><th>version</th><th>digest</th></tr></thead>
 <tbody>
@@ -195,6 +217,7 @@
 {% endfor %}
 </tbody>
 </table>
+{% endif %}
 {% if provenance.databases %}
 <table data-table-provenance="databases">
 <thead><tr><th>database</th><th>version</th><th>checksum</th><th>retrieved</th></tr></thead>
@@ -211,6 +234,16 @@
 {% endif %}
 </section>
 {% endfor %}
+{% if not_applicable %}
+<section id="sec-not-applicable">
+<h2>{{ not_applicable_heading }}</h2>
+<ul>
+{% for name, reason in not_applicable %}
+<li>{{ name }}: {{ reason }}</li>
+{% endfor %}
+</ul>
+</section>
+{% endif %}
 {% if plotlyjs %}
 <footer><p>Interactive figures use plotly.js {{ plotly_version }} (MIT licence, Copyright Plotly, Inc.), inlined in this page.</p></footer>
 {% endif %}

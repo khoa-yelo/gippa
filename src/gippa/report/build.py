@@ -7,7 +7,12 @@ inlined, ids prefixed with the instance stem so no two SVGs share an id), then t
 ``TOP_ROWS`` rows of its tables as written, with a link to the full TSV. The template inlines its
 CSS and ``tables.js``; ``twins`` (instance stem -> ``(div id, figure JSON)``, M9-14) adds one Plotly
 div per instance beside its static SVG and inlines plotly.js once in ``<head>`` (only when a twin
-exists). Every link is relative (``../plots/...``, ``../tables/...``) and names a file that exists.
+exists). Every link is relative (``../plots/...``, ``../tables/...``) and names a file that exists,
+apart from the absolute links to the docs-site methods pages (links, never loads; M12-04 Q12).
+
+M12-04 PR 2: a section that does not apply to the run (``not_applicable``) is listed once in
+``#sec-not-applicable`` at the end instead of being rendered; an empty-state instance is a
+``.notice``; a 0-row preview is "none" with its link; the genes preview is ``GENES_PREVIEW``.
 """
 
 from __future__ import annotations
@@ -24,11 +29,12 @@ from markupsafe import Markup
 import gippa
 from gippa.config import GippaConfig
 from gippa.determinants.models import MIN_ROWS, MIN_TUS
-from gippa.io.plot_files import PlotFiles
+from gippa.io.plot_files import PlotFiles, svg_title
 from gippa.io.run_view import PATHS, RunView
 from gippa.io.tsv import format_value
 from gippa.report import content, head
 from gippa.viz import style
+from gippa.viz.words import plain
 
 TOP_ROWS = 20
 UNESTIMATED = "unestimated"
@@ -48,7 +54,7 @@ class Section:
 SECTIONS: tuple[Section, ...] = (
     Section("summary", "Summary"),
     Section("inputs-qc", "Inputs and quality control", ("V17",)),
-    Section("mapping", "Peptide mapping", ("V05", "V06")),
+    Section("mapping", "Mapping", ("V05", "V06")),
     Section("detection", "Gene detection", ("V07", "V18"), ("genes_tsv", "detection_summary")),
     Section(
         "genome-context",
@@ -65,6 +71,19 @@ SECTIONS: tuple[Section, ...] = (
     Section("methods", "Methods"),
     Section("provenance", "Provenance"),
 )
+#: the curated genes preview, in order (R-06); ``tables/genes.tsv`` keeps every column
+GENES_PREVIEW = ("locus_tag", "gene", "product", "detection_status", "n_peptides_unique",
+                 "abundance_log2", "region_ids", "flags")  # fmt: skip
+NOT_APPLICABLE = "Not applicable in this run"
+SENSITIVITY_NONE = "No flagged results, so there is nothing to compare across sensitivity reruns."
+#: section id -> the tables whose absence makes it inapplicable (all of them absent)
+_NEEDS: Mapping[str, tuple[str, ...]] = {
+    "operons": ("pairs", "operon_flags"),
+    "variants": ("variants",),
+    "novel-orfs": ("novel_orfs",),
+}
+#: section id -> the module it needs
+_MODULE: Mapping[str, str] = {"function": "function"}
 
 _ENV = jinja2.Environment(
     loader=jinja2.PackageLoader("gippa.report", "templates"),
@@ -93,35 +112,93 @@ def _script_json(text: str) -> str:
     return text.replace("<", "\\u003c")
 
 
-def reason_words(reason: str) -> str:
-    """``module_off:function`` -> "the function module is off" (behaviour 2)."""
-    kind, _, what = reason.partition(":")
-    words = {
-        "module_off": f"the {what} module is off",
-        "input_absent": f"input {what} absent",
-        "layer_missing": f"layer {what} missing",
-        "not_registered": "this plot is not available in this GIPPA version",
-    }
-    return words.get(kind, reason)
+def not_applicable(view: RunView) -> list[tuple[str, str, str]]:
+    """``(section id, name, plain reason)`` of each section that does not apply to the run (its
+    module off, or every table it needs absent), then the BGC content when ``bgc`` is off; the
+    mobile module is a Genome context note instead (behaviour 4, lead decisions 1-3)."""
+    off = view.modules_off()
+    out = []
+    for s in SECTIONS:
+        mod = _MODULE.get(s.id)
+        needs = _NEEDS.get(s.id)
+        if mod is not None and mod in off:
+            out.append((s.id, s.heading, plain(f"module_off:{mod}")))
+        elif needs and not any(view.has(k) for k in needs):
+            reason = plain(f"input_absent:{needs[0]}")
+            if s.id == "variants" and not _has_rows(view, "peptide_hits"):
+                reason += " (variant calling needs peptides)"
+            out.append((s.id, s.heading, reason))
+    if "bgc" in off:
+        out.append(("", "Biosynthetic gene clusters (BGC)", "not searched, so no BGC regions "
+                    "or BGC locus views (" + plain("module_off:bgc") + ")"))  # fmt: skip
+    return out
+
+
+def _has_rows(view: RunView, key: str) -> bool:
+    try:
+        frame = view.table(key) if view.has(key) else None
+    except Exception:
+        return False
+    return frame is not None and len(frame) > 0
 
 
 def _plot_slot(
-    pid: str, files: PlotFiles | None, skipped: Mapping[str, str], twins: Mapping[str, Twin]
+    pid: str,
+    files: PlotFiles | None,
+    skipped: Mapping[str, str],
+    twins: Mapping[str, Twin],
+    notices: bool = False,
 ) -> dict[str, Any]:
+    """One plot's slot; with ``notices`` an empty-state instance is a ``notice`` (its title, no
+    image, no twin; M12-04 PR 2) and each drawn instance carries its ``caption``."""
     if files is None or not files.instances:
-        note = f"not run: {reason_words(skipped[pid])}" if pid in skipped else "plot file absent"
-        return {"pid": pid, "note": note, "instances": []}
-    insts = []
+        note = f"not shown: {plain(skipped[pid])}" if pid in skipped else "plot file absent"
+        return {"pid": pid, "note": note, "instances": [], "notices": []}
+    insts, empty = [], []
     for inst in files.instances:
+        if notices and inst.empty:
+            title = None if inst.svg is None else svg_title(inst.svg)
+            empty.append(" ".join((title or "Nothing to show in this run.").split()))
+            continue
         links = [(rel.rsplit(".", 1)[1].upper(), f"../plots/{rel}") for rel in inst.images]
         if inst.data is not None:
             links.append(("data TSV", f"../plots/{inst.data}"))
         svg = None if inst.svg is None else Markup(embed_svg(inst.svg, inst.stem))
         twin = twins.get(inst.stem)
         spec = None if twin is None else {"id": twin[0], "spec": Markup(_script_json(twin[1]))}
-        insts.append({"stem": inst.stem, "svg": svg, "links": links, "twin": spec})
-    absent = None if any(i["svg"] is not None for i in insts) else "plot file absent"
-    return {"pid": pid, "note": absent, "instances": insts}
+        insts.append({"stem": inst.stem, "svg": svg, "links": links, "twin": spec,
+                      "caption": content.CAPTIONS.get(pid, inst.stem)})  # fmt: skip
+    drawn = empty or any(i["svg"] is not None for i in insts)
+    return {"pid": pid, "note": None if drawn else "plot file absent", "instances": insts,
+            "notices": empty}  # fmt: skip
+
+
+def _genes_preview(view: RunView) -> tuple[list[str], list[list[str]]]:
+    """The first ``TOP_ROWS`` genes in ``GENES_PREVIEW`` columns (those present): by
+    ``abundance_log2`` descending, NA last, ties by ``locus_tag``; with no abundance at all, by
+    ``detected``, then ``n_peptides_unique`` (both descending), then ``locus_tag`` (R-06)."""
+    genes = view.table("genes_tsv")
+    if genes is None:
+        return [], []
+    cols = [c for c in GENES_PREVIEW if c in genes.columns]
+
+    def num(col: str) -> pd.Series:
+        if col not in genes.columns:
+            return pd.Series(float("nan"), index=genes.index)
+        return pd.to_numeric(genes[col], errors="coerce").astype(float)
+
+    ab = num("abundance_log2")
+    tag = (
+        genes["locus_tag"].astype(str) if "locus_tag" in genes.columns else genes.index.astype(str)
+    )
+    if bool(ab.notna().any()):
+        keys = list(zip(ab.isna(), -ab.fillna(0.0), tag, strict=True))
+    else:
+        det, pep = num("detected").fillna(0.0), num("n_peptides_unique").fillna(0.0)
+        keys = list(zip(det <= 0, -pep, tag, strict=True))
+    order = sorted(range(len(genes)), key=lambda i: keys[i])[:TOP_ROWS]
+    recs = genes[cols].iloc[order].to_dict("records")
+    return cols, [[format_value(r[c]) for c in cols] for r in recs]
 
 
 def _table(view: RunView, key: str) -> dict[str, Any]:
@@ -129,6 +206,8 @@ def _table(view: RunView, key: str) -> dict[str, Any]:
     try:
         head = view.head(key, TOP_ROWS)
         whole = view.table(key) if key == "sensitivity" and head is not None else None
+        if key == "genes_tsv" and head is not None and head[1]:
+            head = _genes_preview(view)
     except Exception as exc:  # an unreadable file is a note, never a crash (review B5)
         return {"key": key, "name": name, "error": _unreadable(key, exc)}
     if head is None:
@@ -142,7 +221,12 @@ def _table(view: RunView, key: str) -> dict[str, Any]:
         "href": f"../{PATHS[key]}",
     }
     if whole is not None and len(whole):  # rendered whole, by family (M9-16 behaviour 5)
+        counts = whole[["n_primary", "n_variant"]].apply(pd.to_numeric, errors="coerce")
+        if bool((counts.fillna(0) == 0).all(axis=None)):
+            return found | {"sentence": SENSITIVITY_NONE}
         found |= {"header": list(whole.columns), "groups": content.sensitivity_groups(whole)}
+    elif not rows:  # a 0-row preview is hidden (AC 2.6)
+        found["none"] = True
     return found
 
 
@@ -380,23 +464,30 @@ def build_report(
 ) -> str:
     """The report page (behaviour 2-6); deterministic, offline, no absolute path."""
     twins = twins or {}
+    absent = not_applicable(view)
+    off = {sid for sid, _, _ in absent}
+    shown_sections = [s for s in SECTIONS if s.id not in off]
     sections = [
         {"id": s.id, "heading": s.heading,
-         "plots": [_plot_slot(p, plots.get(p), skipped, twins) for p in s.plots],
+         "plots": [_plot_slot(p, plots.get(p), skipped, twins, True) for p in s.plots],
          "tables": [_table(view, k) for k in s.tables]}
-        for s in SECTIONS
+        for s in shown_sections
     ]  # fmt: skip
     summary, notes = cards(view, cfg)
     doc, note = content.read_manifest(view)
-    shown = any(i.stem in twins for s in SECTIONS for p in s.plots if p in plots
-                for i in plots[p].instances)  # fmt: skip
+    shown = any(i.stem in twins and not i.empty for s in shown_sections for p in s.plots
+                if p in plots for i in plots[p].instances)  # fmt: skip
+    entries = [(s.id, s.heading) for s in shown_sections]
+    if absent:
+        entries.append(("not-applicable", NOT_APPLICABLE))
     plotlyjs = _plotlyjs() if shown else None
     version = None if plotlyjs is None else _BANNER.search(plotlyjs)
     table = cfg.annotation.translation_table
     return _ENV.get_template("report.html.j2").render(
         sections=sections, cards=summary, notes=notes, version=gippa.__version__,
         box=head.run_box(view, plots, skipped, cfg),
-        toc=head.toc(view, [(s.id, s.heading) for s in SECTIONS]),
+        toc=head.toc(view, entries), not_applicable=[(n, r) for _, n, r in absent],
+        not_applicable_heading=NOT_APPLICABLE, glossary=content.GLOSSARY,
         provenance=content.provenance(view, doc, note), extras=content.extras(view, doc),
         warnings=content.summary_warnings(view), snippets=content.snippets(),
         code_note=content.genetic_code_note(table),
