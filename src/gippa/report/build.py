@@ -13,6 +13,11 @@ apart from the absolute links to the docs-site methods pages (links, never loads
 M12-04 PR 2: a section that does not apply to the run (``not_applicable``) is listed once in
 ``#sec-not-applicable`` at the end instead of being rendered; an empty-state instance is a
 ``.notice``; a 0-row preview is "none" with its link; the genes preview is ``GENES_PREVIEW``.
+
+M12-04 PR 13: Gene detection shows the pivoted views of ``detection_summary``
+(``gippa.report.detection``) instead of its raw preview; ``redact`` rewrites the provenance
+command line (``content.redact_command_line``); a page whose fully inlined size reaches
+``REPORT_LINK_THRESHOLD`` is built again with the V13 locus views linked (``plots/`` SVGs).
 """
 
 from __future__ import annotations
@@ -32,11 +37,16 @@ from gippa.determinants.models import MIN_ROWS, MIN_TUS
 from gippa.io.plot_files import PlotFiles, svg_title
 from gippa.io.run_view import PATHS, RunView
 from gippa.io.tsv import format_value
-from gippa.report import content, head
+from gippa.report import content, detection, head
 from gippa.viz import style
 from gippa.viz.words import plain
 
 TOP_ROWS = 20
+#: bytes: at or over this fully inlined page size the V13 locus views are linked, not inlined;
+#: 80 % of ``gippa.steps.plots.REPORT_BUDGET`` (25 MB, §10.3; M12-04 PR 13). Read at call time.
+REPORT_LINK_THRESHOLD = 20_000_000
+#: the instances linked when the page is too large
+LINKED_PREFIX = "V13_novel_orfs_locus_"
 UNESTIMATED = "unestimated"
 #: a Plotly twin: ``(div id, figure JSON)``
 Twin = tuple[str, str]
@@ -55,7 +65,7 @@ SECTIONS: tuple[Section, ...] = (
     Section("summary", "Summary"),
     Section("inputs-qc", "Inputs and quality control", ("V17",)),
     Section("mapping", "Mapping", ("V05", "V06")),
-    Section("detection", "Gene detection", ("V07", "V18"), ("genes_tsv", "detection_summary")),
+    Section("detection", "Gene detection", ("V07", "V18"), ("genes_tsv",)),
     Section(
         "genome-context",
         "Genome context",
@@ -156,9 +166,11 @@ def _plot_slot(
     skipped: Mapping[str, str],
     twins: Mapping[str, Twin],
     notices: bool = False,
+    linked: bool = False,
 ) -> dict[str, Any]:
     """One plot's slot; with ``notices`` an empty-state instance is a ``notice`` (its title, no
-    image, no twin; M12-04 PR 2) and each drawn instance carries its ``caption``."""
+    image, no twin; M12-04 PR 2) and each drawn instance carries its ``caption``; with ``linked``
+    a ``LINKED_PREFIX`` instance with an SVG file is an ``img`` of it, not inlined (PR 13)."""
     if files is None or not files.instances:
         note = f"not shown: {plain(skipped[pid])}" if pid in skipped else "plot file absent"
         return {"pid": pid, "note": note, "instances": [], "notices": []}
@@ -173,12 +185,15 @@ def _plot_slot(
             empty.append({"title": " ".join((title or "Nothing to show in this run.").split()),
                           "links": links})  # fmt: skip
             continue
-        svg = None if inst.svg is None else Markup(embed_svg(inst.svg, inst.stem))
+        img = next((f"../plots/{r}" for r in inst.images if r.endswith(".svg")), None)
+        if not (linked and inst.stem.startswith(LINKED_PREFIX)) or inst.svg is None:
+            img = None
+        svg = None if inst.svg is None or img else Markup(embed_svg(inst.svg, inst.stem))
         twin = twins.get(inst.stem)
         spec = None if twin is None else {"id": twin[0], "spec": Markup(_script_json(twin[1]))}
-        insts.append({"stem": inst.stem, "svg": svg, "links": links, "twin": spec,
+        insts.append({"stem": inst.stem, "svg": svg, "img": img, "links": links, "twin": spec,
                       "caption": content.caption(pid, inst.stem)})  # fmt: skip
-    drawn = empty or any(i["svg"] is not None for i in insts)
+    drawn = empty or any(i["svg"] is not None or i["img"] for i in insts)
     return {"pid": pid, "note": None if drawn else "plot file absent", "instances": insts,
             "notices": empty}  # fmt: skip
 
@@ -237,6 +252,19 @@ def _table(view: RunView, key: str) -> dict[str, Any]:
     elif not rows:  # a 0-row preview is hidden (AC 2.6)
         found["none"] = True
     return found
+
+
+def _detection(view: RunView) -> dict[str, Any] | None:
+    """The Gene detection views and the link to the long file; ``None`` when it is absent; an
+    unreadable file is a note, never a crash (review B5)."""
+    if not view.has("detection_summary"):
+        return None
+    try:
+        frame = view.table("detection_summary")
+        found: dict[str, Any] = {} if frame is None else dict(detection.views(frame))
+    except Exception as exc:
+        return {"error": _unreadable("detection_summary", exc)}
+    return found | {"href": f"../{PATHS['detection_summary']}"}
 
 
 def _all_zero(frame: pd.DataFrame, cols: tuple[str, ...]) -> bool:
@@ -479,15 +507,33 @@ def build_report(
     skipped: Mapping[str, str],
     cfg: GippaConfig,
     twins: Mapping[str, Twin] | None = None,
+    redact: bool = False,
 ) -> str:
-    """The report page (behaviour 2-6); deterministic, offline, no absolute path."""
-    twins = twins or {}
+    """The report page (behaviour 2-6); deterministic, offline, no absolute path. ``redact``
+    rewrites the provenance command line (R-09). At or over ``REPORT_LINK_THRESHOLD`` UTF-8 bytes
+    fully inlined, the page is built again with the V13 locus views linked (PR 13)."""
+    page = _page(view, plots, skipped, cfg, twins or {}, redact, linked=False)
+    if len(page.encode("utf-8")) < REPORT_LINK_THRESHOLD:
+        return page
+    return _page(view, plots, skipped, cfg, twins or {}, redact, linked=True)
+
+
+def _page(
+    view: RunView,
+    plots: Mapping[str, PlotFiles],
+    skipped: Mapping[str, str],
+    cfg: GippaConfig,
+    twins: Mapping[str, Twin],
+    redact: bool,
+    linked: bool,
+) -> str:
     absent = not_applicable(view, plots)
     off = {sid for sid, _, _ in absent}
     shown_sections = [s for s in SECTIONS if s.id not in off]
     sections = [
         {"id": s.id, "heading": s.heading,
-         "plots": [_plot_slot(p, plots.get(p), skipped, twins, True) for p in s.plots],
+         "plots": [_plot_slot(p, plots.get(p), skipped, twins, True, linked)
+                   for p in s.plots],
          "tables": [_table(view, k) for k in s.tables]}
         for s in shown_sections
     ]  # fmt: skip
@@ -506,7 +552,8 @@ def build_report(
         box=head.run_box(view, plots, skipped, cfg),
         toc=head.toc(view, entries), not_applicable=[(n, r) for _, n, r in absent],
         not_applicable_heading=NOT_APPLICABLE, glossary=content.GLOSSARY,
-        provenance=content.provenance(view, doc, note), extras=content.extras(view, doc),
+        detection=_detection(view),
+        provenance=content.provenance(view, doc, note, redact), extras=content.extras(view, doc),
         warnings=content.summary_warnings(view), snippets=content.snippets(),
         code_note=content.genetic_code_note(table),
         code_methods=content.genetic_code_methods(table),

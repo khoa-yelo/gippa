@@ -105,6 +105,7 @@ gippa report out                       # all plots and the report
 gippa report out --plots V02,V07       # only these plots, then the report
 gippa report out --no-interactive      # a static report (no Plotly)
 gippa report out --strict              # exit 3 if the report exceeds its size budget
+gippa report out --redact              # a shareable report (no local paths or profile)
 ```
 
 By default, `gippa report` reads the run's own `resolved_config.yaml`, so thresholds, formats and
@@ -112,3 +113,13 @@ dpi match the run. `--config` or `--set` override them, for example
 `--set report.formats=[svg]`. Running `gippa report` twice gives identical `plots/data/*.tsv`.
 
 The report's size budget is 25 MB. Beyond it, `--strict` exits with code 3.
+
+Gene detection shows two views of `tables/detection_summary.tsv` instead of its first rows: genes
+detected by q threshold (detected, genes, FDR, FDR with two peptides, expected false positives;
+the counts only for the protein-list and two-peptide tiers), and observed over expected
+detection (O/E) by replicon, feature class and COG category. A link leads to the full table. Use
+`gippa report --redact` before you share or publish a report: the provenance command line then
+shows `<input>/<file name>` for every absolute path, `<outdir>` for the output directory and
+`<profile>` for the profile; nothing else changes. When the report with every figure inlined would
+reach 20 MB (80 % of the size budget), the V13 locus views are linked to their SVG files under
+`plots/` instead of being inlined, so keep `plots/` next to `report/` when you move the report.
