@@ -52,8 +52,11 @@ def wording(html: str) -> list[str]:
 
 
 def unlabelled_numbers(cards: Sequence[Mapping[str, Any]]) -> list[str]:
-    """The names of the cards whose value has no error estimate (nor ``unestimated``)."""
-    return [str(c.get("name", "")) for c in cards if not str(c.get("estimate") or "").strip()]
+    """The names of the cards whose value has no error estimate (nor ``unestimated``); a card
+    whose ``no_estimate`` says why none applies (an exact count, an SD shown with the value) is
+    not flagged."""
+    return [str(c.get("name", "")) for c in cards
+            if not str(c.get("estimate") or "").strip() and not c.get("no_estimate")]  # fmt: skip
 
 
 #: elements whose ``href``/``xlink:href`` is fetched when the page opens (``src`` always is)
