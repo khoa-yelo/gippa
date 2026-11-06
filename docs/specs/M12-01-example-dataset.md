@@ -445,6 +445,15 @@ with the sha256 of every source and output file. In summary:
   (R12), the Slurm job 1918156, the input report's sha256; row counts kept (targets, decoys,
   rows with an ORF ID) and the rule-9 rewrite count. It says the genome-wide run of A4 called 0
   novel ORFs.
+  - *Shortening (lead, 2026-11-06, #574 review):* an absolute, `~/` or `../` path argument,
+    alone, after `=`, or glued to a flag (`-B/x:/y`), becomes its base name when its last
+    component has a file extension, and `<dir>` otherwise (a trailing `/` or no extension).
+    The leak guard also fails the build when the building user's login name
+    (`getpass.getuser()`, `Path.home().name`) occurs as a whole word in any written text file.
+  - *Rewrite count:* `orf_id_rewrite.distinct_ids` is the number of distinct region ORF IDs
+    rewritten in any text column of the written report (`Protein.Ids`, `Protein.Group` and any
+    other string column), dictionary- and view-typed string columns included. The build fails
+    when a column holding a region ORF ID cannot be rewritten.
 - The build: script path and commit, Slurm job ID, GIPPA version and commit that produced
   `expected/`, the Bakta DB (light 6.0) and image digests used, the run settings, and that UniOP was
   not installed.
