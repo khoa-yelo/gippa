@@ -1417,9 +1417,11 @@ def convert(
     if any(i.severity == "error" for i in issues):
         sys.exit(ExitCode.INVALID_INPUT)
     peptides = res.peptides
+    out.parent.mkdir(parents=True, exist_ok=True)  # e.g. the example's runs/<route>/ (M12-01)
     write_tsv(out, list(peptides.columns), peptides.itertuples(index=False, name=None))
     if abundance_out is not None and res.abundance is not None:
         ab = res.abundance
+        abundance_out.parent.mkdir(parents=True, exist_ok=True)
         write_tsv(abundance_out, list(ab.columns), ab.itertuples(index=False, name=None))
         click.echo(f"wrote {abundance_out}; use --abundance-type maxlfq with it")
 
