@@ -68,6 +68,7 @@ from gippa.config import GippaConfig, resolve_config
 from gippa.io.plot_files import write_instance
 from gippa.io.run_view import RunView
 from gippa.viz import base, style
+from gippa.viz import determinants as v15
 from gippa.viz.base import Instance, Skip
 
 COLUMNS = ["panel", "model", "block", "feature", "x", "y", "ci_low", "ci_high", "locus_tag",
@@ -80,7 +81,9 @@ EX1_TITLE = (  # lead decision 5, B1 and S2: neutral head, the interval named ho
 )
 NONE_ABOVE = "no block's ΔR² interval lies above 0"  # decision 5, B3
 A_HEADER = "(a) block ΔR² (t-interval over CV repeats, uncalibrated)"  # B1
-DELTA_FOOT = "ΔR² intervals uncalibrated: CV repeats share data (ADR-0031)"  # B1
+#: B1; M12-04 PR 7b: plain caveats, no ADR numbers in figure text (AC 7b.3)
+DELTA_FOOT = ("Feature blocks are correlated; ΔR² is the loss in CV R² when a block is removed "
+              "(intervals uncalibrated: CV repeats share data).")  # fmt: skip
 D_HEADER = "(d) observed vs. LightGBM out-of-fold"  # B2
 D_R2 = (  # B2
     f"CV R² {_n(0.25)} ± {_n(0.04)} (LightGBM, plotted); elastic net {_n(0.21)} ± {_n(0.03)} "
@@ -90,9 +93,10 @@ D_FLAG = "unexplained (> 2 SD of LightGBM residuals)"  # B2
 B_LABEL = "partial dependence, LightGBM (secondary); spread over 25 CV models (not a CI)"  # S1
 HEX_BAR, HEX_PROXY = "genes per bin (log count)", "model genes (binned)"  # B4
 MINUS = "\u2212"
-NULL_FOOT = f"null p {style.fmt_q(0.02)} (uncalibrated: valid only for exchangeable TUs, ADR-0034)"
-UNI_FOOT = "univariate CIs uncalibrated (ADR-0032)"
-EN_LEGEND, LGB_LEGEND = "elastic net (primary, ADR-0033)", "LightGBM (secondary check)"
+NULL_FOOT = (f"null p {style.fmt_q(0.02)} (uncalibrated: valid only for exchangeable "
+             "transcription units)")  # fmt: skip
+UNI_FOOT = "Univariate CIs are uncalibrated."
+EN_LEGEND, LGB_LEGEND = "elastic net (primary)", "LightGBM (secondary check)"  # PR 7b: no ADR
 PD_LABEL = "spread over 25 CV models (not a CI)"
 
 
@@ -158,12 +162,17 @@ def _b_axes(inst: Instance) -> list[Axes]:
     return found
 
 
+def _flat(text: str) -> str:
+    """Whitespace normalised: M12-04 PR 7b wraps titles and notes at the panel width."""
+    return " ".join(text.split())
+
+
 def _ax_texts(ax: Axes) -> list[str]:
-    return [t.get_text() for t in ax.findobj(Text) if t.get_text()]
+    return [_flat(t.get_text()) for t in ax.findobj(Text) if t.get_text()]
 
 
 def _texts(inst: Instance) -> list[str]:
-    return [t.get_text() for t in inst.figure.findobj(Text) if t.get_text()]
+    return [_flat(t.get_text()) for t in inst.figure.findobj(Text) if t.get_text()]
 
 
 def _alltext(inst: Instance) -> str:
@@ -408,9 +417,9 @@ def test_missing_pd_feature_is_not_available(tmp_path: Path, cfg: GippaConfig) -
     feats = set(_rows(inst, "b")["feature"].astype(str))
     assert "tir_ostir" not in feats
     text = " ".join(_ax_texts(_axes(inst, "b_tir_ostir")))
-    assert "not available" in text
-    assert "layer_missing:ostir" in text
-    assert "not available" not in " ".join(_ax_texts(_axes(inst, "b_cai")))
+    assert "not computed" in text  # M12-04 PR 7b: plain, no flag token
+    assert "layer_missing" not in text
+    assert "not computed" not in " ".join(_ax_texts(_axes(inst, "b_cai")))
 
 
 # --- panel (c) --------------------------------------------------------------------------------
@@ -691,7 +700,7 @@ def test_b1_title_names_the_repeat_t_interval_uncalibrated(
 
 def test_b1_panel_a_header(tmp_path: Path, cfg: GippaConfig) -> None:
     ax = _axes(_main(tmp_path, cfg), "a")
-    assert ax.get_title(loc="left") == A_HEADER
+    assert _flat(ax.get_title(loc="left")) == A_HEADER
 
 
 def test_b1_delta_r2_footnote(tmp_path: Path, cfg: GippaConfig) -> None:
@@ -732,8 +741,10 @@ def test_n4_ties_are_broken_in_blocks_order(tmp_path: Path, cfg: GippaConfig) ->
 
 
 def test_s2_title_uses_a_unicode_minus(tmp_path: Path, cfg: GippaConfig) -> None:
+    """A negative mean is gated since M12-04 PR 7b; the gated title keeps the Unicode minus."""
     t = _title_of(tmp_path, cfg, vd.EN_DELTAS_NULL, en_cv=(-0.05, 0.03, 0.5))
-    assert t == f"Elastic net CV R² {_n(-0.05)} ± {_n(0.03)}; {NONE_ABOVE}", t
+    assert t == f"Elastic net CV R² {_n(-0.05)} ± {_n(0.03)}: no predictive power", t
+    assert t == "Elastic net CV R² \u22120.050 ± 0.030: no predictive power", t
     assert t.startswith(f"Elastic net CV R² {MINUS}"), t
     assert "-" not in t
 
@@ -751,7 +762,7 @@ def test_s2_na_cv_r2_reads_unestimated(tmp_path: Path, cfg: GippaConfig) -> None
 
 def test_b2_panel_d_header_r2_text_and_flag_label(tmp_path: Path, cfg: GippaConfig) -> None:
     ax = _axes(_main(tmp_path, cfg), "d")
-    assert ax.get_title(loc="left") == D_HEADER
+    assert _flat(ax.get_title(loc="left")) == D_HEADER
     texts = _ax_texts(ax)
     assert D_R2 in texts, texts
     legend = ax.get_legend()
@@ -900,8 +911,12 @@ def _arr(v: object) -> list[object]:
     return list(v) if isinstance(v, list | tuple) else [v]
 
 
+#: the twin's (a) trace names: the plot's own legend names
+TWIN_EN, TWIN_LGB = v15.LEGEND["elastic_net"], v15.LEGEND["lightgbm"]
+
+
 def _a_traces(fig: dict) -> dict[str, dict]:
-    return {t["name"]: t for t in fig["data"] if t.get("name") in (EN_LEGEND, LGB_LEGEND)}
+    return {t["name"]: t for t in fig["data"] if t.get("name") in (TWIN_EN, TWIN_LGB)}
 
 
 def _yaxis(fig: dict, trace: dict) -> dict:
@@ -912,14 +927,14 @@ def _yaxis(fig: dict, trace: dict) -> dict:
 def test_s3_twin_panel_a_dodged_numeric_y(tmp_path: Path, cfg: GippaConfig) -> None:
     fig = _twin(tmp_path, cfg)
     tr = _a_traces(fig)
-    assert set(tr) == {EN_LEGEND, LGB_LEGEND}
+    assert set(tr) == {TWIN_EN, TWIN_LGB}
     ys = {k: _arr(t["y"]) for k, t in tr.items()}
     for y in ys.values():
         assert all(isinstance(v, int | float | np.number) for v in y), y
-    en = tr[EN_LEGEND]
+    en = tr[TWIN_EN]
     # shared blocks in BLOCKS order: transcription, translation, codon, protein
     for i in range(4):
-        gap = abs(float(ys[EN_LEGEND][i]) - float(ys[LGB_LEGEND][i]))  # type: ignore[arg-type]
+        gap = abs(float(ys[TWIN_EN][i]) - float(ys[TWIN_LGB][i]))  # type: ignore[arg-type]
         assert 0 < gap < 0.5, (i, ys)
     ax = _yaxis(fig, en)
     assert set(vd.BLOCKS) <= set(ax.get("ticktext", []))
@@ -927,13 +942,13 @@ def test_s3_twin_panel_a_dodged_numeric_y(tmp_path: Path, cfg: GippaConfig) -> N
 
 def test_s3_twin_panel_a_markers(tmp_path: Path, cfg: GippaConfig) -> None:
     tr = _a_traces(_twin(tmp_path, cfg))
-    assert tr[EN_LEGEND]["marker"].get("symbol") == "circle"
-    assert tr[LGB_LEGEND]["marker"].get("symbol") == "diamond-open"
+    assert tr[TWIN_EN]["marker"].get("symbol") == "circle"
+    assert tr[TWIN_LGB]["marker"].get("symbol") == "diamond-open"
 
 
 def test_s3_twin_panel_a_y_axis_reversed(tmp_path: Path, cfg: GippaConfig) -> None:
     fig = _twin(tmp_path, cfg)
-    ax = _yaxis(fig, _a_traces(fig)[EN_LEGEND])
+    ax = _yaxis(fig, _a_traces(fig)[TWIN_EN])
     rng = ax.get("range")
     assert ax.get("autorange") == "reversed" or (rng and rng[0] > rng[1]), ax
 
