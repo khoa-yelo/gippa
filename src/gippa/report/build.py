@@ -39,6 +39,7 @@ from gippa.io.run_view import PATHS, RunView
 from gippa.io.tsv import format_value
 from gippa.report import content, detection, head
 from gippa.viz import style
+from gippa.viz.determinants import no_predictive_power
 from gippa.viz.words import plain
 
 TOP_ROWS = 20
@@ -143,21 +144,13 @@ def not_applicable(
             out.append((s.id, s.heading, plain(f"module_off:{mod}")))
         elif needs and not any(view.has(k) for k in needs):
             reason = plain(f"input_absent:{needs[0]}")
-            if s.id in _NEEDS_PEPTIDES and not _has_rows(view, "peptide_hits"):
+            if s.id in _NEEDS_PEPTIDES and not content.has_rows(view, "peptide_hits"):
                 reason += f" ({_NEEDS_PEPTIDES[s.id]} needs peptides)"
             out.append((s.id, s.heading, reason))
     if "bgc" in off:
         out.append(("", "Biosynthetic gene clusters (BGC)", "not searched, so no BGC regions "
                     "or BGC locus views (" + plain("module_off:bgc") + ")"))  # fmt: skip
     return out
-
-
-def _has_rows(view: RunView, key: str) -> bool:
-    try:
-        frame = view.table(key) if view.has(key) else None
-    except Exception:
-        return False
-    return frame is not None and len(frame) > 0
 
 
 def _plot_slot(
@@ -297,16 +290,19 @@ def _tier_fdr(ds: pd.DataFrame | None, alpha: float) -> str | None:
 
 
 def _novel_fdr(novel: pd.DataFrame) -> str | None:
-    """The max class FDR over CALLED rows; ``None`` (unestimated) if any called row is (B1).
-    M7-17: a suffix counts the called rows flagged ``denovo_only_unsupported`` (ADR-0050)."""
+    """The max class FDR over CALLED rows; ``None`` without called rows, the plain words of
+    ``class_fdr_unestimated`` if any called row is NA (B1; M12-04 PR 11c). M7-17: a suffix counts
+    the called rows flagged ``denovo_only_unsupported`` (ADR-0050)."""
     called = novel[novel["called"].fillna(False).astype(bool)]
     fdrs = pd.to_numeric(called["class_fdr"], errors="coerce")
     flags = called["flags"].fillna("").astype(str).str.split(";")
     k = int(flags.map(lambda f: "denovo_only_unsupported" in f).sum())
     suffix = (f"; {style.fmt_count(k)} of {style.fmt_count(len(called))} de novo-only, no database"
               " or RBS support") if k else ""  # fmt: skip
-    if called.empty or bool(fdrs.isna().any()):
-        return UNESTIMATED + suffix if k else None
+    if called.empty:
+        return None
+    if bool(fdrs.isna().any()):
+        return plain("class_fdr_unestimated") + suffix
     return f"class FDR {_at_most(float(fdrs.max()))}{suffix}"
 
 
@@ -334,14 +330,15 @@ SD_IN_VALUE = "the CV SD is shown with the value"
 
 
 def _alt_estimate(alt: pd.DataFrame) -> str | None:
-    """The ``class_error_rate`` range over the numeric rows, "(N unestimated)" appended (lead
-    decision 5); ``None`` when no row has a number."""
+    """The ``class_error_rate`` range over the numeric rows, "(N not estimated)" appended (lead
+    decision 5; NA in plain words, M12-04 PR 11c); the plain words of ``class_error_unestimated``
+    when no row has a number, ``None`` without rows."""
     rates = pd.to_numeric(alt["class_error_rate"], errors="coerce")
     known, n_un = rates.dropna(), int(rates.isna().sum())
     if known.empty:
-        return None
+        return plain("class_error_unestimated") if n_un else None
     lo, hi = style.fmt_q(float(known.min())), style.fmt_q(float(known.max()))
-    tail = f" ({style.fmt_count(n_un)} unestimated)" if n_un else ""
+    tail = f" ({style.fmt_count(n_un)} {plain('unestimated')})" if n_un else ""
     return f"class error rate {lo if lo == hi else f'{lo}–{hi}'} (pooled per class){tail}"
 
 
@@ -469,7 +466,7 @@ def cards(view: RunView, cfg: GippaConfig) -> tuple[list[dict[str, Any]], list[s
 
     def model(t: pd.DataFrame) -> None:
         """ADR-0033: the elastic-net whole-model rows only; ADR-0034: "(uncalibrated)"; label
-        first, "no predictive power" when the mean or mean minus SD is ≤ 0 (M12-04 PR 1)."""
+        first, "no predictive power" by V15's gate (M12-04 PR 1, PR 7b)."""
         en = t[(t["model"] == "elastic_net") & (t["feature_or_block"] == "all")]
         (r2, _), (sd, _) = _metric(en, "cv_r2_mean"), _metric(en, "cv_r2_sd")
         p, flags = _metric(en, "null_p")
@@ -480,7 +477,7 @@ def cards(view: RunView, cfg: GippaConfig) -> tuple[list[dict[str, Any]], list[s
                 prefix="Model R²:")  # fmt: skip
             return
         value = style.fmt_num(r2) if sd is None else head.mean_sd(r2, sd)
-        no_power = r2 <= 0 or (sd is not None and r2 - sd <= 0)
+        no_power = no_predictive_power(t)  # the V15 gate (one rule for the card and the plot)
         label = f"(CV), {NO_POWER}" if no_power else "(CV)"
         unc = " (uncalibrated)" if "null_uncalibrated" in flags else ""
         est = None if p is None else f"null p {style.fmt_q(p)}{unc}"
@@ -563,7 +560,7 @@ def _page(
         not_applicable_heading=NOT_APPLICABLE, glossary=content.GLOSSARY,
         detection=det,
         provenance=content.provenance(view, doc, note, redact), extras=content.extras(view, doc),
-        warnings=content.summary_warnings(view), snippets=content.snippets(),
+        warnings=content.summary_warnings(view), snippets=content.methods_snippets(view, doc, off),
         code_note=content.genetic_code_note(table),
         code_methods=content.genetic_code_methods(table),
         licence_notes=content.licence_notes(doc),

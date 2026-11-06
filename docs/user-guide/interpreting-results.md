@@ -62,7 +62,7 @@ with the default threshold of each (`stats.alpha.*` in the
 | Peptide placed at a locus | placement q-value from genome decoys: one list per decoy type × stratum (0, 1, 2 differences), length classes pooled | 0.01 |
 | Gene detected | gene q-value (tiers `decoy_picked`, `mayu`) or `unestimated` | 0.01 |
 | Novel ORF | FDR per class | 0.01 |
-| ALT call | the 0.01 is the placement-q filter on supporting peptides (`stats.alpha.variants`); the class error rate is reported, never thresholded, else `unestimated` (see below) | 0.01 |
+| ALT call | the 0.01 is the placement-q filter on supporting peptides (`stats.alpha.variants`); the class error rate is reported, never thresholded, else NA (flag `class_error_unestimated`; see below) | 0.01 |
 | Region effect | BH within each (region type, statistic) family | 0.05 |
 | Autocorrelation | BH across lags | 0.05 |
 | Abundance island | FWER, run-wide over replicons; conditional on the dependence regime | 0.05 |

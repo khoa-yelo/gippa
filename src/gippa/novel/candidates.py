@@ -9,6 +9,7 @@ lowest 0-based genome coordinate of the codon, wrapped into ``[0, L)``.
 
 from __future__ import annotations
 
+import math
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from typing import Any, Literal, cast, get_args
@@ -347,6 +348,6 @@ def minimal_call(orfs: Sequence[Orf], cfg: GippaConfig) -> pd.DataFrame:
         if o.end_5p_open or o.end_3p_open:
             flags.add("partial")
         n = len(o.peptides)
-        rows.append((o.orf_id, n, n >= need, "unestimated", ";".join(sorted(flags))))
+        rows.append((o.orf_id, n, n >= need, math.nan, ";".join(sorted(flags))))
     df = pd.DataFrame(rows, columns=CALL_COLUMNS)
-    return df.astype({"n_peptides": "int64", "called": "bool"})
+    return df.astype({"n_peptides": "int64", "called": "bool", "class_fdr": "float64"})

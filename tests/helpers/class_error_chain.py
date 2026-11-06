@@ -272,7 +272,7 @@ def measured_rates(variants: pd.DataFrame) -> dict[Class, tuple[float, int]]:
     out: dict[Class, tuple[float, int]] = {}
     for c, r, n in zip(table_classes(variants), variants["class_error_rate"],
                        variants["class_error_n"], strict=True):  # fmt: skip
-        if r == "unestimated":
+        if r in ("NA", ""):  # unestimated: NA (M12-04 PR 11c)
             assert n in ("NA", ""), (c, r, n)
             continue
         v = (float(r), int(n))

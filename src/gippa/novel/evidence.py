@@ -304,8 +304,8 @@ def class_rules(
 def _call(cell: object, q: float | None, rule: bool, n_peptides: int, need: int,
           alpha: float) -> bool:  # fmt: skip
     """Rule 6 (M7-11b): a numeric class FDR q calls at q <= alpha (no peptide minimum); an
-    ``unestimated`` cell needs ``need`` peptides (§7.6.4 "Neither")."""
-    if is_na(cell) or cell == "unestimated":
+    NA (unestimated) cell needs ``need`` peptides (§7.6.4 "Neither")."""
+    if is_na(cell):
         return rule and n_peptides >= need
     return rule and (float(cell) if q is None else q) <= alpha  # type: ignore[arg-type]
 

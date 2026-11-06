@@ -37,6 +37,7 @@ Readings pinned by the test author (see tests/helpers/novel_evidence_fixture.py 
 from __future__ import annotations
 
 import json
+import math
 from pathlib import Path
 from typing import Any
 
@@ -496,7 +497,7 @@ def test_example_1_called_and_rbs_supported() -> None:
     assert r["rbs_supported"] == True  # noqa: E712
     assert r["called"] == True  # noqa: E712
     assert r["rank"] == 1
-    assert r["class_fdr"] == "unestimated"
+    assert math.isnan(r["class_fdr"])  # NA: unestimated (M12-04 PR 11c)
     assert flags_of(r) == ["class_fdr_unestimated", "rbs_supported"]
 
 

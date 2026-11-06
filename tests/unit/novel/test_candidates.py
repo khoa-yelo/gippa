@@ -19,15 +19,16 @@ Conventions these tests pin where the spec is silent (see also tests/helpers/nov
 * ``promoter_windows`` returns windows unique by ``(contig, strand, end3p)``; ``Window.owner`` is
   the ``orf_id``; ``Window.k`` is relative to the start the window was built for;
 * the minimal call is ``minimal_call(orfs, cfg) -> DataFrame`` with columns ``orf_id``,
-  ``n_peptides``, ``called``, ``class_fdr``, ``flags`` (one row per ORF, input order; flags
-  ``;``-joined alphabetically: ``class_fdr_unestimated`` always, ``no_start_codon`` without a
-  start, ``partial`` when either end is open).
+  ``n_peptides``, ``called``, ``class_fdr`` (float, NA), ``flags`` (one row per ORF, input
+  order; flags ``;``-joined alphabetically: ``class_fdr_unestimated`` always,
+  ``no_start_codon`` without a start, ``partial`` when either end is open).
 """
 
 from __future__ import annotations
 
 import copy
 import dataclasses
+import math
 
 import pandas as pd
 import pytest
@@ -229,10 +230,11 @@ def test_example1_one_orf_two_starts_id_and_length() -> None:
     assert orf.overlapping_gene is None
     call = minimal_call([orf], cfg())
     assert list(call.columns) == ["orf_id", "n_peptides", "called", "class_fdr", "flags"]
-    assert call.to_dict("records") == [
-        {"orf_id": "NOVEL_c1_43_p", "n_peptides": 2, "called": True,
-         "class_fdr": "unestimated", "flags": "class_fdr_unestimated"}
-    ]  # fmt: skip
+    (rec,) = call.to_dict("records")
+    assert math.isnan(rec.pop("class_fdr"))  # NA: unestimated (M12-04 PR 11c)
+    assert rec == {"orf_id": "NOVEL_c1_43_p", "n_peptides": 2, "called": True,
+                   "flags": "class_fdr_unestimated"}  # fmt: skip
+    assert call["class_fdr"].dtype == "float64"
 
 
 def test_example2_other_frame_is_a_second_orf() -> None:
@@ -260,7 +262,7 @@ def test_example3_peptide_also_cds_inframe_elsewhere_is_excluded() -> None:
     call = minimal_call([orf], cfg())
     assert call["n_peptides"].tolist() == [1]
     assert call["called"].tolist() == [False]
-    assert call["class_fdr"].tolist() == ["unestimated"]
+    assert call["class_fdr"].isna().tolist() == [True]
 
 
 def test_example4_minus_strand_mirror() -> None:
@@ -649,7 +651,7 @@ def test_minimal_call_keeps_input_order() -> None:
     orfs = run(ex2())
     call = minimal_call(list(reversed(orfs)), cfg())
     assert call["orf_id"].tolist() == [o.orf_id for o in reversed(orfs)]
-    assert set(call["class_fdr"]) == {"unestimated"}
+    assert call["class_fdr"].isna().all()
 
 
 # ---------------------------------------------------------------- config is honoured

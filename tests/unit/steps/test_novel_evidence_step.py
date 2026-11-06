@@ -130,7 +130,7 @@ def _check(table: pd.DataFrame, work: Path, sim: Any, cfg: Any, thr: float | Non
         else:
             want = two
         assert r["called"] == want, (oid, cls)
-        assert r["class_fdr"] == "unestimated"
+        assert is_na(r["class_fdr"]) and "class_fdr_unestimated" in f  # NA (M12-04 PR 11c)
     called = [r for r in recs if r["called"]]
     assert sorted(int(r["rank"]) for r in called) == list(range(1, len(called) + 1))
     assert all(is_na(r["rank"]) for r in recs if not r["called"])

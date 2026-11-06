@@ -33,7 +33,7 @@ NOVEL_ORFS_TYPES: dict[str, Kind] = {
     "length_aa_best": "int", "start_codon_best": "str", "n_peptides": "int", "peptides": "str",
     "best_peptide_q": "float", "tir_ostir": "float", "promoter_score": "float",
     "promoter_supported": "bool", "terminator_downstream": "bool", "terminator_conf": "float",
-    "terminator_distance_nt": "int", "rbs_supported": "bool", "class_fdr": "str",
+    "terminator_distance_nt": "int", "rbs_supported": "bool", "class_fdr": "float",
     "called": "bool", "rank": "int", "overlapping_gene": "str", "flags": "str",
 }  # fmt: skip
 NOVEL_ORFS_COLUMNS: tuple[str, ...] = tuple(NOVEL_ORFS_TYPES)
@@ -94,8 +94,9 @@ def _scored_by_id(scored: pd.DataFrame | None) -> dict[str, dict[str, Any]]:
     return {str(r["orf_id"]): r for r in recs}
 
 
-def _class_fdr(v: Any) -> str:
-    return "unestimated" if is_na(v) else v if isinstance(v, str) else format_value(float(v))
+def _class_fdr(v: Any) -> float:
+    """The ``class_fdr`` cell as a float; NaN (NA) when unestimated (M12-04 PR 11c)."""
+    return math.nan if is_na(v) else float(v)
 
 
 def _orf_row(
@@ -132,7 +133,7 @@ def _orf_row(
     used = best if best is not None else o.start_longest
     fdr = _class_fdr(s.get("class_fdr"))
     flags = set(str(s.get("flags") or "").split(";")) - {"", "class_fdr_unestimated"}
-    flags |= {"class_fdr_unestimated"} if fdr == "unestimated" else set()
+    flags |= {"class_fdr_unestimated"} if math.isnan(fdr) else set()
     flags |= {"no_start_codon"} if not o.starts else set()
     flags |= {"partial"} if o.end_5p_open or o.end_3p_open else set()
     flags |= {"ostir_missing"} if o.starts and best is None else set()

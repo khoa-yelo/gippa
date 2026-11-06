@@ -136,6 +136,7 @@ FLAG_TEXT: Mapping[str, str] = MappingProxyType(
         "start_codon": "variant at a start codon",
         "stop_codon": "variant at a stop codon",
         "vcf_unrepresentable": "spans the origin; not written to the VCF",
+        "class_error_unestimated": "class error not estimated",
         # novel ORFs
         "junction_spanned": "a peptide spans the pseudogene junction",
         "junction_unknown": "pseudogene junction not located",
