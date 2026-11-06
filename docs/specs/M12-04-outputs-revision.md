@@ -841,8 +841,8 @@ after the variants step; manifest commit cae1a731, variants code identical to ma
 
 **Examples.**
 - K V12 (b) before: 2160 × 3735 px, 30 lines each ending "class error unestimated", "F→J" and
-  "M→J". After: 15 lines, "F→I/L", and the title "… (class error unestimated; top 15 of 55
-  high)".
+  "M→J". After: 15 lines, "F→I/L", and the title "… ALT sites (top 15 of N; all in tables/variants.tsv)
+  (class error not estimated)" (amended at review: clause order kept, 11c wording).
 - K VAR_107 (`U00096.3:1114548 (−)`, no gene, `TTG L→M`, high) before. After, if the site
   survives on main: `confidence candidate`, flags `snv;strain_difference;database_derived;putative_start`.
 

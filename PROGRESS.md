@@ -282,6 +282,7 @@ packet: `$GIPPA_ROOT/review/m10-pilot/r1/` (#524), round r1.
   Needs Khoa: no: ADR-0053, ADR-0059, ADR-0062, ADR-0063, ADR-0066.
 
 ## In progress
+- M12-04 PR 10 (#566, `putative_start`): AC 10.0 evidence is K-12 on main, Slurm job 1933797 (`gippa-run-k12main`; variants task 1934116 COMPLETED; the driver ended FAILED after `report_html` from the unpinned main checkout; report re-run 1934834). Manifest commit cae1a731, variants code identical to main. After the rule: 126 rows flagged, high 64 → 55. Statistician C7 (variants calsuite fast tier before/after): jobs 1937787 (main a1736ae4) and 1937788 (pr10 359c1488); 1937766/1937767 crashed on PYTHONPATH. New scenario nightly tier: job 1937768, 16 passed.
 - Benchmark window: array 1916711 ended 2026-11-01 (repeats 1 and 2 on wheat-01; repeat 3 cancelled, ADR-0072).
 - Arm A4 six-frame run: exploratory and outside the gate. `gippa run` job 1921228 finished 2026-11-01, exit 0, 109 candidates, 0 called; no call was possible at its class sizes (statistician review; numbers in `docs/user-guide/makedb.md`).
 M7-01 residue aligner (branch m7/alignment, implementer step done 2026-10-21): `gippa.variants.align` (247 code lines, numba banded DP with traceback; M3 kernels untouched). Unit 42 passed, property 5 passed (also over 20 Hypothesis seeds), sim100k conformance passed (Slurm 1864764), fast suite 9180 passed (1864763), benchmark 100k tolerant hits 11.35 s < 30 s (1864766, wheat-08). Next: code review.
