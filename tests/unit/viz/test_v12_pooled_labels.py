@@ -4,10 +4,13 @@ and a rate of exactly 1 on an ALT site gets the ``*`` mark and the bias-1 footno
 
 from __future__ import annotations
 
+import math
+
 import pandas as pd
 
 from gippa.viz import style
 from gippa.viz.variants import DEGENERATE_NOTE, POOLED, _header, title
+from gippa.viz.words import plain
 
 
 def _site(rate: object, n: object) -> dict[str, object]:
@@ -31,13 +34,14 @@ def test_site_line_with_na_n() -> None:
 
 
 def test_unestimated_site_has_no_pooled_suffix() -> None:
-    text = _header(_site("unestimated", 7))
-    assert text.endswith("class error unestimated") and "pooled" not in text
+    """M12-04 PR 11c: an NA rate reads as the flag's plain words."""
+    text = _header(_site(math.nan, 7))
+    assert text.endswith(plain("class_error_unestimated")) and "pooled" not in text
 
 
 def test_pooled_clause_only_with_a_numeric_rate() -> None:
     assert POOLED in title(_alt([0.2, 0.4]))
-    assert POOLED not in title(_alt(["unestimated"]))
+    assert POOLED not in title(_alt([math.nan]))
 
 
 def test_rate_one_marks_the_title_and_below_one_does_not() -> None:

@@ -32,6 +32,8 @@ from gippa.steps.variants import run_variants
 
 BODY, FLANK = "MSDKPLTEAGRWQLNEFK", "VPAGHTLDMRK"
 N = 3 * (len(BODY) + 1 + len(FLANK) + 1)  # 93
+#: no paired reference rows: every class error is NA and flagged (M12-04 PR 11c)
+CE = "class_error_unestimated"
 
 
 def world(codon: str = "TGA", letter: str = "U", strand: str = "+") -> tuple[dict[str, str], Any]:
@@ -141,7 +143,7 @@ def test_u_over_a_recoded_tga_is_an_unrepresentable_candidate_alt(strand: str) -
         "candidate",
     )
     assert int(r["n_alt"]) == 1 and int(r["aa_pos"]) == 19
-    assert set(r["flags"]) == {"stop_codon", "vcf_unrepresentable"}
+    assert set(r["flags"]) == {"stop_codon", "vcf_unrepresentable", CE}
     assert records == []
 
 
@@ -149,7 +151,7 @@ def test_o_over_a_recoded_tag_is_an_unrepresentable_alt() -> None:
     _pile, table, records = run([ex("O")], codon="TAG", letter="O")
     r = only(table)
     assert (r["ref_codon"], r["ref_aa"], r["alt_aa"], r["call"]) == ("TAG", "*", "O", "ALT")
-    assert set(r["flags"]) == {"stop_codon", "vcf_unrepresentable"}
+    assert set(r["flags"]) == {"stop_codon", "vcf_unrepresentable", CE}
     assert records == []
 
 
@@ -161,7 +163,7 @@ def test_w_over_a_recoded_tga_is_an_ordinary_w_alt(strand: str) -> None:
     _pile, table, records = run([ex("W", strand)], strand=strand)
     r = only(table)
     assert (r["ref_codon"], r["ref_aa"], r["alt_aa"], r["call"]) == ("TGA", "*", "W", "ALT")
-    assert set(r["flags"]) == {"snv", "stop_codon"}
+    assert set(r["flags"]) == {"snv", "stop_codon", CE}
     (rec,) = records
     if strand == "+":
         assert (rec.pos0 + 1, rec.ref, rec.alts) == (55, "TGA", ("TGG",))

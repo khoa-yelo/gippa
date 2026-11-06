@@ -43,7 +43,7 @@ import yaml
 
 from gippa.config.model import Module
 from gippa.io._open import open_text
-from gippa.io.migration import migrate_columns, migrate_values
+from gippa.io.migration import migrate_cells, migrate_columns, migrate_values
 from gippa.io.tsv import read_tsv
 from gippa.runner.local import PUBLISHED, PUBLISHED_FILES, out_path
 
@@ -139,9 +139,11 @@ def _typed(
 
 def read_schema_tsv(path: Path, table: str, schema: Mapping[str, Any]) -> pd.DataFrame:
     """A TSV typed by its Frictionless ``schema``; schema columns first, in schema order. A 1.0
-    header is migrated to the 1.1 names first (``gippa.io.migration``, ADR-0075)."""
+    header is migrated to the 1.1 names first (``gippa.io.migration``, ADR-0075), and a 1.0
+    ``unestimated`` cell to NA plus its flag (M12-04 PR 11c)."""
     header, rows = read_tsv(path)
     header = migrate_columns(table, header)
+    rows = migrate_cells(table, header, rows)
     fields = {f["name"]: str(f.get("type", "string")) for f in schema["fields"]}
     for name in fields:
         if name not in header:

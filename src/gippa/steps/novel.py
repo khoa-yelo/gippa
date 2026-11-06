@@ -43,7 +43,7 @@ from gippa.io.novel_tables import (
 from gippa.io.output_checks import check_gff3, check_tsv
 from gippa.io.parquet import write_parquet_deterministic
 from gippa.io.protein_fasta import read_protein_fasta
-from gippa.io.tsv import read_tsv
+from gippa.io.tsv import format_value, read_tsv
 from gippa.io.work_tables import FILE_NAMES, _read_tsv_table
 from gippa.mapping.loci import LocusClassifier
 from gippa.model.coords import Interval, Replicon
@@ -363,7 +363,7 @@ def novel_orfs(ctx: StepContext) -> None:
     res, support = _class_fdr(ctx, orfs, genome)
     scored = minimal_call(orfs, cfg).merge(sec, on="orf_id", how="left")
     scored["class_fdr"] = pd.Series([cc.class_fdr_cell(res.orfs[i]) for i in scored["orf_id"]],
-                                    dtype="object")  # fmt: skip
+                                    dtype="float64")  # fmt: skip
     tt = cfg.annotation.translation_table
     table = orf_table(orfs, scored, genome=genome, replicons=reps, translation_table=tt)
     terms_df = _layer(ctx, "terminators", "terminators", reps)
@@ -438,8 +438,9 @@ def _write_side(
     rows = []
     for t in table.to_dict("records"):
         r = res.orfs[str(t["orf_id"])]
+        cell = None if is_na(t["class_fdr"]) else format_value(t["class_fdr"])  # the TSV text
         flag = _FLAG in _flag_set(t["flags"]) if ok else None
-        rows.append((r.orf_id, t["class"], r.fdr_class, r.regime, r.q, t["class_fdr"], r.reason,
+        rows.append((r.orf_id, t["class"], r.fdr_class, r.regime, r.q, cell, r.reason,
                      r.class_mismatch, rules[r.orf_id], bool(t["called"]), flag))  # fmt: skip
     write_parquet_deterministic(path, _SIDE_COLS, rows)
 

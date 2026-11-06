@@ -8,7 +8,9 @@ spells the 1.0 names.
 ``COLUMN_RENAMES`` maps a table (its schema stem) to ``{1.0 name: 1.1 name}``. ``VALUE_RENAMES``
 maps the 1.0 feature names held as *values* (``determinants_model.feature_or_block``, the
 ``feature`` column of the ``determinants_pd`` and ``determinants_shap`` support files) to their
-1.1 names, the same renames as the ``determinants_features`` columns. Pure functions only.
+1.1 names, the same renames as the ``determinants_features`` columns. ``UNESTIMATED_CELLS``
+maps a table to the column that 1.0 filled with the word ``unestimated`` and the flag 1.1 sets
+instead (M12-04 PR 11c): such a cell reads as NA and the row gains the flag. Pure functions only.
 """
 
 from __future__ import annotations
@@ -19,8 +21,10 @@ import pandas as pd
 
 __all__ = [
     "COLUMN_RENAMES",
+    "UNESTIMATED_CELLS",
     "VALUE_COLUMNS",
     "VALUE_RENAMES",
+    "migrate_cells",
     "migrate_columns",
     "migrate_values",
 ]
@@ -51,6 +55,34 @@ VALUE_COLUMNS: Mapping[str, str] = {
     "determinants_pd": "feature",
     "determinants_shap": "feature",
 }
+
+
+#: table -> (column, flag): a 1.0 ``unestimated`` cell is NA in 1.1 and the row has the flag
+UNESTIMATED_CELLS: Mapping[str, tuple[str, str]] = {
+    "variants": ("class_error_rate", "class_error_unestimated"),
+    "novel_orfs": ("class_fdr", "class_fdr_unestimated"),
+}
+_UNESTIMATED = "unestimated"
+
+
+def migrate_cells(
+    table: str, header: Sequence[str], rows: Sequence[Sequence[str | None]]
+) -> list[list[str | None]]:
+    """``rows`` (``read_tsv`` cells under the 1.1 ``header``) with each 1.0 ``unestimated`` cell
+    of ``UNESTIMATED_CELLS[table]`` set to ``None`` (NA) and its flag appended to the row's
+    ``flags`` cell unless already there; other tables and cells unchanged (copies)."""
+    out = [list(r) for r in rows]
+    spec = UNESTIMATED_CELLS.get(table)
+    if spec is None or spec[0] not in header or "flags" not in header:
+        return out
+    col, fl = header.index(spec[0]), header.index("flags")
+    for r in out:
+        if r[col] != _UNESTIMATED:
+            continue
+        r[col] = None
+        have = [f for f in (r[fl] or "").split(";") if f]
+        r[fl] = ";".join(have if spec[1] in have else [*have, spec[1]])
+    return out
 
 
 def migrate_columns(table: str, columns: Sequence[str]) -> list[str]:

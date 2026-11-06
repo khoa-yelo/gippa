@@ -16,6 +16,7 @@ from helpers.viz_out_tree import write_schema_table
 
 from gippa.io.run_view import RunView
 from gippa.viz import style
+from gippa.viz.words import plain
 
 FLAG = "denovo_only_unsupported"
 #: M12-04 PR 1 review r1 (M6): shorter suffix, numbers through ``fmt_q``
@@ -35,7 +36,7 @@ def _estimate(page: Page) -> str:
     return " ".join(found[0].text().split())
 
 
-def _novel(out: Path, rows: list[tuple[str, str, bool, str, str | None]]) -> None:
+def _novel(out: Path, rows: list[tuple[str, str, bool, str | None, str | None]]) -> None:
     body = [{"orf_id": i, "class": c, "called": k, "class_fdr": f, "flags": g}
             for i, c, k, f, g in rows]  # fmt: skip
     write_schema_table(out / "tables" / "novel_orfs.tsv", "novel_orfs", body)
@@ -59,10 +60,10 @@ def test_example_13_card_suffix(tmp_path: Path) -> None:
 
 def test_suffix_follows_unestimated(tmp_path: Path) -> None:
     out = run_out(tmp_path)
-    _novel(out, [("N1", "sorf", True, "unestimated", f"class_fdr_unestimated;{FLAG}"),
-                 ("N2", "sorf", True, "unestimated", "class_fdr_unestimated")])  # fmt: skip
+    _novel(out, [("N1", "sorf", True, None, f"class_fdr_unestimated;{FLAG}"),
+                 ("N2", "sorf", True, None, "class_fdr_unestimated")])  # fmt: skip
     est = _estimate(_page(out))
-    assert est.startswith("unestimated"), est
+    assert est.startswith(plain("class_fdr_unestimated")), est  # NA (M12-04 PR 11c)
     assert est.endswith(SUFFIX.format(k=1, m=2)), est
 
 

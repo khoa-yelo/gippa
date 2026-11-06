@@ -135,6 +135,10 @@ def _run(
     return table
 
 
+#: no peptide spectra here: every rate is NA and flagged, last (M12-04 PR 11c)
+CE = "class_error_unestimated"
+
+
 def _flags(cell: object) -> list[str]:
     if isinstance(cell, str):
         return [f for f in cell.split(";") if f]
@@ -167,7 +171,7 @@ def test_substitution_from_a_database_other_peptide_is_database_derived(
     row = _site(table, "c1", 39, "substitution")
     assert row["ref_aa"] == "A" and row["alt_aa"] == "S"
     assert _flags(row["flags"]) == ["mass_equivalent", "snv", "strain_difference",
-                                    "database_derived"]  # fmt: skip
+                                    "database_derived", CE]  # fmt: skip
 
 
 def test_substitution_from_a_denovo_peptide_is_not_database_derived(table: pd.DataFrame) -> None:
@@ -188,7 +192,7 @@ def test_frameshift_from_a_database_other_peptide_is_database_derived(
     table: pd.DataFrame,
 ) -> None:
     row = _site(table, "c1", FS_CODON, "frameshift")
-    assert _flags(row["flags"]) == ["strain_difference", "database_derived"]
+    assert _flags(row["flags"]) == ["strain_difference", "database_derived", CE]
 
 
 def test_each_row_carries_the_flags_of_its_own_supporting_peptides(table: pd.DataFrame) -> None:

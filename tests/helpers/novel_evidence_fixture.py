@@ -26,6 +26,7 @@ Interface pinned by the test author (``gippa.novel.evidence``):
 from __future__ import annotations
 
 import dataclasses
+import math
 from collections.abc import Mapping, Sequence
 from typing import Any
 
@@ -131,7 +132,7 @@ def row(**kw: Any) -> dict[str, Any]:
         "peptides": "ALEKRDSPHW;SPHWFNQ", "best_peptide_q": 0.001, "tir_ostir": 500.0,
         "promoter_score": None, "promoter_supported": None, "terminator_downstream": None,
         "terminator_conf": None, "terminator_distance_nt": None, "rbs_supported": None,
-        "class_fdr": "unestimated", "called": False, "rank": None, "overlapping_gene": None,
+        "class_fdr": math.nan, "called": False, "rank": None, "overlapping_gene": None,
         "flags": "class_fdr_unestimated", "start_upstream_nt": None,
         "spans_annotated_stop": False,
     }  # fmt: skip

@@ -6,7 +6,8 @@ lead decision 1; GIPPA_SPEC.md §7.5.4, §7.5.5).
 Interface pinned here (test-author reading; see the report to the lead):
 
 * The step declares ``peptide_spectra`` among its ``optional_inputs`` (lead decision 1); its
-  required inputs are unchanged. Without it every ALT row is ``unestimated`` / ``NA``.
+  required inputs are unchanged. Without it every ALT row has rate ``NA`` / n ``NA`` and the
+  flag ``class_error_unestimated`` (M12-04 PR 11c; before, the rate was the word).
 * With it, the rates are pooled per class ``(alt_type, mass_equivalent)``, where a site's
   ``mass_equivalent`` is its M7-05 flag, and every row of a class carries the same value.
   The expected values come from ``helpers.class_error_chain.oracle_rates``: a brute-force count
@@ -43,7 +44,8 @@ from helpers.class_error_chain import (
 )
 
 SEED = 23
-UNEST = "unestimated"
+UNEST = "NA"  # the written cell of an unestimated rate (M12-04 PR 11c)
+CE_FLAG = "class_error_unestimated"
 
 
 @pytest.fixture(scope="module")
@@ -74,6 +76,7 @@ def _all_unestimated(variants: pd.DataFrame) -> None:
     assert len(variants) > 0
     assert set(variants["class_error_rate"]) == {UNEST}
     assert set(variants["class_error_n"]) <= {"NA", ""}
+    assert all(CE_FLAG in f.split(";") for f in variants["flags"])
 
 
 def test_step_declares_peptide_spectra_optional() -> None:
@@ -194,6 +197,11 @@ def test_rates_do_not_change_calls_or_counts(with_spectra: Any, chain: ClassErro
     paths, _ = with_spectra
     base, _ = run_step(chain.step_inputs(with_spectra=False), tmp_path, chain.cfg)
     a, b = read_variants(paths["variants"]), read_variants(base["variants"])
-    keep = [c for c in a.columns if c not in ("class_error_rate", "class_error_n")]
+    keep = [c for c in a.columns if c not in ("class_error_rate", "class_error_n", "flags")]
     pd.testing.assert_frame_equal(a[keep], b[keep])
+
+    def other(flags: pd.Series) -> list[list[str]]:  # the flags besides the NA-rate one
+        return [[f for f in x.split(";") if f and f != CE_FLAG] for x in flags]
+
+    assert other(a["flags"]) == other(b["flags"])
     assert paths["pileup"].read_bytes() == base["pileup"].read_bytes()
