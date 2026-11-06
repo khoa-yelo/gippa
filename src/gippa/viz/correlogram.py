@@ -7,16 +7,22 @@ grey) and TU-block (``#56B4E9``) 2.5-97.5 % envelopes (``null_lo``-``null_hi``) 
 means. A marker is filled when the TU-block row's ``q_value ≤ stats.alpha.context`` (the
 conservative null ADR-0020 gates); NA rows, and rows flagged ``not_estimable`` or ``few_values``
 whatever their value (lead decision 21), draw nothing, and a panel whose rows are all NA says
-"not estimable (<flags>)". Contigs wrap into rows of at most 3 columns, each (b) panel under its
-(a) panel (lead decision 23). ``oriter_slope`` rows are context-table rows and are not drawn.
+"Not drawn: <flags in plain words>" (``flags_text``). Contigs wrap into rows of at most 3
+columns, each (b) panel under its (a) panel (lead decision 23). ``oriter_slope`` rows are
+context-table rows and are not drawn.
 A ``join_count_bb`` row's ``value`` is the raw count BB_k while its ``null_*`` and ``effect`` are on
 the Pearson-residual statistic S_k (ADR-0020 Amendment 1), so (b) plots S_k = ``effect +
 null_mean`` against the envelopes (docs/specs/stat-m5-joincount-scale.md).
+
+When no ``morans_i`` row is drawable (every one NA or flagged; M12-04 PR 4, P-06) the plot is
+one empty state naming the detected genes ("Too few detected genes (4 of 158) to estimate
+autocorrelation."). Flags in partial panels are written in plain words (``words.plain``).
 """
 
 from __future__ import annotations
 
 import math
+import textwrap
 from collections.abc import Sequence
 from typing import TYPE_CHECKING
 
@@ -26,6 +32,7 @@ from matplotlib.artist import Artist
 from matplotlib.axes import Axes
 
 from gippa.viz import base, style
+from gippa.viz.words import plain
 
 if TYPE_CHECKING:
     from gippa.config import GippaConfig
@@ -41,6 +48,8 @@ NULL_STYLE = {"gene_label": ("#CCCCCC", 0.6, "#777777"), "tu_block": ("#56B4E9",
 NULL_LABEL = {"gene_label": "gene-label", "tu_block": "TU-block"}
 YLABEL = {"morans_i": "Moran's I", "join_count_bb": "BB join statistic (Pearson residual)"}
 NOT_ESTIMABLE = "Autocorrelation not estimable on this genome"
+#: the whole-plot empty state when no Moran's I row is drawable (P-06)
+TOO_FEW = "Too few detected genes{count} to estimate autocorrelation."
 GREY = "#555555"
 NA_FLAGS = frozenset({"not_estimable", "few_values"})
 _COLS, _HEAD_IN, _FOOT_IN, _ROW_IN = 3, 0.45, 0.62, 3.4
@@ -81,11 +90,24 @@ def plotted(
 
 def drawn(data: pd.DataFrame) -> pd.DataFrame:
     """``data`` with the flagged rows' numbers set to NA: what the figure and title read."""
-    na = [f is not None and not NA_FLAGS.isdisjoint(f.split(";")) for f in data["flags"]]
+    na = [not NA_FLAGS.isdisjoint(_split(f)) for f in data["flags"]]
     out = data.copy()
     out.loc[na, list(_NUM)] = math.nan
     out.loc[na, "significant"] = False
     return out
+
+
+def _split(flags: object) -> list[str]:
+    """The tokens of a ``flags`` cell; NA (``None``, NaN, ``pd.NA``) is no flag."""
+    return [t for t in flags.split(";") if t] if isinstance(flags, str) else []
+
+
+def too_few(genes: pd.DataFrame | None) -> str:
+    """The P-06 empty-state title, with "(<detected> of <genes>)" when ``genes.tsv`` is read."""
+    if genes is None or "detected" not in genes.columns:
+        return TOO_FEW.format(count="")
+    detected = int(genes["detected"].astype("boolean").fillna(False).sum())
+    return TOO_FEW.format(count=f" ({style.fmt_count(detected)} of {style.fmt_count(len(genes))})")
 
 
 def contig_order(data: pd.DataFrame, fasta: Sequence[str]) -> list[str]:
@@ -135,12 +157,21 @@ def title(data: pd.DataFrame, order: Sequence[str]) -> str:
             f"({style.q_equals(q)}, {name} null)")  # fmt: skip
 
 
-def _flags(rows: pd.DataFrame) -> str:
+def flags_text(rows: pd.DataFrame) -> str:
+    """The flags of ``rows`` in plain words: those that make a row NA when any, else all."""
     seen: dict[str, None] = {}
     for f in rows["flags"]:
-        if f is not None:
-            seen.update(dict.fromkeys(str(f).split(";")))
-    return ", ".join(seen)
+        seen.update(dict.fromkeys(_split(f)))
+    tokens = [t for t in seen if t in NA_FLAGS] or list(seen)
+    return "; ".join(plain(t) for t in tokens) or "no estimable value"
+
+
+def _fit(ax: Axes, text: str, size: float) -> str:
+    """``text`` wrapped to the width of ``ax`` (about 0.55 em per character)."""
+    fig = ax.get_figure(root=True)
+    width_in = ax.get_position().width * (fig.get_figwidth() if fig is not None else 7.0)
+    chars = max(12, int(width_in * 72 / (0.55 * size)))
+    return textwrap.fill(text, chars)
 
 
 def _panel(ax: Axes, rows: pd.DataFrame, statistic: str, lags: tuple[int, int]) -> None:
@@ -149,9 +180,18 @@ def _panel(ax: Axes, rows: pd.DataFrame, statistic: str, lags: tuple[int, int]) 
                                  num["null_mean"]))  # fmt: skip
     if not np.isfinite(rows["y"].to_numpy(dtype=float)).any():
         ax.set_axis_off()
-        ax.text(0.5, 0.5, f"not estimable ({_flags(rows)})", ha="center", va="center",
-                transform=ax.transAxes, color=GREY, fontsize=6, wrap=True)  # fmt: skip
+        ax.text(0.0, 0.5, _fit(ax, f"Not drawn: {flags_text(rows)}", 6), ha="left", va="center",
+                transform=ax.transAxes, color=GREY, fontsize=6)  # fmt: skip
         return
+    finite = np.isfinite(rows["y"].to_numpy(dtype=float))
+    na_lags = sorted({int(v) for v in rows["lag"].dropna()} - {int(v) for v in
+                     rows.loc[finite, "lag"].dropna()})  # fmt: skip
+    if na_lags:
+        na_rows = rows[rows["lag"].isin(na_lags)]
+        noun = "lag" if len(na_lags) == 1 else "lags"
+        note = f"{noun} {', '.join(str(v) for v in na_lags)} not drawn: {flags_text(na_rows)}"
+        ax.text(0.02, 0.02, _fit(ax, note, 5), ha="left", va="bottom", transform=ax.transAxes,
+                color=GREY, fontsize=5)  # fmt: skip
     by_null = {n: rows[rows["null_model"] == n] for n in NULLS}
     for null, sub in by_null.items():
         band, a, line = NULL_STYLE[null]
@@ -191,7 +231,7 @@ def _panel(ax: Axes, rows: pd.DataFrame, statistic: str, lags: tuple[int, int]) 
     ax.set_ylabel(YLABEL[statistic])
 
 
-@base.plot("V10", "correlogram", needs=("autocorrelation",))
+@base.plot("V10", "correlogram", needs=("autocorrelation",), optional=("genes_tsv",))
 def correlogram(view: RunView, cfg: GippaConfig) -> list[base.Instance] | base.Skip:
     """V10: Moran's I and BB join-count correlograms with both null envelopes."""
     ac = view.table("autocorrelation")
@@ -203,6 +243,10 @@ def correlogram(view: RunView, cfg: GippaConfig) -> list[base.Instance] | base.S
     order = contig_order(data, fasta)
     lags = (int(cfg.context.moran_lags[0]), int(cfg.context.moran_lags[-1]))
     shown = drawn(data)
+    moran = shown[shown["statistic"] == "morans_i"]
+    if not np.isfinite(moran["value"].to_numpy(dtype=float)).any():  # P-06
+        msg = too_few(view.table("genes_tsv"))
+        return [base.empty_state("V10", "correlogram", msg, COLUMNS, "double")]
     text = title(shown, order)
     n_rows, n_cols = -(-len(order) // _COLS), min(_COLS, len(order))
     height = _HEAD_IN + _FOOT_IN + _ROW_IN * n_rows

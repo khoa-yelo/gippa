@@ -11,6 +11,10 @@ names the span and nothing is claimed from it), islands with ``p_value ≤ stats
 shaded (an origin-crossing island is one row, two spans) and oriC / ter lines when
 ``plots/support/replicon_landmarks.tsv`` calls them. One shared legend sits in the figure foot,
 below every panel (lead decision 22).
+
+With no measured abundance (M12-04 PR 4, P-05) each panel is a detection strip instead: one row
+of ticks at the genes' 0-based starts coloured by ``detection_status``, no y axis, titled "No
+abundance in this run: detection along the replicon (4 of 158 detected)".
 """
 
 from __future__ import annotations
@@ -35,10 +39,12 @@ COLUMNS = ("contig", "kind", "locus_tag", "position_bp", "start", "end", "value"
            "product")  # fmt: skip
 KINDS = ("point", "rug", "trend", "island", "oric", "ter")
 _INT_COLUMNS = ("position_bp", "start", "end")
-NO_ABUNDANCE = "No measured abundance: detection only"
+#: the detection-strip title (P-05); ``{d}`` detected of ``{n}`` genes
+NO_ABUNDANCE = "No abundance in this run: detection along the replicon ({d} of {n} detected)"
 NO_ISLANDS = "islands table absent: no islands shaded"
 GREY = "#555555"
 _ROW_IN, _HEAD_IN, _FOOT_IN, _LEGEND_IN, _NOTE_IN = 1.5, 0.45, 0.42, 0.32, 0.16
+_STRIP_IN = 0.75  # one strip panel with its title and x axis
 
 
 class Replicon(NamedTuple):
@@ -135,7 +141,9 @@ def _gene_rows(
     tags = g["locus_tag"].astype(str).to_numpy()
     status = g["detection_status"].astype(str).to_numpy()
     prod = [None if pd.isna(p) else str(p) for p in g.get("product", pd.Series([None] * len(g)))]
-    cells = [{"locus_tag": tags[i], "position_bp": int(mids[i]), "category": status[i],
+    # the strip (no abundance) ticks at the 0-based start, the M9 convention for origin-crossers
+    pos = np.asarray(pd.to_numeric(g["start"]), dtype=np.int64) if all_rug else mids
+    cells = [{"locus_tag": tags[i], "position_bp": int(pos[i]), "category": status[i],
               "product": prod[i]} for i in range(len(g))]  # fmt: skip
     rows = [_row(rep.contig, "rug", **cells[i]) for i in np.flatnonzero(rug)]
     idx = np.flatnonzero(point & ~rug)
@@ -206,9 +214,14 @@ def _lag1_clause(view: RunView) -> str:
     )
 
 
+def strip_title(genes: pd.DataFrame) -> str:
+    """The detection-strip title: genes detected of all genes (P-05)."""
+    return NO_ABUNDANCE.format(d=int(_bools(genes["detected"]).sum()), n=len(genes))
+
+
 def title(rows: Sequence[Mapping[str, Any]], alpha: float, clause: str) -> str:
     if not any(r["kind"] == "point" for r in rows):
-        return NO_ABUNDANCE
+        return "No measured abundance"
     dirs = [r["category"] for r in rows if r["kind"] == "island"]
     n_high, n_low = dirs.count("high"), dirs.count("low")
     return (f"{n_high} high and {n_low} low abundance islands at FWER ≤ "
@@ -220,7 +233,9 @@ def _xs(rows: Sequence[Mapping[str, Any]], scale: float) -> list[float]:
 
 
 def _panel(ax: Axes, rep: Replicon, rows: Sequence[Mapping[str, Any]], frac: float,
-           ylabel: str = style.ABUNDANCE_FALLBACK) -> None:  # fmt: skip
+           ylabel: str | None = style.ABUNDANCE_FALLBACK) -> None:  # fmt: skip
+    """One replicon; ``ylabel`` ``None`` draws the detection strip (full-height ticks, no y
+    axis)."""
     scale, unit = (1e6, "Mb") if rep.length > 2_000_000 else (1e3, "kb")
     kind: dict[str, list[Mapping[str, Any]]] = {k: [] for k in KINDS}
     for r in rows:
@@ -246,15 +261,22 @@ def _panel(ax: Axes, rep: Replicon, rows: Sequence[Mapping[str, Any]], frac: flo
     for status in sorted({str(r["category"]) for r in kind["rug"]}):
         xs = _xs([r for r in kind["rug"] if r["category"] == status], scale)
         colour = style.STATUS_COLOUR.get(status, style.DETECTION["not_detected"])
-        ax.vlines(xs, 0.0, 0.07, transform=ax.get_xaxis_transform(), colors=colour,
+        top = 0.07 if ylabel is not None else 1.0
+        ax.vlines(xs, 0.0, top, transform=ax.get_xaxis_transform(), colors=colour,
                   linewidth=0.6, label=status.replace("_", " "))  # fmt: skip
     for k, ls, name in (("oric", "-", "oriC"), ("ter", ":", "ter")):
         for r in kind[k]:
             ax.axvline(r["position_bp"] / scale, color=GREY, linestyle=ls, lw=0.8, label=name)
     ax.set_xlim(0.0, rep.length / scale)
     ax.set_xlabel(f"position ({unit})")
-    ax.set_ylabel(ylabel)
     ax.set_title(rep.contig, loc="left")
+    if ylabel is None:  # the strip: no y axis
+        ax.set_yticks([])
+        ax.set_ylabel("")
+        for side in ("left", "right", "top"):
+            ax.spines[side].set_visible(False)
+    else:
+        ax.set_ylabel(ylabel)
 
 
 @base.plot(
@@ -279,14 +301,14 @@ def abundance_landscape(view: RunView, cfg: GippaConfig) -> list[base.Instance] 
             rows += _island_rows(rep, islands, alpha)
         per[rep.contig] = rows + _landmark_rows(rep, landmarks)
     every = [r for rows in per.values() for r in rows]
-    text = title(every, alpha, _lag1_clause(view) if measured else "")
+    text = title(every, alpha, _lag1_clause(view)) if measured else strip_title(genes)
     foot = _FOOT_IN + _LEGEND_IN + _NOTE_IN
-    height = _HEAD_IN + foot + _ROW_IN * len(reps)
+    height = _HEAD_IN + foot + (_ROW_IN if measured else _STRIP_IN) * len(reps)
     fig = style.new_figure("double", height)
     fig.set_label("V02_abundance_landscape")
     grid = fig.add_gridspec(len(reps), 1, left=0.09, right=0.98, bottom=foot / height,
                             top=1 - _HEAD_IN / height, hspace=0.75)  # fmt: skip
-    ylabel = style.run_abundance_label(genes) or style.ABUNDANCE_FALLBACK
+    ylabel = (style.run_abundance_label(genes) or style.ABUNDANCE_FALLBACK) if measured else None
     for i, rep in enumerate(reps):
         _panel(fig.add_subplot(grid[i, 0], label=rep.contig), rep, per[rep.contig], frac, ylabel)
     entries: dict[str, Artist] = {}  # one legend for every panel, in the figure foot

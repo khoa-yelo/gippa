@@ -41,7 +41,7 @@ from matplotlib.text import Text
 from matplotlib.transforms import Bbox
 
 from gippa.config import GippaConfig, resolve_config
-from gippa.io.plot_files import write_instance
+from gippa.io.plot_files import write_data, write_instance
 from gippa.io.run_view import RunView
 from gippa.viz import base, style
 from gippa.viz.base import Instance, Skip
@@ -198,11 +198,13 @@ def test_b1_flag_across_the_origin_window_is_single_with_one_origin_line(
 
 
 def test_b1_index_row_is_not_the_whole_replicon(tmp_path: Path, cfg: GippaConfig) -> None:
-    result = _run_plot(_straddle_out(tmp_path), cfg)
-    (index,) = [i for i in result if i.suffix is None]
+    out = _straddle_out(tmp_path)
+    result = _run_plot(out, cfg)
+    assert [i for i in result if i.suffix is None] == []  # no index image (M12-04 P-12)
+    index = base.data_tables()["V03"](RunView.from_outdir(out), cfg)
     row = index.data.set_index("locus_id").loc["PAIR_1"]
     assert (int(row["start"]), int(row["end"])) == (99_500, 100_500)
-    write_instance(index, "V03", "locus", tmp_path / "plots", ["svg"], 100)
+    write_data(index, "V03", "locus", tmp_path / "plots")
     tsv = (tmp_path / "plots" / "data" / "V03_locus.tsv").read_text(encoding="utf-8")
     line = next(ln for ln in tsv.splitlines() if "\tPAIR_1\t" in ln)
     assert "\tchr1\t99501\t100500\t" in line

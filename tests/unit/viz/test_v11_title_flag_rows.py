@@ -42,7 +42,8 @@ def test_every_row_passing_keeps_the_m9_11_wording() -> None:
 def test_too_few_form_uses_the_same_clause() -> None:
     meds = {"OP": 0.4, "NO": math.nan}
     got = title(meds, 0, 0.1, 2)
-    assert got == "0 of 2 candidate flags at q ≤ 0.1; too few measured pairs for densities"
+    # M12-04 P-11: built from what is drawn (OP only), no "too few" clause
+    assert got == f"Median |Δ| OP {style.fmt_num(0.4)} log2; 0 of 2 candidate flags at q ≤ 0.1"
 
 
 @pytest.mark.skipif(not SNAPSHOT.is_dir(), reason="M9-25 snapshot fixture absent")

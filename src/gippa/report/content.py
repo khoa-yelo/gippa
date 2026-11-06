@@ -28,7 +28,7 @@ from gippa.io.run_view import RunView
 from gippa.io.tsv import format_value
 from gippa.model.genetic_code import codon_table, table_name
 from gippa.viz import function_terms
-from gippa.viz.style import fmt_num
+from gippa.viz.style import fmt_num, fmt_q
 from gippa.viz.words import plain
 
 #: GIPPA_SPEC.md §7.4, verbatim
@@ -659,13 +659,34 @@ CAPTIONS: Mapping[str, str] = {
     "distribution.",
 }
 
-#: plot ID -> the stem of its index instance and that instance's caption (review r1 L2)
-INDEX_STEMS: Mapping[str, str] = {"V03": "V03_locus", "V13": "V13_novel_orfs_locus"}
+#: plot ID -> the stem of its index instance and that instance's caption (review r1 L2); the V03
+#: index is a table, not an image (``locus_index``; M12-04 PR 4, P-12)
+INDEX_STEMS: Mapping[str, str] = {"V13": "V13_novel_orfs_locus"}
 INDEX_CAPTIONS: Mapping[str, str] = {
-    "V03": "This index lists every selected locus in display order, with its kind and the error "
-    "estimate of its test family, and marks the loci not drawn as locus views.",
     "V13": "This index lists the top called candidates drawn as locus views, by rank.",
 }
+#: plot ID -> (the stem of its image-free index table, the table's caption)
+INDEX_TABLES: Mapping[str, tuple[str, str]] = {
+    "V03": ("V03_locus", "Locus views, in display order"),
+}
+LOCUS_INDEX_HEADER = ("rank", "locus", "family", "estimate", "q")
+
+
+def locus_index(header: Sequence[str], rows: Sequence[Sequence[str | None]]) -> list[list[str]]:
+    """The report rows of ``data/V03_locus.tsv``: rank, locus, family (in words), the name of the
+    family's estimate and its value with 2 significant digits (``fmt_q``), in TSV order."""
+    col = {name: i for i, name in enumerate(header)}
+
+    def cell(row: Sequence[str | None], name: str) -> str | None:
+        return row[col[name]] if name in col else None
+
+    out = []
+    for r in rows:
+        family = cell(r, "family") or cell(r, "kind") or ""
+        out.append([cell(r, "rank") or "", cell(r, "locus_id") or "",
+                     family.replace("_", " "), cell(r, "estimate") or "q",
+                     fmt_q(cell(r, "error"))])  # fmt: skip
+    return out
 
 
 def question(pid: str) -> str:

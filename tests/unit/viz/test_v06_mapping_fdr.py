@@ -12,9 +12,10 @@ Interface assumed where the spec leaves it open:
   ``Instance``, ``suffix=None``, ``coords=()``.
 - Panel axes carry ``Axes.get_label()`` ``"a"``, ``"b"`` and (only with de novo rows) ``"c"``.
 - Data columns are exactly ``panel, length_class, n_diff, score_bin, metric, value, ci_low,
-  ci_high, flags``: the spec's eight plus ``score_bin`` (panel (c) rows need their bin; the spec
-  lists no column for it). Panel (a): ``metric`` ∈ {``decoys``, ``targets``}, one row per length
-  class x n_diff x metric (42 with the default classes). Panel (b): ``length_class = all``,
+  ci_high, flags, drawn``: the spec's eight plus ``score_bin`` (panel (c) rows need their bin; the
+  spec lists no column for it) and ``drawn`` (M12-04 P-03: false for rows kept but not drawn).
+  Panel (a): ``metric`` ∈ {``decoys``, ``targets``}, one row per length class x n_diff x metric
+  (42 with the default classes). Panel (b): ``length_class = all``,
   ``metric`` ∈ {``fdr_stratum``, ``n_accepted``} per n_diff (the title's accepted count comes from
   the data, index decision 5); NA strata keep ``value`` NA. Panel (c): ``metric = precision``,
   ``length_class`` and ``n_diff`` NA, ``flags`` as in ``mapping_fdr``.
@@ -69,6 +70,7 @@ COLUMNS = [
     "ci_low",
     "ci_high",
     "flags",
+    "drawn",
 ]
 EX4_TITLE = (
     "Placement FDR ≤ 0.01 in strata 0; 920 FDR-tested placements accepted; "
@@ -82,6 +84,9 @@ EX6_DENOVO = [
     denovo_row(3, 0.95, 0.9, 0.98, "c_assumed"),
 ]
 FOOTNOTE = "c assumed 0.99 (no reference peptides)"
+#: M12-04 PR 4 (P-02, P-03)
+EXACT_EMPTY = "All peptides placed by exact match; the tolerant-route FDR is not needed."
+ASSUMED_TEXT = "De novo precision not measured (no reference peptides); assumed c = 0.99"
 
 
 @pytest.fixture(autouse=True)
@@ -345,7 +350,10 @@ def test_points_accepted_labels_and_na_marker(tmp_path: Path, cfg: GippaConfig) 
     assert [x for x, _ in hollow] == [2.0]
     assert hollow[0][1] == pytest.approx(ax.get_ylim()[0], rel=1e-6, abs=1e-12)
     texts = _notes(ax)
-    assert "NA (no targets)" in texts
+    # M12-04 P-02: the NA strata share one stacked note
+    notes = [t for t in texts if t.startswith("NA (no targets)")]
+    assert len(notes) == 1, texts
+    assert " ".join(notes[0].split()).endswith("stratum 2"), notes
     for n in ("880", "40", "0"):
         assert n in texts, n
 
@@ -356,21 +364,18 @@ def test_every_stratum_estimated_and_below_alpha(tmp_path: Path, cfg: GippaConfi
     assert (
         inst.title == "Placement FDR ≤ 0.01 in strata 0, 1, 2; 540 FDR-tested placements accepted"
     )
-    assert "NA (no targets)" not in _notes(_ax(inst, "b"))
+    assert not any(t.startswith("NA (no targets)") for t in _notes(_ax(inst, "b")))
 
 
 def test_every_target_count_zero(tmp_path: Path, cfg: GippaConfig) -> None:
-    """The 2026-10-22 validation run's first rows: (a) at the floor, (b) NA, title unestimated."""
+    """The 2026-10-22 validation run's first rows: no tolerant-route target and no de novo rows.
+    Since M12-04 PR 4 (P-02) the whole plot is one empty state: every placement was exact."""
     inst = _render(mapping_out(tmp_path, fdr=full_placement({})), cfg)
-    a = _rows(inst, "a")
-    assert len(a) == 42
-    assert all(_num(v) == 0 for v in a["value"])
-    b = _rows(inst, "b")
-    assert all(_isna(v) for v in b[b["metric"] == "fdr_stratum"]["value"])
-    ax = _ax(inst, "b")
-    hollow = [x for x, _, h in _markers(ax) if h]
-    assert sorted(hollow) == [0.0, 1.0, 2.0]
-    assert "unestimated" in inst.title
+    assert inst.empty is True
+    assert inst.title == EXACT_EMPTY  # no peptide_hits table: no count to name
+    assert list(inst.data.columns) == COLUMNS
+    assert len(inst.data) == 0
+    assert all(not ax.axison for ax in inst.figure.axes)
     assert not inst.title.startswith("Placement FDR ≤")  # no stratum is estimated
 
 
@@ -406,11 +411,13 @@ def test_example6_denovo_precision_with_footnote(tmp_path: Path, cfg: GippaConfi
     assert all("c_assumed" in str(f) for f in c["flags"])
     assert all(_isna(v) for v in c["length_class"])
     assert all(_isna(v) for v in c["n_diff"])
-    assert FOOTNOTE in _fig_texts(inst)
+    # M12-04 P-03: every bin c assumed: the values are kept but nothing is drawn, the panel
+    # says why, and no axis label claims a CI
+    assert [v is False or str(v).lower() == "false" for v in c["drawn"]] == [True] * 3
     ax = _ax(inst, "c")
-    pts = _markers(ax)
-    assert sorted(y for _, y, _ in pts) == pytest.approx([0.8, 0.9, 0.95])
-    assert all(h for _, _, h in pts)  # c assumed: hollow
+    assert _markers(ax) == []
+    assert ASSUMED_TEXT in [" ".join(t.split()) for t in _fig_texts(inst)]
+    assert not any("(CI)" in a.get_ylabel() for a in inst.figure.axes)
 
 
 def test_denovo_without_c_assumed_has_no_footnote(tmp_path: Path, cfg: GippaConfig) -> None:
@@ -423,7 +430,10 @@ def test_denovo_without_c_assumed_has_no_footnote(tmp_path: Path, cfg: GippaConf
 
 
 def test_denovo_error_bars_span_the_ci(tmp_path: Path, cfg: GippaConfig) -> None:
-    inst = _render(_ex4(tmp_path, EX6_DENOVO), cfg)
+    # measured bins (an all-c-assumed panel draws nothing since M12-04 P-03)
+    rows = [denovo_row(r["score_bin"], r["precision"], r["ci_low"], r["ci_high"])
+            for r in EX6_DENOVO]  # fmt: skip
+    inst = _render(_ex4(tmp_path, rows), cfg)
     ax = _ax(inst, "c")
     spans = []
     for coll in ax.collections:
@@ -465,6 +475,9 @@ def test_property_title_lists_exactly_the_strata_at_or_below_alpha(
     cfg = resolve_config(overrides=[f"stats.alpha.placement={alpha}"])
     with tempfile.TemporaryDirectory() as tmp:
         inst = _render(mapping_out(Path(tmp), fdr=full_placement(totals)), cfg)
+    if all(f is None for f in fdrs):  # no tolerant-route target: the P-02 empty state
+        assert inst.empty is True and inst.title == EXACT_EMPTY
+        return
     b = _rows(inst, "b")
     for m, f in zip(STRATA, fdrs, strict=True):
         v = _cell(b, "all", m, "fdr_stratum")["value"]
@@ -492,16 +505,13 @@ def test_renders_on_the_sim50k_golden_tables(tmp_path: Path, cfg: GippaConfig) -
     (out / "mapping").mkdir(parents=True, exist_ok=True)
     (out / "mapping" / "mapping_fdr.tsv").write_bytes((GOLDEN / "mapping_fdr.tsv").read_bytes())
     inst = _render(out, cfg)
-    b = _rows(inst, "b")
     # M11-20: the golden's 4 stratum-1 targets (non-ATG N-terminal peptides) are credited exact
-    # rows now, so stratum 1 is empty (was 2 targets in 15-19, FDR 0.25 over all)
-    assert _isna(_cell(b, "all", 1, "fdr_stratum")["value"])
-    assert _isna(_cell(b, "all", 0, "fdr_stratum")["value"])
-    assert _num(_cell(_rows(inst, "a"), "15-19", 1, "targets")["value"]) == 0
-    assert len(_rows(inst, "a")) == 42
-    assert "unestimated" in inst.title
+    # rows now, so no stratum has a tolerant-route target (was 2 targets in 15-19, FDR 0.25 over
+    # all) and there are no de novo rows: since M12-04 P-02 V06 is the exact-only empty state
+    assert inst.empty is True
+    assert inst.title == EXACT_EMPTY
     assert "in strata 1" not in inst.title  # 0.25 > 0.01: no claim
-    assert "c" not in {ax.get_label() for ax in inst.figure.axes}
+    assert all(not ax.axison for ax in inst.figure.axes)
 
 
 def test_golden_tables_with_a_numeric_stratum_1_fdr(tmp_path: Path, cfg: GippaConfig) -> None:

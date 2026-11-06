@@ -101,7 +101,7 @@ def test_v03_plot_runs_with_an_amr_set(tmp_path: Path, cfg: GippaConfig) -> None
     out = _out(tmp_path, [vl.region("prophage_1", "prophage", "chr1", 10_001, 12_000), _amr_set()])
     result = base.registered()["V03"].fn(RunView.from_outdir(out), cfg)
     assert isinstance(result, list)
-    assert [i.suffix for i in result] == ["prophage_1", None]
+    assert [i.suffix for i in result] == ["prophage_1"]  # no index instance (M12-04 P-12)
 
 
 def test_v13_locus_view_with_an_amr_set(tmp_path: Path, cfg: GippaConfig) -> None:
