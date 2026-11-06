@@ -129,6 +129,34 @@ plan job with `publishing off: vars.GHCR_PUBLISH is not 'true'; nothing is built
     - Run `towncrier build --version <base> --date <YYYY-MM-DD> --yes`. This turns the fragments
       into `## GIPPA <base> (<YYYY-MM-DD>)` in `CHANGELOG.md` and removes them.
     - `CITATION.cff`: set `version: <v>` and `date-released: <YYYY-MM-DD>`.
+- **The example bundle** ([ADR-0074](adr/ADR-0074-example-dataset.md)). There is one bundle per
+  minor, `gippa-example-<X.Y>.tar.gz`, where `<X.Y>` is the minor of `<v>`. It is built on this
+  branch, so its `expected/` numbers come from the release code. A validation agent runs the jobs
+  on FarmShare. Before each `sbatch`, add up the `gippa-*` CPUs (R14).
+    - **Minor or major release** (`<X.Y>.0`): build a new bundle, even when the inputs did not
+      change, because `expected/` changes with the minor.
+        1. `sbatch scripts/slurm/build_example.sbatch`. It builds twice, checks that both archives
+           have one sha256, and prints the `db_sources.yaml` row and the `bundles.tsv` row.
+        2. `sbatch scripts/slurm/example_routes.sbatch` on the new bundle. It runs every route
+           of the bundle and writes the numbers for `expected/` and the wall time of each route.
+        3. Fill `expected/` from that run and build again:
+           `sbatch scripts/slurm/build_example.sbatch --expected <dir> --expected-commit <sha> --force`.
+           The archive sha256 changes with `expected/`.
+        4. Add the `example_<X>_<Y>` row to `src/gippa/data/db_sources.yaml` and its row to
+           `validation/example/bundles.tsv`, both as printed by the last build. Leave
+           `asset_digest` empty; step 15 fills it.
+        5. Fill the measured times table on `docs/get-started/example.md` from step 2's times.
+        6. The bundle stays read-only at `$GIPPA_ROOT/example/gippa-example-<X.Y>.tar.gz`, for
+           Khoa's upload in step 13.
+    - **Patch release** (`<X.Y>.<Z>`, `<Z>` > 0): build no bundle. Run
+      `sbatch scripts/slurm/example_routes.sbatch` on the minor's bundle. Every route must stay
+      within the tolerances of its `expected/`. A difference outside them means the release is
+      not a patch ([ADR-0060](adr/ADR-0060-release-versioning-and-image-keys.md)): stop and ask
+      the lead.
+    - **After an rc**: the rc prep PR builds and pins the bundle. The final `<X.Y>.0` prep PR
+      after an rc changes only the version lines, so it keeps that bundle and its pin.
+    - The pin URL always names the release `v<X.Y>.0`. An rc has no GitHub release, so
+      `gippa example fetch` on an rc install gets a 404 until step 13 of the final.
 - **The rc path**: the towncrier `--version` is always `<base>`, never `<v>` with `rc`.
     - `notes.py 1.0.0rc1` reads the `## GIPPA 1.0.0 (` section and adds "Release candidate
       1.0.0rc1 of GIPPA 1.0.0." in front of it. A `## GIPPA 1.0.0rc1 (…)` heading is never read, and
@@ -151,7 +179,9 @@ plan job with `publishing off: vars.GHCR_PUBLISH is not 'true'; nothing is built
       `benchmarks/`, `pyproject.toml` or `uv.lock`, makes `readiness.py verify` fail with
       `fail (stale: <path>)`.
     - `release.yml` builds main's HEAD, so such a merge makes the PyPI publish fail at verify.
-- Evidence: PR URL and the SHA of R.
+- Evidence: PR URL and the SHA of R. For a minor or major: the bundle sha256, its size and the
+  Slurm job IDs of the builds and the route run. For a patch: the route run's job ID and its
+  result.
 
 ### 7. Evidence runs on R (**agent**)
 
@@ -275,6 +305,22 @@ gh run download <run id> -n release -D local/review/m11-release/r<k>/
     - creates the GitHub release "GIPPA `<v>`" with `notes.md`. (The workflow would mark an
       `rc` as a pre-release, but an `rc` never reaches this step: see below.)
 - Zenodo mints the DOI.
+- **13b. Attach the example bundle** (**Khoa**; minor and major releases only). Do it right after the run
+  creates the release: until then `gippa example fetch` gets a 404. Only Khoa uploads, because
+  publishing is Khoa's. Patch releases attach nothing; they reuse the bundle of `v<X.Y>.0`.
+
+    ```bash
+    gh release upload v<X.Y>.0 $GIPPA_ROOT/example/gippa-example-<X.Y>.tar.gz --repo khoa-yelo/gippa
+    gh release view v<X.Y>.0 --repo khoa-yelo/gippa --json assets
+    ```
+
+    - In the JSON, the asset `gippa-example-<X.Y>.tar.gz` has a `digest` of the form
+      `sha256:<hex>`. It must equal the `checksum` of the `example_<X>_<Y>` row in
+      `db_sources.yaml` and the `sha256` in `validation/example/bundles.tsv`. If it differs,
+      delete the asset and ask the lead; never change the pin to match it.
+    - Zenodo archives the source zipball, not release assets, so the bundle does not reach
+      Zenodo (ADR-0074: not on Zenodo). Check that the Zenodo record has no bundle file.
+    - Evidence: the `digest` line, which the lead records for step 15.
 - **Release candidates stop at step 12.** An `rc` goes to TestPyPI only; PyPI gets finals only
   (M11-14 Q-K15). `release.yml` itself does not refuse an `rc` with `target=pypi`; the rule is this
   runbook's.
@@ -298,11 +344,23 @@ gh run download <run id> -n release -D local/review/m11-release/r<k>/
         --proteins tests/data/recorded/miniprot/0.18/sim100k/proteins.faa
     ```
 
+- Then fetch the example bundle with the new install, and run the live pin test from the main
+  checkout. The pin test is marked `needs_net(github.com)`, so CI never runs it. It downloads the
+  live asset and checks it against the pin.
+
+    ```bash
+    "$smoke/venv/bin/gippa" example fetch --outdir "$smoke/example"
+    uv run pytest tests/unit -m needs_net -k example
+    ```
+
 - The expected results:
     - `gippa --version` prints `gippa, version <v>`;
     - the JSON has `"gippa": "<v>"`;
-    - preflight exits 0.
-- Evidence: a PROGRESS line with the three outputs.
+    - preflight exits 0;
+    - `gippa example fetch` exits 0 and prints the four routes (a patch fetches the bundle of
+      `v<X.Y>.0`);
+    - the pin test passes.
+- Evidence: a PROGRESS line with the five outputs.
 
 ### 15. Post-release PR (**agent**)
 
@@ -310,6 +368,12 @@ gh run download <run id> -n release -D local/review/m11-release/r<k>/
 - Add `CITATION.cff › identifiers`: the Zenodo concept DOI and the version DOI, both from the
   Zenodo record page.
 - Add the README DOI badge.
+- Minor or major release: copy the `digest` from step 13b into the `asset_digest` column of the
+  `<X.Y>` row in `validation/example/bundles.tsv`. The CI pin test
+  (`tests/unit/test_m12_01_example_pin.py`) checks that it equals the row's `sha256`. A patch
+  release changes nothing here.
+- `validation/example/` is not paperwork (step 6). Merge this PR only after step 13's run has
+  finished green, so that a re-dispatch (section E) still verifies.
 - `__version__` stays `<v>` until the next release-prep PR.
 - If Zenodo has no record (step 3 skipped), the PR waits and the lead notes it under PROGRESS ›
   Questions for Khoa.
@@ -372,6 +436,7 @@ Release candidates `1.y.0rc1`, `1.y.0rc2`, … are cut on main by the same relea
 | weekly e2e (K-12, Nissle, TE8; R5) | rerun K-12 standard | rerun | rerun |
 | A2 pilot gate (TE1, mapping FDR; R1, R2) | see below | see below | rerun |
 | benchmark `k12_standard` window (R7) | see below | see below | rerun |
+| example bundle (step 6, ADR-0074) | reuse the minor's bundle; `example_routes.sbatch` must stay within `expected/` | new bundle | new bundle |
 | Khoa approval (§14.8 item 5) | yes | yes | yes |
 
 **The reuse predicate, as `scripts/release/readiness.py` implements it.** `reusable(C, R)` is
