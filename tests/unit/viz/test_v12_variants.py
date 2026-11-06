@@ -21,7 +21,7 @@ Interface assumed where the spec leaves it open (M9-18 test author):
   gene, aa_pos, ref_aa, alt_aa, alt_type, n_alt, n_ref, class_error_rate, ref_window,
   peptides``. Panel (a) ``flag`` is a §9.4 flag, ``"all"`` or ``"no flag"``; rows with ``n = 0``
   may be present. Panel (b) ``peptides`` is the ``;``-joined distinct covering peptides;
-  ``class_error_rate`` is a number, or NA / ``"unestimated"``; ``ref_window`` is NA without
+  ``class_error_rate`` is a number, or NA (M12-04 PR 11c); ``ref_window`` is NA without
   ``plots/support/variant_windows.tsv``.
 - "Accepted ``peptide_hits`` rows": every row of ``peptide_hits.tsv`` (the mapping step writes
   accepted placements only). A placement covers a site when it is on the site's contig and
@@ -54,6 +54,7 @@ from gippa.io.plot_files import write_instance
 from gippa.io.run_view import RunView
 from gippa.viz import base, style
 from gippa.viz.base import Instance, Skip
+from gippa.viz.words import plain
 
 COLUMNS = {
     "panel", "call", "confidence", "flag", "n", "rank", "variant_id", "gene", "aa_pos",
@@ -117,7 +118,7 @@ def _int(value: object) -> int:
 
 
 def _rate(value: object) -> float | None:
-    if _isna(value) or str(value) == "unestimated":
+    if _isna(value):
         return None
     return float(str(value))
 
@@ -311,8 +312,9 @@ def test_flag_colours_are_okabe_ito_in_flag_order() -> None:
     from gippa.viz.variants import FLAG_COLOUR
 
     assert tuple(FLAG_ORDER) == vv.FLAG_ORDER
+    assert vv.CE_FLAG not in FLAG_COLOUR  # an NA class error is never a bar (M12-04 PR 11c)
     palette = [c.upper() for c in style.OKABE_ITO.values()]
-    colours = [FLAG_COLOUR[f].upper() for f in FLAG_ORDER]
+    colours = [FLAG_COLOUR[f].upper() for f in vv.BAR_FLAGS]
     assert len(set(colours)) == len(colours)
     assert all(c in palette for c in colours)
     idx = [palette.index(c) for c in colours]
@@ -360,7 +362,7 @@ def test_example_2_order_confidence_then_n_alt(tmp_path: Path, cfg: GippaConfig)
 
 def test_order_then_class_error_ascending_na_last_then_id(tmp_path: Path, cfg: GippaConfig) -> None:
     sites = [
-        _site("VAR0001", aa_pos=10, n_alt=2, class_error_rate="unestimated"),
+        _site("VAR0001", aa_pos=10, n_alt=2, class_error_rate=None, flags=f"snv;{vv.CE_FLAG}"),
         _site("VAR0002", aa_pos=20, n_alt=2, class_error_rate="0.01"),
         _site("VAR0004", aa_pos=30, n_alt=2, class_error_rate="0.002"),
         _site("VAR0003", aa_pos=40, n_alt=2, class_error_rate="0.002"),
@@ -505,12 +507,15 @@ def test_title_counts_and_class_error_range(tmp_path: Path, cfg: GippaConfig) ->
 
 def test_title_when_every_class_error_is_unestimated(tmp_path: Path, cfg: GippaConfig) -> None:
     sites = [
-        _site("v1", aa_pos=20, class_error_rate="unestimated"),
-        _site("v2", aa_pos=40, confidence="candidate", class_error_rate="unestimated"),
-        _site("v3", aa_pos=60, confidence="candidate", class_error_rate="unestimated"),
+        _site("v1", aa_pos=20, class_error_rate=None, flags=vv.CE_FLAG),
+        _site("v2", aa_pos=40, confidence="candidate", class_error_rate=None, flags=vv.CE_FLAG),
+        _site("v3", aa_pos=60, confidence="candidate", class_error_rate=None, flags=vv.CE_FLAG),
     ]
     inst = _render(vv.build_out(tmp_path, sites, []), cfg)
-    assert inst.title == "1 high-confidence and 2 candidate ALT sites (class error unestimated)"
+    assert inst.title == (
+        f"1 high-confidence and 2 candidate ALT sites (class error {plain('unestimated')})"
+    )
+    assert vv.CE_FLAG not in set(_rows(inst, "a")["flag"])  # not a panel (a) bar
 
 
 def test_never_says_mutation_or_modification(tmp_path: Path, cfg: GippaConfig) -> None:
@@ -559,6 +564,10 @@ def _key(s: Mapping[str, object]) -> tuple[int, int, int, float, str]:
     )
 
 
+def _flag_rank(flag: str) -> int:
+    return vv.FLAG_ORDER.index(flag)
+
+
 def _sites(draw: Sequence[tuple]) -> list[dict[str, object]]:
     return [
         _site(
@@ -567,8 +576,9 @@ def _sites(draw: Sequence[tuple]) -> list[dict[str, object]]:
             call=c,
             confidence=k,
             n_alt=n,
-            class_error_rate="unestimated" if r is None else f"{r:g}",
-            flags=";".join(sorted(fl, key=vv.FLAG_ORDER.index)) or None,
+            class_error_rate=None if r is None else f"{r:g}",  # NA plus the flag (PR 11c)
+            flags=";".join(sorted([*fl, *([vv.CE_FLAG] if r is None else [])], key=_flag_rank))
+            or None,
         )
         for i, (c, k, n, r, fl) in enumerate(draw)
     ]
@@ -593,8 +603,11 @@ def test_property_counts_and_top_site_order(draw: list[tuple]) -> None:
                     assert counts.get((call, conf, "all"), 0) == 0
                     continue
                 assert counts[(call, conf, "all")] == len(grp)
-                unflagged = sum(1 for s in grp if s["flags"] is None)
+                bars = [[f for f in str(s["flags"] or "").split(";") if f and f != vv.CE_FLAG]
+                        for s in grp]  # fmt: skip
+                unflagged = sum(1 for b in bars if not b)  # the NA-rate flag is not a bar
                 assert counts.get((call, conf, "no flag"), 0) == unflagged
+                assert counts.get((call, conf, vv.CE_FLAG), 0) == 0
                 for f in vv.FLAG_ORDER[:7]:
                     n = sum(1 for s in grp if s["flags"] and f in str(s["flags"]).split(";"))
                     assert counts.get((call, conf, f), 0) == n

@@ -48,6 +48,8 @@ from gippa.model.genetic_code import codon_table
 SRC = Path(__file__).resolve().parents[2] / "src" / "gippa"
 _COMP = str.maketrans("ACGT", "TGCA")
 _SENSE_TABLES = (4, 25)
+#: no paired reference rows: every class error is NA and flagged (M12-04 PR 11c)
+CE = "class_error_unestimated"
 
 
 def tr(nt: str, table: int) -> str:
@@ -458,7 +460,7 @@ def test_substitution_at_tga_is_ordinary_under_4_and_25(
     _pile, t, records = _variants(sense, alt, 1, table)
     (r,) = t.to_dict("records")
     assert (r["ref_codon"], r["ref_aa"], r["alt_aa"], r["call"]) == ("TGA", sense, alt, "ALT")
-    assert set(r["flags"]) == {"snv"}  # no stop_codon
+    assert set(r["flags"]) == {"snv", CE}  # no stop_codon
     assert r["alt_codon_vcf"] == alt_codon and int(r["nt_changes"]) == 1
     (rec,) = records
     assert (rec.pos0, rec.ref, rec.alts) == (54, "TGA", (alt_codon,))
@@ -479,7 +481,7 @@ def test_u_over_tga_at_11_is_unchanged() -> None:
     _pile, t, records = _variants("U", "U", 1, 11)
     (r,) = t.to_dict("records")
     assert (r["ref_aa"], r["alt_aa"]) == ("*", "U")
-    assert set(r["flags"]) == {"stop_codon", "vcf_unrepresentable"} and records == []
+    assert set(r["flags"]) == {"stop_codon", "vcf_unrepresentable", CE} and records == []
 
 
 @pytest.mark.parametrize("table", (4, 11, 25))

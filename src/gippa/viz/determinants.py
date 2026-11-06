@@ -1,4 +1,4 @@
-# ruff: noqa: RUF001, RUF003  (Δ, ², ± and – are the spec's own characters)
+# ruff: noqa: RUF001, RUF002, RUF003  (Δ, ², ± and – are the spec's own characters)
 """V15 ``determinants``: what explains abundance? (GIPPA_SPEC.md §10.2 V15, §7.8.2, §9.3; M9-20;
 ADR-0031..0034). Draws the M8 ``determinants_*`` tables and the M9-17 support files
 ``determinants_pd`` / ``determinants_shap``; computes no statistic.
@@ -11,6 +11,10 @@ observed vs. LightGBM out-of-fold predicted, unexplained genes and ribosomal ref
 (model genes binned on a log count scale above 20,000 rows). The title names the elastic net's
 largest block whose repeat t-interval has both ends finite and lies wholly above 0, ties in
 BLOCKS order (decisions 1, 4, 5 and 6); the interval is named uncalibrated (ADR-0031).
+
+M12-04 PR 7b (P-07; ADR-0075 item 4): with no predictive power (``no_predictive_power``) only
+(a) and (d) are drawn, under a banner, and the title says so. Panel titles and notes wrap at the
+panel width; figure text names no ADR and no flag token.
 """
 
 from __future__ import annotations
@@ -23,10 +27,13 @@ import matplotlib as mpl
 import numpy as np
 import pandas as pd
 from matplotlib.axes import Axes
+from matplotlib.backends.backend_agg import RendererAgg
+from matplotlib.font_manager import FontProperties
 from matplotlib.patches import Patch
+from matplotlib.text import Text
 
 from gippa.determinants import CAVEATS
-from gippa.viz import base, style
+from gippa.viz import base, style, words
 
 if TYPE_CHECKING:
     from gippa.config import GippaConfig
@@ -36,17 +43,24 @@ COLUMNS = ("panel", "model", "block", "feature", "x", "y", "ci_low", "ci_high", 
            "category", "flags")  # fmt: skip
 BLOCKS = ("transcription", "translation", "codon", "protein", "context")
 MODELS = ("elastic_net", "lightgbm")
-LEGEND = {"elastic_net": "elastic net (primary, ADR-0033)",
+LEGEND = {"elastic_net": "elastic net (primary)",
           "lightgbm": "LightGBM (secondary check)"}  # fmt: skip
 MARKER = {"elastic_net": ("o", True), "lightgbm": ("D", False)}  # (marker, filled)
 MODEL_COLOUR = {"elastic_net": style.OKABE_ITO["blue"],
                 "lightgbm": style.OKABE_ITO["bluish_green"]}  # fmt: skip
 PD_FEATURES = ("cai", "tai", "tir_ostir", "promoter_score")
-PD_XLABEL = {"cai": "CAI (index)", "tai": "tAI (index)", "tir_ostir": "OSTIR TIR (au)",
-             "promoter_score": "promoter score"}  # fmt: skip
+#: plain feature names (``words.FEATURE_LABEL``) with a unit where the name carries none
+PD_UNIT = {"cai": " (0 to 1)", "tai": " (0 to 1)", "tir_ostir": "", "promoter_score": ""}
+PD_XLABEL = {f: words.FEATURE_LABEL[f] + PD_UNIT[f] for f in PD_FEATURES}
+#: the short name of a PD feature in a "not computed" note
+PD_SHORT = {"cai": "CAI", "tai": "tAI", "tir_ostir": "translation initiation rate",
+            "promoter_score": "promoter score"}  # fmt: skip
 #: the layer a PD feature comes from (decision 4: fallback when no run flag names it)
 PD_LAYER = {"cai": "codon", "tai": "codon", "tir_ostir": "ostir",
             "promoter_score": "promoters"}  # fmt: skip
+#: why a PD feature was not computed, by its layer
+LAYER_REASON = {"codon": "codon usage unavailable", "ostir": "OSTIR rates unavailable",
+                "promoters": "promoter predictions unavailable"}  # fmt: skip
 SHAP_TOP = 20
 MAX_DRAWN = 20_000  # the M9-01 element rule
 _C_EXTRA = 1  # panel (c)'s zero line counts towards the rule too
@@ -57,12 +71,21 @@ CAT_LABEL = {"model": "model genes",
              "unexplained": "unexplained (> 2 SD of LightGBM residuals)",
              "ribosomal_reference": "ribosomal reference (not in R²)"}  # fmt: skip
 GREY = "#555555"
-UNI_FOOT = "univariate CIs uncalibrated (ADR-0032)"
-DELTA_FOOT = "ΔR² intervals uncalibrated: CV repeats share data (ADR-0031)"
+UNI_FOOT = "Univariate CIs are uncalibrated."
+DELTA_FOOT = ("Feature blocks are correlated; ΔR² is the loss in CV R² when a block is removed "
+              "(intervals uncalibrated: CV repeats share data).")  # fmt: skip
+NULL_CAL = " (uncalibrated: valid only for exchangeable transcription units)"
+NO_POWER = "no predictive power"
+#: the end of a gated title; the twin reads the gate from it (it sees only the data and title)
+GATED_SUFFIX = f": {NO_POWER}"
+NO_ABUNDANCE = ("Nothing to show: this run has no abundance values, so the determinants model "
+                "was not fitted.")  # fmt: skip
+BANNER = "The model does not predict abundance in this run; feature effects are not shown."
 A_HEADER = "(a) block ΔR² (t-interval over CV repeats, uncalibrated)"
 D_HEADER = "(d) observed vs. LightGBM out-of-fold"
 HEX_BAR, HEX_PROXY = "genes per bin (log count)", "model genes (binned)"
 MINUS = "\u2212"
+LEGEND_GAP_PT = 6.0  # (d) legend: points below the x label
 
 
 def _na(v: object) -> bool:
@@ -106,6 +129,24 @@ def _f2(v: float) -> str:
 def _metric(model: pd.DataFrame, name: str, metric: str) -> pd.Series | None:
     sel = model[(model["model"] == name) & (model["metric"] == metric)]
     return None if not len(sel) else sel.iloc[0]
+
+
+def no_predictive_power(model: pd.DataFrame) -> bool:
+    """P-07 (ADR-0075 item 4, Q6): the elastic net's CV R² mean m is NA or ≤ 0, m − sd ≤ 0 (sd
+    NA: m alone), or an estimated interval of m (both ends finite) has its low end ≤ 0."""
+    row, sd_row = (_metric(model, "elastic_net", m) for m in ("cv_r2_mean", "cv_r2_sd"))
+    if row is None:
+        return True
+    m, lo, hi = _floats([row["value"], row["ci_low"], row["ci_high"]])
+    s = math.nan if sd_row is None else float(_floats([sd_row["value"]])[0])
+    if math.isnan(m) or m <= 0 or (not math.isnan(s) and m - s <= 0):
+        return True
+    return bool(math.isfinite(lo) and math.isfinite(hi) and lo <= 0)
+
+
+def fitted(model: pd.DataFrame) -> bool:
+    """Whether a multivariate model (elastic net or LightGBM) has rows."""
+    return bool(model["model"].isin(MODELS).any())
 
 
 def too_few(model: pd.DataFrame) -> bool:
@@ -155,6 +196,8 @@ def title(model: pd.DataFrame, n_tus: tuple[int, str] | None = None) -> str:
     finite and lies wholly above 0 (decisions 4-6; ties in BLOCKS order)."""
     if n_tus is not None:
         return too_few_title(*n_tus)
+    if no_predictive_power(model):
+        return f"Elastic net CV R² {cv_text(model)}{GATED_SUFFIX}"
     head = f"Elastic net CV R² {cv_text(model)}; "
     d = model[(model["model"] == "elastic_net") & (model["metric"] == "delta_r2")]
     best: tuple[float, str, float, float] | None = None
@@ -251,11 +294,53 @@ def rows_d(att: pd.DataFrame | None) -> list[list[object]]:
 # ---------------------------------------------------------------- drawing
 
 
-def _note(ax: Axes, text: str, label: str) -> None:
+_MEASURE = RendererAgg(1, 1, 72)  # type: ignore[no-untyped-call]  # widths in points
+
+
+def _width_pt(text: str, prop: FontProperties) -> float:
+    w = _MEASURE.get_text_width_height_descent(text, prop, ismath=False)  # type: ignore[no-untyped-call]
+    return float(w[0])
+
+
+def fit(text: str, width_pt: float, prop: FontProperties) -> str:
+    """``text`` wrapped at word boundaries so that no line is wider than ``width_pt`` (a single
+    word wider than that stays whole); existing line breaks are kept."""
+    out: list[str] = []
+    for para in text.split("\n"):
+        lines: list[str] = []
+        for word in para.split():
+            trial = f"{lines[-1]} {word}" if lines else word
+            if lines and _width_pt(trial, prop) <= width_pt:
+                lines[-1] = trial
+            else:
+                lines.append(word)
+        out += lines or [""]
+    return "\n".join(out)
+
+
+def _panel_pt(ax: Axes, frac: float = 1.0) -> float:
+    fig = ax.get_figure(root=True)
+    assert fig is not None
+    return float(ax.get_position().width * fig.get_figwidth() * 72.0 * frac)
+
+
+def _fit_text(t: Text, width_pt: float) -> Text:
+    t.set_text(fit(t.get_text(), 0.97 * width_pt, t.get_fontproperties()))  # hinting margin
+    return t
+
+
+def _title(ax: Axes, text: str, width_pt: float | None = None, **kw: Any) -> Text:
+    """A left title wrapped at ``width_pt`` (default: the axes width)."""
+    t = ax.set_title(text, loc="left", **kw)
+    return _fit_text(t, _panel_pt(ax) if width_pt is None else width_pt)
+
+
+def _note(ax: Axes, text: str, label: str, width_pt: float | None = None) -> None:
     ax.set_axis_off()
-    ax.set_title(label, loc="left")
-    ax.text(0.5, 0.5, text, ha="center", va="center", transform=ax.transAxes, color=GREY,
-            fontsize=6, wrap=True)  # fmt: skip
+    _title(ax, label, width_pt)
+    t = ax.text(0.5, 0.5, text, ha="center", va="center", transform=ax.transAxes, color=GREY,
+                fontsize=6)  # fmt: skip
+    _fit_text(t, _panel_pt(ax, 0.95))
 
 
 def _panel_a(ax: Axes, a: pd.DataFrame) -> None:
@@ -281,24 +366,23 @@ def _panel_a(ax: Axes, a: pd.DataFrame) -> None:
     ax.set_xlabel("ΔR² (drop-one-block, CV)")
     ax.locator_params(axis="x", nbins=4)
     ax.legend(frameon=False, loc="best", fontsize=6)
-    ax.set_title(A_HEADER, loc="left", x=-0.3)  # over the block labels: clear of (b)
+    _title(ax, A_HEADER, x=-0.3)  # over the block labels: clear of (b)
 
 
 def _panel_b(fig: Any, cell: Any, pdf: pd.DataFrame | None, b: pd.DataFrame,
-             flags: frozenset[str], spread: str) -> None:  # fmt: skip
+             spread: str) -> None:  # fmt: skip
+    width = float(cell.get_position(fig).width * fig.get_figwidth() * 72.0)
     if pdf is None:
-        text = "not available (no determinants_pd support file)"
+        text = "not available (no partial dependence file in this run)"
         _note(fig.add_subplot(cell, label="b"), text, "(b) partial dependence")
         return
-    grid = cell.subgridspec(2, 2, hspace=0.9, wspace=0.45)
+    grid = cell.subgridspec(2, 2, hspace=1.0, wspace=0.45)
     for i, f in enumerate(PD_FEATURES):
         ax = fig.add_subplot(grid[i // 2, i % 2], label=f"b_{f}")
         head = f"(b) partial dependence, LightGBM (secondary); {spread}" if i == 0 else ""
         d = b[b["feature"] == f]
         if not len(d):
-            layer = next((fl for fl in sorted(flags) if fl == f"layer_missing:{PD_LAYER[f]}"),
-                         f"layer_missing:{PD_LAYER[f]}")  # fmt: skip
-            _note(ax, f"{PD_XLABEL[f].split(' (')[0]}:\nnot available ({layer})", head)
+            _note(ax, f"{PD_SHORT[f]}: not computed ({LAYER_REASON[PD_LAYER[f]]})", head, width)
             continue
         g, rug = d[d["category"] == "pd_mean"], d[d["category"] == "rug"]
         x = _floats(g["x"])
@@ -311,10 +395,11 @@ def _panel_b(fig: Any, cell: Any, pdf: pd.DataFrame | None, b: pd.DataFrame,
                     transform=ax.get_xaxis_transform())  # fmt: skip
         ax.locator_params(axis="both", nbins=3)
         ax.set_xlabel(PD_XLABEL[f])
+        _fit_text(ax.xaxis.label, _panel_pt(ax, 1.2))
         if i % 2 == 0:
             ax.set_ylabel("PD (log2 abundance)")
         if head:
-            ax.set_title(head, loc="left", fontsize=7, wrap=True)  # wraps at the figure edge
+            _title(ax, head, width, fontsize=7)
 
 
 def _panel_c(ax: Axes, c: pd.DataFrame) -> None:
@@ -325,7 +410,7 @@ def _panel_c(ax: Axes, c: pd.DataFrame) -> None:
     ax.set_ylim(-0.6, len(feats) - 0.4)
     ax.axvline(0.0, color=GREY, linewidth=0.6, linestyle=":")
     ax.set_xlabel("SHAP (log2 abundance)")
-    ax.set_title("(c) SHAP, top 20; LightGBM (secondary)", loc="left")
+    _title(ax, "(c) SHAP, top 20; LightGBM (secondary)")
     cax = ax.inset_axes((1.03, 0.0, 0.03, 0.35))
     bar = ax.get_figure(root=True).colorbar(sc, cax=cax, ticks=[0.0, 1.0])  # type: ignore[union-attr]
     bar.ax.set_yticklabels(["low", "high"], fontsize=6)
@@ -371,17 +456,22 @@ def _panel_d(ax: Axes, d: pd.DataFrame, r2: str, lab: str = style.ABUNDANCE_FALL
     ax.set_xlabel(f"predicted {lab} (LightGBM out-of-fold)")
     ax.set_ylabel(f"observed {lab}")
     handles, _ = ax.get_legend_handles_labels()
-    ax.legend(handles=[*proxy, *handles], frameon=False, loc="best", fontsize=6)
-    ax.set_title(D_HEADER, loc="left", pad=14)  # above the R² line
+    fig_ = ax.get_figure(root=True)
+    assert fig_ is not None
+    renderer = fig_._get_renderer()  # type: ignore[attr-defined]  # lays out ticks and x label
+    y0 = ax.xaxis.get_tightbbox(renderer).y0 - LEGEND_GAP_PT * fig_.dpi / 72.0  # type: ignore[union-attr]
+    below = float(ax.transAxes.inverted().transform((0.0, y0))[1])
+    ax.legend(handles=[*proxy, *handles], frameon=False, fontsize=6, loc="upper left",
+              bbox_to_anchor=(0.0, below), borderaxespad=0.0)  # fmt: skip
+    _title(ax, D_HEADER, pad=14)  # above the R² line
 
 
 def footnotes(model: pd.DataFrame) -> list[str]:
     notes = []
     p = _metric(model, "elastic_net", "null_p")
     if p is not None and not _na(p["value"]):
-        cal = " (uncalibrated: valid only for exchangeable TUs, ADR-0034)"
         notes.append(f"null p {style.fmt_q(float(p['value']))}"
-                     + (cal if "null_uncalibrated" in _flags(p["flags"]) else ""))  # fmt: skip
+                     + (NULL_CAL if "null_uncalibrated" in _flags(p["flags"]) else ""))  # fmt: skip
     if (model["metric"] == "delta_r2").any():
         notes.append(DELTA_FOOT)
     if (model["model"] == "univariate").any():
@@ -394,37 +484,47 @@ def footnotes(model: pd.DataFrame) -> list[str]:
     "determinants",
     needs=("determinants_model",),
     optional=("determinants_attribution", "determinants_features", "genes_tsv"),
-    layers=("abundance",),
+    # no ``layers``: a run without abundance gets V15's empty state, not a skip (PR 7b review)
 )
 def determinants(view: RunView, cfg: GippaConfig) -> list[base.Instance] | base.Skip:
-    """V15: block ΔR², partial dependence, SHAP beeswarm and observed vs. predicted."""
+    """V15: block ΔR², partial dependence, SHAP beeswarm and observed vs. predicted; only (a) and
+    (d) under a banner when the model has no predictive power."""
     model = view.table("determinants_model")
     assert model is not None  # guaranteed by ``needs``
     att, features = view.table("determinants_attribution"), view.table("determinants_features")
+    if "layer_missing:abundance" in view.run_flags() or (not model.empty and not fitted(model)):
+        return [base.empty_state("V15", "determinants", NO_ABUNDANCE, COLUMNS, "double")]
     if model.empty or too_few(model):  # no model, or NA predictions only: no panel has data
         text = title(model, counts(features, att))
         return [base.empty_state("V15", "determinants", text, COLUMNS, "double")]
-    text = title(model)
+    text, gated = title(model), no_predictive_power(model)
     pdf, shap = view.support("determinants_pd"), view.support("determinants_shap")
     rows = rows_a(model)
-    rows += [] if pdf is None else rows_b(pdf, features)
-    rows += [] if shap is None or not len(shap) else rows_c(shap)
+    if not gated:
+        rows += [] if pdf is None else rows_b(pdf, features)
+        rows += [] if shap is None or not len(shap) else rows_c(shap)
     data = pd.DataFrame([*rows, *rows_d(att)], columns=list(COLUMNS), dtype=object)
     sub = {p: data[data["panel"] == p] for p in "abcd"}
-    fig = style.new_figure("double", 6.6)
+    fig = style.new_figure("double", 4.2 if gated else 7.2)
     fig.set_label("V15_determinants")
-    outer = fig.add_gridspec(2, 2, left=0.17, right=0.95, bottom=0.15, top=0.91, hspace=0.42,
-                             wspace=0.5)  # fmt: skip
-    _panel_a(fig.add_subplot(outer[0, 0], label="a"), sub["a"])
-    n_fits = cfg.determinants.outer_folds * cfg.determinants.repeats
-    spread = f"spread over {n_fits} CV models (not a CI)"
-    _panel_b(fig, outer[0, 1], pdf, sub["b"], view.run_flags(), spread)
-    ax_c = fig.add_subplot(outer[1, 0], label="c")
-    if len(sub["c"]):
-        _panel_c(ax_c, sub["c"])
+    if gated:
+        outer = fig.add_gridspec(1, 2, left=0.17, right=0.95, bottom=0.38, top=0.76, wspace=0.5)
+        ax_a, ax_d = (fig.add_subplot(outer[0, k], label=lab) for k, lab in enumerate("ad"))
+        fig.text(0.5, 0.92, fit(BANNER, 0.95 * fig.get_figwidth() * 72, FontProperties(
+            size=7)), ha="center", va="top", fontsize=7, color=GREY)  # fmt: skip
     else:
-        _note(ax_c, "not available (no determinants_shap support file)", "(c) SHAP")
-    ax_d = fig.add_subplot(outer[1, 1], label="d")
+        outer = fig.add_gridspec(2, 2, left=0.17, right=0.95, bottom=0.24, top=0.88, hspace=0.5,
+                                 wspace=0.5)  # fmt: skip
+        ax_a = fig.add_subplot(outer[0, 0], label="a")
+        n_fits = cfg.determinants.outer_folds * cfg.determinants.repeats
+        _panel_b(fig, outer[0, 1], pdf, sub["b"], f"spread over {n_fits} CV models (not a CI)")
+        ax_c = fig.add_subplot(outer[1, 0], label="c")
+        if len(sub["c"]):
+            _panel_c(ax_c, sub["c"])
+        else:
+            _note(ax_c, "not available (no SHAP file in this run)", "(c) SHAP")
+        ax_d = fig.add_subplot(outer[1, 1], label="d")
+    _panel_a(ax_a, sub["a"])
     if len(sub["d"]):
         r2 = (f"CV R² {cv_text(model, 'lightgbm')} (LightGBM, plotted); "
               f"elastic net {cv_text(model)} (primary)")  # fmt: skip
@@ -432,7 +532,8 @@ def determinants(view: RunView, cfg: GippaConfig) -> list[base.Instance] | base.
         _panel_d(ax_d, sub["d"], r2, lab)
     else:
         _note(ax_d, "no out-of-fold predictions", D_HEADER)
-    for i, note in enumerate(footnotes(model)):
-        fig.text(0.01, 0.075 - 0.02 * i, note, fontsize=6, color=GREY)
-    fig.suptitle(text, y=0.985)
+    foot = fig.text(0.01, 0.01, "\n".join(footnotes(model)), fontsize=6, color=GREY,
+                    va="bottom", linespacing=1.3)  # fmt: skip
+    _fit_text(foot, 0.97 * fig.get_figwidth() * 72)
+    _fit_text(fig.suptitle(text, y=0.985), 0.97 * fig.get_figwidth() * 72)
     return [base.Instance(None, fig, data, text)]

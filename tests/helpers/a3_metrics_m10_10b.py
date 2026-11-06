@@ -106,13 +106,14 @@ def orf(
     cls: str = "intergenic",
     *,
     called: bool = True,
-    class_fdr: str = "0.01",
+    class_fdr: str | None = "0.01",
     lowest: int | None = None,
     n_peptides: int = 2,
     **kw: object,
 ) -> dict[str, object]:
     """A ``novel_orfs.tsv`` row (1-based ``end``; ``orf_id`` from ``lowest``, default a fixed
-    offset below ``end``)."""
+    offset below ``end``). A ``None`` ``class_fdr`` is NA (unestimated) and the row carries
+    ``class_fdr_unestimated`` (M12-04 PR 11c)."""
     low = lowest if lowest is not None else max(1, end - 300)
     row: dict[str, object] = {
         "orf_id": f"NOVEL_{contig}_{low}_{'p' if strand == '+' else 'm'}",
@@ -126,6 +127,8 @@ def orf(
         "class_fdr": class_fdr,
         "called": called,
     }
+    if class_fdr is None:
+        row["flags"] = "class_fdr_unestimated"
     row.update(kw)
     return row
 
@@ -140,7 +143,7 @@ def variant(
     alt_type: str = "substitution",
     call: str = "ALT",
     confidence: str = "high",
-    class_error_rate: str = "unestimated",
+    class_error_rate: str | None = None,
     source: str = "database",
 ) -> dict[str, object]:
     """A ``variants.tsv`` row (1-based ``codon_start`` as written)."""
@@ -158,6 +161,8 @@ def variant(
         "n_ref": 0,
         "n_alt": 2,
         "class_error_rate": class_error_rate,
+        # NA plus the flag (M12-04 PR 11c)
+        "flags": "class_error_unestimated" if class_error_rate is None else None,
         "source": source,
     }
 

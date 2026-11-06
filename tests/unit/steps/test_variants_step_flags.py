@@ -6,7 +6,8 @@ On the M7-04 gippasim chain (sample-strain peptides mapped to the reference geno
 
 * every ``variants.tsv`` row has a non-empty ``flags`` cell, ``;``-joined, each flag once, in the
   §9.4 order (``mass_equivalent, snv, multi_nt, strain_difference, database_derived,
-  start_codon, stop_codon``, then M7-03's ``vcf_unrepresentable``);
+  start_codon, stop_codon``, then M7-03's ``vcf_unrepresentable``, then M12-04 PR 11c's
+  ``class_error_unestimated``, set exactly when ``class_error_rate`` is NA);
 * each cell equals an independent oracle of rules 1-6 built from the row itself (``ref_codon``,
   ``ref_aa``, ``alt_aa``, ``alt_type``) and the gene model. The fixture's peptides are all
   ``database`` with ``search_db: same`` (gippasim), so ``database_derived`` is absent; if a
@@ -40,7 +41,7 @@ from test_variants_step import (
 
 ORDER = (
     "mass_equivalent", "snv", "multi_nt", "strain_difference", "database_derived",
-    "start_codon", "stop_codon", "vcf_unrepresentable",
+    "start_codon", "stop_codon", "vcf_unrepresentable", "class_error_unestimated",
 )  # fmt: skip
 
 B5: dict[str, float] = {
@@ -109,6 +110,8 @@ def expected_flags(
         want.add("mass_equivalent")
     if "vcf_unrepresentable" in r["flags"].split(";"):
         want.add("vcf_unrepresentable")
+    if r["class_error_rate"] == "NA":  # the written cell (M12-04 PR 11c)
+        want.add("class_error_unestimated")
     if db_other and "database" in r["source"].split(";"):
         return None
     return [f for f in ORDER if f in want]

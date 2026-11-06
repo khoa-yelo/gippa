@@ -169,12 +169,12 @@ def class_fdr(
     return ClassFdrResult(out, tuple(summaries), n_dec, n_dec > 0 and not makedb)
 
 
-def class_fdr_cell(r: OrfClassFdr) -> float | str:
+def class_fdr_cell(r: OrfClassFdr) -> float:
     """The ``novel_orfs.tsv`` ``class_fdr`` cell (rule 5): q, 1.0 for ``lost_pick`` (Q1), else
-    ``"unestimated"``."""
+    NaN (NA: unestimated, M12-04 PR 11c)."""
     if math.isfinite(r.q):
         return float(r.q)
-    return 1.0 if r.reason == "lost_pick" else "unestimated"
+    return 1.0 if r.reason == "lost_pick" else math.nan
 
 
 def db_supported(
