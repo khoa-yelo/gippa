@@ -47,7 +47,8 @@ def test_step_13b_khoa_attaches_and_verifies_the_asset(text: str) -> None:
     assert "**Khoa**" in sub or "(Khoa)" in sub
     assert f"gh release upload v<X.Y>.0 $GIPPA_ROOT/example/{ASSET}" in sub
     assert "--repo khoa-yelo/gippa" in sub
-    assert "gh release view v<X.Y>.0 --json assets" in sub and "digest" in sub
+    assert re.search(r"gh release view v<X\.Y>\.0( --repo \S+)? --json assets", sub), sub
+    assert "digest" in sub
     assert "Zenodo" in sub  # the Zenodo record holds no bundle file
 
 
