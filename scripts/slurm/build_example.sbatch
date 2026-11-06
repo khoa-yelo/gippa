@@ -22,8 +22,9 @@
 # "user env retrieval" (scripts/slurm/nightly.sbatch), and the oat nodes are kept free.
 set -euo pipefail
 export GIPPA_REPO="${GIPPA_REPO:-/home/classes/bios/270/khoa/giap}"
-source "$GIPPA_REPO/scripts/farmshare_env.sh"
+# before the source: farmshare_env.sh defaults GIPPA_ROOT to $GIPPA_REPO/local (a worktree's)
 export GIPPA_ROOT="${GIPPA_ROOT:-/home/classes/bios/270/khoa/giap/local}"
+source "$GIPPA_REPO/scripts/farmshare_env.sh"
 export TMPDIR="$(mktemp -d /tmp/gippa.XXXXXX)"; trap 'rm -rf "$TMPDIR"' EXIT
 export PYTHONPATH="$GIPPA_REPO/src"
 PY="$UV_PROJECT_ENVIRONMENT/bin/python"
@@ -34,7 +35,7 @@ echo "build_example: job ${SLURM_JOB_ID:-local} on $(hostname), commit $(git rev
 again=()
 for x in "$@"; do [[ "$x" == --force ]] || again+=("$x"); done
 
-echo "== build 1 ($GIPPA_ROOT/example)"
+echo "== build 1 (--out, default $GIPPA_ROOT/example)"
 "$PY" scripts/example/build_example.py "$@" | tee "$TMPDIR/build1.log"
 sha1=$(awk '/^sha256: /{print $2}' "$TMPDIR/build1.log")
 archive=$(awk '/^archive: /{print $2}' "$TMPDIR/build1.log")
