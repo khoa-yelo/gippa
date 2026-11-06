@@ -589,12 +589,14 @@ VAL_OUT = Path(os.environ.get("GIPPA_ROOT", REPO / "local")) / "runs" / "val-mvp
 @pytest.mark.slow
 @pytest.mark.skipif(not VAL_OUT.is_dir(), reason=f"validation run absent: {VAL_OUT}")
 def test_example6_validation_run_is_not_estimable(tmp_path: Path, cfg: GippaConfig) -> None:
-    """chr1 and plasmid_1: 160 morans_i / join_count_bb rows, all NA; oriter_slope dropped."""
+    """chr1 and plasmid_1: 160 morans_i / join_count_bb rows, all NA; oriter_slope dropped.
+    M12-04 P-06: no Moran's I value to draw, so V10 is its empty state naming the detected genes
+    (0 of the run's 87), with a header-only data TSV and no axes."""
     inst = _render(VAL_OUT, cfg)
-    assert inst.title == NOT_ESTIMABLE
-    assert len(inst.data) == 160
-    for contig in ("chr1", "plasmid_1"):
-        notes = [t for ax in _contig_axes(inst, contig) for t in _notes(ax)]
-        assert any(t.startswith("not estimable (") for t in notes), (contig, notes)
+    assert inst.empty is True
+    assert inst.title == "Too few detected genes (0 of 87) to estimate autocorrelation."
+    assert list(inst.data.columns) == COLUMNS and len(inst.data) == 0
+    assert all(not ax.axison for ax in inst.figure.axes)
+    assert all(markers(ax) == [] for ax in inst.figure.axes)
     paths = write_instance(inst, "V10", "correlogram", tmp_path, ["svg", "png"], 100)
     assert all(p.stat().st_size > 0 for p in paths)
