@@ -137,11 +137,19 @@ plan job with `publishing off: vars.GHCR_PUBLISH is not 'true'; nothing is built
       change, because `expected/` changes with the minor.
         1. `sbatch scripts/slurm/build_example.sbatch`. It builds twice, checks that both archives
            have one sha256, and prints the `db_sources.yaml` row and the `bundles.tsv` row.
-        2. `sbatch scripts/slurm/example_routes.sbatch` on the new bundle. It runs every route
-           of the bundle and writes the numbers for `expected/` and the wall time of each route.
+        2. Measure the new build tree. It has no pin yet, so `gippa example fetch` cannot check
+           it; measure mode reads the unpacked tree instead:
+           `GIPPA_EXAMPLE_DIR=$GIPPA_ROOT/example/nissle_r200k/gippa-example-<X.Y> sbatch scripts/slurm/example_routes.sbatch <worktree>`,
+           where `<worktree>` is this branch's checkout. It runs every route's printed commands
+           on that tree, with no fetch and no `expected/` comparison, and writes
+           `measured/<route>.json` and `wall_times.tsv` (the wall time of each route) under
+           `$GIPPA_ROOT/example/routes/<jobid>/gippa-example/runs/`.
         3. Fill `expected/` from that run and build again:
            `sbatch scripts/slurm/build_example.sbatch --expected <dir> --expected-commit <sha> --force`.
-           The archive sha256 changes with `expected/`.
+           `<dir>` is step 2's `measured/` folder
+           (`$GIPPA_ROOT/example/routes/<jobid>/gippa-example/runs/measured`), already in the
+           `expected/` layout, and `<sha>` is the commit step 2 ran. The archive sha256 changes
+           with `expected/`.
         4. Add the `example_<X>_<Y>` row to `src/gippa/data/db_sources.yaml` and its row to
            `validation/example/bundles.tsv`, both as printed by the last build. Leave
            `asset_digest` empty; step 15 fills it.
@@ -149,7 +157,7 @@ plan job with `publishing off: vars.GHCR_PUBLISH is not 'true'; nothing is built
         6. The bundle stays read-only at `$GIPPA_ROOT/example/gippa-example-<X.Y>.tar.gz`, for
            Khoa's upload in step 13.
     - **Patch release** (`<X.Y>.<Z>`, `<Z>` > 0): build no bundle. Run
-      `sbatch scripts/slurm/example_routes.sbatch` on the minor's bundle. Every route must stay
+      `sbatch scripts/slurm/example_routes.sbatch <worktree>` on the minor's bundle. Every route must stay
       within the tolerances of its `expected/`. A difference outside them means the release is
       not a patch ([ADR-0060](adr/ADR-0060-release-versioning-and-image-keys.md)): stop and ask
       the lead.

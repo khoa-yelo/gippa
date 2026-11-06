@@ -1,9 +1,0 @@
-**Plots with little or nothing to draw now say so plainly** instead of drawing empty axes or overlapping labels:
-
-- Peptide mapping FDR: when every peptide was placed by exact match, the plot is one line ("All 774 peptides placed by exact match; the tolerant-route FDR is not needed."). With de novo peptides, the target and decoy panels collapse to one line. When no de novo precision was measured (no reference peptides), the precision panel says so and draws no points; the data TSV keeps the values and gains a `drawn` column. Strata with no targets share one note, and the axis says "(CI)" only when an interval is drawn.
-- Where the sequences went: when every sequence took one route to one outcome, the plot is a single short bar ("All 106 proteins placed (miniprot)").
-- Abundance landscape: a run without abundance shows a detection strip along each replicon, with ticks at each gene's start coloured by detection status.
-- Autocorrelation: when Moran's I cannot be estimated, the plot is one message naming the detected genes ("Too few detected genes (4 of 158) to estimate autocorrelation."); flags in partly estimable panels are written in words. A flags column mixing empty and filled cells no longer crashes the plot.
-- Operon partners: a run with no measured pairs gives one message; titles and legends name only the pair classes drawn ("OP (same operon)"), non-operon pairs are green and same-operon pairs are drawn on top.
-- Locus views: the text-only index image `plots/V03_locus.{svg,png,pdf}` is gone; `plots/data/V03_locus.tsv` is still written (now with `family` and `estimate` columns), and the report shows it as the table "Locus views, in display order".
-- Variants, novel ORFs, enrichment and determinants: empty plots read "Nothing to show: <reason>. <what would change it>.", for example "Nothing to show: the determinants model needs ≥ 100 genes with abundance in ≥ 25 TUs (this run: 99 genes, 34 TUs)."
