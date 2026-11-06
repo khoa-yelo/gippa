@@ -39,6 +39,7 @@ from gippa.io.run_view import PATHS, RunView
 from gippa.io.tsv import format_value
 from gippa.report import content, detection, head
 from gippa.viz import style
+from gippa.viz.determinants import no_predictive_power
 from gippa.viz.words import plain
 
 TOP_ROWS = 20
@@ -165,13 +166,20 @@ def _plot_slot(
     a ``LINKED_PREFIX`` instance with an SVG file is an ``img`` of it, not inlined (PR 13)."""
     if files is None or not files.instances:
         note = f"not shown: {plain(skipped[pid])}" if pid in skipped else "plot file absent"
-        return {"pid": pid, "note": note, "instances": [], "notices": []}
+        return {"pid": pid, "note": note, "instances": [], "notices": [], "tables": []}
     insts: list[dict[str, Any]] = []
     empty: list[dict[str, Any]] = []
+    tables: list[dict[str, Any]] = []
     for inst in files.instances:
         links = [(rel.rsplit(".", 1)[1].upper(), f"../plots/{rel}") for rel in inst.images]
         if inst.data is not None:
             links.append(("data TSV", f"../plots/{inst.data}"))
+        index = content.INDEX_TABLES.get(pid)
+        if inst.table is not None and index is not None and index[0] == inst.stem:
+            rows = content.locus_index(*inst.table)  # an image-free index (M12-04 PR 4, P-12)
+            tables.append({"caption": index[1], "header": content.LOCUS_INDEX_HEADER,
+                           "rows": rows, "href": f"../plots/{inst.data}"})  # fmt: skip
+            continue
         if notices and inst.empty:  # the title and its file links, no image (review r1 M2)
             title = None if inst.svg is None else svg_title(inst.svg)
             empty.append({"title": " ".join((title or "Nothing to show in this run.").split()),
@@ -185,9 +193,9 @@ def _plot_slot(
         spec = None if twin is None else {"id": twin[0], "spec": Markup(_script_json(twin[1]))}
         insts.append({"stem": inst.stem, "svg": svg, "img": img, "links": links, "twin": spec,
                       "caption": content.caption(pid, inst.stem)})  # fmt: skip
-    drawn = empty or any(i["svg"] is not None or i["img"] for i in insts)
+    drawn = empty or tables or any(i["svg"] is not None or i["img"] for i in insts)
     return {"pid": pid, "note": None if drawn else "plot file absent", "instances": insts,
-            "notices": empty}  # fmt: skip
+            "notices": empty, "tables": tables}  # fmt: skip
 
 
 def _genes_preview(view: RunView) -> tuple[list[str], list[list[str]]]:
@@ -465,7 +473,7 @@ def cards(view: RunView, cfg: GippaConfig) -> tuple[list[dict[str, Any]], list[s
 
     def model(t: pd.DataFrame) -> None:
         """ADR-0033: the elastic-net whole-model rows only; ADR-0034: "(uncalibrated)"; label
-        first, "no predictive power" when the mean or mean minus SD is ≤ 0 (M12-04 PR 1)."""
+        first, "no predictive power" by V15's gate (M12-04 PR 1, PR 7b)."""
         en = t[(t["model"] == "elastic_net") & (t["feature_or_block"] == "all")]
         (r2, _), (sd, _) = _metric(en, "cv_r2_mean"), _metric(en, "cv_r2_sd")
         p, flags = _metric(en, "null_p")
@@ -476,7 +484,7 @@ def cards(view: RunView, cfg: GippaConfig) -> tuple[list[dict[str, Any]], list[s
                 prefix="Model R²:")  # fmt: skip
             return
         value = style.fmt_num(r2) if sd is None else head.mean_sd(r2, sd)
-        no_power = r2 <= 0 or (sd is not None and r2 - sd <= 0)
+        no_power = no_predictive_power(t)  # the V15 gate (one rule for the card and the plot)
         label = f"(CV), {NO_POWER}" if no_power else "(CV)"
         unc = " (uncalibrated)" if "null_uncalibrated" in flags else ""
         est = None if p is None else f"null p {style.fmt_q(p)}{unc}"
@@ -526,6 +534,9 @@ def _page(
     absent = not_applicable(view, plots)
     off = {sid for sid, _, _ in absent}
     shown_sections = [s for s in SECTIONS if s.id not in off]
+    if content.function_no_terms(view):  # the section is one notice (M12-04 PR 8)
+        shown_sections = [Section(s.id, s.heading) if s.id == "function" else s
+                          for s in shown_sections]  # fmt: skip
     sections: list[dict[str, Any]] = [
         {"id": s.id, "heading": s.heading,
          "plots": [_plot_slot(p, plots.get(p), skipped, twins, True, linked)

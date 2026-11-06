@@ -239,7 +239,8 @@ def test_example3_placed_and_unmapped_counts_once_as_placed(
     inst = _render(out, cfg)
     assert _nonzero(inst) == {("peptide", "exact", "placed"): 1}
     assert _flows(inst)[CONFLICTS] == 1
-    assert inst.title == "100 % of 1 input peptides placed in the genome"
+    # one route and one outcome carry flow: the M12-04 P-15 single bar
+    assert inst.title == "All 1 peptide placed by exact match"
 
 
 def test_exact_wins_over_tolerant_for_one_peptide(tmp_path: Path, cfg: GippaConfig) -> None:
@@ -428,7 +429,13 @@ def test_property_flows_partition_distinct_sequences(
     assert flows[("peptide", "unmapped", "unexplained")] == unexplained
     assert flows[("peptide", "unmapped", "rejected by FDR")] == lost_by["rejected_placement_fdr"]
     assert flows[("peptide", "unmapped", "contaminant")] == lost_by["contaminant"]
-    assert inst.title.startswith(f"{base.title_pct(len(placed), total)} of {total} input peptides")
+    live = [key for key, v in flows.items() if key != CONFLICTS and v > 0]
+    if len(live) == 1:  # one route and one outcome: the single bar (M12-04 P-15)
+        assert inst.title.startswith(f"All {total} peptide"), inst.title
+    else:
+        assert inst.title.startswith(
+            f"{base.title_pct(len(placed), total)} of {total} input peptides"
+        )
 
 
 # --- the golden M3 tables, files and determinism ----------------------------------------------

@@ -147,7 +147,9 @@ def test_all_not_estimable_contig_with_zero_join_counts_is_the_empty_state(
     for panel in ("a", "b"):
         ax = _ax(inst, f"{panel}:chrB")
         notes = _notes(ax)
-        assert any(t.startswith("not estimable (") for t in notes), (panel, notes)
+        # M12-04 P-06: the note names the flags in plain words
+        assert any(t.startswith("Not drawn: ") for t in notes), (panel, notes)
+        assert not any("not_estimable" in t for t in notes), (panel, notes)
         assert markers(ax) == [], panel
     assert len(markers(_ax(inst, "b:chrA"))) == 20
 
@@ -155,17 +157,16 @@ def test_all_not_estimable_contig_with_zero_join_counts_is_the_empty_state(
 def test_flagged_rows_are_na_even_when_every_value_is_zero(
     tmp_path: Path, cfg: GippaConfig
 ) -> None:
-    """Moran's I written as 0 too: flags decide, not finiteness; the title is not estimable."""
+    """Moran's I written as 0 too: flags decide, not finiteness; nothing is estimable."""
     rows = correlogram_rows("chrA")
     _flag_lags(rows, "morans_i", set(range(1, 21)), "ci_unestimated;few_values;not_estimable", True)
     _flag_lags(rows, "join_count_bb", set(range(1, 21)), NE_FLAGS, True)
     inst = _render("V10", _v10_out(tmp_path, rows), cfg)
-    assert inst.title == NOT_ESTIMABLE
-    for panel in ("a", "b"):
-        ax = _ax(inst, f"{panel}:chrA")
-        assert markers(ax) == [], panel
-        assert any(t.startswith("not estimable (") for t in _notes(ax)), panel
-    assert not inst.data["significant"].astype(bool).any()
+    # M12-04 P-06: no drawable Moran's I row: the one empty state, nothing marked
+    assert inst.empty is True
+    assert inst.title == "Too few detected genes (1 of 1) to estimate autocorrelation."
+    assert all(markers(ax) == [] for ax in inst.figure.axes)
+    assert "significant" not in inst.data or not inst.data["significant"].astype(bool).any()
 
 
 @pytest.mark.parametrize("flags", [NE_FLAGS, "ci_unestimated;few_values"])

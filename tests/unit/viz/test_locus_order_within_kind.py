@@ -24,7 +24,6 @@ import functools
 import itertools
 import math
 import random
-import re
 import tempfile
 from collections.abc import Callable, Mapping, Sequence
 from pathlib import Path
@@ -35,12 +34,11 @@ from helpers import snapshot_fixture as sf
 from helpers import viz_locus as vl
 from hypothesis import HealthCheck, assume, given, settings
 from hypothesis import strategies as st
-from matplotlib.text import Text
 
 from gippa.config import GippaConfig, resolve_config
 from gippa.io.run_view import RunView
 from gippa.viz import base, style
-from gippa.viz.base import Instance, Skip
+from gippa.viz.base import DataTable, Instance, Skip
 from gippa.viz.locus import Locus, select_loci
 
 FAMILIES = ("prophage", "bgc", "island", "operon_discordance", "missed_operon")
@@ -52,18 +50,14 @@ KIND = {
     "operon_discordance": "operon_flag",
     "missed_operon": "operon_flag",
 }
+#: the name of each family's own estimate in the index (``estimate``; BH q for the q families)
 ESTIMATE = {
-    "prophage": "q",
-    "bgc": "q",
+    "prophage": "BH q",
+    "bgc": "BH q",
     "island": "FWER p",
-    "operon_discordance": "q",
+    "operon_discordance": "BH q",
     "missed_operon": "decoy-FDR q",
 }
-HEADERS = ("significant at each family's own level", "not significant", "no estimate")
-CAPTION = (
-    "Order alternates between test families; values from different test families are on "
-    "different scales and are not compared."
-)
 
 #: one pool entry: (family, locus_id, error); error None = NA
 Entry = tuple[str, str, float | None]
@@ -92,13 +86,15 @@ def _v03() -> base.PlotSpec:
     return base.registered()["V03"]
 
 
-def _run(out: Path, cfg: GippaConfig) -> tuple[Instance, list[Instance]]:
-    result = _v03().fn(RunView.from_outdir(out), cfg)
+def _run(out: Path, cfg: GippaConfig) -> tuple[DataTable, list[Instance]]:
+    """The V03 index table (``base.data_tables()["V03"]``; M12-04 PR 4, P-12: no index image)
+    and the rendered locus instances."""
+    view = RunView.from_outdir(out)
+    result = _v03().fn(view, cfg)
     assert not isinstance(result, Skip), result
-    index = [i for i in result if i.suffix is None]
-    loci = [i for i in result if i.suffix is not None]
-    assert len(index) == 1, [i.suffix for i in result]
-    return index[0], loci
+    assert [i.suffix for i in result if i.suffix is None] == []
+    index = base.data_tables()["V03"](view, cfg)
+    return index, list(result)
 
 
 def _ids(loci: Sequence[Locus]) -> list[str]:
@@ -625,7 +621,7 @@ def test_property_changing_an_alpha_that_no_locus_crosses(entries: list[Entry], 
         assert _keys(select_loci(view, cfg_new)) == got
 
 
-# --- the index figure ------------------------------------------------------------------------
+# --- the index table (M12-04 PR 4, P-12: a report table, no longer a figure) -----------------
 
 _INDEX_ENTRIES: list[Entry] = [
     ("prophage", "prophage_1", 0.01), ("bgc", "bgc_1", 0.3), ("island", "ISL_1", 0.005),
@@ -635,64 +631,30 @@ _INDEX_ENTRIES: list[Entry] = [
 _INDEX_ORDER = ["prophage_1", "ISL_1", "PAIR_1", "PAIR_2", "bgc_1", "prophage_2", "ISL_2"]
 
 
-def _texts_top_down(inst: Instance) -> list[str]:
-    """Every non-empty visible text of the figure, top to bottom (display y)."""
-    found = []
-    for t in inst.figure.findobj(Text):
-        s = t.get_text()
-        if s.strip() and t.get_visible():
-            y = t.get_transform().transform(t.get_position())[1]
-            found.append((-y, s))
-    return [s for _, s in sorted(found, key=lambda p: p[0])]
+def _report_rows(tmp: Path, entries: Sequence[Entry]) -> list[list[str]]:
+    """The report rows (rank, locus, family, estimate, q) of the written index TSV."""
+    from gippa.io.plot_files import write_data
+    from gippa.io.tsv import read_tsv
+    from gippa.report.content import locus_index
+
+    index, _ = _run(_build(tmp / "run", entries), _cfg("report.max_locus_plots=0"))
+    header, rows = read_tsv(write_data(index, "V03", "locus", tmp / "plots"))
+    return locus_index(header, rows)
 
 
-def _index_figure(tmp: Path, entries: Sequence[Entry]) -> list[str]:
-    index, _ = _run(_build(tmp, entries), _cfg("report.max_locus_plots=0"))
-    return _texts_top_down(index)
-
-
-def test_index_lines_name_each_family_estimate(tmp_path: Path) -> None:
-    texts = _index_figure(tmp_path, _INDEX_ENTRIES)
-    lines = [s for s in texts if re.match(r"\d+\. ", s)]
-    assert [re.match(r"\d+\. (\S+)", s).group(1) for s in lines] == _INDEX_ORDER  # type: ignore[union-attr]
+def test_index_rows_name_each_family_estimate(tmp_path: Path) -> None:
+    rows = _report_rows(tmp_path, _INDEX_ENTRIES)
+    assert [r[1] for r in rows] == _INDEX_ORDER
+    assert [r[0] for r in rows] == [str(i) for i in range(1, len(_INDEX_ORDER) + 1)]
     fam = {lid: f for f, lid, _ in _INDEX_ENTRIES}
     err = {lid: e for _, lid, e in _INDEX_ENTRIES}
-    for rank, (lid, line) in enumerate(zip(_INDEX_ORDER, lines, strict=True), start=1):
-        head = f"{rank}. {lid} [{KIND[fam[lid]]}] "
-        assert line.startswith(head), line
-        rest = line[len(head) :]
-        if err[lid] is None:
-            assert re.match(r"(?:(?:q|FWER p|decoy-FDR q) )?NA\b", rest), line
-        else:
-            assert rest.startswith(f"{ESTIMATE[fam[lid]]} {base.sig(err[lid], 3)}"), line
-    assert "decoy-FDR" not in lines[_INDEX_ORDER.index("PAIR_1")]
-    assert "FWER" not in lines[_INDEX_ORDER.index("prophage_1")]
-
-
-def test_index_prints_tier_headers_and_the_caption(tmp_path: Path) -> None:
-    texts = _index_figure(tmp_path, _INDEX_ENTRIES)
-    assert sum(CAPTION in s for s in texts) == 1, texts
-    markers: list[str] = []
-    for s in texts:
-        hit = [h for h in HEADERS if s.strip() == h or s.strip().startswith(h)]
-        if hit:
-            markers.append(f"H:{hit[0]}")
-        elif m := re.match(r"\d+\. (\S+)", s):
-            markers.append(m.group(1))
-    assert markers == [
-        f"H:{HEADERS[0]}", "prophage_1", "ISL_1", "PAIR_1", "PAIR_2",
-        f"H:{HEADERS[1]}", "bgc_1",
-        f"H:{HEADERS[2]}", "prophage_2", "ISL_2",
-    ]  # fmt: skip
-
-
-def test_index_prints_headers_only_for_non_empty_tiers(tmp_path: Path) -> None:
-    texts = _index_figure(tmp_path, [("prophage", "prophage_1", 0.01), ("island", "ISL_1", 0.02)])
-    joined = "\n".join(texts)
-    assert HEADERS[0] in joined
-    assert sum(CAPTION in s for s in texts) == 1
-    for h in HEADERS[1:]:
-        assert not any(s.strip().startswith(h) for s in texts), texts
+    for lid, (_, _, family, estimate, q) in zip(_INDEX_ORDER, rows, strict=True):
+        assert family == fam[lid].replace("_", " "), (lid, family)
+        assert estimate == ESTIMATE[fam[lid]], (lid, estimate)
+        assert q == style.fmt_q(err[lid]), (lid, q)
+    by_id = {r[1]: r for r in rows}
+    assert "decoy-FDR" not in by_id["PAIR_1"][3]
+    assert "FWER" not in by_id["prophage_1"][3]
 
 
 def test_index_tsv_follows_the_new_order(tmp_path: Path) -> None:

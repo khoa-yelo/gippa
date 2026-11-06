@@ -454,7 +454,8 @@ def test_no_abundance_is_a_rug_for_every_gene(tmp_path: Path, cfg: GippaConfig) 
         gene("s1", 70_000, None, status="single_peptide_unestimated", abundance_type="none"),
     ]
     inst = _render(landscape_out(tmp_path, genes=genes, islands=[]), cfg)
-    assert inst.title == "No measured abundance: detection only"
+    # M12-04 P-05: the detection strip, titled with the detected count
+    assert inst.title == "No abundance in this run: detection along the replicon (2 of 4 detected)"
     assert set(_kind(inst.data, "rug")["locus_tag"]) == {"d1", "d2", "u1", "s1"}
     assert len(_kind(inst.data, "point")) == 0
     assert len(_kind(inst.data, "trend")) == 0

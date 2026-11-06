@@ -204,7 +204,10 @@ def test_v15_header_only_model_is_the_too_few_empty_state(tmp_path: Path, cfg: G
     )
     inst = _render("V15", out, cfg)
     assert checklist.is_empty_state(inst)
-    assert inst.title == "Too few genes for the determinants model (60 rows, 20 TUs)"
+    assert inst.title == (
+        "Nothing to show: the determinants model needs ≥ 100 genes with abundance in ≥ 25 TUs "
+        "(this run: 60 genes, 20 TUs)."
+    )
     assert len(inst.data) == 0
 
 
@@ -213,7 +216,7 @@ def test_v15_header_only_model_with_full_inputs_is_still_too_few(
 ) -> None:
     inst = _render("V15", vd.build_out(tmp_path, model=[]), cfg)
     assert checklist.is_empty_state(inst)
-    assert inst.title.startswith("Too few genes for the determinants model (")
+    assert inst.title.startswith("Nothing to show: the determinants model needs ≥ ")
 
 
 # --- V12 (M9-18 amendment) --------------------------------------------------------------------

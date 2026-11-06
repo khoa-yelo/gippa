@@ -209,6 +209,7 @@ SKIP_TEXT: Mapping[str, str] = MappingProxyType(
         "input_absent:preflight": "no input check in this run",
         "input_absent:unmapped": "no unmapped peptide table in this run",
         "input_absent:variants": "no variant table in this run",
+        "no_terms:function": "no function terms in this run",
         "not_registered": "this plot is not available in this GIPPA version",
     }
 )
