@@ -166,3 +166,32 @@ teeth, B3 rule 5 claimed an upper bound). Re-reviewed and **approved 2026-10-23*
 
 Open items (backlog, not blocking): a run flag when every class rate is 1, and an optional
 `low_n` flag or interval columns.
+
+## Putative starts
+
+Bacteria read the first codon as methionine whatever it is. A peptide that begins at an
+unannotated GTG/TTG start (an N-terminal extension, an internal alternative start or an
+unannotated ORF) therefore maps with one difference, V/L→M, at its first residue. The initiator
+M is credited only at annotated starts. An ALT row is flagged `putative_start`, and
+capped at `candidate`, when:
+
+- the ALT is a substitution to M at a non-ATG codon of `annotation.start_codons`, not at an
+  annotated start;
+- every ALT peptide has the M as its first residue, in transcription order;
+- and, inside a gene, the preceding residue is not K/R.
+
+The cap moves no count, call or class error rate.
+
+Why the K/R condition: a true substitution produces a peptide that starts at the site only
+through trypsin cleavage after K/R. Initiation leaves a random preceding residue. On K-12
+(job 1933797):
+
+- all 126 out-of-gene alternative-start M sites pass the peptide test, against 5 of 249 other
+  substitution sites, all 5 after K/R;
+- 8.7% of the 126 follow K/R, about the background rate.
+
+A real X→M substitution outside annotated genes, directly after K/R, with only N-terminal
+peptides, is still capped. That is the rule's known cost, and the row keeps its evidence.
+
+`putative_start` is not exempt from `id_mixups`: a same-strain database peptide cannot initiate
+away from an annotated start.

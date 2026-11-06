@@ -16,7 +16,7 @@
 ##FORMAT=<ID=AD,Number=R,Type=Integer,Description="Distinct peptides supporting REF, then each ALT allele">
 ##FORMAT=<ID=DP,Number=1,Type=Integer,Description="Distinct eligible peptides covering the codon">
 #CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	peptides_denovo
-chr1	741	.	CAA	CAT	.	PASS	AA_REF=L;AA_ALT=M;CALL=ALT;CONF=candidate;NT_CHANGES=1;ALT_TYPE=substitution;FLAGS=snv|strain_difference;CLASS_ERR=0.763407	GT:AD:DP	1:0,1:1
+chr1	741	.	CAA	CAT	.	PASS	AA_REF=L;AA_ALT=M;CALL=ALT;CONF=candidate;NT_CHANGES=1;ALT_TYPE=substitution;FLAGS=snv|strain_difference|putative_start;CLASS_ERR=0.763407	GT:AD:DP	1:0,1:1
 chr1	998	.	GCG	AAC	.	PASS	GENE=GSIM_00010;AA_POS=69;AA_REF=A;AA_ALT=N;CALL=mixed;CONF=candidate;NT_CHANGES=3;ALT_TYPE=substitution;FLAGS=mass_equivalent|multi_nt|strain_difference;CLASS_ERR=0.967213	GT:AD:DP	.:2,1:3
 chr1	1034	.	CAG	AAG	.	PASS	GENE=GSIM_00010;AA_POS=81;AA_REF=Q;AA_ALT=K;CALL=mixed;CONF=candidate;NT_CHANGES=1;ALT_TYPE=substitution;FLAGS=mass_equivalent|snv|strain_difference;CLASS_ERR=0.967213	GT:AD:DP	.:4,1:5
 chr1	1091	.	GAG	CTG	.	PASS	GENE=GSIM_00010;AA_POS=100;AA_REF=E;AA_ALT=J;CALL=mixed;CONF=candidate;NT_CHANGES=2;ALT_TYPE=substitution;FLAGS=multi_nt|strain_difference;CLASS_ERR=0.763407	GT:AD:DP	.:4,1:5
@@ -152,7 +152,7 @@ chr1	9217	.	AGTACC	ACTAGC	.	PASS	GENE=GSIM_00045;AA_POS=132;AA_REF=ST;AA_ALT=TS;
 chr1	9253	.	GCCGTA	GGCCTA	.	PASS	GENE=GSIM_00045;AA_POS=144;AA_REF=AV;AA_ALT=GL;CALL=mixed;CONF=candidate;NT_CHANGES=2;ALT_TYPE=block;FLAGS=mass_equivalent|strain_difference;CLASS_ERR=1	GT:AD:DP	.:3,1:4
 chr1	9340	.	TTG	GCG	.	PASS	GENE=GSIM_00045;AA_POS=173;AA_REF=L;AA_ALT=A;CALL=mixed;CONF=candidate;NT_CHANGES=2;ALT_TYPE=substitution;FLAGS=multi_nt|strain_difference;CLASS_ERR=0.763407	GT:AD:DP	.:1,1:5
 chr1	9352	.	AAA	CAA	.	PASS	GENE=GSIM_00045;AA_POS=177;AA_REF=K;AA_ALT=Q;CALL=mixed;CONF=candidate;NT_CHANGES=1;ALT_TYPE=substitution;FLAGS=mass_equivalent|snv|strain_difference;CLASS_ERR=0.967213	GT:AD:DP	.:4,1:5
-chr1	9586	.	TTG	ATG	.	PASS	AA_REF=L;AA_ALT=M;CALL=ALT;CONF=candidate;NT_CHANGES=1;ALT_TYPE=substitution;FLAGS=snv|strain_difference;CLASS_ERR=0.763407	GT:AD:DP	1:0,1:1
+chr1	9586	.	TTG	ATG	.	PASS	AA_REF=L;AA_ALT=M;CALL=ALT;CONF=candidate;NT_CHANGES=1;ALT_TYPE=substitution;FLAGS=snv|strain_difference|putative_start;CLASS_ERR=0.763407	GT:AD:DP	1:0,1:1
 chr1	9652	.	GGGTGT	TGCGGT	.	PASS	AA_REF=GC;AA_ALT=CG;CALL=mixed;CONF=candidate;NT_CHANGES=3;ALT_TYPE=swap;FLAGS=mass_equivalent|strain_difference;CLASS_ERR=1	GT:AD:DP	.:3,1:4
 chr1	10383	.	TGC	TCT	.	PASS	GENE=GSIM_00055;AA_POS=193;AA_REF=A;AA_ALT=R;CALL=mixed;CONF=candidate;NT_CHANGES=2;ALT_TYPE=substitution;FLAGS=multi_nt|strain_difference;CLASS_ERR=0.763407	GT:AD:DP	.:2,1:3
 chr1	10389	.	GGT	GTT	.	PASS	GENE=GSIM_00055;AA_POS=191;AA_REF=T;AA_ALT=N;CALL=mixed;CONF=candidate;NT_CHANGES=1;ALT_TYPE=substitution;FLAGS=snv|strain_difference;CLASS_ERR=0.763407	GT:AD:DP	.:2,1:3
@@ -202,11 +202,11 @@ chr1	13439	.	TGGCAA	CAGTGG	.	PASS	GENE=GSIM_00070;AA_POS=67;AA_REF=WQ;AA_ALT=QW;
 chr1	13442	.	CAA	GGA	.	PASS	GENE=GSIM_00070;AA_POS=68;AA_REF=Q;AA_ALT=G;CALL=mixed;CONF=candidate;NT_CHANGES=2;ALT_TYPE=substitution;FLAGS=multi_nt|strain_difference;CLASS_ERR=0.763407	GT:AD:DP	.:4,1:5
 chr1	13454	.	GCC	TCC	.	PASS	GENE=GSIM_00070;AA_POS=72;AA_REF=A;AA_ALT=S;CALL=mixed;CONF=candidate;NT_CHANGES=1;ALT_TYPE=substitution;FLAGS=mass_equivalent|snv|strain_difference;CLASS_ERR=0.967213	GT:AD:DP	.:5,1:6
 chr1	13511	.	GACGTC	GTCGAC	.	PASS	AA_REF=DV;AA_ALT=VD;CALL=mixed;CONF=candidate;NT_CHANGES=2;ALT_TYPE=swap;FLAGS=mass_equivalent|strain_difference;CLASS_ERR=1	GT:AD:DP	.:1,1:2
-chr1	13559	.	CAA	CAT	.	PASS	AA_REF=L;AA_ALT=M;CALL=ALT;CONF=candidate;NT_CHANGES=1;ALT_TYPE=substitution;FLAGS=snv|strain_difference;CLASS_ERR=0.763407	GT:AD:DP	1:0,1:1
+chr1	13559	.	CAA	CAT	.	PASS	AA_REF=L;AA_ALT=M;CALL=ALT;CONF=candidate;NT_CHANGES=1;ALT_TYPE=substitution;FLAGS=snv|strain_difference|putative_start;CLASS_ERR=0.763407	GT:AD:DP	1:0,1:1
 chr1	13571	.	ACG	GAC	.	PASS	GENE=GSIM_00070;AA_POS=111;AA_REF=T;AA_ALT=D;CALL=mixed;CONF=candidate;NT_CHANGES=3;ALT_TYPE=substitution;FLAGS=mass_equivalent|multi_nt|strain_difference;CLASS_ERR=0.967213	GT:AD:DP	.:1,1:2
 chr1	13971	.	GTG	AGG	.	PASS	GENE=GSIM_00075;AA_POS=111;AA_REF=V;AA_ALT=R;CALL=mixed;CONF=candidate;NT_CHANGES=2;ALT_TYPE=substitution;FLAGS=mass_equivalent|multi_nt|strain_difference;CLASS_ERR=0.967213	GT:AD:DP	.:3,1:4
 chr1	13983	.	CTGCAG	CAGCTG	.	PASS	GENE=GSIM_00075;AA_POS=115;AA_REF=LQ;AA_ALT=QL;CALL=mixed;CONF=candidate;NT_CHANGES=2;ALT_TYPE=swap;FLAGS=mass_equivalent|strain_difference;CLASS_ERR=1	GT:AD:DP	.:1,1:4
-chr1	13996	.	CAC	CAT	.	PASS	AA_REF=V;AA_ALT=M;CALL=ALT;CONF=candidate;NT_CHANGES=1;ALT_TYPE=substitution;FLAGS=mass_equivalent|snv|strain_difference;CLASS_ERR=0.967213	GT:AD:DP	1:0,1:1
+chr1	13996	.	CAC	CAT	.	PASS	AA_REF=V;AA_ALT=M;CALL=ALT;CONF=candidate;NT_CHANGES=1;ALT_TYPE=substitution;FLAGS=mass_equivalent|snv|strain_difference|putative_start;CLASS_ERR=0.967213	GT:AD:DP	1:0,1:1
 chr1	14193	.	GAACGT	AGAGAA	.	PASS	GENE=GSIM_00075;AA_POS=185;AA_REF=ER;AA_ALT=RE;CALL=mixed;CONF=candidate;NT_CHANGES=5;ALT_TYPE=swap;FLAGS=mass_equivalent|strain_difference;CLASS_ERR=1	GT:AD:DP	.:2,1:3
 chr1	14856	.	CCCGCG	CCTGCC	.	PASS	GENE=GSIM_00080;AA_POS=138;AA_REF=RG;AA_ALT=GR;CALL=mixed;CONF=candidate;NT_CHANGES=2;ALT_TYPE=swap;FLAGS=mass_equivalent|strain_difference;CLASS_ERR=1	GT:AD:DP	.:1,1:2
 chr1	15743	.	GCA	TCA	.	PASS	GENE=GSIM_00085;AA_POS=56;AA_REF=A;AA_ALT=S;CALL=mixed;CONF=candidate;NT_CHANGES=1;ALT_TYPE=substitution;FLAGS=mass_equivalent|snv|strain_difference;CLASS_ERR=0.967213	GT:AD:DP	.:1,1:2
@@ -220,7 +220,7 @@ chr1	16247	.	GTCGCG	CTCGGG	.	PASS	GENE=GSIM_00085;AA_POS=224;AA_REF=VA;AA_ALT=LG
 chr1	16256	.	AAC	CAA	.	PASS	GENE=GSIM_00085;AA_POS=227;AA_REF=N;AA_ALT=Q;CALL=mixed;CONF=candidate;NT_CHANGES=2;ALT_TYPE=substitution;FLAGS=mass_equivalent|multi_nt|strain_difference;CLASS_ERR=0.967213	GT:AD:DP	.:2,1:3
 chr1	16325	.	GTG	TAC	.	PASS	GENE=GSIM_00085;AA_POS=250;AA_REF=V;AA_ALT=Y;CALL=mixed;CONF=candidate;NT_CHANGES=3;ALT_TYPE=substitution;FLAGS=multi_nt|strain_difference;CLASS_ERR=0.763407	GT:AD:DP	.:1,1:2
 chr1	16602	.	GGT	GCT	.	PASS	GENE=GSIM_00090;AA_POS=12;AA_REF=G;AA_ALT=A;CALL=mixed;CONF=candidate;NT_CHANGES=1;ALT_TYPE=substitution;FLAGS=mass_equivalent|snv|strain_difference;CLASS_ERR=0.967213	GT:AD:DP	.:1,1:2
-chr1	16890	.	CAA	CAT	.	PASS	AA_REF=L;AA_ALT=M;CALL=ALT;CONF=candidate;NT_CHANGES=1;ALT_TYPE=substitution;FLAGS=snv|strain_difference;CLASS_ERR=0.763407	GT:AD:DP	1:0,1:1
+chr1	16890	.	CAA	CAT	.	PASS	AA_REF=L;AA_ALT=M;CALL=ALT;CONF=candidate;NT_CHANGES=1;ALT_TYPE=substitution;FLAGS=snv|strain_difference|putative_start;CLASS_ERR=0.763407	GT:AD:DP	1:0,1:1
 chr1	16905	.	GGT	GCT	.	PASS	GENE=GSIM_00090;AA_POS=113;AA_REF=G;AA_ALT=A;CALL=mixed;CONF=candidate;NT_CHANGES=1;ALT_TYPE=substitution;FLAGS=mass_equivalent|snv|strain_difference;CLASS_ERR=0.967213	GT:AD:DP	.:1,1:2
 chr1	16926	.	TTGGGT	GTGGCT	.	PASS	GENE=GSIM_00090;AA_POS=120;AA_REF=LG;AA_ALT=VA;CALL=mixed;CONF=candidate;NT_CHANGES=2;ALT_TYPE=block;FLAGS=mass_equivalent|strain_difference;CLASS_ERR=1	GT:AD:DP	.:1,1:2
 chr1	17019	.	TCA	AAC	.	PASS	GENE=GSIM_00090;AA_POS=151;AA_REF=S;AA_ALT=N;CALL=mixed;CONF=candidate;NT_CHANGES=3;ALT_TYPE=substitution;FLAGS=multi_nt|strain_difference;CLASS_ERR=0.763407	GT:AD:DP	.:1,1:2
@@ -317,7 +317,7 @@ chr1	22264	.	CAGCCG	CCGCAG	.	PASS	AA_REF=RL;AA_ALT=LR;CALL=mixed;CONF=candidate;
 chr1	22273	.	GGTGCC	GCCGGT	.	PASS	AA_REF=GT;AA_ALT=TG;CALL=mixed;CONF=candidate;NT_CHANGES=4;ALT_TYPE=swap;FLAGS=mass_equivalent|strain_difference;CLASS_ERR=1	GT:AD:DP	.:2,1:3
 chr1	22273	.	GGTGCC	GCTGGC	.	PASS	GENE=GSIM_00115;AA_POS=332;AA_REF=GA;AA_ALT=AG;CALL=mixed;CONF=candidate;NT_CHANGES=2;ALT_TYPE=swap;FLAGS=mass_equivalent|strain_difference;CLASS_ERR=1	GT:AD:DP	.:3,1:4
 chr1	22285	.	GGT	GCT	.	PASS	GENE=GSIM_00115;AA_POS=336;AA_REF=G;AA_ALT=A;CALL=mixed;CONF=candidate;NT_CHANGES=1;ALT_TYPE=substitution;FLAGS=mass_equivalent|snv|strain_difference;CLASS_ERR=0.967213	GT:AD:DP	.:3,1:4
-chr1	22309	.	CAC	CAT	.	PASS	AA_REF=V;AA_ALT=M;CALL=ALT;CONF=candidate;NT_CHANGES=1;ALT_TYPE=substitution;FLAGS=mass_equivalent|snv|strain_difference;CLASS_ERR=0.967213	GT:AD:DP	1:0,1:1
+chr1	22309	.	CAC	CAT	.	PASS	AA_REF=V;AA_ALT=M;CALL=ALT;CONF=candidate;NT_CHANGES=1;ALT_TYPE=substitution;FLAGS=mass_equivalent|snv|strain_difference|putative_start;CLASS_ERR=0.967213	GT:AD:DP	1:0,1:1
 chr1	22315	.	TGTTCA	AGTTGC	.	PASS	GENE=GSIM_00115;AA_POS=346;AA_REF=CS;AA_ALT=SC;CALL=mixed;CONF=candidate;NT_CHANGES=3;ALT_TYPE=swap;FLAGS=mass_equivalent|strain_difference;CLASS_ERR=1	GT:AD:DP	.:6,1:7
 chr1	22345	.	ACC	TGG	.	PASS	GENE=GSIM_00115;AA_POS=356;AA_REF=T;AA_ALT=W;CALL=mixed;CONF=candidate;NT_CHANGES=3;ALT_TYPE=substitution;FLAGS=multi_nt|strain_difference;CLASS_ERR=0.763407	GT:AD:DP	.:3,1:4
 chr1	22372	.	CAAACA	ACACAA	.	PASS	GENE=GSIM_00115;AA_POS=365;AA_REF=QT;AA_ALT=TQ;CALL=mixed;CONF=candidate;NT_CHANGES=4;ALT_TYPE=swap;FLAGS=mass_equivalent|strain_difference;CLASS_ERR=1	GT:AD:DP	.:1,1:2
@@ -354,7 +354,7 @@ chr1	24303	.	GAC	GTT	.	PASS	AA_REF=V;AA_ALT=N;CALL=mixed;CONF=candidate;NT_CHANG
 chr1	24309	.	CAAGTT	GTACAA	.	PASS	GENE=GSIM_00125;AA_POS=151;AA_REF=QV;AA_ALT=VQ;CALL=mixed;CONF=candidate;NT_CHANGES=5;ALT_TYPE=swap;FLAGS=mass_equivalent|strain_difference;CLASS_ERR=1	GT:AD:DP	.:1,1:2
 chr1	24315	.	GTA	GTT	.	PASS	AA_REF=Y;AA_ALT=N;CALL=mixed;CONF=candidate;NT_CHANGES=1;ALT_TYPE=substitution;FLAGS=snv|strain_difference;CLASS_ERR=0.763407	GT:AD:DP	.:3,1:4
 chr1	24336	.	GCA	CCA	.	PASS	AA_REF=C;AA_ALT=W;CALL=mixed;CONF=candidate;NT_CHANGES=1;ALT_TYPE=substitution;FLAGS=snv|strain_difference;CLASS_ERR=0.763407	GT:AD:DP	.:3,1:4
-chr1	24438	.	CAA	CAT	.	PASS	AA_REF=L;AA_ALT=M;CALL=ALT;CONF=high;NT_CHANGES=1;ALT_TYPE=substitution;FLAGS=snv|strain_difference;CLASS_ERR=0.763407	GT:AD:DP	1:0,2:2
+chr1	24438	.	CAA	CAT	.	PASS	AA_REF=L;AA_ALT=M;CALL=ALT;CONF=candidate;NT_CHANGES=1;ALT_TYPE=substitution;FLAGS=snv|strain_difference|putative_start;CLASS_ERR=0.763407	GT:AD:DP	1:0,2:2
 chr1	24728	.	ATG	GCG	.	PASS	GENE=GSIM_00130;AA_POS=1;AA_REF=M;AA_ALT=A;CALL=mixed;CONF=candidate;NT_CHANGES=2;ALT_TYPE=substitution;FLAGS=multi_nt|strain_difference;CLASS_ERR=0.763407	GT:AD:DP	.:4,1:5
 chr1	24752	.	GATTGG	TGGGAC	.	PASS	GENE=GSIM_00130;AA_POS=9;AA_REF=DW;AA_ALT=WD;CALL=mixed;CONF=candidate;NT_CHANGES=6;ALT_TYPE=swap;FLAGS=mass_equivalent|strain_difference;CLASS_ERR=1	GT:AD:DP	.:4,1:5
 chr1	24782	.	GATTTA	CTTGAC	.	PASS	GENE=GSIM_00130;AA_POS=19;AA_REF=DL;AA_ALT=LD;CALL=mixed;CONF=candidate;NT_CHANGES=5;ALT_TYPE=swap;FLAGS=mass_equivalent|strain_difference;CLASS_ERR=1	GT:AD:DP	.:4,1:5
@@ -429,7 +429,7 @@ chr1	31172	.	AAC	GAC	.	PASS	GENE=GSIM_00155;AA_POS=459;AA_REF=N;AA_ALT=D;CALL=mi
 chr1	31184	.	CTT	CAA	.	PASS	GENE=GSIM_00155;AA_POS=463;AA_REF=L;AA_ALT=Q;CALL=mixed;CONF=candidate;NT_CHANGES=2;ALT_TYPE=substitution;FLAGS=multi_nt|strain_difference;CLASS_ERR=0.763407	GT:AD:DP	.:1,1:2
 chr1	31232	.	CTGGGT	GTGGCT	.	PASS	GENE=GSIM_00155;AA_POS=479;AA_REF=LG;AA_ALT=VA;CALL=mixed;CONF=candidate;NT_CHANGES=2;ALT_TYPE=block;FLAGS=mass_equivalent|strain_difference;CLASS_ERR=1	GT:AD:DP	.:2,1:4
 chr1	31280	.	TCCGCA	GGCACA	.	PASS	GENE=GSIM_00155;AA_POS=495;AA_REF=SA;AA_ALT=GT;CALL=mixed;CONF=candidate;NT_CHANGES=3;ALT_TYPE=block;FLAGS=mass_equivalent|strain_difference;CLASS_ERR=1	GT:AD:DP	.:1,1:2
-chr1	31765	.	TTG	ATG	.	PASS	AA_REF=L;AA_ALT=M;CALL=ALT;CONF=candidate;NT_CHANGES=1;ALT_TYPE=substitution;FLAGS=snv|strain_difference;CLASS_ERR=0.763407	GT:AD:DP	1:0,1:1
+chr1	31765	.	TTG	ATG	.	PASS	AA_REF=L;AA_ALT=M;CALL=ALT;CONF=candidate;NT_CHANGES=1;ALT_TYPE=substitution;FLAGS=snv|strain_difference|putative_start;CLASS_ERR=0.763407	GT:AD:DP	1:0,1:1
 chr1	31768	.	GGCCAG	GAGCGC	.	PASS	GENE=GSIM_00160;AA_POS=219;AA_REF=LA;AA_ALT=AL;CALL=mixed;CONF=candidate;NT_CHANGES=4;ALT_TYPE=swap;FLAGS=mass_equivalent|strain_difference;CLASS_ERR=1	GT:AD:DP	.:3,1:5
 chr1	31774	.	GTT	GTC	.	PASS	GENE=GSIM_00160;AA_POS=218;AA_REF=N;AA_ALT=D;CALL=mixed;CONF=candidate;NT_CHANGES=1;ALT_TYPE=substitution;FLAGS=mass_equivalent|snv|strain_difference;CLASS_ERR=0.967213	GT:AD:DP	.:4,1:5
 chr1	31783	.	GTT	GTC	.	PASS	GENE=GSIM_00160;AA_POS=215;AA_REF=N;AA_ALT=D;CALL=mixed;CONF=candidate;NT_CHANGES=1;ALT_TYPE=substitution;FLAGS=mass_equivalent|snv|strain_difference;CLASS_ERR=0.967213	GT:AD:DP	.:4,1:5
@@ -521,7 +521,7 @@ chr1	38023	.	AGC	AGA	.	PASS	AA_REF=A;AA_ALT=S;CALL=mixed;CONF=high;NT_CHANGES=1;
 chr1	38023	.	AGCGGA	ACCGGT	.	PASS	AA_REF=SA;AA_ALT=TG;CALL=mixed;CONF=candidate;NT_CHANGES=2;ALT_TYPE=block;FLAGS=mass_equivalent|strain_difference;CLASS_ERR=1	GT:AD:DP	.:7,1:8
 chr1	38071	.	GGCAGA	GCCAGT	.	PASS	AA_REF=SA;AA_ALT=TG;CALL=mixed;CONF=candidate;NT_CHANGES=2;ALT_TYPE=block;FLAGS=mass_equivalent|strain_difference;CLASS_ERR=1	GT:AD:DP	.:2,1:4
 chr1	38074	.	AGA	ACG	.	PASS	AA_REF=S;AA_ALT=R;CALL=mixed;CONF=candidate;NT_CHANGES=2;ALT_TYPE=substitution;FLAGS=multi_nt|strain_difference;CLASS_ERR=0.763407	GT:AD:DP	.:2,1:4
-chr1	38101	.	CAA	CAT	.	PASS	AA_REF=L;AA_ALT=M;CALL=ALT;CONF=candidate;NT_CHANGES=1;ALT_TYPE=substitution;FLAGS=snv|strain_difference;CLASS_ERR=0.763407	GT:AD:DP	1:0,1:1
+chr1	38101	.	CAA	CAT	.	PASS	AA_REF=L;AA_ALT=M;CALL=ALT;CONF=candidate;NT_CHANGES=1;ALT_TYPE=substitution;FLAGS=snv|strain_difference|putative_start;CLASS_ERR=0.763407	GT:AD:DP	1:0,1:1
 chr1	38466	.	TCC	TGC	.	PASS	GENE=GSIM_00195;AA_POS=9;AA_REF=S;AA_ALT=C;CALL=mixed;CONF=candidate;NT_CHANGES=1;ALT_TYPE=substitution;FLAGS=mass_equivalent|snv|strain_difference;CLASS_ERR=0.967213	GT:AD:DP	.:6,1:7
 chr1	38481	.	ACGGGC	GCGAGC	.	PASS	GENE=GSIM_00195;AA_POS=14;AA_REF=TG;AA_ALT=AS;CALL=mixed;CONF=candidate;NT_CHANGES=2;ALT_TYPE=block;FLAGS=mass_equivalent|strain_difference;CLASS_ERR=1	GT:AD:DP	.:6,1:7
 chr1	38484	.	GGC	GCC	.	PASS	GENE=GSIM_00195;AA_POS=15;AA_REF=G;AA_ALT=A;CALL=mixed;CONF=candidate;NT_CHANGES=1;ALT_TYPE=substitution;FLAGS=mass_equivalent|snv|strain_difference;CLASS_ERR=0.967213	GT:AD:DP	.:5,1:6
@@ -584,7 +584,7 @@ chr1	42701	.	GGTTCC	AGTGGC	.	PASS	GENE=GSIM_00215;AA_POS=28;AA_REF=GS;AA_ALT=SG;
 chr1	42716	.	GGTGTG	GTTGGG	.	PASS	GENE=GSIM_00215;AA_POS=33;AA_REF=GV;AA_ALT=VG;CALL=mixed;CONF=candidate;NT_CHANGES=2;ALT_TYPE=swap;FLAGS=mass_equivalent|strain_difference;CLASS_ERR=1	GT:AD:DP	.:4,1:5
 chr1	42788	.	AAT	TGG	.	PASS	GENE=GSIM_00215;AA_POS=57;AA_REF=N;AA_ALT=W;CALL=mixed;CONF=candidate;NT_CHANGES=3;ALT_TYPE=substitution;FLAGS=multi_nt|strain_difference;CLASS_ERR=0.763407	GT:AD:DP	.:1,1:2
 chr1	42789	.	ATG	CAT	.	PASS	AA_REF=H;AA_ALT=M;CALL=mixed;CONF=candidate;NT_CHANGES=3;ALT_TYPE=substitution;FLAGS=multi_nt|strain_difference;CLASS_ERR=0.763407	GT:AD:DP	.:2,1:3
-chr1	42831	.	CAC	CAT	.	PASS	AA_REF=V;AA_ALT=M;CALL=ALT;CONF=candidate;NT_CHANGES=1;ALT_TYPE=substitution;FLAGS=mass_equivalent|snv|strain_difference;CLASS_ERR=0.967213	GT:AD:DP	1:0,1:1
+chr1	42831	.	CAC	CAT	.	PASS	AA_REF=V;AA_ALT=M;CALL=ALT;CONF=candidate;NT_CHANGES=1;ALT_TYPE=substitution;FLAGS=mass_equivalent|snv|strain_difference|putative_start;CLASS_ERR=0.967213	GT:AD:DP	1:0,1:1
 chr1	42941	.	GGT	TAT	.	PASS	GENE=GSIM_00215;AA_POS=108;AA_REF=G;AA_ALT=Y;CALL=mixed;CONF=candidate;NT_CHANGES=2;ALT_TYPE=substitution;FLAGS=multi_nt|strain_difference;CLASS_ERR=0.763407	GT:AD:DP	.:2,1:3
 chr1	43008	.	AAC	GAC	.	PASS	GENE=GSIM_00220;AA_POS=7;AA_REF=N;AA_ALT=D;CALL=mixed;CONF=candidate;NT_CHANGES=1;ALT_TYPE=substitution;FLAGS=mass_equivalent|snv|strain_difference;CLASS_ERR=0.967213	GT:AD:DP	.:3,1:4
 chr1	43011	.	ATA	ATG	.	PASS	GENE=GSIM_00220;AA_POS=8;AA_REF=I;AA_ALT=M;CALL=mixed;CONF=candidate;NT_CHANGES=1;ALT_TYPE=substitution;FLAGS=snv|strain_difference;CLASS_ERR=0.763407	GT:AD:DP	.:2,1:4

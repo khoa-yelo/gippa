@@ -84,8 +84,9 @@ FIXTURES: tuple[tuple[str, str], ...] = (
 GOLDEN_SHA256 = {
     "tests/data/golden/sim50k_m7/novel_orfs.tsv":
         "29d294727bdf9ef862e06512a464e2d636690052fd21e98be46d740221e52989",
+    # PR 10 (putative_start) caps the TTG->M row, so this golden's content changes there
     "tests/data/golden/sim50k_m7/variants.tsv":
-        "6a4e749ef3f62fd0cf304b27ef8d763fb07ce841ae405b308f8937209d853982",
+        "22c3d32ce87cdc899ad594a63ec3835aa79adec5c30226328bb91370f00426f2",
 }  # fmt: skip
 COLUMN = {"variants": (CE, CE_FLAG), "novel_orfs": (FDR, FDR_FLAG)}
 

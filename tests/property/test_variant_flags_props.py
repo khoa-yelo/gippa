@@ -1,5 +1,7 @@
-"""M7-05 properties (docs/specs/M7-05-variant-flags.md rule 7 and acceptance criterion 3): flags
-never change ``call``, ``confidence``, ``n_ref`` or ``n_alt``.
+"""M7-05 properties (docs/specs/M7-05-variant-flags.md rule 7 and acceptance criterion 3): M7-05
+flags never change ``call``, ``confidence``, ``n_ref`` or ``n_alt``; only ``putative_start`` caps
+confidence (M12-04 PR 10, tested in test_putative_start_cap_props.py). The test genome's only
+GTG/TTG codon is G1's annotated start, so no row here can carry ``putative_start``.
 
 * Site level: ``site_flags`` never mutates its ``sites`` row, is deterministic, returns known
   flags once each in the §9.4 order, and follows rules 2-4 for every alt type.
@@ -173,6 +175,17 @@ def _unflagged(ph: pd.DataFrame, peps: pd.DataFrame, cfg: GippaConfig) -> pd.Dat
     return table
 
 
+def test_c3_pin_the_only_alternative_start_codon_is_g1_annotated_start() -> None:
+    """M12-04 PR 10 C3: this file's chain property may keep "flags never change confidence" only
+    because no hit it draws can carry ``putative_start``. The hits cover codons 0-99 of G1 and G2;
+    the only one in ``annotation.start_codons`` minus ATG is G1's first, an annotated start."""
+    alt_starts = set(_cfg("related").annotation.start_codons) - {"ATG"}
+    found = {(g.tag, i) for g in (G1, G2) for i in range(100)
+             if codon_nt(SEQ, g.codon(i), g.strand) in alt_starts}  # fmt: skip
+    assert found == {("G1", 0)}, found
+    assert ("c1", "+", G1.codon(0)) in fl().start_codons(GM)
+
+
 CORE = ["variant_id", "contig", "codon_start", "strand", "alt_aa", "alt_type", "call",
         "confidence", "n_ref", "n_alt"]  # fmt: skip
 
@@ -187,6 +200,8 @@ CORE = ["variant_id", "contig", "codon_start", "strand", "alt_aa", "alt_type", "
 def test_flags_never_change_call_confidence_or_counts(
     data: tuple[pd.DataFrame, pd.DataFrame], relation: str, k: int, tol: float
 ) -> None:
+    """M7-05 flags never change confidence; only ``putative_start`` caps it (PR 10), and this
+    genome has no site it could flag."""
     from gippa.steps.variants import run_variants
 
     ph, peps = data

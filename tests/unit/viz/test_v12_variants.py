@@ -313,8 +313,13 @@ def test_flag_colours_are_okabe_ito_in_flag_order() -> None:
 
     assert tuple(FLAG_ORDER) == vv.FLAG_ORDER
     assert vv.CE_FLAG not in FLAG_COLOUR  # an NA class error is never a bar (M12-04 PR 11c)
+    # M12-04 PR 10: putative_start shares start_codon's colour; the 8 others are distinct
+    for f, other in vv.SHARED_COLOUR.items():
+        assert FLAG_COLOUR[f].upper() == FLAG_COLOUR[other].upper(), f
     palette = [c.upper() for c in style.OKABE_ITO.values()]
-    colours = [FLAG_COLOUR[f].upper() for f in vv.BAR_FLAGS]
+    own = [f for f in vv.BAR_FLAGS if f not in vv.SHARED_COLOUR]
+    assert len(own) == 8
+    colours = [FLAG_COLOUR[f].upper() for f in own]
     assert len(set(colours)) == len(colours)
     assert all(c in palette for c in colours)
     idx = [palette.index(c) for c in colours]
@@ -375,20 +380,26 @@ def test_mixed_sites_are_not_in_panel_b(tmp_path: Path, cfg: GippaConfig) -> Non
     assert _order(_main(tmp_path, cfg)) == ["VAR0001", "VAR0002", "VAR0003", "VAR0004"]
 
 
-def test_more_than_30_alt_sites_draw_30_and_count_all(tmp_path: Path, cfg: GippaConfig) -> None:
+def test_more_than_30_alt_sites_draw_the_shown_sites_and_count_all(
+    tmp_path: Path, cfg: GippaConfig
+) -> None:
+    """Panel (b) draws the first ``SHOWN_SITES`` (15, M12-04 PR 10 P-17) of the top sites; the
+    support data (``variant_windows``) keeps 30; panel (a) counts every site."""
+    from gippa.viz.variants import SHOWN_SITES
+
     sites = [
         _site(f"VAR{i:04d}", gene=f"GA{i:02d}", aa_pos=5 + 3 * i, n_alt=100 - i, flags="snv")
         for i in range(1, 36)
     ]
     inst = _render(vv.build_out(tmp_path, sites, []), cfg)
-    assert _order(inst) == [f"VAR{i:04d}" for i in range(1, 31)]
+    assert _order(inst) == [f"VAR{i:04d}" for i in range(1, SHOWN_SITES + 1)]
     counts = _nonzero(inst)
     assert counts[("ALT", "high", "all")] == 35
     assert counts[("ALT", "high", "snv")] == 35
     text = _joined(_ax(inst, "b"))
-    for i in range(1, 31):
+    for i in range(1, SHOWN_SITES + 1):
         assert f"GA{i:02d}" in text
-    for i in range(31, 36):
+    for i in range(SHOWN_SITES + 1, 36):
         assert f"GA{i:02d}" not in text
 
 
@@ -549,7 +560,7 @@ _SITE = st.tuples(
     st.sampled_from(["high", "candidate"]),
     st.integers(1, 12),
     st.one_of(st.none(), st.sampled_from([0.001, 0.004, 0.01, 0.02, 0.2])),
-    st.lists(st.sampled_from(vv.FLAG_ORDER[:7]), unique=True, max_size=3),
+    st.lists(st.sampled_from(vv.M705_FLAGS), unique=True, max_size=3),
 )
 
 
@@ -591,6 +602,8 @@ def _sites(draw: Sequence[tuple]) -> list[dict[str, object]]:
 )
 @given(st.lists(_SITE, min_size=1, max_size=40))
 def test_property_counts_and_top_site_order(draw: list[tuple]) -> None:
+    from gippa.viz.variants import SHOWN_SITES  # panel (b) draws 15 (M12-04 PR 10)
+
     cfg = resolve_config()
     sites = _sites(draw)
     with tempfile.TemporaryDirectory() as tmp:
@@ -608,9 +621,9 @@ def test_property_counts_and_top_site_order(draw: list[tuple]) -> None:
                 unflagged = sum(1 for b in bars if not b)  # the NA-rate flag is not a bar
                 assert counts.get((call, conf, "no flag"), 0) == unflagged
                 assert counts.get((call, conf, vv.CE_FLAG), 0) == 0
-                for f in vv.FLAG_ORDER[:7]:
+                for f in vv.M705_FLAGS:
                     n = sum(1 for s in grp if s["flags"] and f in str(s["flags"]).split(";"))
                     assert counts.get((call, conf, f), 0) == n
         alt = sorted((s for s in sites if s["call"] == "ALT"), key=_key)
-        assert _order(inst) == [str(s["variant_id"]) for s in alt[:30]]
+        assert _order(inst) == [str(s["variant_id"]) for s in alt[:SHOWN_SITES]]
         inst.figure.clear()

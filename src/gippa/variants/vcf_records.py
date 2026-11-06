@@ -38,7 +38,8 @@ VARIANTS_COLUMNS: tuple[str, ...] = (
 )  # fmt: skip
 _FLAG_ORDER: tuple[str, ...] = (
     "mass_equivalent", "snv", "multi_nt", "strain_difference", "database_derived",
-    "start_codon", "stop_codon", "vcf_unrepresentable", "class_error_unestimated",
+    "putative_start", "start_codon", "stop_codon", "vcf_unrepresentable",
+    "class_error_unestimated",
 )  # fmt: skip
 VARIANT_FLAGS: frozenset[str] = frozenset(_FLAG_ORDER)
 #: the flag of a row whose ``class_error_rate`` is NA (M12-04 PR 11c)

@@ -9,7 +9,9 @@ On the M7-04 gippasim chain (sample-strain peptides mapped to the reference geno
   start_codon, stop_codon``, then M7-03's ``vcf_unrepresentable``, then M12-04 PR 11c's
   ``class_error_unestimated``, set exactly when ``class_error_rate`` is NA);
 * each cell equals an independent oracle of rules 1-6 built from the row itself (``ref_codon``,
-  ``ref_aa``, ``alt_aa``, ``alt_type``) and the gene model. The fixture's peptides are all
+  ``ref_aa``, ``alt_aa``, ``alt_type``) and the gene model, plus M12-04 PR 10's
+  ``putative_start`` (after ``database_derived``) exactly on the rows the independent
+  ``helpers.putative_start_oracle`` flags on the step's own inputs. The fixture's peptides are all
   ``database`` with ``search_db: same`` (gippasim), so ``database_derived`` is absent; if a
   peptide with another ``search_db`` ever appears, rows with database support skip the check;
 * the VCF ``FLAGS`` INFO field is the ``|``-joined union of the flags of the record's alleles
@@ -39,9 +41,12 @@ from test_variants_step import (
     step_inputs,
 )
 
+from gippa.config import GippaConfig
+
 ORDER = (
     "mass_equivalent", "snv", "multi_nt", "strain_difference", "database_derived",
-    "start_codon", "stop_codon", "vcf_unrepresentable", "class_error_unestimated",
+    "putative_start", "start_codon", "stop_codon", "vcf_unrepresentable",
+    "class_error_unestimated",
 )  # fmt: skip
 
 B5: dict[str, float] = {
@@ -91,11 +96,13 @@ def _starts(gm: Any) -> set[tuple[str, str, int]]:
 
 
 def expected_flags(
-    r: Mapping[str, Any], starts: set[tuple[str, str, int]], db_other: bool
-) -> list[str] | None:
-    """Rules 1-6 for one ``variants.tsv`` row (1-based ``codon_start``) under ``related``;
-    ``None`` when ``database_derived`` cannot be decided from the row (database peptides while
-    some peptide of the input is not ``search_db: same``)."""
+    r: Mapping[str, Any], starts: set[tuple[str, str, int]], db_other: bool,
+    putative: frozenset[str] = frozenset(),
+) -> list[str] | None:  # fmt: skip
+    """Rules 1-6 for one ``variants.tsv`` row (1-based ``codon_start``) under ``related``, plus
+    ``putative_start`` when the row's ``variant_id`` is in ``putative`` (M12-04 PR 10, from
+    :func:`putative_ids`); ``None`` when ``database_derived`` cannot be decided from the row
+    (database peptides while some peptide of the input is not ``search_db: same``)."""
     kind, alt, ref_nt = r["alt_type"], r["alt_aa"], r["ref_codon"]
     want: set[str] = {"strain_difference"}
     if kind == "substitution":
@@ -112,9 +119,28 @@ def expected_flags(
         want.add("vcf_unrepresentable")
     if r["class_error_rate"] == "NA":  # the written cell (M12-04 PR 11c)
         want.add("class_error_unestimated")
+    if r["variant_id"] in putative:
+        want.add("putative_start")
     if db_other and "database" in r["source"].split(";"):
         return None
     return [f for f in ORDER if f in want]
+
+
+def putative_ids(inputs: Mapping[str, Path], cfg: GippaConfig) -> frozenset[str]:
+    """``variant_id`` of the rows the independent PR 10 oracle flags, on the step's inputs."""
+    from helpers.putative_start_oracle import chain_alignments, oracle_flagged
+    from test_variants_step import _genome, _hits
+
+    from gippa.steps.variants import run_variants_qc
+
+    ph = _hits(inputs["mapping"])
+    ht = pd.read_parquet(inputs["hits_tolerant"])
+    genome = _genome(inputs["genome"])
+    gm = _gene_model(inputs["genes"], _replicons(inputs["replicons"]))
+    peptides = pd.read_parquet(inputs["peptides"])
+    _, table, _, support = run_variants_qc(ph, ht, peptides, gm, genome, cfg)
+    aligns = chain_alignments(ph, genome, gm, cfg, ht)
+    return frozenset(oracle_flagged(table, support, aligns, genome, gm, cfg))
 
 
 @pytest.fixture(scope="module")
@@ -152,9 +178,13 @@ def test_flags_follow_rules_1_to_6(chain: dict[str, Path], table: pd.DataFrame) 
     gm = _gene_model(chain["genes"], _replicons(chain["replicons"]))
     starts = _starts(gm)
     db_other = bool((pd.read_parquet(chain["peptides"])["search_db"] != "same").any())
+    putative = putative_ids(step_inputs(chain), _cfg())
+    got = {r["variant_id"] for r in table.to_dict("records")
+           if "putative_start" in r["flags"].split(";")}  # fmt: skip
+    assert got == putative, (sorted(got), sorted(putative))
     checked = 0
     for r in table.to_dict("records"):
-        want = expected_flags(r, starts, db_other)
+        want = expected_flags(r, starts, db_other, putative)
         if want is None:
             continue
         assert r["flags"] == ";".join(want), r

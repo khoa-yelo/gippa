@@ -4,7 +4,8 @@
 (a) Grouped bars of the ``variants.tsv`` sites: x = ``call`` (ALT, mixed), one bar per
 ``confidence``, stacked by §7.5.3 flag (a site with several flags counts once in each; sites
 without flags count under "no flag"); the "all" total is printed above each bar. (b) Monospace
-text alignments of the ``gippa.viz.support.top_alt_sites`` (at most 30): a header line, the
+text alignments of the ``gippa.viz.support.top_alt_sites`` (at most 15, ``SHOWN_SITES``; the title
+says "top 15 of <n>" when more ALT sites exist): a header line, the
 reference window from ``plots/support/variant_windows.tsv`` (absent: no ``ref`` line) and one
 peptide line, the covering peptide that spans most of the ±10 aa display window, with the ALT
 residue bold vermillion, then "(N peptides)", the distinct covering count (lead decision 8).
@@ -19,7 +20,9 @@ lies in ``[start, end)`` and the codon is in frame with the placement (lead deci
 circular replicon the codon is also tried one replicon length further (origin-crossing
 placements). ``alt_type`` block / frameshift sites list a peptide unaligned with ``NOTE``.
 Panel (b) residue positions are protein positions, so ``-`` strand and origin-crossing genes need
-no special case. Pure: tables come from the ``RunView``.
+no special case. Figure text writes residue ``J`` as "I/L"; the plotted data keeps ``J``. When the
+title says the class error is not estimated, the site lines do not repeat it. Pure: tables come
+from the ``RunView``.
 """
 
 from __future__ import annotations
@@ -52,14 +55,33 @@ COLUMNS = (
 CALLS = ("ALT", "mixed")
 CONFIDENCES = ("high", "candidate")
 NO_FLAG, ALL = "no flag", "all"
+#: flags drawn in the colour of another: ``putative_start`` shares ``start_codon``'s (both are
+#: start-codon artefacts; Okabe-Ito has 8 colours besides grey for the 9 bar flags)
+SHARED_COLOUR: Mapping[str, str] = {"putative_start": "start_codon"}
+#: flags of the bars: an NA class error (``class_error_unestimated``) is never a bar
+_BAR_FLAGS = tuple(f for f in FLAG_ORDER if f != "class_error_unestimated")
 #: §9.4 flag -> Okabe-Ito colour, assigned in flag order (grey is kept for "no flag")
-FLAG_COLOUR: Mapping[str, str] = dict(
-    zip(FLAG_ORDER, [c for k, c in style.OKABE_ITO.items() if k != "grey"], strict=False)
-)
+_OWN = dict(
+    zip([f for f in _BAR_FLAGS if f not in SHARED_COLOUR],
+        [c for k, c in style.OKABE_ITO.items() if k != "grey"], strict=True)
+)  # fmt: skip
+FLAG_COLOUR: Mapping[str, str] = {f: _OWN[SHARED_COLOUR.get(f, f)] for f in _BAR_FLAGS}
 NO_FLAG_COLOUR = style.OKABE_ITO["grey"]
 ALT_COLOUR = style.OKABE_ITO["vermillion"]
 EN_DASH = "\N{EN DASH}"
+#: panel (b) draws the first 15 top sites (P-17); the support data keeps ``MAX_TOP_SITES``
+SHOWN_SITES = 15
 CE_FLAG = "class_error_unestimated"  # its rate is NA (M12-04 PR 11c)
+#: the words of an NA class error, in the title and the site lines; stated once when the title
+#: holds it for every site (P-17)
+UNESTIMATED = plain(CE_FLAG)  # the default words; code calls unestimated()
+
+
+def unestimated() -> str:
+    """The plain words of an NA class error, read at call time (``FLAG_TEXT`` is the source)."""
+    return plain(CE_FLAG)
+
+
 NOTE = "length-changing: shown unaligned"
 UNALIGNED = frozenset({"block", "frameshift"})
 #: the empty states (M12-04 PR 4, P-14: "Nothing to show: <reason>. <what would change it>.")
@@ -182,7 +204,7 @@ def panel_b(
     hits, lengths, windows = view.table("peptide_hits"), _lengths(view), _windows(view)
     rows: list[dict[str, object]] = []
     peps: list[dict[str, int]] = []
-    for rank, (_, s) in enumerate(top_alt_sites(variants).iterrows(), start=1):
+    for rank, (_, s) in enumerate(top_alt_sites(variants, SHOWN_SITES).iterrows(), start=1):
         cov = covering(s, hits, lengths)
         win = windows.get(str(s["variant_id"]))
         row = {"panel": "b", "rank": rank, "confidence": s["confidence"]}
@@ -209,18 +231,43 @@ def _has_one(variants: pd.DataFrame) -> bool:
     return any(class_error_value(v) == 1 for v in alt["class_error_rate"])
 
 
+def _shown(variants: pd.DataFrame) -> pd.DataFrame:
+    """The ``call = ALT`` rows panel (b) draws: all of them up to ``SHOWN_SITES``, else the top
+    ``SHOWN_SITES`` (``top_alt_sites``)."""
+    alt = variants[variants["call"] == "ALT"]
+    return alt if len(alt) <= SHOWN_SITES else top_alt_sites(variants, SHOWN_SITES)
+
+
+def shown_unestimated(variants: pd.DataFrame) -> bool:
+    """No site panel (b) shows has a class error rate. Pure."""
+    return all(class_error_value(v) is None for v in _shown(variants)["class_error_rate"])
+
+
 def title(variants: pd.DataFrame) -> str:
     """Counts and class-error range over the ``call = ALT`` sites (lead decision 4); the range
-    says the rate is pooled per class over ALT and mixed sites (#325, V12 label fix)."""
+    says the rate is pooled per class over ALT and mixed sites (#325, V12 label fix). When no
+    site panel (b) shows (:func:`_shown`) has a rate, the clause is :data:`UNESTIMATED` and the
+    site lines leave it out (PR 10 review, lead decision: judged over the shown sites)."""
     alt = variants[variants["call"] == "ALT"]
     h, c = int((alt["confidence"] == "high").sum()), int((alt["confidence"] == "candidate").sum())
     rates = [r for r in (class_error_value(v) for v in alt["class_error_rate"]) if r is not None]
     lo, hi = (style.fmt_num(min(rates)), style.fmt_num(max(rates))) if rates else ("", "")
-    rng = plain("unestimated") if not rates else lo if lo == hi else f"{lo}{EN_DASH}{hi}"
-    if _has_one(variants):
-        rng += DEGENERATE_MARK
+    if not shown_unestimated(variants):
+        error = f"class error {lo if lo == hi else f'{lo}{EN_DASH}{hi}'}"
+        if _has_one(variants):
+            error += DEGENERATE_MARK
+    else:
+        error, rates = unestimated(), []
     pooled = f", {POOLED}" if rates else ""
-    return f"{h} high-confidence and {c} candidate ALT sites (class error {rng}{pooled})"
+    top = ""
+    if len(alt) > SHOWN_SITES:
+        top = f" (top {SHOWN_SITES} of {len(alt)}; all in tables/variants.tsv)"
+    return f"{h} high-confidence and {c} candidate ALT sites{top} ({error}{pooled})"
+
+
+def residues(aa: str) -> str:
+    """Residues as figure text: ``J`` (I or L, not told apart by mass) reads "I/L"."""
+    return aa.replace("J", "I/L")
 
 
 def _draw_a(ax: Axes, rows: Sequence[Mapping[str, object]]) -> None:
@@ -288,7 +335,7 @@ def _header(r: Mapping[str, object]) -> str:
 
     rate = class_error_value(r["class_error_rate"])
     if rate is None:  # NA (M12-04 PR 11c): the flag's plain words
-        error = plain(CE_FLAG)
+        error = unestimated()
     else:
         mark = DEGENERATE_MARK if rate == 1 else ""
         n = r.get("class_error_n")
@@ -298,7 +345,7 @@ def _header(r: Mapping[str, object]) -> str:
         where = f"{cell('contig')}:{cell('codon_start')} ({cell('strand')})  no gene (aa NA)"
     else:
         where = f"{r['gene']} aa {r['aa_pos']}"
-    return (f"{where}  {cell('ref_aa')}→{cell('alt_aa')}  {cell('alt_type')}  "
+    return (f"{where}  {residues(cell('ref_aa'))}→{residues(cell('alt_aa'))}  {cell('alt_type')}  "
             f"{cell('confidence')}  n_alt {cell('n_alt')} / n_ref {cell('n_ref')}  "
             f"{error}")  # fmt: skip
 
@@ -314,12 +361,18 @@ def _best(cov: Mapping[str, int]) -> str:
 
 
 def _draw_b(ax: Axes, rows: Sequence[Mapping[str, object]], peps: Sequence[Mapping[str, int]],
-            windows: Mapping[str, tuple[int, str]], footnote: bool = False) -> None:  # fmt: skip
+            windows: Mapping[str, tuple[int, str]], footnote: bool = False,
+            shared_error: bool = False) -> None:  # fmt: skip
+    """``shared_error``: the title already states :data:`UNESTIMATED` for every site shown,
+    so the site lines leave it out (stated once)."""
     ax.set_axis_off()
     ax.set_title("(b) peptides at the top ALT sites", loc="left")
     lines = _Lines(ax)
     for r, cov in zip(rows, peps, strict=True):
-        lines.put(0, _header(r))
+        head = _header(r)
+        if shared_error and head.endswith(f"  {unestimated()}"):
+            head = head.removesuffix(f"  {unestimated()}")
+        lines.put(0, head)
         lines.next()
         genic = not pd.isna(r["aa_pos"])  # no gene: shown unaligned (lead decision 11)
         pos = int(str(r["aa_pos"])) if genic else 0
@@ -362,7 +415,8 @@ def variants(view: RunView, cfg: GippaConfig) -> list[base.Instance] | base.Skip
     rows_a = panel_a(table)
     rows_b, peps = panel_b(view, table)
     refs = [r["ref_window"] is not None and r["alt_type"] not in UNALIGNED for r in rows_b]
-    footnote = _has_one(table)
+    shared = shown_unestimated(table)  # the title states UNESTIMATED once; the lines omit it
+    footnote = _has_one(table) and not shared  # the title carries the "*" mark
     h_a, h_b = 1.9, (sum(2.4 + ref for ref in refs) + 1.5 + footnote) * LINE_PT / 72 + 0.15
     height = h_a + h_b + 0.35
     fig = style.new_figure("double", height)
@@ -370,9 +424,10 @@ def variants(view: RunView, cfg: GippaConfig) -> list[base.Instance] | base.Skip
     ax_a = fig.add_axes((0.08, (h_b + 0.6) / height, 0.7, (h_a - 0.9) / height), label="a")
     ax_b = fig.add_axes((0.03, 0.1 / height, 0.94, h_b / height), label="b")
     _draw_a(ax_a, rows_a)
-    _draw_b(ax_b, rows_b, peps, _windows(view), footnote)
+    text = title(table)
+    _draw_b(ax_b, rows_b, peps, _windows(view), footnote, shared)
     if not rows_b:
         ax_b.text(0.0, 0.9, "no ALT site", transform=ax_b.transAxes, color="#555555")
-    text = title(table)
-    fig.suptitle(text, y=1 - 0.12 / height)
+    # the top-15 clause on its own line: the one-line title is wider than the figure
+    fig.suptitle(text.replace(" (top ", "\n(top ", 1), y=1 - 0.12 / height)
     return [base.Instance(None, fig, data_frame([*rows_a, *rows_b]), text)]

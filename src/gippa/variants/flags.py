@@ -1,7 +1,9 @@
 """Variant flags (GIPPA_SPEC.md §7.5.1, §7.5.3, §9.4, Appendix B.5;
 docs/specs/M7-05-variant-flags.md rules 1-7).
 
-Flags annotate a ``sites`` row; they never change its call, confidence or counts. The mass list is
+The M7-05 flags annotate a ``sites`` row; they never change its call, confidence or counts. The one
+flag that does change confidence is ``putative_start`` (``gippa.variants.starts``, M12-04 PR 10):
+the ``variants`` chain adds it after these flags and caps the row at ``candidate``. The mass list is
 recomputed at the configured tolerance from the B.5 masses (lead decision 2): the committed
 ``mass_equivalents.tsv`` is never read here. ADR-0049: every swap row and every substitution that an
 ALT peptide also reads as a left 2->1 block (:func:`left_block_read`) is ``mass_equivalent``.
@@ -37,8 +39,12 @@ M705_FLAGS: tuple[str, ...] = (
     "mass_equivalent", "snv", "multi_nt", "strain_difference", "database_derived",
     "start_codon", "stop_codon",
 )  # fmt: skip
-#: §9.4 order (rule 7); ``class_error_unestimated`` marks an NA class error (M12-04 PR 11c)
-FLAG_ORDER: tuple[str, ...] = (*M705_FLAGS, "vcf_unrepresentable", "class_error_unestimated")
+#: §9.4 order (rule 7); ``putative_start`` (M12-04 PR 10) follows ``database_derived``;
+#: ``class_error_unestimated`` marks an NA class error (M12-04 PR 11c)
+FLAG_ORDER: tuple[str, ...] = (
+    *M705_FLAGS[:5], "putative_start", *M705_FLAGS[5:], "vcf_unrepresentable",
+    "class_error_unestimated",
+)  # fmt: skip
 
 _StartKey = tuple[str, str, int]  # (contig, strand, wrapped first codon)
 _START_TYPES = frozenset({"cds", "sorf"})
