@@ -1443,3 +1443,13 @@ the user guide is [Inputs › Genetic code](user-guide/inputs.md#genetic-code) a
 - **Readiness H1** counts `### Gate M<k>` headings only, so it passes over a gate recorded as not met.
 - **Stale markers:** `test_variants_gate.py` and `test_attack_m7_gate.py` say ADR-0049 is proposed; PROGRESS Questions row 11 reads open; M7 G1, A6a and A6b need a full-tier run on ADR-0049's scope.
 - **Node exclusion in the launchers (ADR-0073):** `nightly_launch.sh`, `nightly.sbatch` and `calibration_full_launch.sh` need an exclusion of the nodes that fail our jobs: barley-01..04 and rye-02 exit 0:53 (no home mount), barley-01/02 and rye-01 hold jobs ("user env retrieval failed requeued held"). The 2026-11-03 nightly 1927650 and seven full-tier suites on 2026-11-02 were lost this way.
+
+### 2026-11-06 (lead, M12-04 wrap-up)
+- V03 report table: the "q" header also heads FWER rows; consider a rendered significance marker.
+- V11 (b): the "lfdr ranks pairs" note can overlap points (pre-existing).
+- V01 notes name raw file names; use plain words.
+- `viz/circos.py` is large: split the ring key into `circos_key.py`.
+- V17: the middle row has an empty cell beside (d); fill it or tighten the grid.
+- Route out-of-gene `putative_start` sites to novel-ORF start evidence (statistician Q7 option 3), after its own chance-mass and decoy review.
+- Variants estimator: initiator reads at putative starts can inflate the substitution class's paired-error estimate; consider excluding them.
+- Flaky property test: `tests/property/test_m5_fixture_props.py::test_oric_is_one_chr1_feature_near_its_fraction` fails at seed 827 (|Δ| 0.0205 vs 0.02); look at the fixture's oriC placement, never widen the tolerance (R3).

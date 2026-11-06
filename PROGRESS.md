@@ -13,7 +13,7 @@ _Last updated: 2026-11-01 · session https://claude.ai/code/session_015h628ytdvW
 
 ## Milestone progress
 <!-- progress:start -->
-🟩 done (merged) · ⬛ superseded by an accepted ADR (counts as done) · 🟨 running (open branch) · ⬜ pending; designed issues: 191/199 done (96 %), 1 running · generated 2026-11-03 12:48 by `scripts/dev/progress_bars.py`
+🟩 done (merged) · ⬛ superseded by an accepted ADR (counts as done) · 🟨 running (open branch) · ⬜ pending; designed issues: 191/199 done (96 %), 1 running · generated 2026-11-06 08:42 by `scripts/dev/progress_bars.py`
 
 | Milestone | Progress | Done | Running | Pending |
 |---|---|---|---|---|
@@ -33,6 +33,8 @@ _Last updated: 2026-11-01 · session https://claude.ai/code/session_015h628ytdvW
 
 - M7-15 K-12 real-tool arm: **Slurm 1879271** (COMPLETED 4 m 41 s; 2,647 cached from 1873779, 4 rerun; d11f7608 + VARIANTS 8 GB; 4fcc29da is cache-key-only, outputs byte-identical). Earlier attempts 1869642, 1871633, 1873779, 1878443 (cancelled).
 ## Current milestone
+**2026-11-06: M12-04 outputs revision done (1.1.0 target).** All 17 PRs merged (spec `docs/specs/M12-04-outputs-revision.md`, ADR-0075); the last two: #564 (PR 6: V07 layout, V18 small-n, V17 labels) and #566 (PR 10: `putative_start`, 98ff402b). Khoa approved every changed snapshot baseline PR by PR. #566 statistician C7: calsuite fast tier jobs 1937787 (before) / 1937788 (after): G2, A6a–c and the reference-proteome arm identical in 20 replicates; G1 one replicate differs (2 fewer predictions, true positives unchanged, 0 capped truth sites), pooled F1 0.8627 → 0.8640, still a strict xfail. Next: M12-01 items, then the 1.1.0 version bump and changelog (readiness H2/H3), then readiness with nightly logs before any date.
+
 **2026-11-03: GIPPA 1.0.0 released.** PyPI https://pypi.org/project/gippa/1.0.0/ (wheel sha256 9ffc0099d33a7906b62614a20a4d7896a548d606782f79cb2b8b50649c99c105, sdist fff51ebc23e77f0e44b8bf77721a7dbe544061d1fdb15b02130492157e17a85b, identical to review packet r1); GitHub release v1.0.0. Readiness overall pass at R `1aae3b67` (R2, R3, R5, R7 waived; R10 deferred), verified on `5a9d4b1c` (#530); dry run 41710757897; publish run 41714305030 (all jobs success), dispatched by the lead at Khoa's in-session request after Khoa's "approved" on #531. TestPyPI skipped; Q-K1 trusted publisher registered by Khoa. Step 14 smoke: Slurm 1928871 (wheat-03, COMPLETED 0:0): fresh venv, `pip install gippa==1.0.0` from PyPI, `gippa demo` done in 92 s with report.html. Open: nightly 1928574 (ADR-0073) still queued; its result is recorded here when it ends. 1.0.1 queue: decoy fixture + lift the ubuntu-24.04 pin (#529), launcher node exclusion, a `singularity` profile for auto-detection, a `gippa run` flag for `params.slurm_*`, drop the README FarmShare heading and its test.
 
 (2026-10-25 evening) M0–M9 are done. M10: #296 (M10-04) and #364 (M10-10a) merged; the A3 run
@@ -282,7 +284,7 @@ packet: `$GIPPA_ROOT/review/m10-pilot/r1/` (#524), round r1.
   Needs Khoa: no: ADR-0053, ADR-0059, ADR-0062, ADR-0063, ADR-0066.
 
 ## In progress
-- M12-04 PR 10 (#566, `putative_start`): AC 10.0 evidence is K-12 on main, Slurm job 1933797 (`gippa-run-k12main`; variants task 1934116 COMPLETED; the driver ended FAILED after `report_html` from the unpinned main checkout; report re-run 1934834). Manifest commit cae1a731, variants code identical to main. After the rule: 126 rows flagged, high 64 → 55. Statistician C7 (variants calsuite fast tier before/after): jobs 1937787 (main a1736ae4) and 1937788 (pr10 359c1488); 1937766/1937767 crashed on PYTHONPATH. New scenario nightly tier: job 1937768, 16 passed.
+- (merged 2026-11-06) M12-04 PR 10 (#566, `putative_start`): AC 10.0 evidence is K-12 on main, Slurm job 1933797 (`gippa-run-k12main`; variants task 1934116 COMPLETED; the driver ended FAILED after `report_html` from the unpinned main checkout; report re-run 1934834). Manifest commit cae1a731, variants code identical to main. After the rule: 126 rows flagged, high 64 → 55. Statistician C7 (variants calsuite fast tier before/after): jobs 1937787 (main a1736ae4) and 1937788 (pr10 359c1488); 1937766/1937767 crashed on PYTHONPATH. New scenario nightly tier: job 1937768, 16 passed.
 - Benchmark window: array 1916711 ended 2026-11-01 (repeats 1 and 2 on wheat-01; repeat 3 cancelled, ADR-0072).
 - Arm A4 six-frame run: exploratory and outside the gate. `gippa run` job 1921228 finished 2026-11-01, exit 0, 109 candidates, 0 called; no call was possible at its class sizes (statistician review; numbers in `docs/user-guide/makedb.md`).
 M7-01 residue aligner (branch m7/alignment, implementer step done 2026-10-21): `gippa.variants.align` (247 code lines, numba banded DP with traceback; M3 kernels untouched). Unit 42 passed, property 5 passed (also over 20 Hypothesis seeds), sim100k conformance passed (Slurm 1864764), fast suite 9180 passed (1864763), benchmark 100k tolerant hits 11.35 s < 30 s (1864766, wheat-08). Next: code review.
