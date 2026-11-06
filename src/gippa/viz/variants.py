@@ -74,7 +74,14 @@ SHOWN_SITES = 15
 CE_FLAG = "class_error_unestimated"  # its rate is NA (M12-04 PR 11c)
 #: the words of an NA class error, in the title and the site lines; stated once when the title
 #: holds it for every site (P-17)
-UNESTIMATED = plain(CE_FLAG)
+UNESTIMATED = plain(CE_FLAG)  # the default words; code calls unestimated()
+
+
+def unestimated() -> str:
+    """The plain words of an NA class error, read at call time (``FLAG_TEXT`` is the source)."""
+    return plain(CE_FLAG)
+
+
 NOTE = "length-changing: shown unaligned"
 UNALIGNED = frozenset({"block", "frameshift"})
 #: the empty states (M12-04 PR 4, P-14: "Nothing to show: <reason>. <what would change it>.")
@@ -250,7 +257,7 @@ def title(variants: pd.DataFrame) -> str:
         if _has_one(variants):
             error += DEGENERATE_MARK
     else:
-        error, rates = UNESTIMATED, []
+        error, rates = unestimated(), []
     pooled = f", {POOLED}" if rates else ""
     top = ""
     if len(alt) > SHOWN_SITES:
@@ -328,7 +335,7 @@ def _header(r: Mapping[str, object]) -> str:
 
     rate = class_error_value(r["class_error_rate"])
     if rate is None:  # NA (M12-04 PR 11c): the flag's plain words
-        error = UNESTIMATED
+        error = unestimated()
     else:
         mark = DEGENERATE_MARK if rate == 1 else ""
         n = r.get("class_error_n")
@@ -363,8 +370,8 @@ def _draw_b(ax: Axes, rows: Sequence[Mapping[str, object]], peps: Sequence[Mappi
     lines = _Lines(ax)
     for r, cov in zip(rows, peps, strict=True):
         head = _header(r)
-        if shared_error and head.endswith(f"  {UNESTIMATED}"):
-            head = head.removesuffix(f"  {UNESTIMATED}")
+        if shared_error and head.endswith(f"  {unestimated()}"):
+            head = head.removesuffix(f"  {unestimated()}")
         lines.put(0, head)
         lines.next()
         genic = not pd.isna(r["aa_pos"])  # no gene: shown unaligned (lead decision 11)

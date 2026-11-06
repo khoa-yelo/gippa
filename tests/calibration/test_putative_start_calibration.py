@@ -22,7 +22,7 @@ Checks (``helpers.putative_start_records.record``), in every replicate unless no
 Vacuity raises ``RuntimeError``, never an assertion, in every replicate: no A, B or B2 row; fewer
 A rows than planted A sites; no out-of-gene K→M control row (review round 1).
 
-Scenario interface (gippasim tooling; the implementer writes it): ``gippasim.alt_start``
+Scenario interface (test tooling; it builds gippa objects, so it lives in ``helpers.alt_start``)
 ``alt_start_initiation(seed, *, size="100k" | "1M", genome_relation="related" | "same",
 translation_table=11, start_codons=("ATG", "GTG", "TTG")) -> AltStartScenario`` with ``genome``
 (``{contig: sequence}``), ``gm`` (``GeneModel``), ``cfg`` (``GippaConfig`` with that relation,

@@ -3,7 +3,7 @@ sign-off ``local/handoff/pr10_statistician.md`` C6) for the calibration test
 (tests/calibration/test_putative_start_calibration.py) and its attack
 (tests/calibration/attacks/test_attack_putative_start.py).
 
-One replicate = one ``gippasim.alt_start.alt_start_initiation`` world through the real ``variants``
+One replicate = one ``helpers.alt_start.alt_start_initiation`` world through the real ``variants``
 chain (``gippa.steps.variants.run_variants_qc`` and ``qc_frame``). :func:`record` evaluates the
 sign-off's thresholds (``putative_start_oracle.checks``) on the chain's output, or on the output a
 mutant of the rule would give:
@@ -44,7 +44,7 @@ def seed_of(i: int) -> int:
 
 
 def scenario(i: int, arm: str, full: bool) -> Any:
-    from gippasim.alt_start import alt_start_initiation
+    from helpers.alt_start import alt_start_initiation
 
     return alt_start_initiation(seed_of(i), size=SIZES[full], **ARMS[arm])
 
