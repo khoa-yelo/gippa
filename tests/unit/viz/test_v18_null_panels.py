@@ -105,8 +105,8 @@ TABLE_ORDER = ["regions_stats", "islands", "determinants_model"]
 GENOME = "genome / abs"
 MAX_REPLICONS = 7
 PER_REPLICON = "per-replicon maximum"
-UNCALIBRATED_NOTE = "(uncalibrated, ADR-0034)"
-XLABEL_ISLANDS = "max |S_w| over windows"
+UNCALIBRATED_NOTE = "(uncalibrated)"  # M12-04 PR 6: no ADR numbers
+XLABEL_ISLANDS = "largest window scan\nstatistic (standardised)"  # M12-04 P-10
 XLABEL_DETERMINANTS = "mean CV R\u00b2 (null: permuted response)"
 
 
@@ -683,7 +683,7 @@ def test_uncalibrated_caption_while_flagged(tmp_path: Path, cfg: GippaConfig) ->
     inst = _render(out, cfg)
     flagged = _texts(_ax(inst, "determinants_model / lightgbm"))
     p = style.fmt_q(0.001)  # M12-04 P-18
-    assert any(f"null p {p} (uncalibrated, ADR-0034)" in t for t in flagged), flagged
+    assert any(f"null p {p} {UNCALIBRATED_NOTE}" in t for t in flagged), flagged
     plain = _texts(_ax(inst, "determinants_model / elastic_net"))
     assert any(f"null p {p}" in t for t in plain), plain
     assert any(UNCALIBRATED_NOTE in t for t in plain), plain  # unconditional (lead decision 4)
@@ -715,7 +715,8 @@ def test_too_few_rows_no_determinants_panel(
 
 def test_example3_no_support_draws_panel_c_text_only(tmp_path: Path, cfg: GippaConfig) -> None:
     out = make_out(tmp_path)
-    _tables(out, regions_stats=[_rs("R01", 0.01, 0.02)])
+    # 10 region tests so panel b is drawn and V18 is not the empty state (M12-04 P-10)
+    _tables(out, regions_stats=[_rs(f"R{i:02d}", 0.01, 0.02, i=i) for i in range(10)])
     inst = _render(out, cfg)
     c = [ax for ax in inst.figure.axes if ax.get_label() == "c"]
     assert len(c) == 1
@@ -726,6 +727,7 @@ def test_example3_no_support_draws_panel_c_text_only(tmp_path: Path, cfg: GippaC
 
 def test_panels_a_and_b_unchanged_by_the_null_support(tmp_path: Path, cfg: GippaConfig) -> None:
     full = _full(tmp_path / "with")
+    _regions(full, 12)  # 12 region tests: panel b is drawn without the support (M12-04 P-10)
     bare = make_out(tmp_path / "without")
     for name in ("regions_stats", "islands", "determinants_model"):
         (bare / "tables" / f"{name}.tsv").write_bytes(
@@ -870,9 +872,9 @@ def test_style_checklist_passes_every_gated_item(
         grid = [round(-2.0 + 4.0 * k / 100, 4) for k in range(1, 100)]
         _tables(out, regions_stats=[_rs("R01", 0.02, 0.04)])
         _support(out, "null_regions", NR_GRID_COLUMNS, _nr_grid("R01", grid, 1.25))
-    else:
+    else:  # 10 region tests: drawn, not the all-small empty state (M12-04 P-10)
         out = make_out(tmp_path / "run")
-        _tables(out, regions_stats=[_rs("R01", 0.01, 0.02)])
+        _tables(out, regions_stats=[_rs(f"R{i:02d}", 0.01, 0.02, i=i) for i in range(10)])
     inst = _render(out, cfg)
     if case != "no_support":
         assert len(_rows(inst, "c")) > 0

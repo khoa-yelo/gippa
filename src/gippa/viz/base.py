@@ -216,9 +216,12 @@ def bin_edges(length: int, n: int) -> np.ndarray:
 title_pct = fmt_pct
 
 
-def plural(n: int, word: str) -> str:
-    """``"1 gene"`` / ``"2 genes"``: the count and the word, ``s`` added unless ``n == 1``."""
-    return f"{n} {word}" if n == 1 else f"{n} {word}s"
+def plural(n: int, word: str, many: str | None = None) -> str:
+    """``"1 gene"`` / ``"2 genes"``: the count and the word, ``s`` added unless ``n == 1``; an
+    irregular plural is passed as ``many`` (``plural(2, "COG category", "COG categories")``)."""
+    if n == 1:
+        return f"{n} {word}"
+    return f"{n} {word}s" if many is None else f"{n} {many}"
 
 
 def sig(value: object, digits: int = 2) -> str:

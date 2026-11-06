@@ -61,8 +61,12 @@ COLUMNS = [
     "ci_high",
     "q_value",
     "flags",
+    # M12-04 P-08: the forest is drawn in percentage points of the group's genes
+    "o_minus_e_pp",
+    "ci_low_pp",
+    "ci_high_pp",
 ]
-XLABEL = "observed \u2212 expected detected genes"
+XLABEL = "observed \u2212 expected detected (percentage points)"
 BLACK = "#000000"
 REGION_TYPES = ("prophage", "plasmid", "bgc", "crispr", "amr")
 
@@ -393,7 +397,7 @@ def test_row_labels_top_to_bottom(tmp_path: Path, cfg: GippaConfig) -> None:
     assert texts_top_to_bottom(inst.figure, "(n = ") == [
         "chr1 (n = 40)",
         "cds (n = 40)",
-        "J (n = 12)",
+        "J Translation (n = 12)",
         "prophage_1 (n = 25)",
         "prophage_2 (n = 25)",
         "plasmid_1 (n = 6)",
@@ -414,7 +418,7 @@ def test_one_point_per_row_at_its_estimate(tmp_path: Path, cfg: GippaConfig) -> 
     inst = _render(_out(tmp_path), cfg)
     ax = _forest(inst)
     xs = sorted(round(m.x, 9) for m in markers(ax))
-    assert xs == sorted(round(_num(v), 9) for v in inst.data["o_minus_e"])
+    assert xs == sorted(round(_num(v), 9) for v in inst.data["o_minus_e_pp"])
 
 
 def test_ci_bars_span_the_interval(tmp_path: Path, cfg: GippaConfig) -> None:
@@ -427,7 +431,7 @@ def test_ci_bars_span_the_interval(tmp_path: Path, cfg: GippaConfig) -> None:
     for coll in ax.collections:
         for seg in getattr(coll, "get_segments", list)():
             xs.update(round(float(x), 9) for x, _ in seg)
-    for lo, hi in zip(inst.data["ci_low"], inst.data["ci_high"], strict=True):
+    for lo, hi in zip(inst.data["ci_low_pp"], inst.data["ci_high_pp"], strict=True):
         assert round(_num(lo), 9) in xs and round(_num(hi), 9) in xs, (lo, hi)
 
 
@@ -459,16 +463,17 @@ def test_small_region_is_hollow_and_others_filled(tmp_path: Path, cfg: GippaConf
         region("prophage_2", "prophage", effect=2.5, q=0.2),
     ]
     ax = _forest(_render(_out(tmp_path, regions=regions), cfg))
-    small, big = markers_at_x(ax, -3.5), markers_at_x(ax, 2.5)
+    small, big = markers_at_x(ax, -14.0), markers_at_x(ax, 10.0)  # pp of n = 25
     assert small and all(m.hollow for m in small)
     assert big and not any(m.hollow for m in big)
 
 
 def test_region_rows_coloured_by_type_basic_rows_black(tmp_path: Path, cfg: GippaConfig) -> None:
     ax = _forest(_render(_out(tmp_path), cfg))
-    assert {style.REGION["prophage"]} <= markers_at_x(ax, -4.75)[0].colours()
-    assert {style.REGION["plasmid"]} <= markers_at_x(ax, 0.8)[0].colours()
-    assert markers_at_x(ax, 2.1)[0].colours() == {BLACK}
+    # pp: -4.75 / 25, 0.8 / 6 (at %.6g) and 2.1 / 40 genes
+    assert {style.REGION["prophage"]} <= markers_at_x(ax, -19.0)[0].colours()
+    assert {style.REGION["plasmid"]} <= markers_at_x(ax, 13.3333)[0].colours()
+    assert markers_at_x(ax, 5.25)[0].colours() == {BLACK}
 
 
 # --- titles -----------------------------------------------------------------------------------
@@ -487,7 +492,10 @@ def test_title_when_no_region_passes(tmp_path: Path, cfg: GippaConfig) -> None:
         PLASMID,
     ]
     inst = _render(_out(tmp_path, regions=regions), cfg)
-    assert inst.title == "No region departs from detectability at q ≤ 0.05; 2 regions tested"
+    assert inst.title == (
+        "No group departs from detectability at q ≤ 0.05 (2 regions, 1 replicon, 1 feature class, "
+        "1 COG category tested)"
+    )
 
 
 def test_title_alpha_from_stats_alpha_context(tmp_path: Path) -> None:
@@ -502,7 +510,8 @@ def test_title_alpha_from_stats_alpha_context(tmp_path: Path) -> None:
     )
     cfg = resolve_config(overrides=["stats.alpha.context=0.1"])
     assert _render(out, cfg).title == (
-        "No region departs from detectability at q ≤ 0.1; 2 regions tested"
+        "No group departs from detectability at q ≤ 0.1 (2 regions, 1 replicon, 1 feature class, "
+        "1 COG category tested)"
     )
 
 
@@ -551,7 +560,9 @@ def test_validation_like_run_rows_unestimated_and_no_region_title(
                flags="small_region;dosage_plus_regulation"),
     ]  # fmt: skip
     inst = _render(_out(tmp_path, summary=summary, regions=regions), cfg)
-    assert inst.title.startswith("No region departs from detectability at q ≤ 0.05")
+    # PR 6: kinds with no tested item are left out of the count
+    assert inst.title == ("No group departs from detectability at q ≤ 0.05 "
+                          "(1 replicon, 1 feature class tested)")  # fmt: skip
     assert texts(inst.figure).count("CI unestimated") >= 2
     assert _num(_row(inst, "replicon", "chr1")["o_minus_e"]) == 0.0
 
@@ -633,8 +644,11 @@ def test_property_region_order_and_title(rows: list[tuple[str, float | None, flo
         best = min(passing, key=lambda r: (float(str(r["q_value"])), *key(r)[:1], r["region_id"]))
         assert inst.title.startswith(f"{best['region_id']} ({best['region_type']}): 25 % detected")
     else:
+        n = len(tested)
+        regions_part = f"{n} region{'' if n == 1 else 's'}, " if n else ""
         assert inst.title == (
-            f"No region departs from detectability at q ≤ 0.05; {len(tested)} regions tested"
+            f"No group departs from detectability at q ≤ 0.05 "
+            f"({regions_part}1 replicon, 1 feature class, 1 COG category tested)"
         )
 
 
@@ -659,7 +673,10 @@ def test_renders_on_the_sim50k_golden_tables(tmp_path: Path, cfg: GippaConfig) -
         ("region", "prophage_1"),
         ("region", "amr_1"),
     ]
-    assert inst.title == "No region departs from detectability at q ≤ 0.05; 2 regions tested"
+    assert inst.title == (
+        "No group departs from detectability at q ≤ 0.05 "
+        "(2 regions, 1 replicon, 2 feature classes, 1 COG category tested)"
+    )
     write_instance(inst, "V07", "obs_vs_exp", tmp_path / "plots", ["svg", "png"], 100)
 
 
@@ -670,9 +687,11 @@ def test_renders_on_the_validation_run(tmp_path: Path, cfg: GippaConfig) -> None
     rows come first, then the two regions (lead fix: the summary is not header-only)."""
     inst = _render(VAL_OUT, cfg)
     keys = _keys(inst)
-    assert keys[-2:] == [("region", "plasmid_1"), ("region", "crispr_1")]
-    assert len(keys) > 2 and all(block != "region" for block, _ in keys[:-2])
-    assert inst.title == "No region departs from detectability at q ≤ 0.05; 0 regions tested"
+    # PR 6: crispr_1 has n = 0, so its row is dropped
+    assert keys[-1:] == [("region", "plasmid_1")]
+    assert len(keys) > 1 and all(block != "region" for block, _ in keys[:-1])
+    assert inst.title.startswith("No group departs from detectability at q ≤ 0.05 (")
+    assert "region" not in inst.title  # no region tested: the kind is left out
     assert "dosage_plus_regulation (untested)" in texts(inst.figure)
     paths = write_instance(inst, "V07", "obs_vs_exp", tmp_path / "plots", ["svg", "png"], 100)
     assert all(p.stat().st_size > 0 for p in paths)

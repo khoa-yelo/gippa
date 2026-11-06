@@ -427,7 +427,10 @@ def test_title_numbers_use_two_significant_digits(tmp_path: Path, cfg: GippaConf
 
 def test_constant_title_counts_drawn_families(tmp_path: Path, cfg: GippaConfig) -> None:
     summary = [*_bins([(0.4, 0.4, 87)]), *_overall(None, None, 0.24, constant=True)]
-    regions = [_region(0.2, i=0), _region(0.6, "hl_shift", i=1)]
+    regions = [_region(0.2, i=i) for i in range(10)]
+    regions += [
+        _region(0.6, "hl_shift", i=10 + i) for i in range(10)
+    ]  # M12-04 P-10: a family needs 10 tests to be drawn
     inst = _render(_out(tmp_path, detection_summary=summary, regions_stats=regions), cfg)
     assert inst.title == "Detectability constant; 2 test families shown"
 
@@ -456,7 +459,7 @@ def test_every_text_is_at_least_6_pt(tmp_path: Path, cfg: GippaConfig) -> None:
 
 def test_reliability_axes_labels_and_limits(tmp_path: Path, cfg: GippaConfig) -> None:
     ax = _ax(_render(_out(tmp_path, detection_summary=EX1_SUMMARY), cfg), "a")
-    assert ax.get_xlabel() == "mean predicted p_detect"
+    assert ax.get_xlabel() == "mean predicted detection probability"  # M12-04 P-10
     assert ax.get_ylabel() == "observed detection rate"
     assert tuple(round(v, 6) for v in ax.get_xlim()) == (0.0, 1.0)
     assert tuple(round(v, 6) for v in ax.get_ylim()) == (0.0, 1.0)
@@ -537,7 +540,11 @@ def test_other_sections_are_ignored(tmp_path: Path, cfg: GippaConfig) -> None:
 
 
 def test_detection_summary_absent_panel_a_not_available(tmp_path: Path, cfg: GippaConfig) -> None:
-    inst = _render(_out(tmp_path, regions_stats=[_region(0.01), _region(0.5, i=1)]), cfg)
+    regions = [
+        _region(0.01),
+        *(_region(0.5, i=i) for i in range(1, 10)),
+    ]  # M12-04 P-10: a family needs 10 tests to be drawn
+    inst = _render(_out(tmp_path, regions_stats=regions), cfg)
     assert any("not available" in t for t in _texts(_ax(inst, "a")))
     assert len(_rows(inst, "a")) == 0
     assert list(_hist_axes(inst)) == ["regions_stats / o_minus_e"]
@@ -548,19 +555,21 @@ def test_detection_summary_absent_panel_a_not_available(tmp_path: Path, cfg: Gip
 
 
 def test_example2_regions_histogram(tmp_path: Path, cfg: GippaConfig) -> None:
-    regions = [_region(p, i=i) for i, p in enumerate([0.01, 0.04, 0.5, 1.0])]
+    # example 2 plus six p = 0.5: a family needs 10 tests to be drawn (M12-04 P-10)
+    ps = [0.01, 0.04, 0.5, 1.0, *[0.5] * 6]
+    regions = [_region(p, i=i) for i, p in enumerate(ps)]
     inst = _render(_out(tmp_path, detection_summary=EX1_SUMMARY, regions_stats=regions), cfg)
     assert _families(inst) == [("regions_stats", "o_minus_e")]
     counts = _family_counts(inst, "regions_stats", "o_minus_e")
-    assert counts == {k: {0: 2, 10: 1, 19: 1}.get(k, 0) for k in range(20)}
+    assert counts == {k: {0: 2, 10: 7, 19: 1}.get(k, 0) for k in range(20)}
     b = _rows(inst, "b")
     assert [round(_num(e), 6) for e in b["bin"]] == [round(0.05 * k, 6) for k in range(20)]
     for col in ("x", "y", "metric", "value"):
         assert all(_isna(v) for v in b[col]), col
     ax = _hist_axes(inst)["regions_stats / o_minus_e"]
-    assert _bar_counts(ax) == {0: 2.0, 10: 1.0, 19: 1.0}
-    assert "regions_stats" in ax.get_title()
-    assert "n = 4" in ax.get_title()
+    assert _bar_counts(ax) == {0: 2.0, 10: 7.0, 19: 1.0}
+    assert "Region tests" in ax.get_title()  # M12-04 P-10: human panel names
+    assert "n = 10" in ax.get_title()
     assert tuple(round(v, 6) for v in ax.get_xlim()) == (0.0, 1.0)
 
 
@@ -574,15 +583,24 @@ def test_decimal_bin_edges_are_closed_on_the_left(tmp_path: Path, cfg: GippaConf
     assert sum(counts.values()) == 1
 
 
-def test_one_p_is_a_one_count_histogram(tmp_path: Path, cfg: GippaConfig) -> None:
+def test_one_p_is_counted_but_not_drawn(tmp_path: Path, cfg: GippaConfig) -> None:
+    """M12-04 P-10: one p-value keeps its data rows but gets no histogram; the run has nothing
+    else to draw, so V18 is the "Nothing to show" empty state."""
     inst = _render(_out(tmp_path, pairs=[_pair(0.42, "one_detected_pmiss")]), cfg)
-    ax = _hist_axes(inst)["pairs / one_detected_pmiss"]
-    assert _bar_counts(ax) == {8: 1.0}
-    assert "n = 1" in ax.get_title()
+    assert _family_counts(inst, "pairs", "one_detected_pmiss") == {
+        k: int(k == 8) for k in range(20)
+    }
+    assert _hist_axes(inst) == {}
+    assert inst.empty
+    assert inst.title.startswith("Nothing to show")
 
 
 def test_p_zero_is_drawn_in_the_first_bin(tmp_path: Path, cfg: GippaConfig) -> None:
-    inst = _render(_out(tmp_path, regions_stats=[_region(0.0), _region(0.3, i=1)]), cfg)
+    regions = [
+        _region(0.0),
+        *(_region(0.3, i=i) for i in range(1, 10)),
+    ]  # M12-04 P-10: a family needs 10 tests to be drawn
+    inst = _render(_out(tmp_path, regions_stats=regions), cfg)
     assert _family_counts(inst, "regions_stats", "o_minus_e")[0] == 1
     assert _bar_counts(_hist_axes(inst)["regions_stats / o_minus_e"])[0] == 1.0
 
@@ -600,10 +618,7 @@ def test_family_rows_filters(tmp_path: Path, cfg: GippaConfig) -> None:
     assert _families(inst) == [("regions_stats", "o_minus_e"), ("pairs", "missed_operon_decoy")]
     assert sum(_family_counts(inst, "regions_stats", "o_minus_e").values()) == 1
     assert sum(_family_counts(inst, "pairs", "missed_operon_decoy").values()) == 1
-    assert set(_hist_axes(inst)) == {
-        "regions_stats / o_minus_e",
-        "pairs / missed_operon_decoy",
-    }
+    assert _hist_axes(inst) == {}  # one test each: listed, not drawn (M12-04 P-10)
 
 
 def test_composite_family_keys_and_sort_order(tmp_path: Path, cfg: GippaConfig) -> None:
@@ -619,7 +634,7 @@ def test_composite_family_keys_and_sort_order(tmp_path: Path, cfg: GippaConfig) 
         ("enrichment_detection", "kegg / under"),
         ("enrichment_gsea", "go_bp"),
     ]
-    assert len(_hist_axes(inst)) == 9
+    assert _hist_axes(inst) == {}  # every family has fewer than 10 tests (M12-04 P-10)
     data = inst.data
     assert list(data["panel"]) == sorted(data["panel"])
     b = _rows(inst, "b")
@@ -665,7 +680,8 @@ def test_enrichment_tables_are_read_when_present(tmp_path: Path, cfg: GippaConfi
 
 
 def _twenty_families() -> tuple[dict[str, list[dict]], list[tuple[str, str]]]:
-    """20 families with distinct sizes 1..20 (in the listing order below)."""
+    """20 families with distinct sizes 10..29 (in the listing order below); every one is
+    drawable (M12-04 P-10: at least 10 tests), so only the top-16 rule drops families."""
     fams: list[tuple[str, str, Any]] = []
     for c in COLLECTIONS:
         for d in ("over", "under"):
@@ -679,7 +695,7 @@ def _twenty_families() -> tuple[dict[str, list[dict]], list[tuple[str, str]]]:
         "regions_stats": [],
     }
     i = 0
-    for size, (table, _, key) in enumerate(fams, start=1):
+    for size, (table, _, key) in enumerate(fams, start=10):
         for j in range(size):
             p = (j + 0.5) / (size + 1)
             if table == "enrichment_detection":
@@ -699,7 +715,7 @@ def test_example5_twenty_families_draw_the_16_largest(tmp_path: Path, cfg: Gippa
     assert len(_rows(inst, "b")) == 20 * 20
     drawn = set(_hist_axes(inst))
     assert drawn == {f"{t} / {f}" for t, f in fams[4:]}
-    for size, (t, f) in enumerate(fams, start=1):
+    for size, (t, f) in enumerate(fams, start=10):
         assert sum(_family_counts(inst, t, f).values()) == size
 
 
@@ -751,6 +767,9 @@ def test_property_counts_match_exact_bins_and_ignore_row_order(
     for p in finite:
         expected[_expected_bin(p)] += 1
     assert counts == expected
+    if len(finite) < 10:  # M12-04 P-10: counted in the data, not drawn
+        assert "regions_stats / o_minus_e" not in _hist_axes(first)
+        return
     assert sum(_bar_counts(_hist_axes(first)["regions_stats / o_minus_e"]).values()) == len(finite)
 
 
@@ -764,7 +783,8 @@ def test_property_top_16_by_size(sizes: list[int], n_fam: int) -> None:
         ("autocorrelation", "morans_i", "gene_label"),
         ("autocorrelation", "morans_i", "tu_block"),
     ]
-    chosen = list(zip(pool[:n_fam], sizes[:n_fam], strict=True))
+    # sizes 10..29: every family is drawable (M12-04 P-10), only the top-16 rule drops some
+    chosen = [(f, s + 9) for f, s in zip(pool[:n_fam], sizes[:n_fam], strict=True)]
     tables: dict[str, list[dict]] = {
         "enrichment_detection": [],
         "enrichment_gsea": [],
@@ -831,8 +851,9 @@ def test_renders_on_the_sim50k_golden_tables(tmp_path: Path, cfg: GippaConfig) -
     for name in ("detection_summary", "regions_stats"):
         shutil.copyfile(GOLDEN / f"{name}.tsv", out / "tables" / f"{name}.tsv")
     inst = _render(out, cfg)
-    assert CONSTANT_TEXT in _texts(_ax(inst, "a"))  # the golden fit is constant
-    assert inst.title == "Detectability constant; 2 test families shown"
+    # the golden fit is constant and both families have 2 tests: nothing to draw (M12-04 P-10)
+    assert inst.empty
+    assert inst.title == "Nothing to show: no test family has 10 or more tests in this run."
     assert _families(inst) == [("regions_stats", "hl_shift"), ("regions_stats", "o_minus_e")]
     for fam in ("hl_shift", "o_minus_e"):
         assert sum(_family_counts(inst, "regions_stats", fam).values()) == 2

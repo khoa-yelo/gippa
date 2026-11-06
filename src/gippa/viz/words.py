@@ -260,6 +260,91 @@ FEATURE_LABEL: Mapping[str, str] = MappingProxyType(
     }
 )
 
+#: run flag -> why a feature column is 100 % missing (V17 panel e); ``FLAG_TEXT`` keeps its words
+NOT_COMPUTED: Mapping[str, str] = MappingProxyType(
+    {
+        "layer_missing:codon": "not computed: codon-usage layer off",
+        "layer_missing:ostir": "not computed: translation-initiation layer off",
+        "layer_missing:promoters": "not computed: promoter layer off",
+        "layer_missing:terminators": "not computed: terminator layer off",
+        "layer_missing:tx_rates": "not computed: transcription-rate layer off",
+        "cai_reference_missing": "not computed: no CAI reference",
+    }
+)
+#: V17 panel (e): the name of ``abundance_raw`` (no ``FEATURE_LABEL`` entry)
+RAW_ABUNDANCE = "raw abundance"
+
+#: V07: block -> bold group header; the note under a forest cut at its row cap
+V07_HEADER: Mapping[str, str] = MappingProxyType(
+    {
+        "replicon": "Replicon",
+        "feature_class": "Feature class",
+        "cog_category": "COG category",
+        "region": "Region",
+    }
+)
+V07_MORE_ROWS = "{k} more rows in the data TSV"
+#: V07 title: block -> (singular, plural) of the tested kind
+V07_KIND: Mapping[str, tuple[str, str]] = MappingProxyType(
+    {
+        "region": ("region", "regions"),
+        "replicon": ("replicon", "replicons"),
+        "feature_class": ("feature class", "feature classes"),
+        "cog_category": ("COG category", "COG categories"),
+    }
+)
+
+#: V18 panel (b): families under 10 tests, and the empty state when every family is
+V18_SMALL_NOTE = "Not shown (fewer than 10 tests): "
+V18_ALL_SMALL = "Nothing to show: no test family has 10 or more tests in this run."
+#: V18 test family table -> (panel title, short name) templates over the family's key words
+V18_FAMILY_NAMES: Mapping[str, tuple[str, str]] = MappingProxyType(
+    {
+        "regions_stats": ("Region tests ({0})", "region {0}"),
+        "autocorrelation": ("{0}, {1} null", "{0}, {1} null"),
+        "pairs": ("Pair tests ({0})", "pair {0}"),
+        "enrichment_detection": ("Enrichment ({0}, {1})", "enrichment {0} {1}"),
+        "enrichment_gsea": ("GSEA ({0})", "GSEA {0}"),
+    }
+)
+#: V18: family key column -> value -> words (schema enums; others: underscores -> spaces)
+V18_KEY_WORDS: Mapping[str, Mapping[str, str]] = MappingProxyType(
+    {
+        "stat": {"o_minus_e": "O \N{MINUS SIGN} E", "hl_shift": "abundance shift"},
+        "statistic": {
+            "morans_i": "Moran's I",
+            "join_count_bb": "Join count",
+            "oriter_slope": "ori\N{EN DASH}ter slope",
+        },
+        "null_model": {"gene_label": "gene-label", "tu_block": "TU-block"},
+        "test": {
+            "both_detected_t": "both detected",
+            "one_detected_pmiss": "one detected",
+            "missed_operon_decoy": "missed-operon decoy",
+        },
+        "collection": {
+            "cog": "COG",
+            "kegg": "KEGG",
+            "go_bp": "GO BP",
+            "go_mf": "GO MF",
+            "go_cc": "GO CC",
+            "go_slim": "GO slim",
+        },
+    }
+)
+#: V18 panel (c) titles (null distributions)
+V18_NULL_TITLE: Mapping[str, str] = MappingProxyType(
+    {
+        "regions_stats": "Region {region}\n({stat})",
+        "islands_genome": "Islands, whole genome",
+        "islands": "Islands on {contig}",
+        "determinants_model": "Determinants model\n({model})",
+    }
+)
+V18_MODEL_NAME: Mapping[str, str] = MappingProxyType(
+    {"elastic_net": "elastic net", "lightgbm": "LightGBM", "univariate": "univariate"}
+)
+
 #: detection tier -> sentence without the tier name (the caller adds it); ``{alpha}`` is the
 #: run's FDR level
 TIER_TEXT: Mapping[str, str] = MappingProxyType(

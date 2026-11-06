@@ -57,7 +57,7 @@ from gippa.config import GippaConfig, resolve_config
 from gippa.io.plot_files import write_instance
 from gippa.io.run_view import RunView
 from gippa.viz import base, style
-from gippa.viz.base import Instance, Skip
+from gippa.viz.base import Instance, Skip, plural
 
 REPO = Path(__file__).resolve().parents[3]
 VAL_PREFLIGHT = REPO / "tests" / "data" / "viz" / "val_mvp_preflight.json"
@@ -349,7 +349,8 @@ def test_axis_labels_per_panel(tmp_path: Path, cfg: GippaConfig) -> None:
 def test_title_states_counts_and_measured_share(tmp_path: Path, cfg: GippaConfig) -> None:
     """Example 4: 3 of 4 non-partial genes measured; 1 warning, 0 errors."""
     inst = _render(_default_out(tmp_path), cfg)
-    expected = "1 preflight warnings, 0 errors; 75 % of genes have a measured abundance"
+    # M12-04 P-16: plurals, and both shares (every non-partial gene is detected)
+    expected = "1 preflight warning, 0 errors; 75 % with measured abundance (100 % detected)"
     assert inst.title == expected
     assert expected in [t.get_text() for t in inst.figure.findobj(Text)]
     assert "express" not in inst.title.lower()
@@ -392,7 +393,7 @@ def test_example1_validation_preflight_counts_and_title(tmp_path: Path, cfg: Gip
     msg = _cell(a, "message", "genome.contiguity")
     assert _isna(msg["value"])
     assert len(a[a["group"] == "message"]) == 1
-    assert inst.title.startswith("1 preflight warnings, 0 errors")
+    assert inst.title.startswith("1 preflight warning, 0 errors")
 
 
 def test_example1_validation_replicons_are_panel_b(tmp_path: Path, cfg: GippaConfig) -> None:
@@ -419,7 +420,7 @@ def test_warning_cell_lists_warn_and_error_messages(tmp_path: Path, cfg: GippaCo
     assert "genome.parse" not in text
     a = _rows(inst, "a")
     assert sorted(a[a["group"] == "message"]["key"]) == ["genome.contiguity", "peptides.content"]
-    assert inst.title.startswith("1 preflight warnings, 1 errors;")
+    assert inst.title.startswith("1 preflight warning, 1 error;")
 
 
 def test_warning_cell_truncates_to_10_lines(tmp_path: Path, cfg: GippaConfig) -> None:
@@ -457,7 +458,8 @@ def test_property_panel_a_counts_every_check(levels: list[str]) -> None:
     assert (a["group"] == "message").sum() == n_msg
     assert len(a) == 4 + n_msg
     assert inst.title.startswith(
-        f"{levels.count('warn')} preflight warnings, {levels.count('error')} errors;"
+        f"{plural(levels.count('warn'), 'preflight warning')}, "
+        f"{plural(levels.count('error'), 'error')};"
     )
 
 
@@ -616,7 +618,7 @@ def test_no_abundance_empty_panel_and_title(tmp_path: Path, cfg: GippaConfig, ca
         for i in range(3)
     ]
     inst = _render(_default_out(tmp_path, genes=genes), cfg)
-    assert inst.title == "1 preflight warnings; no abundance input"
+    assert inst.title == "1 preflight warning; no abundance input"
     assert len(_rows(inst, "d")) == 0
     ax = _ax(inst, "d")
     assert _drawn(ax) == []
@@ -679,8 +681,8 @@ def test_property_missingness_and_measured_share(genes: list[tuple[bool, bool, b
     assert _num(row["value"]) == pytest.approx(sum(g[1] for g in whole) / len(whole))
     n_measured = sum(g[2] for g in whole)
     if n_measured:
-        pct = int(100 * n_measured / len(whole) + 0.5)
-        assert inst.title.endswith(f"; {pct} % of genes have a measured abundance")
+        pct = style.fmt_pct(n_measured, len(whole))  # every gene_row is detected
+        assert inst.title.endswith(f"; {pct} with measured abundance (100 % detected)")
     else:
         assert inst.title.endswith("; no abundance input")
 
@@ -698,7 +700,7 @@ def test_example6_no_genes_tsv_marks_d_and_e_not_available(
         assert any("not available" in t for t in _texts(ax)), label
         assert _drawn(ax) == []
     assert len(_drawn(_ax(inst, "c"))) > 0
-    assert inst.title.startswith("1 preflight warnings")
+    assert inst.title.startswith("1 preflight warning,")
 
 
 # --- files and determinism --------------------------------------------------------------------
@@ -741,7 +743,7 @@ def test_render_does_not_mutate_between_calls(tmp_path: Path, cfg: GippaConfig) 
 def test_renders_on_the_validation_run(tmp_path: Path, cfg: GippaConfig) -> None:
     inst = _render(VAL_OUT, cfg)
     assert set(inst.data["panel"]) >= {"a", "b", "c"}
-    assert inst.title.startswith("1 preflight warnings")
+    assert inst.title.startswith("1 preflight warning,")
     paths = write_instance(inst, "V17", "qc", tmp_path / "plots", ["svg", "png"], 100)
     assert all(p.stat().st_size > 0 for p in paths)
 
