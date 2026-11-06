@@ -459,7 +459,7 @@ def test_every_text_is_at_least_6_pt(tmp_path: Path, cfg: GippaConfig) -> None:
 
 def test_reliability_axes_labels_and_limits(tmp_path: Path, cfg: GippaConfig) -> None:
     ax = _ax(_render(_out(tmp_path, detection_summary=EX1_SUMMARY), cfg), "a")
-    assert ax.get_xlabel() == "mean predicted p_detect"
+    assert ax.get_xlabel() == "mean predicted detection probability"  # M12-04 P-10
     assert ax.get_ylabel() == "observed detection rate"
     assert tuple(round(v, 6) for v in ax.get_xlim()) == (0.0, 1.0)
     assert tuple(round(v, 6) for v in ax.get_ylim()) == (0.0, 1.0)

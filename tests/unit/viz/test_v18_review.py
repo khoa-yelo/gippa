@@ -306,8 +306,9 @@ def test_b1_counts_are_per_family(tmp_path: Path, cfg: GippaConfig) -> None:
         _autocorr(_exact(-0.1), "morans_i", "tu_block", 1),
         _autocorr(_exact(math.inf), "morans_i", "tu_block", 2),
         _autocorr(0.6, "morans_i", "tu_block", 3),
-        # 10 tests so the tu_block family is drawn (M12-04 P-10)
-        *(_autocorr(0.6, "morans_i", "tu_block", lag) for lag in range(4, 11)),
+        # 10 p-values in [0, 1] so the tu_block family is drawn (M12-04 P-10; the -0.1 and
+        # inf rows do not count)
+        *(_autocorr(0.6, "morans_i", "tu_block", lag) for lag in range(4, 13)),
     ]
     inst = _render(_out(tmp_path, autocorrelation=acf), cfg)
     got = {

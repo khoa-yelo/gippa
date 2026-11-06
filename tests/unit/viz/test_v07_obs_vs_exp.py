@@ -493,7 +493,8 @@ def test_title_when_no_region_passes(tmp_path: Path, cfg: GippaConfig) -> None:
     ]
     inst = _render(_out(tmp_path, regions=regions), cfg)
     assert inst.title == (
-        "No group departs from detectability at q ≤ 0.05 (2 regions, 3 classes tested)"
+        "No group departs from detectability at q ≤ 0.05 (2 regions, 1 replicon, 1 feature class, "
+        "1 COG category tested)"
     )
 
 
@@ -509,7 +510,8 @@ def test_title_alpha_from_stats_alpha_context(tmp_path: Path) -> None:
     )
     cfg = resolve_config(overrides=["stats.alpha.context=0.1"])
     assert _render(out, cfg).title == (
-        "No group departs from detectability at q ≤ 0.1 (2 regions, 3 classes tested)"
+        "No group departs from detectability at q ≤ 0.1 (2 regions, 1 replicon, 1 feature class, "
+        "1 COG category tested)"
     )
 
 
@@ -558,7 +560,9 @@ def test_validation_like_run_rows_unestimated_and_no_region_title(
                flags="small_region;dosage_plus_regulation"),
     ]  # fmt: skip
     inst = _render(_out(tmp_path, summary=summary, regions=regions), cfg)
-    assert inst.title.startswith("No group departs from detectability at q ≤ 0.05 (0 regions")
+    # PR 6: kinds with no tested item are left out of the count
+    assert inst.title == ("No group departs from detectability at q ≤ 0.05 "
+                          "(1 replicon, 1 feature class tested)")  # fmt: skip
     assert texts(inst.figure).count("CI unestimated") >= 2
     assert _num(_row(inst, "replicon", "chr1")["o_minus_e"]) == 0.0
 
@@ -640,9 +644,11 @@ def test_property_region_order_and_title(rows: list[tuple[str, float | None, flo
         best = min(passing, key=lambda r: (float(str(r["q_value"])), *key(r)[:1], r["region_id"]))
         assert inst.title.startswith(f"{best['region_id']} ({best['region_type']}): 25 % detected")
     else:
+        n = len(tested)
+        regions_part = f"{n} region{'' if n == 1 else 's'}, " if n else ""
         assert inst.title == (
             f"No group departs from detectability at q ≤ 0.05 "
-            f"({len(tested)} region{'' if len(tested) == 1 else 's'}, 3 classes tested)"
+            f"({regions_part}1 replicon, 1 feature class, 1 COG category tested)"
         )
 
 
@@ -668,7 +674,8 @@ def test_renders_on_the_sim50k_golden_tables(tmp_path: Path, cfg: GippaConfig) -
         ("region", "amr_1"),
     ]
     assert inst.title == (
-        "No group departs from detectability at q ≤ 0.05 (2 regions, 4 classes tested)"
+        "No group departs from detectability at q ≤ 0.05 "
+        "(2 regions, 1 replicon, 2 feature classes, 1 COG category tested)"
     )
     write_instance(inst, "V07", "obs_vs_exp", tmp_path / "plots", ["svg", "png"], 100)
 
@@ -680,9 +687,11 @@ def test_renders_on_the_validation_run(tmp_path: Path, cfg: GippaConfig) -> None
     rows come first, then the two regions (lead fix: the summary is not header-only)."""
     inst = _render(VAL_OUT, cfg)
     keys = _keys(inst)
-    assert keys[-2:] == [("region", "plasmid_1"), ("region", "crispr_1")]
-    assert len(keys) > 2 and all(block != "region" for block, _ in keys[:-2])
-    assert inst.title.startswith("No group departs from detectability at q ≤ 0.05 (0 regions, ")
+    # PR 6: crispr_1 has n = 0, so its row is dropped
+    assert keys[-1:] == [("region", "plasmid_1")]
+    assert len(keys) > 1 and all(block != "region" for block, _ in keys[:-1])
+    assert inst.title.startswith("No group departs from detectability at q ≤ 0.05 (")
+    assert "region" not in inst.title  # no region tested: the kind is left out
     assert "dosage_plus_regulation (untested)" in texts(inst.figure)
     paths = write_instance(inst, "V07", "obs_vs_exp", tmp_path / "plots", ["svg", "png"], 100)
     assert all(p.stat().st_size > 0 for p in paths)

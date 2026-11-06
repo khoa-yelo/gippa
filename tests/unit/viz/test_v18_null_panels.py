@@ -105,8 +105,8 @@ TABLE_ORDER = ["regions_stats", "islands", "determinants_model"]
 GENOME = "genome / abs"
 MAX_REPLICONS = 7
 PER_REPLICON = "per-replicon maximum"
-UNCALIBRATED_NOTE = "(uncalibrated, ADR-0034)"
-XLABEL_ISLANDS = "max |S_w| over windows"
+UNCALIBRATED_NOTE = "(uncalibrated)"  # M12-04 PR 6: no ADR numbers
+XLABEL_ISLANDS = "largest window scan\nstatistic (standardised)"  # M12-04 P-10
 XLABEL_DETERMINANTS = "mean CV R\u00b2 (null: permuted response)"
 
 
@@ -683,7 +683,7 @@ def test_uncalibrated_caption_while_flagged(tmp_path: Path, cfg: GippaConfig) ->
     inst = _render(out, cfg)
     flagged = _texts(_ax(inst, "determinants_model / lightgbm"))
     p = style.fmt_q(0.001)  # M12-04 P-18
-    assert any(f"null p {p} (uncalibrated, ADR-0034)" in t for t in flagged), flagged
+    assert any(f"null p {p} {UNCALIBRATED_NOTE}" in t for t in flagged), flagged
     plain = _texts(_ax(inst, "determinants_model / elastic_net"))
     assert any(f"null p {p}" in t for t in plain), plain
     assert any(UNCALIBRATED_NOTE in t for t in plain), plain  # unconditional (lead decision 4)

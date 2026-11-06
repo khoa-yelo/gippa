@@ -271,12 +271,15 @@ def _add_determinant_nulls(out: Path) -> None:
 
 
 def _region_ids(out: Path) -> set[str]:
-    """The run's own region IDs (``annotation/regions.tsv``, ``tables/regions_stats.tsv``):
-    identifiers from the data, which V18 text may show (lead, review round 1)."""
+    """The run's own region and contig IDs (``annotation/regions.tsv``,
+    ``tables/regions_stats.tsv``, ``tables/islands.tsv``): identifiers from the data, which
+    V18 text may show (lead, review rounds 1 and 2)."""
     ids: set[str] = set()
-    for rel in ("annotation/regions.tsv", "tables/regions_stats.tsv"):
+    for rel, col in (("annotation/regions.tsv", "region_id"),
+                     ("tables/regions_stats.tsv", "region_id"),
+                     ("tables/islands.tsv", "contig")):  # fmt: skip
         if (out / rel).is_file():
-            ids |= {r["region_id"] for r in h5.read_table(out, rel) if r.get("region_id")}
+            ids |= {r[col] for r in h5.read_table(out, rel) if r.get(col)}
     return ids
 
 
@@ -284,7 +287,11 @@ def _bad_tokens(inst: Instance, out: Path) -> list[str]:
     """Texts with an ADR number or a ``\\w+_\\w+`` token that is not one of the run's region IDs."""
     allowed = _region_ids(out)
     found = [inst.title, *h.texts(inst.figure)]
-    raw = [t for t in found if any(m not in allowed for m in RAW_TOKEN.findall(t))]
+
+    def ok(m: str) -> bool:  # a data ID, or a piece of one shortened with an ellipsis
+        return any(m in a for a in allowed)
+
+    raw = [t for t in found if not all(ok(m) for m in RAW_TOKEN.findall(t))]
     return raw + [t for t in found if ADR.search(t) and t not in raw]
 
 
