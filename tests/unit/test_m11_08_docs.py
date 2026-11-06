@@ -17,7 +17,7 @@ GUIDE = [f"get-started/{p}.md" for p in ("install", "setup-databases", "manual-d
     for p in ("inputs", "run", "outputs", "interpreting-results", "plots-and-report", "compare",
               "makedb", "convert", "licences", "runtimes")
 ]  # fmt: skip
-TUTORIALS = ["tutorials/example-routes.md", "tutorials/nissle-pilot.md"]  # guarded from the stubs on
+TUTORIALS = ["tutorials/example-routes.md", "tutorials/nissle-pilot.md"]
 CHECKED = GUIDE + TUTORIALS
 PLOTS = {"V01": "circos", "V02": "abundance_landscape", "V03": "locus", "V05": "mapping_sankey",
          "V06": "mapping_fdr", "V07": "obs_vs_exp", "V08": "cog_abundance", "V10": "correlogram",
