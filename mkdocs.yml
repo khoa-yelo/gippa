@@ -63,7 +63,7 @@ nav:
       - user-guide/platforms.md
       - user-guide/runtimes.md
   - Tutorials:
-      - tutorials/ecoli-k12.md
+      - tutorials/example-routes.md
       - tutorials/nissle-pilot.md
   - Reference:
       - reference/cli.md
