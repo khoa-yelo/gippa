@@ -217,16 +217,33 @@ def _has_one(variants: pd.DataFrame) -> bool:
     return any(class_error_value(v) == 1 for v in alt["class_error_rate"])
 
 
+def _shown(variants: pd.DataFrame) -> pd.DataFrame:
+    """The ``call = ALT`` rows panel (b) draws: all of them up to ``SHOWN_SITES``, else the top
+    ``SHOWN_SITES`` (``top_alt_sites``)."""
+    alt = variants[variants["call"] == "ALT"]
+    return alt if len(alt) <= SHOWN_SITES else top_alt_sites(variants, SHOWN_SITES)
+
+
+def shown_unestimated(variants: pd.DataFrame) -> bool:
+    """No site panel (b) shows has a class error rate. Pure."""
+    return all(class_error_value(v) is None for v in _shown(variants)["class_error_rate"])
+
+
 def title(variants: pd.DataFrame) -> str:
     """Counts and class-error range over the ``call = ALT`` sites (lead decision 4); the range
-    says the rate is pooled per class over ALT and mixed sites (#325, V12 label fix)."""
+    says the rate is pooled per class over ALT and mixed sites (#325, V12 label fix). When no
+    site panel (b) shows (:func:`_shown`) has a rate, the clause is :data:`UNESTIMATED` and the
+    site lines leave it out (PR 10 review, lead decision: judged over the shown sites)."""
     alt = variants[variants["call"] == "ALT"]
     h, c = int((alt["confidence"] == "high").sum()), int((alt["confidence"] == "candidate").sum())
     rates = [r for r in (class_error_value(v) for v in alt["class_error_rate"]) if r is not None]
     lo, hi = (style.fmt_num(min(rates)), style.fmt_num(max(rates))) if rates else ("", "")
-    error = UNESTIMATED if not rates else f"class error {lo if lo == hi else f'{lo}{EN_DASH}{hi}'}"
-    if _has_one(variants):
-        error += DEGENERATE_MARK
+    if not shown_unestimated(variants):
+        error = f"class error {lo if lo == hi else f'{lo}{EN_DASH}{hi}'}"
+        if _has_one(variants):
+            error += DEGENERATE_MARK
+    else:
+        error, rates = UNESTIMATED, []
     pooled = f", {POOLED}" if rates else ""
     top = ""
     if len(alt) > SHOWN_SITES:
@@ -384,7 +401,8 @@ def variants(view: RunView, cfg: GippaConfig) -> list[base.Instance] | base.Skip
     rows_a = panel_a(table)
     rows_b, peps = panel_b(view, table)
     refs = [r["ref_window"] is not None and r["alt_type"] not in UNALIGNED for r in rows_b]
-    footnote = _has_one(table)
+    shared = shown_unestimated(table)  # the title states UNESTIMATED once; the lines omit it
+    footnote = _has_one(table) and not shared  # the title carries the "*" mark
     h_a, h_b = 1.9, (sum(2.4 + ref for ref in refs) + 1.5 + footnote) * LINE_PT / 72 + 0.15
     height = h_a + h_b + 0.35
     fig = style.new_figure("double", height)
@@ -393,8 +411,9 @@ def variants(view: RunView, cfg: GippaConfig) -> list[base.Instance] | base.Skip
     ax_b = fig.add_axes((0.03, 0.1 / height, 0.94, h_b / height), label="b")
     _draw_a(ax_a, rows_a)
     text = title(table)
-    _draw_b(ax_b, rows_b, peps, _windows(view), footnote, UNESTIMATED in text)
+    _draw_b(ax_b, rows_b, peps, _windows(view), footnote, shared)
     if not rows_b:
         ax_b.text(0.0, 0.9, "no ALT site", transform=ax_b.transAxes, color="#555555")
-    fig.suptitle(text, y=1 - 0.12 / height)
+    # the top-15 clause on its own line: the one-line title is wider than the figure
+    fig.suptitle(text.replace(" (top ", "\n(top ", 1), y=1 - 0.12 / height)
     return [base.Instance(None, fig, data_frame([*rows_a, *rows_b]), text)]
