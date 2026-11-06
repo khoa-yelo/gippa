@@ -149,7 +149,7 @@ def test_every_nav_page_exists(cfg: Any) -> None:
                 ]
             ],
         ),
-        ("Tutorials", ["tutorials/ecoli-k12.md", "tutorials/nissle-pilot.md"]),
+        ("Tutorials", ["tutorials/example-routes.md", "tutorials/nissle-pilot.md"]),
         (
             "Reference",
             [
