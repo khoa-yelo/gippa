@@ -29,7 +29,7 @@ from matplotlib.figure import Figure
 from matplotlib.lines import Line2D
 from matplotlib.ticker import FuncFormatter
 
-from gippa.viz import base, style
+from gippa.viz import base, function_terms, style
 from gippa.viz.interactive import interactive
 
 if TYPE_CHECKING:
@@ -356,6 +356,9 @@ def enrichment(view: RunView, cfg: GippaConfig) -> list[base.Instance] | base.Sk
     if not len(gsea) and not len(ora):
         missing = all(f"layer_missing:{x}" in view.run_flags() for x in ("go", "kegg", "cog"))
         msg = NO_RESOURCES if missing else EMPTY
+        colls = function_terms.collections(view)
+        if function_terms.no_terms(colls):  # coverage 0 everywhere (M12-04 PR 8)
+            msg = no_terms_title(colls or {})
         return [base.empty_state("V14", "enrichment", msg, COLUMNS, "double")]
     by_key = {(str(r["collection"]), str(r["term"])): r for r in gsea.to_dict("records")}
     sets = running_sets(support, by_key) if len(gsea) and support is not None else []
@@ -370,6 +373,14 @@ def enrichment(view: RunView, cfg: GippaConfig) -> list[base.Instance] | base.Sk
     fig = _figure(sets, finite, sel, level, NO_SUPPORT if len(gsea) else NO_ABUNDANCE, no_b)
     fig.suptitle(text.replace("; ", ";\n"), y=1 - 0.08 / fig.get_figheight(), va="top")
     return [base.Instance(None, fig, data_frame(sets, finite, sel), text)]
+
+
+def no_terms_title(colls: Mapping[str, Any]) -> str:
+    """The V14 empty state when no collection has a term (M12-04 PR 8)."""
+    return (
+        f"Nothing to show: no gene has a {function_terms.names(colls)} term. Enrichment "
+        "needs genes with function terms."
+    )
 
 
 def data_frame(

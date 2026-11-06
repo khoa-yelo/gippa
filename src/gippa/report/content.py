@@ -27,6 +27,7 @@ from gippa.data import calibration
 from gippa.io.run_view import RunView
 from gippa.io.tsv import format_value
 from gippa.model.genetic_code import codon_table, table_name
+from gippa.viz import function_terms
 from gippa.viz.style import fmt_num, fmt_q
 from gippa.viz.words import plain
 
@@ -185,9 +186,24 @@ def _safe(view: RunView, key: str) -> pd.DataFrame | None:
         return None
 
 
+#: the second sentence of the no-terms notice (M12-04 PR 8)
+NO_TERMS_LIGHT = ("With the Bakta light database this is expected: rerun with the full database "
+                  "to get function results.")  # fmt: skip
+NO_TERMS_CHECK = "Check the annotation source."
+
+
+def function_no_terms(view: RunView) -> bool:
+    """Whether the Function section is the no-terms notice alone (M12-04 PR 8)."""
+    return function_terms.no_terms(function_terms.collections(view))
+
+
 def _function(view: RunView, doc: Mapping[str, Any] | None) -> list[dict[str, Any]]:
     out: list[dict[str, Any]] = []
     flags = view.run_flags()
+    colls = function_terms.collections(view)
+    if colls is not None and function_terms.no_terms(colls):
+        second = NO_TERMS_LIGHT if "bakta_db_light" in flags else NO_TERMS_CHECK
+        return [_p(f"{function_terms.no_terms_sentence(colls)} {second}", cls="notice")]
     gsea = _safe(view, "enrichment_gsea") if view.has("enrichment_gsea") else None
     if view.has("enrichment_gsea"):
         out += [_p(t, "function-gsea") for t in GSEA]
@@ -201,6 +217,8 @@ def _function(view: RunView, doc: Mapping[str, Any] | None) -> list[dict[str, An
         f"{c} {format_value(v)}"
         for c, v in cats.drop_duplicates("collection")[["collection", "coverage"]].itertuples(False)
     )  # fmt: skip
+    if colls is not None:  # the event first, then category_summary (M12-04 PR 8)
+        cov = function_terms.coverage_note(colls)
     out.append(_p(f"Annotation coverage leans toward well-studied genes; coverage per "
                   f"collection: {cov or NOT_RECORDED}.", "function"))  # fmt: skip
     if "bakta_db_light" in flags:
@@ -208,7 +226,7 @@ def _function(view: RunView, doc: Mapping[str, Any] | None) -> list[dict[str, An
                       "the full DB."))  # fmt: skip
     if no_kegg:
         out.append(_p(KEGG_SKIPPED))
-    else:
+    elif colls is None or function_terms.kegg_terms(colls):
         date = kegg_date(doc) or NOT_RECORDED_RUN
         out.append(_p(f"{KEGG_TERMS} KEGG retrieval date: {date}."))
     return out

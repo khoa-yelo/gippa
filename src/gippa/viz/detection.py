@@ -21,6 +21,7 @@ from matplotlib.figure import Figure
 from matplotlib.patches import Patch
 
 from gippa.io.cog_categories import cog_descriptions
+from gippa.viz import function_terms
 from gippa.viz.base import Instance, Skip, empty_state, plot, plural
 from gippa.viz.style import (
     ABUNDANCE_FALLBACK,
@@ -432,7 +433,10 @@ def _abundance_figure(cats: Sequence[_Cat], title: str,
 
 @plot("V08", "cog_abundance", needs=("genes_tsv",))
 def cog_abundance(view: RunView, cfg: GippaConfig) -> list[Instance] | Skip:
-    """§10.2 V8: log2 abundance per COG category, sorted by median, with detected fractions."""
+    """§10.2 V8: log2 abundance per COG category, sorted by median, with detected fractions;
+    skipped when the run's function event shows no term in any collection (M12-04 PR 8)."""
+    if function_terms.no_terms(function_terms.collections(view)):
+        return Skip(function_terms.NO_TERMS)
     genes = view.table("genes_tsv")
     if genes is None:
         return Skip("input_absent:genes_tsv")
