@@ -528,8 +528,13 @@ def h2(c: Ctx) -> Row:
                 ["src/gippa/__init__.py", "CITATION.cff", "git tag -l"])  # fmt: skip
 
 
+#: ``1.1.0rc1`` -> ``1.1.0``: an rc is released from its base's changelog section (release step 6)
+RC = re.compile(r"^(\d+\.\d+\.\d+)rc\d+$")
+
+
 def h3(c: Ctx) -> Row:
-    head = f"## GIPPA {c.version} ("
+    m = RC.match(c.version)
+    head = f"## GIPPA {m.group(1) if m else c.version} ("
     d = c.repo / "changelog.d"
     frags = (
         sorted(p.name for p in d.rglob("*") if p.is_file() and p.name != ".gitkeep")

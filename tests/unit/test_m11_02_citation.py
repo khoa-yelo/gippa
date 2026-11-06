@@ -61,7 +61,8 @@ def agreement_errors(cff: dict[str, Any], version: str, changelog: str) -> list[
         except ValueError:
             errors.append(f"CITATION.cff date-released {date!r} is not an ISO date")
         else:
-            heading = f"## GIPPA {cff_version} ({date})"
+            base = re.sub(r"rc\d+$", "", cff_version)  # an rc uses its base's section
+            heading = f"## GIPPA {base} ({date})"
             if not any(line.strip() == heading for line in changelog.splitlines()):
                 errors.append(f"CHANGELOG.md has no heading {heading!r}")
     return errors
@@ -226,6 +227,15 @@ def test_example5_date_without_changelog_heading_fails() -> None:
     assert "## GIPPA 1.0.0 (2026-11-01)" in errors[0]
     ok = "# Changelog\n\n## GIPPA 1.0.0 (2026-11-01)\n\n### Features\n"
     assert agreement_errors(cff, "1.0.0", ok) == []
+
+
+def test_rc_uses_its_base_changelog_section() -> None:
+    """docs/release.md step 6: ``1.0.0rc1`` is released from ``## GIPPA 1.0.0 (…)``."""
+    cff = load_cff(BASE.replace("0.0.1", "1.0.0rc1") + "date-released: 2026-11-01\n")
+    ok = "# Changelog\n\n## GIPPA 1.0.0 (2026-11-01)\n\n### Features\n"
+    assert agreement_errors(cff, "1.0.0rc1", ok) == []
+    errors = agreement_errors(cff, "1.0.0rc1", "# Changelog\n")
+    assert len(errors) == 1 and "## GIPPA 1.0.0 (2026-11-01)" in errors[0]
 
 
 def test_example5_invalid_date_fails() -> None:

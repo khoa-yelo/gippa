@@ -170,9 +170,9 @@ def _assert_vcf_changes(text: str, where: str) -> None:
 
 
 def test_changelog_fragment_names_the_vcf_changes() -> None:
-    text = "\n".join(p.read_text(encoding="utf-8")
-                     for p in sorted((REPO / "changelog.d").glob("*.removal.md"))
-                     if CE in p.read_text(encoding="utf-8"))  # fmt: skip
+    from helpers.removal_notes import removal_texts
+
+    text = "\n".join(t for t in removal_texts() if CE in t)
     assert text, "no changelog.d/*.removal.md fragment for class_error_rate"
     _assert_vcf_changes(text, "changelog fragment")
 

@@ -229,8 +229,9 @@ def _pair_line(text: str, table: str, old: str, new: str) -> bool:
 
 
 def _removal_text() -> str:
-    frags = sorted((REPO / "changelog.d").glob("*.removal.md"))
-    return "\n".join(p.read_text(encoding="utf-8") for p in frags)
+    from helpers.removal_notes import removal_texts
+
+    return "\n".join(removal_texts())
 
 
 @pytest.mark.parametrize(("table", "old", "new"), TRIPLES, ids=[f"{t}.{o}" for t, o, _ in TRIPLES])
