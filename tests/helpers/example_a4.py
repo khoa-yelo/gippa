@@ -84,12 +84,12 @@ class Entry:
     strand: str
     cls: str | None = None  # the ORF class (kind orf)
     locus_tag: str | None = None
-    name: str | None = None  # CDS/sORF ID; ORFs take orf_id()
+    name: str | None = None  # CDS/sORF ID; ORFs take orf_id() unless set (a malformed ID)
     first_m: bool = False  # the strain_db record reads the first codon as M
 
     @property
     def db_id(self) -> str:
-        if self.kind == "orf":
+        if self.kind == "orf" and self.name is None:
             assert self.cls is not None
             return orf_id(self.cls, CHROM, self.s1, self.e1, self.strand)
         assert self.name is not None
@@ -258,11 +258,20 @@ def write_a4(
     ents: Mapping[str, Entry] | None = None,
     map_shift: str | None = None,
     bad_translation: str | None = None,
+    map_strand: str | None = None,
+    long_record: str | None = None,
+    column_types: Mapping[str, str] | None = None,
+    extras: Mapping[str, str] | None = None,
 ) -> A4:
     """The three A4 files under ``root`` for the chromosome sequence ``chrom``.
 
     ``map_shift=KEY`` writes that entry's map start 3 bases after its ID's (rule 9 check 1);
-    ``bad_translation=KEY`` changes residue 5 of its record (rule 9 check 3)."""
+    ``bad_translation=KEY`` changes residue 5 of its record (rule 9 check 3); ``map_strand=KEY``
+    writes the other strand in its map row; ``long_record=KEY`` appends one residue to its
+    record; ``column_types={column: "dictionary" | "string_view"}`` stores report columns in that
+    Arrow type; ``extras={path under the A4 dir: text}`` writes PROVENANCE's command and config
+    files (``A4/command_step1.txt``, ``jobs/diann_A4.cfg``, ...). The defaults write none of
+    these."""
     ent = dict(ents if ents is not None else entries(start, end))
     rng = random.Random(4)
     report, id_map, faa = root / REPORT_REL, root / MAP_REL, root / FAA_REL
@@ -272,17 +281,29 @@ def write_a4(
         fh.write("\t".join(ID_MAP_COLUMNS) + "\n")
         for e in ent.values():
             s1 = e.s1 + 3 if e.key == map_shift else e.s1
-            cells = (e.db_id, e.kind, e.locus_tag or "", e.cls or "", CHROM, s1, e.e1, e.strand)
+            strand = ("-" if e.strand == "+" else "+") if e.key == map_strand else e.strand
+            cells = (e.db_id, e.kind, e.locus_tag or "", e.cls or "", CHROM, s1, e.e1, strand)
             fh.write("\t".join(str(c) for c in cells) + "\n")
     text = []
     for e in ent.values():
         seq = record(e, chrom, rng)
         if e.key == bad_translation:
             seq = _mutate(seq)
+        if e.key == long_record:
+            seq += "W"
         text.append(f">{e.db_id}\n" + "\n".join(seq[i : i + 60] for i in range(0, len(seq), 60)))
     faa.write_text("\n".join(text) + "\n", encoding="utf-8")
     table = pa.Table.from_pandas(pd.DataFrame(report_rows(rows, ent)), preserve_index=False)
+    for col, kind in (column_types or {}).items():
+        i = table.schema.get_field_index(col)
+        arr = table.column(i).combine_chunks()
+        new = arr.dictionary_encode() if kind == "dictionary" else arr.cast(pa.string_view())
+        table = table.set_column(i, pa.field(col, new.type), new)
     pq.write_table(table, report)
+    for rel, text in (extras or {}).items():
+        path = root / A4_DIR / rel
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(text, encoding="utf-8")
     return A4(report, id_map, faa, ent, tuple(rows))
 
 
