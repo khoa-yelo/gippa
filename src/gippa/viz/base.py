@@ -51,7 +51,18 @@ class Skip:
     reason: str
 
 
+@dataclass(frozen=True)
+class DataTable:
+    """A data TSV with no image: ``data/Vnn_<name>[_<suffix>].tsv`` (the V03 locus index, which
+    the report shows as a table; M12-04 PR 4, P-12). ``coords`` as in ``Instance``."""
+
+    suffix: str | None
+    data: pd.DataFrame
+    coords: tuple[str, ...] = ()
+
+
 PlotFn = Callable[["RunView", "GippaConfig"], "list[Instance] | Skip"]
+TableFn = Callable[["RunView", "GippaConfig"], DataTable]
 
 
 @dataclass(frozen=True)
@@ -66,6 +77,7 @@ class PlotSpec:
 
 
 _REGISTRY: dict[str, PlotSpec] = {}
+_TABLES: dict[str, TableFn] = {}
 _PID = re.compile(r"^[Vv](\d{1,2})$")
 
 
@@ -120,6 +132,24 @@ def plot(
         return wrapped
 
     return deco
+
+
+def data_table(pid: str) -> Callable[[TableFn], TableFn]:
+    """Register ``fn`` as the image-free data table of plot ``pid``: the plots step writes it
+    whenever the plot is not skipped."""
+
+    def deco(fn: TableFn) -> TableFn:
+        if pid in _TABLES:
+            raise ValueError(f"plot ID {pid} already has a data table")
+        _TABLES[pid] = fn
+        return fn
+
+    return deco
+
+
+def data_tables() -> Mapping[str, TableFn]:
+    """Plot ID -> its registered data table function."""
+    return dict(_TABLES)
 
 
 def registered() -> Mapping[str, PlotSpec]:

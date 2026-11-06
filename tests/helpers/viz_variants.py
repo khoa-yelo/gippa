@@ -34,11 +34,15 @@ REPLICONS = (
     {"id": "chr1", "kind": "chromosome", "length": L_CHR1, "topology": "circular"},
     {"id": "chr2", "kind": "unknown", "length": 5_000, "topology": "linear"},
 )
-#: the §9.4 / M7-05 flag order
+#: the §9.4 / M7-05 flag order (``class_error_unestimated`` last, M12-04 PR 11c)
 FLAG_ORDER = (
     "mass_equivalent", "snv", "multi_nt", "strain_difference", "database_derived",
-    "start_codon", "stop_codon", "vcf_unrepresentable",
+    "start_codon", "stop_codon", "vcf_unrepresentable", "class_error_unestimated",
 )  # fmt: skip
+#: the flag of an NA class error: in the V12 title, never a panel (a) bar (lead decision)
+CE_FLAG = "class_error_unestimated"
+#: the flags panel (a) draws as bars
+BAR_FLAGS = tuple(f for f in FLAG_ORDER if f != CE_FLAG)
 
 
 def protein(n: int, seed: int) -> str:
@@ -94,7 +98,7 @@ def variant(
     confidence: str = "high",
     n_alt: int = 3,
     n_ref: int = 0,
-    class_error_rate: str = "0.004",
+    class_error_rate: str | None = "0.004",
     flags: str | None = "snv",
     contig: str = "chr1",
     strand: str = "+",
@@ -234,8 +238,8 @@ def main_variants() -> list[dict[str, object]]:
         variant("VAR0002", gene="GSIM_00200", aa_pos=50, ref_aa="D", alt_aa="N", strand="-",
                 n_alt=2, n_ref=1, class_error_rate="0.01", flags="snv;start_codon"),
         variant("VAR0003", aa_pos=250, ref_aa=P105[249], alt_aa="fs+1", alt_type="frameshift",
-                confidence="candidate", n_alt=2, class_error_rate="unestimated",
-                flags="database_derived"),
+                confidence="candidate", n_alt=2, class_error_rate=None,
+                flags="database_derived;class_error_unestimated"),  # NA rate (M12-04 PR 11c)
         variant("VAR0004", gene="GSIM_00900", aa_pos=35, ref_aa="S", alt_aa="T",
                 confidence="candidate", n_alt=1, class_error_rate="0.02", flags=None),
         variant("VAR0005", aa_pos=120, ref_aa=P105[119], alt_aa="W", call="mixed",

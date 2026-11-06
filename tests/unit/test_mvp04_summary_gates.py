@@ -673,8 +673,10 @@ def test_gate12_uncalled_or_unestimated_rows_are_no_calls(d: S.Dirs) -> None:
         for r in rows:
             if r["class"] == "intergenic":
                 r["called"] = "false"
-            if r["class"] == "cds_outframe":
-                r["class_fdr"] = "unestimated"
+            if r["class"] == "cds_outframe":  # NA plus the flag (M12-04 PR 11c)
+                r["class_fdr"] = "NA"
+                have = [f for f in (r.get("flags") or "").split(";") if f and f != "NA"]
+                r["flags"] = ";".join(sorted({*have, "class_fdr_unestimated"}))
             if r["class"] == "antisense":
                 r["class_fdr"] = "0.02"
         return rows

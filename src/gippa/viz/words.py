@@ -136,6 +136,7 @@ FLAG_TEXT: Mapping[str, str] = MappingProxyType(
         "start_codon": "variant at a start codon",
         "stop_codon": "variant at a stop codon",
         "vcf_unrepresentable": "spans the origin; not written to the VCF",
+        "class_error_unestimated": "class error not estimated",
         # novel ORFs
         "junction_spanned": "a peptide spans the pseudogene junction",
         "junction_unknown": "pseudogene junction not located",
@@ -207,6 +208,7 @@ SKIP_TEXT: Mapping[str, str] = MappingProxyType(
         "input_absent:preflight": "no input check in this run",
         "input_absent:unmapped": "no unmapped peptide table in this run",
         "input_absent:variants": "no variant table in this run",
+        "no_terms:function": "no function terms in this run",
         "not_registered": "this plot is not available in this GIPPA version",
     }
 )

@@ -39,6 +39,7 @@ from gippa.io.run_view import PATHS, RunView
 from gippa.io.tsv import format_value
 from gippa.report import content, detection, head
 from gippa.viz import style
+from gippa.viz.determinants import no_predictive_power
 from gippa.viz.words import plain
 
 TOP_ROWS = 20
@@ -165,13 +166,20 @@ def _plot_slot(
     a ``LINKED_PREFIX`` instance with an SVG file is an ``img`` of it, not inlined (PR 13)."""
     if files is None or not files.instances:
         note = f"not shown: {plain(skipped[pid])}" if pid in skipped else "plot file absent"
-        return {"pid": pid, "note": note, "instances": [], "notices": []}
+        return {"pid": pid, "note": note, "instances": [], "notices": [], "tables": []}
     insts: list[dict[str, Any]] = []
     empty: list[dict[str, Any]] = []
+    tables: list[dict[str, Any]] = []
     for inst in files.instances:
         links = [(rel.rsplit(".", 1)[1].upper(), f"../plots/{rel}") for rel in inst.images]
         if inst.data is not None:
             links.append(("data TSV", f"../plots/{inst.data}"))
+        index = content.INDEX_TABLES.get(pid)
+        if inst.table is not None and index is not None and index[0] == inst.stem:
+            rows = content.locus_index(*inst.table)  # an image-free index (M12-04 PR 4, P-12)
+            tables.append({"caption": index[1], "header": content.LOCUS_INDEX_HEADER,
+                           "rows": rows, "href": f"../plots/{inst.data}"})  # fmt: skip
+            continue
         if notices and inst.empty:  # the title and its file links, no image (review r1 M2)
             title = None if inst.svg is None else svg_title(inst.svg)
             empty.append({"title": " ".join((title or "Nothing to show in this run.").split()),
@@ -185,9 +193,9 @@ def _plot_slot(
         spec = None if twin is None else {"id": twin[0], "spec": Markup(_script_json(twin[1]))}
         insts.append({"stem": inst.stem, "svg": svg, "img": img, "links": links, "twin": spec,
                       "caption": content.caption(pid, inst.stem)})  # fmt: skip
-    drawn = empty or any(i["svg"] is not None or i["img"] for i in insts)
+    drawn = empty or tables or any(i["svg"] is not None or i["img"] for i in insts)
     return {"pid": pid, "note": None if drawn else "plot file absent", "instances": insts,
-            "notices": empty}  # fmt: skip
+            "notices": empty, "tables": tables}  # fmt: skip
 
 
 def _genes_preview(view: RunView) -> tuple[list[str], list[list[str]]]:
@@ -289,16 +297,19 @@ def _tier_fdr(ds: pd.DataFrame | None, alpha: float) -> str | None:
 
 
 def _novel_fdr(novel: pd.DataFrame) -> str | None:
-    """The max class FDR over CALLED rows; ``None`` (unestimated) if any called row is (B1).
-    M7-17: a suffix counts the called rows flagged ``denovo_only_unsupported`` (ADR-0050)."""
+    """The max class FDR over CALLED rows; ``None`` without called rows, the plain words of
+    ``class_fdr_unestimated`` if any called row is NA (B1; M12-04 PR 11c). M7-17: a suffix counts
+    the called rows flagged ``denovo_only_unsupported`` (ADR-0050)."""
     called = novel[novel["called"].fillna(False).astype(bool)]
     fdrs = pd.to_numeric(called["class_fdr"], errors="coerce")
     flags = called["flags"].fillna("").astype(str).str.split(";")
     k = int(flags.map(lambda f: "denovo_only_unsupported" in f).sum())
     suffix = (f"; {style.fmt_count(k)} of {style.fmt_count(len(called))} de novo-only, no database"
               " or RBS support") if k else ""  # fmt: skip
-    if called.empty or bool(fdrs.isna().any()):
-        return UNESTIMATED + suffix if k else None
+    if called.empty:
+        return None
+    if bool(fdrs.isna().any()):
+        return plain("class_fdr_unestimated") + suffix
     return f"class FDR {_at_most(float(fdrs.max()))}{suffix}"
 
 
@@ -326,14 +337,15 @@ SD_IN_VALUE = "the CV SD is shown with the value"
 
 
 def _alt_estimate(alt: pd.DataFrame) -> str | None:
-    """The ``class_error_rate`` range over the numeric rows, "(N unestimated)" appended (lead
-    decision 5); ``None`` when no row has a number."""
+    """The ``class_error_rate`` range over the numeric rows, "(N not estimated)" appended (lead
+    decision 5; NA in plain words, M12-04 PR 11c); the plain words of ``class_error_unestimated``
+    when no row has a number, ``None`` without rows."""
     rates = pd.to_numeric(alt["class_error_rate"], errors="coerce")
     known, n_un = rates.dropna(), int(rates.isna().sum())
     if known.empty:
-        return None
+        return plain("class_error_unestimated") if n_un else None
     lo, hi = style.fmt_q(float(known.min())), style.fmt_q(float(known.max()))
-    tail = f" ({style.fmt_count(n_un)} unestimated)" if n_un else ""
+    tail = f" ({style.fmt_count(n_un)} {plain('unestimated')})" if n_un else ""
     return f"class error rate {lo if lo == hi else f'{lo}–{hi}'} (pooled per class){tail}"
 
 
@@ -461,7 +473,7 @@ def cards(view: RunView, cfg: GippaConfig) -> tuple[list[dict[str, Any]], list[s
 
     def model(t: pd.DataFrame) -> None:
         """ADR-0033: the elastic-net whole-model rows only; ADR-0034: "(uncalibrated)"; label
-        first, "no predictive power" when the mean or mean minus SD is ≤ 0 (M12-04 PR 1)."""
+        first, "no predictive power" by V15's gate (M12-04 PR 1, PR 7b)."""
         en = t[(t["model"] == "elastic_net") & (t["feature_or_block"] == "all")]
         (r2, _), (sd, _) = _metric(en, "cv_r2_mean"), _metric(en, "cv_r2_sd")
         p, flags = _metric(en, "null_p")
@@ -472,7 +484,7 @@ def cards(view: RunView, cfg: GippaConfig) -> tuple[list[dict[str, Any]], list[s
                 prefix="Model R²:")  # fmt: skip
             return
         value = style.fmt_num(r2) if sd is None else head.mean_sd(r2, sd)
-        no_power = r2 <= 0 or (sd is not None and r2 - sd <= 0)
+        no_power = no_predictive_power(t)  # the V15 gate (one rule for the card and the plot)
         label = f"(CV), {NO_POWER}" if no_power else "(CV)"
         unc = " (uncalibrated)" if "null_uncalibrated" in flags else ""
         est = None if p is None else f"null p {style.fmt_q(p)}{unc}"
@@ -522,6 +534,9 @@ def _page(
     absent = not_applicable(view, plots)
     off = {sid for sid, _, _ in absent}
     shown_sections = [s for s in SECTIONS if s.id not in off]
+    if content.function_no_terms(view):  # the section is one notice (M12-04 PR 8)
+        shown_sections = [Section(s.id, s.heading) if s.id == "function" else s
+                          for s in shown_sections]  # fmt: skip
     sections: list[dict[str, Any]] = [
         {"id": s.id, "heading": s.heading,
          "plots": [_plot_slot(p, plots.get(p), skipped, twins, True, linked)

@@ -16,7 +16,7 @@ Claims (the three bullets of criterion 6):
 Readings pinned by the test author:
 
 * the ORF's class is the side table's ``class`` (the reconstructed class of ``novel_orfs.tsv``);
-  "unestimated" is the ``class_fdr`` cell;
+  unestimated is a null ``class_fdr`` cell (NA since M12-04 PR 11c; it was the word);
 * a "gene-model miss" is an ``nterm_extension`` ORF whose overlapping gene has no
   ``nterm_entries`` record in the run's gene model, or whose record's ``db_id`` is not among the
   searched protein IDs (the search database and the run's gene model disagree about that gene);
@@ -101,8 +101,9 @@ def test_tagged_classes_have_no_unestimated_orf_but_gene_model_misses(
         return (r["class"] == "nterm_extension" and r["reason"] == "no_makedb_pair"
                 and (g is None or g not in nterm or nterm[g] not in ids))  # fmt: skip
 
+    # an unestimated cell is NA (M12-04 PR 11c)
     bad = [r for r in tagged.to_dict("records")
-           if r["class_fdr"] == "unestimated" and not gene_model_miss(r)]  # fmt: skip
+           if pd.isna(r["class_fdr"]) and not gene_model_miss(r)]  # fmt: skip
     assert not bad, f"{len(bad)} of {len(tagged)} tagged-class ORFs unestimated: " + "; ".join(
         f"{r['orf_id']} {r['class']} {r['regime']} {r['reason']}" for r in bad[:20]
     )

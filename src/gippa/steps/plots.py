@@ -26,7 +26,13 @@ import pandas as pd
 
 from gippa.config import GippaConfig
 from gippa.io.fasta import read_genome_fasta
-from gippa.io.plot_files import PlotFiles, read_plot_files, remove_plot_files, write_instance
+from gippa.io.plot_files import (
+    PlotFiles,
+    read_plot_files,
+    remove_plot_files,
+    write_data,
+    write_instance,
+)
 from gippa.io.plot_support import SUPPORT_DIR, write_support
 from gippa.io.run_view import ANALYSIS_SUPPORT, PATHS, RunView
 from gippa.runner.local import PUBLISHED, PUBLISHED_FILES
@@ -98,6 +104,10 @@ def render_plots(
                 inst, pid, spec.name, plots_dir, cfg.report.formats, cfg.report.dpi
             )
             files += [p.relative_to(plots_dir).as_posix() for p in written]
+        table = base.data_tables().get(pid)
+        if table is not None:  # an image-free data TSV (the V03 locus index, P-12)
+            path = write_data(table(view, cfg), pid, spec.name, plots_dir)
+            files.append(path.relative_to(plots_dir).as_posix())
         data = {"plot": pid, "files": files, "instances": len(result)}
         events.append(PlotEvent("plots.rendered", data))
     return events

@@ -206,8 +206,8 @@ def test_values_matching_the_pattern_pass(tmp_path: Path) -> None:
         variant_id="VAR_120",
         ref_codon="ATN",
         source="database;denovo",
-        flags="snv;strain_difference",
-        class_error_rate="unestimated",
+        flags="snv;strain_difference;class_error_unestimated",
+        class_error_rate="NA",  # unestimated: NA plus the flag (M12-04 PR 11c)
     )
     check_tsv("variants", path, "variants")
 

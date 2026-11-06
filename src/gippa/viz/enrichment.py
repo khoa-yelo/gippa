@@ -29,7 +29,7 @@ from matplotlib.figure import Figure
 from matplotlib.lines import Line2D
 from matplotlib.ticker import FuncFormatter
 
-from gippa.viz import base, style
+from gippa.viz import base, function_terms, style
 from gippa.viz.interactive import interactive
 
 if TYPE_CHECKING:
@@ -53,8 +53,11 @@ TWIN_ALPHA = 0.05  # the twin sees only the TSV: its alpha line is at the defaul
 FOOT_GSEA = "GSEA is conditional on detection, with no p_detect adjustment"
 FOOT_COVERAGE = "coverage = share of eligible genes with ≥ 1 term"
 XLABEL_C = "observed / expected detected TUs"
-NO_RESOURCES = "No annotation resources installed (gippa setup --go --kegg --cog)"
-EMPTY = "No GSEA or detection ORA rows in this run"
+#: the empty states (M12-04 PR 4, P-14)
+NO_RESOURCES = ("Nothing to show: no annotation resources are installed. Install them with "
+                "gippa setup --go --kegg --cog and rerun.")  # fmt: skip
+EMPTY = ("Nothing to show: no gene set or detection enrichment results in this run. Function "
+         "terms on more genes would give some.")  # fmt: skip
 NO_ABUNDANCE, NO_SUPPORT = "no abundance input", "running scores not available"
 NO_TESTABLE = "no testable sets"
 OE_UNDEFINED = "O/E undefined (E = 0)"
@@ -353,6 +356,9 @@ def enrichment(view: RunView, cfg: GippaConfig) -> list[base.Instance] | base.Sk
     if not len(gsea) and not len(ora):
         missing = all(f"layer_missing:{x}" in view.run_flags() for x in ("go", "kegg", "cog"))
         msg = NO_RESOURCES if missing else EMPTY
+        colls = function_terms.collections(view)
+        if function_terms.no_terms(colls):  # coverage 0 everywhere (M12-04 PR 8)
+            msg = no_terms_title(colls or {})
         return [base.empty_state("V14", "enrichment", msg, COLUMNS, "double")]
     by_key = {(str(r["collection"]), str(r["term"])): r for r in gsea.to_dict("records")}
     sets = running_sets(support, by_key) if len(gsea) and support is not None else []
@@ -367,6 +373,14 @@ def enrichment(view: RunView, cfg: GippaConfig) -> list[base.Instance] | base.Sk
     fig = _figure(sets, finite, sel, level, NO_SUPPORT if len(gsea) else NO_ABUNDANCE, no_b)
     fig.suptitle(text.replace("; ", ";\n"), y=1 - 0.08 / fig.get_figheight(), va="top")
     return [base.Instance(None, fig, data_frame(sets, finite, sel), text)]
+
+
+def no_terms_title(colls: Mapping[str, Any]) -> str:
+    """The V14 empty state when no collection has a term (M12-04 PR 8)."""
+    return (
+        f"Nothing to show: no gene has a {function_terms.names(colls)} term. Enrichment "
+        "needs genes with function terms."
+    )
 
 
 def data_frame(

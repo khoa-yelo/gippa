@@ -10,11 +10,12 @@ Interface assumed where the spec leaves it open (reported to the lead):
   renders its first ``report.max_locus_plots`` loci.
 - ``Locus.start0`` / ``end0`` are the locus *span* (0-based half-open; an island crossing the
   origin keeps ``end0 > length``); ``error`` is ``None`` for NA.
-- The plot returns one ``Instance`` per rendered locus (``suffix = locus_id``) plus one index
-  ``Instance`` with ``suffix = None`` (written as ``V03_locus.*`` and ``data/V03_locus.tsv``):
-  data columns exactly ``rank, locus_id, kind, contig, start, end, error, rendered``, ``start`` in
-  ``coords`` (so the TSV is 1-based closed), ``rank`` 1-based. With no loci the index is the
-  framework empty state titled ``"no loci to show"``.
+- The plot returns one ``Instance`` per rendered locus (``suffix = locus_id``), and no index
+  ``Instance`` (M12-04 PR 4, P-12). The index is the image-free data table of ``V03``
+  (``base.data_tables()["V03"]``, a ``DataTable`` with ``suffix = None``, written as
+  ``data/V03_locus.tsv`` only): data columns exactly ``rank, locus_id, kind, family, contig,
+  start, end, estimate, error, rendered``, ``start`` in ``coords`` (so the TSV is 1-based closed),
+  ``rank`` 1-based. With no loci the plot returns no instance and the index is header-only.
 - A merged operon locus (flags in one TU) keeps the ``pair_id`` of its best (first-ordered) flag
   and that flag's q as ``error``.
 - Numbers in labels print in ``%g`` form (``0.003``, ``0.01``, ``21.5``), as in V11.
@@ -31,13 +32,14 @@ import pytest
 from helpers import viz_locus as vl
 
 from gippa.config import GippaConfig, resolve_config
-from gippa.io.plot_files import write_instance
+from gippa.io.plot_files import write_data, write_instance
 from gippa.io.run_view import RunView
 from gippa.viz import base, style
-from gippa.viz.base import Instance, Skip
+from gippa.viz.base import DataTable, Instance, Skip
 from gippa.viz.locus import Locus, select_loci
 
-INDEX_COLUMNS = ["rank", "locus_id", "kind", "contig", "start", "end", "error", "rendered"]
+INDEX_COLUMNS = ["rank", "locus_id", "kind", "family", "contig", "start", "end", "estimate",
+                 "error", "rendered"]  # fmt: skip
 KIND_ORDER = ("prophage", "bgc", "island", "operon_flag")
 
 
@@ -61,13 +63,15 @@ def _v03() -> base.PlotSpec:
     return base.registered()["V03"]
 
 
-def _run(out: Path, cfg: GippaConfig) -> tuple[Instance, list[Instance]]:
-    result = _v03().fn(RunView.from_outdir(out), cfg)
+def _run(out: Path, cfg: GippaConfig) -> tuple[DataTable, list[Instance]]:
+    """The V03 index table and the rendered locus instances (the plot returns no index)."""
+    view = RunView.from_outdir(out)
+    result = _v03().fn(view, cfg)
     assert not isinstance(result, Skip), result
-    index = [i for i in result if i.suffix is None]
-    loci = [i for i in result if i.suffix is not None]
-    assert len(index) == 1, [i.suffix for i in result]
-    return index[0], loci
+    assert [i.suffix for i in result if i.suffix is None] == []
+    index = base.data_tables()["V03"](view, cfg)
+    assert isinstance(index, DataTable) and index.suffix is None
+    return index, list(result)
 
 
 def _ids(loci: Sequence[Locus]) -> list[str]:
@@ -342,7 +346,6 @@ def test_no_loci_writes_a_header_only_index(tmp_path: Path, cfg: GippaConfig) ->
     assert rendered == []
     assert list(index.data.columns) == INDEX_COLUMNS
     assert len(index.data) == 0
-    assert index.title == "no loci to show"
 
 
 def test_header_only_tables_are_no_loci(tmp_path: Path, cfg: GippaConfig) -> None:
@@ -357,16 +360,16 @@ def test_example1_index_tsv_is_one_based_with_kind_and_na_error(
 ) -> None:
     out = _example1_out(tmp_path / "run")
     index, _ = _run(out, cfg)
-    paths = write_instance(index, "V03", "locus", tmp_path / "plots", ["svg"], 100)
-    tsv = tmp_path / "plots" / "data" / "V03_locus.tsv"
-    assert tsv in paths
+    tsv = write_data(index, "V03", "locus", tmp_path / "plots")
+    assert tsv == tmp_path / "plots" / "data" / "V03_locus.tsv"
+    assert sorted(p.name for p in (tmp_path / "plots").iterdir()) == ["data"]  # no image
     lines = tsv.read_text(encoding="utf-8").splitlines()
     assert lines[0] == "\t".join(INDEX_COLUMNS)
     assert lines[1:] == [
-        "1\tprophage_1\tprophage\tchr1\t10001\t35000\t0.003\ttrue",
-        "2\tISL_1\tisland\tchr1\t70001\t75000\t0.01\ttrue",
-        "3\tPAIR_7\toperon_flag\tchr1\t40001\t42000\t0.02\ttrue",
-        "4\tprophage_2\tprophage\tchr1\t60001\t62000\tNA\ttrue",
+        "1\tprophage_1\tprophage\tprophage\tchr1\t10001\t35000\tBH q\t0.003\ttrue",
+        "2\tISL_1\tisland\tisland\tchr1\t70001\t75000\tFWER p\t0.01\ttrue",
+        "3\tPAIR_7\toperon_flag\toperon_discordance\tchr1\t40001\t42000\tBH q\t0.02\ttrue",
+        "4\tprophage_2\tprophage\tprophage\tchr1\t60001\t62000\tBH q\tNA\ttrue",
     ]
 
 

@@ -309,7 +309,7 @@ def render_plot_files(fixture: str, plots_dir: Path, formats: tuple[str, ...]) -
 
 
 def _render_plot_files(fixture: str, plots_dir: Path, formats: tuple[str, ...]) -> None:
-    from gippa.io.plot_files import write_instance
+    from gippa.io.plot_files import write_data, write_instance
     from gippa.io.run_view import RunView
     from gippa.steps.plots import load_plot_modules
     from gippa.viz import base
@@ -324,6 +324,9 @@ def _render_plot_files(fixture: str, plots_dir: Path, formats: tuple[str, ...]) 
                 continue
             for inst in result:
                 write_instance(inst, pid, spec.name, plots_dir, list(formats), SNAPSHOT_DPI)
+            table = base.data_tables().get(pid)  # an image-free index, as the plots step writes
+            if table is not None:  # (M12-04 PR 4, P-12: data/V03_locus.tsv)
+                write_data(table(view, cfg), pid, spec.name, plots_dir)
 
     styled(run)
 

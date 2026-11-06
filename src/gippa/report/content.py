@@ -27,7 +27,8 @@ from gippa.data import calibration
 from gippa.io.run_view import RunView
 from gippa.io.tsv import format_value
 from gippa.model.genetic_code import codon_table, table_name
-from gippa.viz.style import fmt_num
+from gippa.viz import function_terms
+from gippa.viz.style import fmt_num, fmt_q
 from gippa.viz.words import plain
 
 #: GIPPA_SPEC.md §7.4, verbatim
@@ -185,9 +186,24 @@ def _safe(view: RunView, key: str) -> pd.DataFrame | None:
         return None
 
 
+#: the second sentence of the no-terms notice (M12-04 PR 8)
+NO_TERMS_LIGHT = ("With the Bakta light database this is expected: rerun with the full database "
+                  "to get function results.")  # fmt: skip
+NO_TERMS_CHECK = "Check the annotation source."
+
+
+def function_no_terms(view: RunView) -> bool:
+    """Whether the Function section is the no-terms notice alone (M12-04 PR 8)."""
+    return function_terms.no_terms(function_terms.collections(view))
+
+
 def _function(view: RunView, doc: Mapping[str, Any] | None) -> list[dict[str, Any]]:
     out: list[dict[str, Any]] = []
     flags = view.run_flags()
+    colls = function_terms.collections(view)
+    if colls is not None and function_terms.no_terms(colls):
+        second = NO_TERMS_LIGHT if "bakta_db_light" in flags else NO_TERMS_CHECK
+        return [_p(f"{function_terms.no_terms_sentence(colls)} {second}", cls="notice")]
     gsea = _safe(view, "enrichment_gsea") if view.has("enrichment_gsea") else None
     if view.has("enrichment_gsea"):
         out += [_p(t, "function-gsea") for t in GSEA]
@@ -201,6 +217,8 @@ def _function(view: RunView, doc: Mapping[str, Any] | None) -> list[dict[str, An
         f"{c} {format_value(v)}"
         for c, v in cats.drop_duplicates("collection")[["collection", "coverage"]].itertuples(False)
     )  # fmt: skip
+    if colls is not None:  # the event first, then category_summary (M12-04 PR 8)
+        cov = function_terms.coverage_note(colls)
     out.append(_p(f"Annotation coverage leans toward well-studied genes; coverage per "
                   f"collection: {cov or NOT_RECORDED}.", "function"))  # fmt: skip
     if "bakta_db_light" in flags:
@@ -208,7 +226,7 @@ def _function(view: RunView, doc: Mapping[str, Any] | None) -> list[dict[str, An
                       "the full DB."))  # fmt: skip
     if no_kegg:
         out.append(_p(KEGG_SKIPPED))
-    else:
+    elif colls is None or function_terms.kegg_terms(colls):
         date = kegg_date(doc) or NOT_RECORDED_RUN
         out.append(_p(f"{KEGG_TERMS} KEGG retrieval date: {date}."))
     return out
@@ -641,13 +659,34 @@ CAPTIONS: Mapping[str, str] = {
     "distribution.",
 }
 
-#: plot ID -> the stem of its index instance and that instance's caption (review r1 L2)
-INDEX_STEMS: Mapping[str, str] = {"V03": "V03_locus", "V13": "V13_novel_orfs_locus"}
+#: plot ID -> the stem of its index instance and that instance's caption (review r1 L2); the V03
+#: index is a table, not an image (``locus_index``; M12-04 PR 4, P-12)
+INDEX_STEMS: Mapping[str, str] = {"V13": "V13_novel_orfs_locus"}
 INDEX_CAPTIONS: Mapping[str, str] = {
-    "V03": "This index lists every selected locus in display order, with its kind and the error "
-    "estimate of its test family, and marks the loci not drawn as locus views.",
     "V13": "This index lists the top called candidates drawn as locus views, by rank.",
 }
+#: plot ID -> (the stem of its image-free index table, the table's caption)
+INDEX_TABLES: Mapping[str, tuple[str, str]] = {
+    "V03": ("V03_locus", "Locus views, in display order"),
+}
+LOCUS_INDEX_HEADER = ("rank", "locus", "family", "estimate", "q")
+
+
+def locus_index(header: Sequence[str], rows: Sequence[Sequence[str | None]]) -> list[list[str]]:
+    """The report rows of ``data/V03_locus.tsv``: rank, locus, family (in words), the name of the
+    family's estimate and its value with 2 significant digits (``fmt_q``), in TSV order."""
+    col = {name: i for i, name in enumerate(header)}
+
+    def cell(row: Sequence[str | None], name: str) -> str | None:
+        return row[col[name]] if name in col else None
+
+    out = []
+    for r in rows:
+        family = cell(r, "family") or cell(r, "kind") or ""
+        out.append([cell(r, "rank") or "", cell(r, "locus_id") or "",
+                     family.replace("_", " "), cell(r, "estimate") or "q",
+                     fmt_q(cell(r, "error"))])  # fmt: skip
+    return out
 
 
 def question(pid: str) -> str:

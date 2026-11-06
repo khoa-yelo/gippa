@@ -37,6 +37,7 @@ from gippa.config import GippaConfig, resolve_config
 from gippa.io.run_view import RunView
 from gippa.viz import base, checklist, style
 from gippa.viz.base import Instance, Skip
+from gippa.viz.words import plain
 
 SNAPSHOT = Path(__file__).resolve().parents[2] / "data" / "snapshot" / "sim_plots" / "OUT"
 needs_snapshot = pytest.mark.skipif(not SNAPSHOT.is_dir(), reason="M9-25 snapshot fixture absent")
@@ -203,7 +204,10 @@ def test_v15_header_only_model_is_the_too_few_empty_state(tmp_path: Path, cfg: G
     )
     inst = _render("V15", out, cfg)
     assert checklist.is_empty_state(inst)
-    assert inst.title == "Too few genes for the determinants model (60 rows, 20 TUs)"
+    assert inst.title == (
+        "Nothing to show: the determinants model needs ≥ 100 genes with abundance in ≥ 25 TUs "
+        "(this run: 60 genes, 20 TUs)."
+    )
     assert len(inst.data) == 0
 
 
@@ -212,7 +216,7 @@ def test_v15_header_only_model_with_full_inputs_is_still_too_few(
 ) -> None:
     inst = _render("V15", vd.build_out(tmp_path, model=[]), cfg)
     assert checklist.is_empty_state(inst)
-    assert inst.title.startswith("Too few genes for the determinants model (")
+    assert inst.title.startswith("Nothing to show: the determinants model needs ≥ ")
 
 
 # --- V12 (M9-18 amendment) --------------------------------------------------------------------
@@ -230,17 +234,18 @@ def _site(rate: object, **kw: object) -> dict[str, object]:
 
 @pytest.mark.parametrize(
     ("rate", "shown"),
-    # M12-04 P-18: the rate prints through style.fmt_num (trailing zeros kept: 1 -> "1.0")
+    # M12-04 P-18: the rate prints through style.fmt_num (trailing zeros kept: 1 -> "1.0");
+    # PR 11c: NA shows the flag's plain words
     [(0.872576, _n(0.872576)), (1.0, _n(1.0)), (0.933333, _n(0.933333)),
      (0.0234567, _n(0.0234567)), (0.0, _n(0.0)), ("0.872576", _n(0.872576)),
-     ("unestimated", "unestimated")],
+     (math.nan, "NA")],
 )  # fmt: skip
 def test_v12_site_line_rounds_the_class_error(rate: object, shown: str) -> None:
     from gippa.viz.variants import _header
 
     text = _header(_site(rate))
-    if shown == "unestimated":
-        assert text.endswith("class error unestimated"), text
+    if shown == "NA":  # M12-04 PR 11c: the flag's plain words
+        assert text.endswith(plain("class_error_unestimated")), text
     else:
         star = "*" if float(rate) == 1 else ""  # type: ignore[arg-type]
         assert text.endswith(f"class error {shown}{star} (pooled, class of 1805 paired reads)"), (
@@ -271,10 +276,11 @@ def test_v12_snapshot_panel_b_site_lines_are_rounded() -> None:
     tails = {
         line.rsplit("class error ", 1)[1].split(" (pooled", 1)[0].rstrip("*") for line in lines
     }
-    assert all("(pooled, class of " in line for line in lines if "unestimated" not in line)
+    na = plain("unestimated")  # "class error not estimated" (M12-04 PR 11c)
+    assert all("(pooled, class of " in line for line in lines if na not in line)
     assert "0.87" in tails
     for tail in tails:
-        assert tail == "unestimated" or tail == _n(float(tail)), tail
+        assert tail == na or tail == _n(float(tail)), tail
     assert not any("0.872576" in line for line in lines)
 
 

@@ -18,6 +18,7 @@ at ``[54, 57)``; the next in-frame stop is the TAA at ``[90, 93)``. Peptides: ex
 
 from __future__ import annotations
 
+import math
 from pathlib import Path
 from typing import Any
 
@@ -105,7 +106,7 @@ def test_example_6_called_with_readthrough_candidate() -> None:
     r = row_of(case())
     assert r["class"] == "cterm_extension"
     assert "readthrough_candidate" in flags_of(r)
-    assert r["class_fdr"] == "unestimated"
+    assert math.isnan(r["class_fdr"])  # NA: unestimated (M12-04 PR 11c)
     assert r["called"] == True  # noqa: E712
     assert r["rank"] == 1
 

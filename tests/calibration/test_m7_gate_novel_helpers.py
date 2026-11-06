@@ -91,8 +91,9 @@ def side(*rows: dict[str, Any]) -> pd.DataFrame:
         row = {**base, "orf_id": f"NOVEL_c1_{k + 1}_p", **r}
         row.setdefault("fdr_class", row["class"])
         q = float(row["q"])
+        # the TSV text; null for NA (M12-04 PR 11c)
         row["class_fdr"] = f"{q:.6g}" if math.isfinite(q) else (
-            "1" if row["reason"] == "lost_pick" else "unestimated")  # fmt: skip
+            "1" if row["reason"] == "lost_pick" else None)  # fmt: skip
         out.append(row)
     return pd.DataFrame(out, columns=SIDE_COLS).astype({"q": "float64", "class_mismatch": bool,
                                                         "class_rule_met": bool,
