@@ -530,7 +530,7 @@ full DB, or an installed UniOP, can change the gene and operon numbers.
   length or N50) are listed, so users do not read them as faults.
 - *Route E, 2026-11-06:* **Route E shows the six-frame workflow, not discoveries.** Expect a few
   novel-ORF candidates and **no call**: a class needs at least 100 target wins over its decoys
-  before its q floor can reach 0.01, and the region holds 35 ORF entries in all. The genome-wide
+  before its q floor can reach 0.01, and the kept rows name 35 ORF entries (of 5,678 in the region). The genome-wide
   A4 run called 0 of 109 for the same reason (8–64 wins per class); `docs/user-guide/makedb.md`
   explains the floor. The novel-ORF line of the caveat above ("novel ORFs (0)") is for routes
   A–D.
