@@ -151,7 +151,7 @@ def oracle_flagged(
 
 
 def chain_alignments(peptide_hits: pd.DataFrame, genome: Mapping[str, str], gm: Any,
-                     cfg: Any) -> list[Any]:  # fmt: skip
+                     cfg: Any, hits_tolerant: pd.DataFrame | None = None) -> list[Any]:  # fmt: skip
     """``align_hits`` exactly as ``run_variants_qc`` calls it (stop sites, initiator starts)."""
     from gippa.mapping.initiator import annotated_starts, start_keys
     from gippa.mapping.readthrough import annotated_stops, site_keys
@@ -160,8 +160,8 @@ def chain_alignments(peptide_hits: pd.DataFrame, genome: Mapping[str, str], gm: 
     tt = cfg.annotation.translation_table
     stops = site_keys(annotated_stops(gm, genome, recoded=True, table=tt)[0])
     inits = start_keys(annotated_starts(gm, genome, cfg.annotation.start_codons, table=tt)[0])
-    return align_hits(peptide_hits, None, genome, gm.replicons, stop_sites=stops, table=tt,
-                      starts=inits)  # fmt: skip
+    return align_hits(peptide_hits, hits_tolerant, genome, gm.replicons, stop_sites=stops,
+                      table=tt, starts=inits)  # fmt: skip
 
 
 def uncapped_confidence(table: pd.DataFrame, cfg: Any) -> pd.Series:

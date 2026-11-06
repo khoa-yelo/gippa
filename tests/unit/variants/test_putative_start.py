@@ -76,11 +76,14 @@ def test_ac_10_1_same_site_with_m_at_peptide_position_3_is_not_flagged() -> None
 
 def test_var_107_minus_ttg_flags_in_section_9_4_order() -> None:
     """Spec example VAR_107 (no gene, ``TTG L→M``, high before): flags
-    ``snv;strain_difference;database_derived;putative_start`` after."""
+    ``snv;strain_difference;database_derived;putative_start`` after, then M12-04 PR 11c's
+    ``class_error_unestimated`` (this run has no spectra), which ends the §9.4 order."""
     w = World(strand="-", sites=(Site(60, ref_codon="TTG"),))
     table, _, _ = run_world(w)
     row = row_at(table, w, 60)
-    assert flags(row) == ("snv", "strain_difference", "database_derived", FLAG)
+    assert flags(row) == (
+        "snv", "strain_difference", "database_derived", FLAG, "class_error_unestimated"
+    )  # fmt: skip
     assert row["confidence"] == "candidate"
 
 

@@ -34,15 +34,23 @@ REPLICONS = (
     {"id": "chr1", "kind": "chromosome", "length": L_CHR1, "topology": "circular"},
     {"id": "chr2", "kind": "unknown", "length": 5_000, "topology": "linear"},
 )
-#: the §9.4 / M7-05 flag order (``class_error_unestimated`` last, M12-04 PR 11c)
-FLAG_ORDER = (
+#: the M7-05 flags (rules 1-6), in §9.4 order
+M705_FLAGS = (
     "mass_equivalent", "snv", "multi_nt", "strain_difference", "database_derived",
-    "start_codon", "stop_codon", "vcf_unrepresentable", "class_error_unestimated",
+    "start_codon", "stop_codon",
+)  # fmt: skip
+#: the §9.4 flag order: ``putative_start`` after ``database_derived`` (M12-04 PR 10), then
+#: M7-03's ``vcf_unrepresentable`` and ``class_error_unestimated`` last (M12-04 PR 11c)
+FLAG_ORDER = (
+    *M705_FLAGS[:5], "putative_start", *M705_FLAGS[5:], "vcf_unrepresentable",
+    "class_error_unestimated",
 )  # fmt: skip
 #: the flag of an NA class error: in the V12 title, never a panel (a) bar (lead decision)
 CE_FLAG = "class_error_unestimated"
 #: the flags panel (a) draws as bars
 BAR_FLAGS = tuple(f for f in FLAG_ORDER if f != CE_FLAG)
+#: a bar flag drawn in another flag's colour (M12-04 PR 10: both are start-codon artefacts)
+SHARED_COLOUR = {"putative_start": "start_codon"}
 
 
 def protein(n: int, seed: int) -> str:

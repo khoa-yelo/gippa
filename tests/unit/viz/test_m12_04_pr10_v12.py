@@ -1,5 +1,5 @@
 """M12-04 PR 10 rendering (P-17): V12 (b) writes residue J as "I/L", shows the top 15 sites and
-states "class error unestimated" once (docs/specs/M12-04-outputs-revision.md "PR 10" Rendering,
+states an unestimated class error once (docs/specs/M12-04-outputs-revision.md "PR 10" Rendering,
 AC 10.2-10.4).
 
 Figure text is every ``Text`` artist of the V12 figure (suptitle, axes titles, panel (b) lines,
@@ -47,11 +47,13 @@ def _headers(inst: Instance) -> list[str]:
     return [t.get_text() for t in ax.texts if " n_alt " in t.get_text()]
 
 
-def _sites(n: int, *, rate: str = "unestimated", alt: str = "K", ref: str = "Q"
+def _sites(n: int, *, rate: str | None = None, alt: str = "K", ref: str = "Q"
            ) -> list[dict[str, object]]:  # fmt: skip
+    """``rate=None``: an NA class error, flagged ``class_error_unestimated`` (M12-04 PR 11c)."""
+    flags = "snv" if rate is not None else f"snv;{vv.CE_FLAG}"
     return [
         vv.variant(f"VAR{i:04d}", aa_pos=5 + 3 * i, ref_aa=ref, alt_aa=alt, n_alt=40 - i,
-                   class_error_rate=rate)
+                   class_error_rate=rate, flags=flags)
         for i in range(n)
     ]  # fmt: skip
 
@@ -104,9 +106,11 @@ def test_ac_10_3_at_most_15_site_blocks_and_top_15_of_in_the_title(tmp_path: Pat
 
 @pytest.mark.parametrize("n", [3, 15, 20])
 def test_ac_10_4_unestimated_for_every_shown_site_is_stated_once(tmp_path: Path, n: int) -> None:
+    from gippa.viz.variants import UNESTIMATED
+
     inst = _render(vv.build_out(tmp_path, _sites(n), []))
     joined = "\n".join(_texts(inst))
-    assert joined.count("class error unestimated") == 1, joined
-    assert inst.title.count("class error unestimated") == 1, inst.title
+    assert joined.count(UNESTIMATED) == 1, joined
+    assert inst.title.count(UNESTIMATED) == 1, inst.title
     for line in _headers(inst):
-        assert "unestimated" not in line, line
+        assert UNESTIMATED not in line, line

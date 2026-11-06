@@ -2,7 +2,9 @@
 tests/unit/variants/test_flags_adr49.py).
 
 * Swaps: any adjacent pair and its swap have the same composition, so ``mass_equivalent`` holds
-  at every tolerance, and ``flags_for`` flags every ``swap`` row ``mass_equivalent``.
+  at every tolerance, and ``flags_for`` flags every ``swap`` row ``mass_equivalent`` without
+  touching its confidence: M7-05 flags never change confidence; only ``putative_start`` caps it
+  (M12-04 PR 10), and it never applies to a swap.
 * ``left_block_read`` equals an independent oracle of the left-form rule, depends only on
   ``ref[k-1-q:k+1]`` and ``peptide[:q+1]`` (so no right-hand or suffix form can enter), and at
   ``q = 0`` reduces to ``mass_equivalent(ref[k-1:k+1], peptide[0])``.
@@ -86,7 +88,9 @@ def test_flags_for_flags_every_swap_row(
     )
     got = fl().flags_for(row, frozenset(), config, sources)
     assert "mass_equivalent" in got, (row, got)
-    assert row["confidence"] == ("high" if n_alt >= 2 else "candidate"), "flags never demote"
+    assert row["confidence"] == ("high" if n_alt >= 2 else "candidate"), (
+        "M7-05 flags never demote; only putative_start caps (PR 10)"
+    )
 
 
 # --------------------------------------------------------------------------- left_block_read
