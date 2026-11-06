@@ -305,7 +305,7 @@ gh run download <run id> -n release -D local/review/m11-release/r<k>/
     - creates the GitHub release "GIPPA `<v>`" with `notes.md`. (The workflow would mark an
       `rc` as a pre-release, but an `rc` never reaches this step: see below.)
 - Zenodo mints the DOI.
-- **13b. Attach the example bundle** (minor and major releases only). Do it right after the run
+- **13b. Attach the example bundle** (**Khoa**; minor and major releases only). Do it right after the run
   creates the release: until then `gippa example fetch` gets a 404. Only Khoa uploads, because
   publishing is Khoa's. Patch releases attach nothing; they reuse the bundle of `v<X.Y>.0`.
 
