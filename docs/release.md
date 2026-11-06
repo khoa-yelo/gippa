@@ -135,11 +135,12 @@ plan job with `publishing off: vars.GHCR_PUBLISH is not 'true'; nothing is built
   on FarmShare. Before each `sbatch`, add up the `gippa-*` CPUs (R14).
     - **Minor or major release** (`<X.Y>.0`): build a new bundle, even when the inputs did not
       change, because `expected/` changes with the minor.
-        1. `sbatch scripts/slurm/build_example.sbatch`. It builds twice, checks that both archives
-           have one sha256, and prints the `db_sources.yaml` row and the `bundles.tsv` row.
+        1. `sbatch scripts/slurm/build_example.sbatch --out $GIPPA_ROOT/example/release-<X.Y>`
+           (a fresh work tree; the default would rewrite older build trees). It builds twice,
+           checks that both archives have one sha256, and prints the `db_sources.yaml` row and the `bundles.tsv` row.
         2. Measure the new build tree. It has no pin yet, so `gippa example fetch` cannot check
            it; measure mode reads the unpacked tree instead:
-           `GIPPA_EXAMPLE_DIR=$GIPPA_ROOT/example/nissle_r200k/gippa-example-<X.Y> sbatch scripts/slurm/example_routes.sbatch <worktree>`,
+           `GIPPA_EXAMPLE_DIR=$GIPPA_ROOT/example/release-<X.Y>/nissle_r200k/gippa-example-<X.Y> sbatch scripts/slurm/example_routes.sbatch <worktree>`,
            where `<worktree>` is this branch's checkout. It runs every route's printed commands
            on that tree, with no fetch and no `expected/` comparison, and writes
            `measured/<route>.json` and `wall_times.tsv` (the wall time of each route) under
