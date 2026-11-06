@@ -47,6 +47,7 @@ import pandas as pd
 import pyarrow as pa
 import pyarrow.parquet as pq
 import pytest
+from helpers.example_a4 import write_a4
 from helpers.example_m12_01 import REPO, flat
 
 SCRIPT_DIR = REPO / "scripts" / "example"
@@ -196,6 +197,7 @@ def make_pilot(
             fh.write("file\tscan\tcharge\tsequence\tscore-type\tscore\n")
             for i, pep in enumerate((PLUS, IL_SSL, MINUS, SPAN, RANDOM)):
                 fh.write(f"/home/users/alice/raw/{run}.mzML\t{100 + i}\t2\t{pep}\tUNKNOWN\t0.9\n")
+    write_a4(root, chrom, S, E)  # route E (M12-01 amendment 2026-11-06)
     return root
 
 

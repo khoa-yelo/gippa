@@ -45,6 +45,7 @@ import pyarrow as pa
 import pyarrow.parquet as pq
 import pytest
 import yaml
+from helpers.example_a4 import write_a4
 from helpers.example_m12_01 import (
     ASSET_HOST,
     REPO,
@@ -176,6 +177,7 @@ def make_pilot(root: Path) -> None:
             fh.write("file\tscan\tcharge\tsequence\tscore-type\tscore\n")
             for i, pep in enumerate(peps):
                 fh.write(f"{PERSONAL}/{run}.mzML\t{100 + i}\t2\t{pep}\tUNKNOWN\t0.{9 - i}\n")
+    write_a4(root, chrom, START, END)  # route E (M12-01 amendment 2026-11-06)
 
 
 # ---------------------------------------------------------------- running the build

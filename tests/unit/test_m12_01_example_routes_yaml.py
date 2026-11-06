@@ -23,7 +23,7 @@ from helpers.example_m12_01 import (
     subcommand,
 )
 
-ROUTE_IDS = ("A", "B", "C", "D")
+ROUTE_IDS = ("A", "B", "C", "D", "E")  # route E, 2026-11-06
 FORBIDDEN = ("--annotation", "--strict", "--resume", "--executor")
 INPUT_OPTS = ("--genome", "--peptides", "--proteins", "--abundance")
 
@@ -43,7 +43,7 @@ def _all(routes: dict[str, dict[str, object]]) -> list[str]:
     return [c for rid in routes for c in _cmds(routes, rid)]
 
 
-def test_four_routes_with_headings(routes: dict[str, dict[str, object]]) -> None:
+def test_five_routes_with_headings(routes: dict[str, dict[str, object]]) -> None:
     assert tuple(sorted(routes)) == ROUTE_IDS
     for rid in ROUTE_IDS:
         assert str(routes[rid]["title"]).strip(), rid
@@ -67,13 +67,15 @@ def test_command_sequence_per_route(routes: dict[str, dict[str, object]]) -> Non
 
 
 def test_route_inputs(routes: dict[str, dict[str, object]]) -> None:
-    conv = {r: options(_cmds(routes, r, "convert")[0]) for r in "ACD"}
+    conv = {r: options(_cmds(routes, r, "convert")[0]) for r in "ACDE"}
     assert conv["A"]["--from"] == ["diann"] and conv["A"]["--search-db"] == ["same"]
     assert conv["C"]["--from"] == ["cascadia"]
     assert conv["D"]["--from"] == ["generic"]
     assert conv["D"]["--source"] == ["database"] and conv["D"]["--search-db"] == ["same"]
+    assert conv["E"]["--from"] == ["diann"] and conv["E"]["--search-db"] == ["same"]
     for r, path in (("A", "{dir}/A_diann/report.parquet"), ("C", "{dir}/C_cascadia/"),
-                    ("D", "{dir}/D_generic/peptides.tsv")):  # fmt: skip
+                    ("D", "{dir}/D_generic/peptides.tsv"),
+                    ("E", "{dir}/E_sixframe/report.parquet")):  # fmt: skip
         cmd = _cmds(routes, r, "convert")[0]
         assert path in cmd, (r, cmd)
         assert conv[r]["--out"] == [f"{{out}}/{r}/peptides.tsv"], (r, conv[r])

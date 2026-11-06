@@ -84,9 +84,10 @@ def bundle_files(version: str = "1.1") -> dict[str, bytes]:
         "C_cascadia/WT_2.ssl": b"file\tscan\n",
         "C_cascadia/WT_3.ssl": b"file\tscan\n",
         "D_generic/peptides.tsv": b"peptide\trun\n",
+        "E_sixframe/report.parquet": b"PAR1 not a real parquet PAR1",
         "expected/README.md": b"# expected (test fixture)\n",
     }
-    for r in "ABCD":
+    for r in "ABCDE":
         out[f"expected/{r}.json"] = (json.dumps({"route": r, "version": version}) + "\n").encode()
     return out
 
