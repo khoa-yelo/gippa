@@ -19,7 +19,8 @@ Checks (``helpers.putative_start_records.record``), in every replicate unless no
 - pooled over the replicates: the rule without its K/R guard flags > 0 B2 rows (the guard has
   teeth), and (full tier) the Wilson 95 % upper bound of the B false-cap share is <= 0.02.
 
-Vacuity (no A, B or B2 row in a replicate) raises ``RuntimeError``, never an assertion.
+Vacuity raises ``RuntimeError``, never an assertion, in every replicate: no A, B or B2 row; fewer
+A rows than planted A sites; no out-of-gene K→M control row (review round 1).
 
 Scenario interface (gippasim tooling; the implementer writes it): ``gippasim.alt_start``
 ``alt_start_initiation(seed, *, size="100k" | "1M", genome_relation="related" | "same",
@@ -116,6 +117,11 @@ def _run(arm: str, full: bool) -> None:
     for r in got:
         if not (r["n_a_rows"] and r["n_b_rows"] and r["n_b2_rows"]):
             raise RuntimeError(f"alt_start_initiation vacuous in replicate {r['replicate']}: {r}")
+        if r["n_a_rows"] != r["n_a_planted"]:  # review round 1: every planted A site is a row
+            raise RuntimeError(f"replicate {r['replicate']}: {r['n_a_rows']} of "
+                               f"{r['n_a_planted']} planted A sites form ALT rows")  # fmt: skip
+        if r["n_control_km_rows"] < 1:  # the K->M control must be exercised
+            raise RuntimeError(f"replicate {r['replicate']}: no out-of-gene K->M control row")
     assert not bad, f"putative_start thresholds failed ({arm}): {bad}"
     assert not disagree, f"oracle and chain disagree ({arm}) in replicates {disagree}"
     if got and not os.environ.get(C.SHARD_ENV):

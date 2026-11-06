@@ -175,6 +175,17 @@ def _unflagged(ph: pd.DataFrame, peps: pd.DataFrame, cfg: GippaConfig) -> pd.Dat
     return table
 
 
+def test_c3_pin_the_only_alternative_start_codon_is_g1_annotated_start() -> None:
+    """M12-04 PR 10 C3: this file's chain property may keep "flags never change confidence" only
+    because no hit it draws can carry ``putative_start``. The hits cover codons 0-99 of G1 and G2;
+    the only one in ``annotation.start_codons`` minus ATG is G1's first, an annotated start."""
+    alt_starts = set(_cfg("related").annotation.start_codons) - {"ATG"}
+    found = {(g.tag, i) for g in (G1, G2) for i in range(100)
+             if codon_nt(SEQ, g.codon(i), g.strand) in alt_starts}  # fmt: skip
+    assert found == {("G1", 0)}, found
+    assert ("c1", "+", G1.codon(0)) in fl().start_codons(GM)
+
+
 CORE = ["variant_id", "contig", "codon_start", "strand", "alt_aa", "alt_type", "call",
         "confidence", "n_ref", "n_alt"]  # fmt: skip
 

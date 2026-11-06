@@ -114,3 +114,32 @@ def test_ac_10_4_unestimated_for_every_shown_site_is_stated_once(tmp_path: Path,
     assert inst.title.count(UNESTIMATED) == 1, inst.title
     for line in _headers(inst):
         assert UNESTIMATED not in line, line
+
+
+# ---------------------------------------------------------------- review round 1 (#566)
+
+
+@pytest.mark.parametrize("n", [3, 15])
+def test_no_top_clause_when_every_site_is_shown(tmp_path: Path, n: int) -> None:
+    """n <= 15: every ALT site is drawn, so the title has no "top 15 of" clause."""
+    inst = _render(vv.build_out(tmp_path, _sites(n, rate="0.01"), []))
+    assert len(_headers(inst)) == n
+    assert "top " not in inst.title, inst.title
+    assert not any("top 15 of" in t for t in _texts(inst))
+
+
+def test_unestimated_stated_once_when_it_holds_for_every_shown_site(tmp_path: Path) -> None:
+    """Lead decision (review round 1): "stated once" is judged over the shown sites. The 15
+    shown sites have no class error rate; a 16th, unshown ALT site has one. The phrase
+    (``UNESTIMATED``) occurs exactly once in the figure text, on no site line."""
+    from gippa.viz.variants import UNESTIMATED
+
+    sites = _sites(15)
+    sites.append(vv.variant("VAR0099", aa_pos=280, n_alt=1, class_error_rate="0.01"))
+    inst = _render(vv.build_out(tmp_path, sites, []))
+    heads = _headers(inst)
+    assert len(heads) == 15 and not any("aa 280" in h for h in heads), heads
+    joined = "\n".join(_texts(inst))
+    assert joined.count(UNESTIMATED) == 1, joined
+    for line in heads:
+        assert UNESTIMATED not in line, line

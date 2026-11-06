@@ -53,6 +53,7 @@ class Site:
     kind: str = "substitution"
     sources: tuple[tuple[str, str], ...] | None = None
     ref_peptides: tuple[tuple[int, int], ...] = ()  # (q, length): reference reads, n_diff 0
+    alt: str = "M"  # the residue the ALT peptides read at the site
 
 
 @dataclass(frozen=True)
@@ -132,7 +133,7 @@ def peptide_of(w: World, st: Site, q: int, n: int, *, alt: bool = True) -> str:
         if not alt:
             pass
         elif i == st.s:
-            aa = "M"
+            aa = st.alt
         elif st.kind == "swap" and i == st.s + 1:
             aa = translate_text(st.ref_codon, w.table)
         res.append(aa)
