@@ -1453,3 +1453,6 @@ the user guide is [Inputs › Genetic code](user-guide/inputs.md#genetic-code) a
 - Route out-of-gene `putative_start` sites to novel-ORF start evidence (statistician Q7 option 3), after its own chance-mass and decoy review.
 - Variants estimator: initiator reads at putative starts can inflate the substitution class's paired-error estimate; consider excluding them.
 - Flaky property test: `tests/property/test_m5_fixture_props.py::test_oric_is_one_chr1_feature_near_its_fraction` fails at seed 827 (|Δ| 0.0205 vs 0.02); look at the fixture's oriC placement, never widen the tolerance (R3).
+
+### 2026-11-06 (docs, M12-01 PR 8b)
+- **K-12 tutorial (Q-K4):** the empty `docs/tutorials/ecoli-k12.md` was replaced by `tutorials/example-routes.md`. Write a K-12 tutorial from public inputs, command by command, once a public K-12 peptide set and its run times are recorded.

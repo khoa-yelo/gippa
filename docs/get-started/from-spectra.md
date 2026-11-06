@@ -15,6 +15,9 @@ The worked example throughout is GIPPA's pilot: three wild-type E. coli Nissle 1
 (`validation/pilot/README.md` and `validation/pilot/reproduce.md` in the repository). Where the
 pilot did not run a route, this page says so.
 
+To try routes A, C and D on real files first, use [the example](example.md): it holds DIA-NN,
+Cascadia and generic tables from the same pilot, cut to one region.
+
 ## Choose a route
 
 | Route | Input spectra | Typical use | `gippa convert --from` | What it feeds in GIPPA | Pilot run time |

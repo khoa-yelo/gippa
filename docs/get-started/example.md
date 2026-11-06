@@ -71,38 +71,41 @@ A failed fetch leaves no partial directory behind. See [all exit codes](../user-
 
 ## The four routes
 
-`<dir>` is the bundle directory and `<out>` is `<dir>/runs`. The commands are the ones
-`gippa example fetch` prints. Run each route's commands in order; the routes are independent.
+The commands below assume the default bundle directory, `gippa-example`, in the current
+directory. Each route writes its outputs to `gippa-example/runs/<route>`. They are the commands
+`gippa example fetch` prints; the printed ones use the absolute path of your bundle directory, so
+copy those if you used `--outdir`. Run each route's commands in order; the routes are
+independent.
 
 ### Route A: DIA-NN report
 
 ```bash
-gippa convert --from diann <dir>/A_diann/report.parquet --out <out>/A/peptides.tsv --search-db same
-gippa preflight --genome <dir>/genome/nissle_r200k.fna.gz --peptides <out>/A/peptides.tsv --set 'modules=[core,bgc]' --set annotation.bakta.db=light --set annotation.terminators.tool=transtermhp --set annotation.promoter_calculator.enabled=false
-gippa run --genome <dir>/genome/nissle_r200k.fna.gz --peptides <out>/A/peptides.tsv --genome-relation same --outdir <out>/A --modules core,bgc --set annotation.bakta.db=light --terminators transtermhp --set annotation.promoter_calculator.enabled=false --threads 4
+gippa convert --from diann gippa-example/A_diann/report.parquet --out gippa-example/runs/A/peptides.tsv --search-db same
+gippa preflight --genome gippa-example/genome/nissle_r200k.fna.gz --peptides gippa-example/runs/A/peptides.tsv --set 'modules=[core,bgc]' --set annotation.bakta.db=light --set annotation.terminators.tool=transtermhp --set annotation.promoter_calculator.enabled=false
+gippa run --genome gippa-example/genome/nissle_r200k.fna.gz --peptides gippa-example/runs/A/peptides.tsv --genome-relation same --outdir gippa-example/runs/A --modules core,bgc --set annotation.bakta.db=light --terminators transtermhp --set annotation.promoter_calculator.enabled=false --threads 4
 ```
 
 ### Route B: protein FASTA and abundance table
 
 ```bash
-gippa preflight --genome <dir>/genome/nissle_r200k.fna.gz --proteins <dir>/B_proteins/proteins.faa --abundance <dir>/B_proteins/abundance.tsv --set 'modules=[core,bgc]' --set annotation.bakta.db=light --set annotation.terminators.tool=transtermhp --set annotation.promoter_calculator.enabled=false
-gippa run --genome <dir>/genome/nissle_r200k.fna.gz --proteins <dir>/B_proteins/proteins.faa --abundance <dir>/B_proteins/abundance.tsv --abundance-type maxlfq --genome-relation same --outdir <out>/B --modules core,bgc --set annotation.bakta.db=light --terminators transtermhp --set annotation.promoter_calculator.enabled=false --threads 4
+gippa preflight --genome gippa-example/genome/nissle_r200k.fna.gz --proteins gippa-example/B_proteins/proteins.faa --abundance gippa-example/B_proteins/abundance.tsv --set 'modules=[core,bgc]' --set annotation.bakta.db=light --set annotation.terminators.tool=transtermhp --set annotation.promoter_calculator.enabled=false
+gippa run --genome gippa-example/genome/nissle_r200k.fna.gz --proteins gippa-example/B_proteins/proteins.faa --abundance gippa-example/B_proteins/abundance.tsv --abundance-type maxlfq --genome-relation same --outdir gippa-example/runs/B --modules core,bgc --set annotation.bakta.db=light --terminators transtermhp --set annotation.promoter_calculator.enabled=false --threads 4
 ```
 
 ### Route C: Cascadia de novo results (a format demo)
 
 ```bash
-gippa convert --from cascadia <dir>/C_cascadia/WT_1.ssl <dir>/C_cascadia/WT_2.ssl <dir>/C_cascadia/WT_3.ssl --out <out>/C/peptides.tsv
-gippa preflight --genome <dir>/genome/nissle_r200k.fna.gz --peptides <out>/C/peptides.tsv --set 'modules=[core,bgc]' --set annotation.bakta.db=light --set annotation.terminators.tool=transtermhp --set annotation.promoter_calculator.enabled=false
-gippa run --genome <dir>/genome/nissle_r200k.fna.gz --peptides <out>/C/peptides.tsv --genome-relation same --outdir <out>/C --modules core,bgc --set annotation.bakta.db=light --terminators transtermhp --set annotation.promoter_calculator.enabled=false --threads 4
+gippa convert --from cascadia gippa-example/C_cascadia/WT_1.ssl gippa-example/C_cascadia/WT_2.ssl gippa-example/C_cascadia/WT_3.ssl --out gippa-example/runs/C/peptides.tsv
+gippa preflight --genome gippa-example/genome/nissle_r200k.fna.gz --peptides gippa-example/runs/C/peptides.tsv --set 'modules=[core,bgc]' --set annotation.bakta.db=light --set annotation.terminators.tool=transtermhp --set annotation.promoter_calculator.enabled=false
+gippa run --genome gippa-example/genome/nissle_r200k.fna.gz --peptides gippa-example/runs/C/peptides.tsv --genome-relation same --outdir gippa-example/runs/C --modules core,bgc --set annotation.bakta.db=light --terminators transtermhp --set annotation.promoter_calculator.enabled=false --threads 4
 ```
 
 ### Route D: a generic peptide table
 
 ```bash
-gippa convert --from generic <dir>/D_generic/peptides.tsv --out <out>/D/peptides.tsv --source database --search-db same
-gippa preflight --genome <dir>/genome/nissle_r200k.fna.gz --peptides <out>/D/peptides.tsv --set 'modules=[core,bgc]' --set annotation.bakta.db=light --set annotation.terminators.tool=transtermhp --set annotation.promoter_calculator.enabled=false
-gippa run --genome <dir>/genome/nissle_r200k.fna.gz --peptides <out>/D/peptides.tsv --genome-relation same --outdir <out>/D --modules core,bgc --set annotation.bakta.db=light --terminators transtermhp --set annotation.promoter_calculator.enabled=false --threads 4
+gippa convert --from generic gippa-example/D_generic/peptides.tsv --out gippa-example/runs/D/peptides.tsv --source database --search-db same
+gippa preflight --genome gippa-example/genome/nissle_r200k.fna.gz --peptides gippa-example/runs/D/peptides.tsv --set 'modules=[core,bgc]' --set annotation.bakta.db=light --set annotation.terminators.tool=transtermhp --set annotation.promoter_calculator.enabled=false
+gippa run --genome gippa-example/genome/nissle_r200k.fna.gz --peptides gippa-example/runs/D/peptides.tsv --genome-relation same --outdir gippa-example/runs/D --modules core,bgc --set annotation.bakta.db=light --terminators transtermhp --set annotation.promoter_calculator.enabled=false --threads 4
 ```
 
 Route D's table was made from route A's rows, as an engine without a GIPPA converter would write
@@ -174,10 +177,13 @@ For a whole genome with the defaults, see the [quick start](quickstart.md).
 - Preflight info rows such as a short genome or small replicons are expected on a region; they are
   not faults.
 
-`<dir>/expected/` holds each route's numbers (`A.json` to `D.json`) and their tolerances, and
+`gippa-example/expected/` holds each route's numbers (`A.json` to `D.json`) and their tolerances, and
 `expected/README.md` shows them as a table with the file and column each one comes from. Other
 machines, thread counts or container runtimes may differ within those tolerances. A Bakta full
 database or an installed UniOP can change the gene and operon numbers.
+
+To read the four runs and compare them, follow the tutorial
+[One Nissle region, four routes](../tutorials/example-routes.md).
 
 ## Licence and citation
 

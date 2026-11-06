@@ -9,6 +9,9 @@ gippa convert --from diann report.parquet --out peptides.tsv --abundance-out abu
 gippa run --genome genome.fna --peptides peptides.tsv --outdir out
 ```
 
+To try `--from diann`, `--from cascadia` and `--from generic` on real files (routes A, C and D),
+use [the example](../get-started/example.md).
+
 DIA-NN peptides carry `intensity`, so `gippa run` computes gene abundance from the peptides. The
 abundance table written by `--abundance-out` is then not used, even when you pass it with
 `--abundance`. It is used only for peptides without intensities (see
