@@ -231,10 +231,11 @@ def test_nextflow_row_loads_through_load_sources() -> None:
 
 
 def test_no_other_row_names_the_asset_host() -> None:
-    """The per-item allowlist widens only the nextflow row (UniOP keeps codeload only)."""
+    """The per-item allowlist widens only the nextflow row and the example bundle pins, which are
+    GitHub release assets too (M12-01 PR 7); UniOP keeps codeload only."""
     rows = raw_rows()
     for name, row in rows.items():
-        if name != "nextflow":
+        if name != "nextflow" and not name.startswith("example_"):
             assert asset_host() not in (row.get("redirect_hosts") or []), name
     uniop = rows["uniop_source"].get("redirect_hosts")
     assert uniop in (None, ["codeload.github.com"]), uniop

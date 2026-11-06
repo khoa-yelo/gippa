@@ -119,10 +119,10 @@ seconds. Measured with the commands above:
 
 | Route | `gippa run` (pipeline time) |
 |---|---|
-| A | 5:00 to 5:05 |
-| B | 8:31 |
-| C | 5:07 |
-| D | 4:59 |
+| A | 5:22 |
+| B | 8:24 |
+| C | 4:04 |
+| D | 4:24 |
 
 More CPUs do not make it faster: the steps run one after another, and each one spends most of
 its few seconds starting up.
