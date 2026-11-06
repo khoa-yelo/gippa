@@ -84,7 +84,9 @@ nothing to --out or --bundle-out:
 from __future__ import annotations
 
 import argparse
+import contextlib
 import csv
+import getpass
 import gzip
 import hashlib
 import importlib.util
@@ -274,6 +276,9 @@ def region_proteins(db_map: Path, start: int, end: int) -> pd.DataFrame:
 
 def subset_diann(report: Path, keep_ids: set[str]) -> tuple[pa.Table, dict[str, int]]:
     t = pq.read_table(report)
+    for i, f in enumerate(t.schema):  # Arrow cannot filter string_view columns: read as string
+        if pa.types.is_string_view(f.type):
+            t = t.set_column(i, pa.field(f.name, pa.string()), t.column(i).cast(pa.string()))
     ids = t.column("Protein.Ids").to_pylist()
     mask = [bool(x) and all(p in keep_ids for p in str(x).split(";")) for x in ids]
     sub = t.filter(pa.array(mask))
@@ -306,9 +311,31 @@ def region_entries(db_map: Path, start: int, end: int) -> pd.DataFrame:
     return m[m["kind"].isin(["cds", "sorf", "orf"])].reset_index(drop=True)
 
 
+def _is_text(typ: pa.DataType) -> bool:
+    """A string column: plain, large, view or dictionary-encoded."""
+    if pa.types.is_dictionary(typ):
+        return _is_text(typ.value_type)
+    return bool(pa.types.is_string(typ) or pa.types.is_large_string(typ)
+                or pa.types.is_string_view(typ))  # fmt: skip
+
+
 def _text_columns(t: pa.Table) -> list[int]:
-    return [i for i, f in enumerate(t.schema)
-            if pa.types.is_string(f.type) or pa.types.is_large_string(f.type)]  # fmt: skip
+    return [i for i, f in enumerate(t.schema) if _is_text(f.type)]
+
+
+def _set_text(t: pa.Table, i: int, values: list[Any]) -> pa.Table:
+    """Column ``i`` of ``t`` replaced by ``values`` in the column's own type (BuildError when the
+    type cannot hold them)."""
+    field = t.schema.field(i)
+    try:
+        if pa.types.is_dictionary(field.type):
+            arr = pa.array(values, type=field.type.value_type).dictionary_encode()
+            arr = arr.cast(field.type)
+        else:
+            arr = pa.array(values, type=field.type)
+    except (pa.ArrowInvalid, pa.ArrowNotImplementedError, pa.ArrowTypeError) as exc:
+        raise BuildError(f"column {field.name} ({field.type}) cannot be rewritten: {exc}") from exc
+    return t.set_column(i, field, arr)
 
 
 def orf_id_rewrite(
@@ -328,7 +355,9 @@ def orf_id_rewrite(
             return new_id[old]
         m = _ORF_ID.match(old)
         row = by_id[old]
-        assert m is not None
+        if m is None:
+            raise BuildError(f"route E: region ORF ID {old} is not "
+                             f"GIPPAORF_{{class}}_{CHROM}_{{s1}}_{{e1}}_{{p|m}}")  # fmt: skip
         cls, s1, e1, sfx = m.group(1), int(m.group(2)), int(m.group(3)), m.group(4)
         strand = "+" if sfx == "p" else "-"
         new = f"GIPPAORF_{cls}_{contig}_{s1 - start}_{e1 - start}_{sfx}"
@@ -355,22 +384,45 @@ def orf_id_rewrite(
         out = [";".join(renamed(p) if p in by_id else p for p in v.split(";"))
                if isinstance(v, str) else v for v in vals]  # fmt: skip
         if out != vals:
-            t = t.set_column(i, t.schema.field(i), pa.array(out, type=t.schema.field(i).type))
+            t = _set_text(t, i, out)
             rewritten.append(t.schema.field(i).name)
-    left = sorted({v for i in _text_columns(t) for v in t.column(i).to_pylist()
-                   if isinstance(v, str) and _ORF_CHROM.search(v)})  # fmt: skip
+    left = sorted({m.group(0) for i in range(t.num_columns) for v in t.column(i).to_pylist()
+                   if isinstance(v, str) for m in _ORF_CHROM.finditer(v)})  # fmt: skip
     if left:
-        raise BuildError(f"route E: ORF IDs naming {CHROM} left after the rewrite: {left[:5]}")
+        raise BuildError(f"route E: ORF IDs naming {CHROM} left after the rewrite (not "
+                         f"region entries, or in a column not rewritten): {left[:5]}")  # fmt: skip
     return t, rewritten, len(new_id)
 
 
+# a path argument: absolute, ~/ or ../; alone, after `=` or `:`, or glued to a flag (`-B/x:/y`)
+_PATH_ARG = re.compile(
+    r"(?:^|(?<=[\s=:'\"]))(?P<flag>-{1,2}[A-Za-z][\w-]*)?"
+    r"(?P<path>(?:~|\.\.)?/(?!/)[^\s:'\"=,;]*)",
+    re.M,
+)
+_EXTENSION = re.compile(r"[^.]\.[A-Za-z0-9]+$")
+
+
 def shorten_paths(text: str) -> str:
-    """Absolute paths in ``text`` reduced to their base names (R12)."""
+    """R12: each path argument of ``text`` becomes its base name when its last component has a
+    file extension, and ``<dir>`` otherwise (a trailing ``/`` or no extension)."""
 
-    def base(m: re.Match[str]) -> str:
-        return m.group(0).rstrip("/").rsplit("/", 1)[-1]
+    def short(m: re.Match[str]) -> str:
+        path = m.group("path")
+        last = path.rsplit("/", 1)[-1]
+        name = last if _EXTENSION.search(last) else "<dir>"
+        return (m.group("flag") or "") + name
 
-    return re.sub(r"(?<![\w.~-])/[^\s'\"=,;]*", base, text)
+    return _PATH_ARG.sub(short, text)
+
+
+def login_names() -> list[str]:
+    """The building user's login names (``getpass.getuser()``, the home directory's name)."""
+    names = []
+    with contextlib.suppress(Exception):  # getuser raises when no name is set
+        names.append(getpass.getuser())
+    names.append(Path.home().name)
+    return sorted({n for n in names if n and n not in (".", "/")})
 
 
 def a4_extras(root: Path) -> dict[str, Any]:
@@ -464,16 +516,14 @@ def scrub_paths(t: pa.Table) -> tuple[pa.Table, list[str]]:
     """Rule 8: every text column holding an absolute path, with each such value reduced to its
     base name (``/`` or backslash separated); the names of the rewritten columns."""
     rewritten = []
-    for i, field in enumerate(t.schema):
-        if not (pa.types.is_string(field.type) or pa.types.is_large_string(field.type)):
-            continue
+    for i in _text_columns(t):
         vals = t.column(i).to_pylist()
         if not any(isinstance(v, str) and _ABS.match(v) for v in vals):
             continue
         new = [re.split(r"[\\/]", v)[-1] if isinstance(v, str) and _ABS.match(v) else v
                for v in vals]  # fmt: skip
-        t = t.set_column(i, field, pa.array(new, type=field.type))
-        rewritten.append(field.name)
+        t = _set_text(t, i, new)
+        rewritten.append(t.schema.field(i).name)
     return t, rewritten
 
 
@@ -481,11 +531,14 @@ def _leaks(text: str, literals: Iterable[str]) -> bool:
     return bool(_PERSONAL.search(text)) or any(lit and lit in text for lit in literals)
 
 
-def personal_paths(top: Path, literals: Iterable[str | Path]) -> list[str]:
+def personal_paths(
+    top: Path, literals: Iterable[str | Path], words: Iterable[str] = ()
+) -> list[str]:
     """R12 leak guard: ``<file> (<where>)`` for every bundle file holding a personal or build
-    path (a parquet cell or metadata entry, a gzipped or plain text file). Values are not
-    reported."""
+    path (a parquet cell or metadata entry, a gzipped or plain text file), or, in a text file,
+    one of ``words`` (the login names) as a whole word. Values are not reported."""
     lits = [str(x) for x in literals if str(x) not in ("", "/", ".")]
+    word = re.compile("|".join(rf"(?<!\w){re.escape(w)}(?!\w)" for w in words if w) or r"(?!)")
     hits: list[str] = []
     for p in sorted(top.rglob("*")):
         if not p.is_file():
@@ -507,8 +560,11 @@ def personal_paths(top: Path, literals: Iterable[str | Path]) -> list[str]:
         raw = p.read_bytes()
         if p.suffix == ".gz":
             raw = gzip.decompress(raw)
-        if _leaks(raw.decode("utf-8", "replace"), lits):
+        text = raw.decode("utf-8", "replace")
+        if _leaks(text, lits):
             hits.append(rel)
+        elif word.search(text):
+            hits.append(f"{rel} (the login name)")
     return hits
 
 
@@ -737,11 +793,9 @@ def build(
     }
     _check_routes(a_counts, c_counts, len(ab), len(gen), len(prot), e_counts)
     e_t, e_scrubbed = scrub_paths(e_t)
-    used = {p for x in e_t.column("Protein.Ids").to_pylist() for p in str(x).split(";")}
     e_t, e_rw_cols, n_rw = orf_id_rewrite(
-        e_t, orfs[orfs["db_id"].isin(used)], region_nt, start, contig,
-        read_fasta(src["a4_strain_db"]),
-    )  # fmt: skip
+        e_t, orfs, region_nt, start, contig, read_fasta(src["a4_strain_db"])
+    )
     e_path = out / "E_sixframe" / "report.parquet"
     pq.write_table(e_t, e_path, compression="zstd")
 
@@ -777,7 +831,12 @@ def build(
         },
         "C": c_counts,
         "D": {"rows": len(gen), "decoy_rows": int((gen["is_decoy"] == "true").sum())},
-        "E": {**e_counts, "region_entries": len(ent), "region_orf_entries": len(orfs)},
+        "E": {
+            **e_counts,
+            "region_entries": len(ent),
+            "region_orf_entries": len(orfs),
+            "orf_entries_named": n_rw,
+        },
     }
     rewritten = {"A_diann/report.parquet": a_scrubbed, "C_cascadia/*.ssl": ["file"],
                  "E_sixframe/report.parquet": e_scrubbed}  # fmt: skip
@@ -839,8 +898,8 @@ def build(
     exp_note = (f"from {expected_commit or 'an unrecorded commit'}" if expected is not None
                 else "not included in this build")  # fmt: skip
     (out / "README.md").write_text(T.readme(version, region["one_based_closed"],
-                                            region["length_bp"], rs, expected is not None),
-                                   encoding="utf-8")  # fmt: skip
+                                            region["length_bp"], rs, expected is not None,
+                                            start, counts["E"]), encoding="utf-8")  # fmt: skip
     (out / "PROVENANCE.md").write_text(T.provenance(
         version, region, src_meta, counts,
         {"commit": commit, "gippa_version": installed, "expected": exp_note}, rewritten,
@@ -863,7 +922,8 @@ def build(
                                      encoding="utf-8")  # fmt: skip
     (out / "CHECKSUMS.sha256").write_text(checksums(out), encoding="utf-8")
 
-    leaks = personal_paths(out, [root, root.resolve(), Path.home(), stage.resolve()])
+    leaks = personal_paths(out, [root, root.resolve(), Path.home(), stage.resolve()],
+                           login_names())  # fmt: skip
     if leaks:
         raise BuildError("personal or build path in the bundle (R12): " + "; ".join(leaks))
 

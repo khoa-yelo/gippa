@@ -56,7 +56,10 @@ def readme(
     length_bp: int,
     routes: Sequence[Mapping[str, Any]],
     expected: bool,
+    start: int,
+    e_counts: Mapping[str, Any],
 ) -> str:
+    """``start``: the 0-based region start; ``e_counts``: ``SELECTION.json > counts > E``."""
     blocks = []
     for route in routes:
         cmds = "\n".join(fill(str(c)) for c in route["commands"])
@@ -69,7 +72,7 @@ def readme(
         else "This build has no `expected/` directory (the numbers are added at release prep)."
     )
     length = region_length(length_bp)
-    offset = int(region.rsplit(":", 1)[1].split("-")[0]) - 1  # the 0-based region start
+    named, in_region = e_counts["orf_entries_named"], e_counts["region_orf_entries"]
     return f"""# GIPPA example bundle {version}
 
 A real, cut-down dataset for trying GIPPA: one region of the *E. coli* Nissle 1917 chromosome,
@@ -111,10 +114,11 @@ longer (see the GIPPA docs, "Try the example").
 - A Bakta full database, or an installed UniOP, can change the gene and operon numbers.
 - Route E shows the six-frame workflow, not discoveries: expect a few novel-ORF candidates and no
   call. A class needs at least 100 target wins over its decoys before its q floor can reach 0.01,
-  and the region holds a few dozen ORF entries in all; the genome-wide six-frame run called 0 of
-  109 for the same reason. Empty novel-ORF results of routes A to D are expected too.
+  and the kept rows name {named:,} ORF entries (of {in_region:,} in the region); the genome-wide
+  six-frame run called 0 of 109 for the same reason. Empty novel-ORF results of routes A to D
+  are expected too.
 - Route E's ORF IDs name the bundle's region contig and region coordinates, not
-  `NZ_CP058217.1`; add {offset:,} to get chromosome coordinates.
+  `NZ_CP058217.1`; add {start:,} to get chromosome coordinates.
 - Route E's tier is expected to be `mayu`, like route A's: its ORF decoys pair no gene, and its
   other decoys pair through peptide votes.
 - Route E's q-values and PEPs are DIA-NN's on the whole six-frame search (147,753 strain records

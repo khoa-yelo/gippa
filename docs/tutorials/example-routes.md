@@ -149,10 +149,10 @@ EOF
 ```
 
 Expect a few candidates and 0 called. A class's q-value cannot go below a floor of one over its
-number of target wins, so a floor of 0.01 needs at least 100 wins; the region holds a few dozen
-six-frame entries in all. `run_manifest.json` (`novel_orfs` › `classes`) lists each class with its
-regime (`picked_decoy`), its counts, its `q_floor` and `floor_above_alpha`. The report's novel-ORF
-section shows the same class summaries.
+number of target wins, so a floor of 0.01 needs at least 100 wins; the kept rows name 35 ORF
+entries (of 5,678 in the region). `run_manifest.json` (`novel_orfs` › `classes`) lists each
+class with its regime (`picked_decoy`), its counts, its `q_floor` and `floor_above_alpha`. The
+report's novel-ORF section shows the same class summaries.
 
 ## 5. Read the report per route
 

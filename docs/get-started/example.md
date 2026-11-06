@@ -130,9 +130,9 @@ genome and its Bakta annotation (the bundle's provenance file has the details an
 from its ID.
 
 - **Few candidates, no call.** Expect a few novel-ORF candidates and none called. A class needs
-  at least 100 target wins over its decoys before its q floor can reach 0.01, and the region
-  holds a few dozen six-frame entries in all. The genome-wide search called 0 of 109 candidates
-  for the same reason. Route E shows the six-frame workflow (IDs, the `picked_decoy` regime, the
+  at least 100 target wins over its decoys before its q floor can reach 0.01, and the kept rows
+  name 35 ORF entries (of 5,678 in the region). The genome-wide search called 0 of 109
+  candidates for the same reason. Route E shows the six-frame workflow (IDs, the `picked_decoy` regime, the
   class summaries and the floor), not a discovery.
 - **IDs in region coordinates.** Route E's ORF IDs name the bundle's region contig and region
   coordinates, so they match the genome you run on. Add 1,965,000 to a coordinate to get its
