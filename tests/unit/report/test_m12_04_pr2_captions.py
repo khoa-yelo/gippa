@@ -37,9 +37,9 @@ V17_CAPTION = (
 )
 
 
-#: the index instance of a multi-instance plot (review r1 L2): V03's suffix-``None`` instance,
-#: V13's ``locus`` instance (its suffix-``None`` instance is panel (a))
-INDEX_STEMS = {"V03": "V03_locus", "V13": "V13_novel_orfs_locus"}
+#: the index instance of a multi-instance plot (review r1 L2): V13's ``locus`` instance (its
+#: suffix-``None`` instance is panel (a)); V03's index is an image-free table since M12-04 PR 4
+INDEX_STEMS = {"V13": "V13_novel_orfs_locus"}
 
 
 def _captions() -> dict[str, str]:

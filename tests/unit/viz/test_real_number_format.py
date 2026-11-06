@@ -28,7 +28,6 @@ from helpers import viz_locus as vl
 from helpers.viz_landscape import correlogram_rows, gene, island, landscape_out, plot_spec
 from hypothesis import given
 from hypothesis import strategies as st
-from matplotlib.text import Text
 
 from gippa.config import GippaConfig, resolve_config
 from gippa.io.run_view import RunView
@@ -257,10 +256,18 @@ def test_v03_locus_titles_round_q_mean_and_p(tmp_path: Path, cfg: GippaConfig) -
 
 
 def test_v03_index_rounds_the_error_column_text(tmp_path: Path, cfg: GippaConfig) -> None:
-    (index,) = [i for i in _v03(tmp_path, cfg) if i.suffix is None]
-    texts = [t.get_text() for t in index.figure.findobj(Text) if t.get_text().strip()]
-    assert any("prophage_1" in t for t in texts), texts
-    bad = [t for t in texts if _too_precise(t)]
+    """The index is a report table since M12-04 PR 4 (P-12): its q cells are rounded."""
+    from gippa.io.plot_files import write_data
+    from gippa.io.tsv import read_tsv
+    from gippa.report.content import locus_index
+
+    insts = _v03(tmp_path / "run", cfg)
+    assert [i.suffix for i in insts if i.suffix is None] == []  # no index image
+    view = RunView.from_outdir(tmp_path / "run" / "OUT")  # vl.build_out writes <tmp>/OUT
+    index = base.data_tables()["V03"](view, cfg)
+    rows = locus_index(*read_tsv(write_data(index, "V03", "locus", tmp_path / "plots")))
+    assert any(r[1] == "prophage_1" for r in rows), rows
+    bad = [r for r in rows if _too_precise(f"q {r[4]}")]
     assert bad == [], bad
 
 

@@ -78,7 +78,8 @@ OVER, UNDER = "#0072B2", "#D55E00"
 XLABEL_C = "observed / expected detected TUs"
 FOOT_GSEA = "GSEA is conditional on detection, with no p_detect adjustment"
 FOOT_COVERAGE = "coverage = share of eligible genes with ≥ 1 term"
-NO_RESOURCES = "No annotation resources installed (gippa setup --go --kegg --cog)"
+#: M12-04 P-14: the empty states read "Nothing to show: <reason>. <what would change it>."
+NOTHING = "Nothing to show: "
 EX3_TITLE = (
     "3 sets enriched by abundance at q ≤ 0.05 (conditional on detection); "
     "2 categories detected more or less than expected"
@@ -687,7 +688,8 @@ def test_no_resources_is_an_empty_state(tmp_path: Path, cfg: GippaConfig) -> Non
 
     flags = ["layer_missing:go", "layer_missing:kegg", "layer_missing:cog"]
     inst = _render(ve.build_out(tmp_path, [], [], flags=flags), cfg)
-    assert inst.title == NO_RESOURCES
+    assert inst.title.startswith(f"{NOTHING}no annotation resources are installed. ")
+    assert "gippa setup" in inst.title
     assert list(inst.data.columns) == COLUMNS
     assert len(inst.data) == 0
     assert checklist.is_empty_state(inst)
@@ -961,8 +963,9 @@ def test_one_layer_missing_flag_is_the_generic_empty_state(
     from gippa.viz import checklist, enrichment
 
     inst = _render(ve.build_out(tmp_path, [], [], flags=["layer_missing:go"]), cfg)
-    assert inst.title != NO_RESOURCES
+    assert "annotation resources" not in inst.title
     assert inst.title == enrichment.EMPTY
+    assert inst.title.startswith(NOTHING)
     assert checklist.is_empty_state(inst)
 
 

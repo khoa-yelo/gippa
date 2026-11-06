@@ -62,8 +62,15 @@ EN_DASH = "\N{EN DASH}"
 CE_FLAG = "class_error_unestimated"  # its rate is NA (M12-04 PR 11c)
 NOTE = "length-changing: shown unaligned"
 UNALIGNED = frozenset({"block", "frameshift"})
-EMPTY = "No ALT site supported by peptides"
-EMPTY_SAME = "No ALT calls (genome relation same)"
+#: the empty states (M12-04 PR 4, P-14: "Nothing to show: <reason>. <what would change it>.")
+EMPTY = (
+    "Nothing to show: no peptide supports an alternative allele (ALT) site in this run. "
+    "Peptides over sites where the strain differs from the reference would add some."
+)
+EMPTY_SAME = (
+    "Nothing to show: the genome is the strain's own, so there are no ALT calls. "
+    "A related-strain reference genome would give variant sites."
+)
 MONO = "DejaVu Sans Mono"
 FONT_PT = 6.0
 CHAR_PT = FONT_PT * 1233 / 2048  # DejaVu Sans Mono advance width

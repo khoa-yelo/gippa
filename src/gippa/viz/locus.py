@@ -3,11 +3,13 @@
 
 ``select_loci`` builds the whole ordered pool (prophage/BGC ``o_minus_e`` rows, islands, operon
 flags at ``q <= stats.alpha.operon_flags``; novel ORFs are V13's). The plot renders the first
-``report.max_locus_plots`` loci, one ``Instance`` each, plus the index ``Instance`` (``suffix =
-None``). Each locus is drawn in a window of its span +/- ``FLANK``: gene arrows coloured by
-cividis on one run-wide scale, a peptide pileup, promoter and terminator marks, region and
-island shading. Circular windows stay unwrapped (features are shifted by +/- the replicon
-length into the window frame, the origin is a dashed line); linear windows are clipped.
+``report.max_locus_plots`` loci, one ``Instance`` each; the index of the whole pool is an
+image-free data table (``base.data_table``: ``data/V03_locus.tsv``) that the report shows as
+"Locus views, in display order" (M12-04 PR 4, P-12). Each locus is drawn in a window of its
+span +/- ``FLANK``: gene arrows coloured by cividis on one run-wide scale, a peptide pileup,
+promoter and terminator marks, region and island shading. Circular windows stay unwrapped
+(features are shifted by +/- the replicon length into the window frame, the origin is a dashed
+line); linear windows are clipped.
 Genes are drawn with plain matplotlib patches on our own ``Figure`` (decision 9: no pyplot).
 """
 
@@ -41,11 +43,8 @@ KIND_ORDER: tuple[str, ...] = ("prophage", "bgc", "island", "operon_flag", "nove
 FAMILY_ORDER: tuple[str, ...] = ("prophage", "bgc", "island", "operon_discordance",
                                  "missed_operon", "novel_orf")  # fmt: skip
 FLAG_FAMILIES: tuple[str, ...] = ("operon_discordance", "missed_operon")
-#: the name of each family's own estimate, printed in the index figure
+#: the name of each family's own estimate, written in the index (``estimate``); BH q otherwise
 ESTIMATE = {"island": "FWER p", "missed_operon": "decoy-FDR q"}
-TIER_HEADERS = ("significant at each family's own level", "not significant", "no estimate")
-INDEX_CAPTION = ("Order alternates between test families; values from different test families "
-                 "are on different scales and are not compared.")  # fmt: skip
 FLANK = 2_000  # bp each side of the span (index decision 20)
 SINGLE_MAX_BP = 20_000
 MAX_TICKS = 5  # labelled position ticks at most (K-12 survey: 7-digit bp labels collided)
@@ -66,7 +65,8 @@ ORF_KEY = "novel ORF; tick: OSTIR start; purple pileup: its peptides"
 IMPUTED_HATCH = "xxx"
 #: ``fill`` is the gene arrow's face colour (NA on the other tracks; M12-04 P-01)
 COLUMNS = ("track", "id", "contig", "start", "end", "strand", "value", "category", "fill")
-INDEX_COLUMNS = ("rank", "locus_id", "kind", "contig", "start", "end", "error", "rendered")
+INDEX_COLUMNS = ("rank", "locus_id", "kind", "family", "contig", "start", "end", "estimate",
+                 "error", "rendered")  # fmt: skip
 EMPTY = "no loci to show"
 _OPTIONAL = ("regions_stats", "islands", "operon_flags", "tus_tsv", "regions_tsv")
 _OPTIONAL_TRACKS = ("promoters_bed", "terminators_bed", "peptide_hits")
@@ -588,47 +588,35 @@ def _empty(columns: Iterable[str]) -> pd.DataFrame:
     return pd.DataFrame({c: pd.Series([], dtype=object) for c in columns})
 
 
-def _index(loci: Sequence[Locus], n_rendered: int, cfg: GippaConfig) -> base.Instance:
+def index_frame(loci: Sequence[Locus], n_rendered: int) -> pd.DataFrame:
+    """The locus index in display order: ``rank`` 1..n, the family's ``estimate`` name and value
+    (``error``), and whether a locus view was drawn (0-based ``start``)."""
     rows = [
-        [i + 1, lo.locus_id, lo.kind, lo.contig, lo.start0, lo.end0,
-         math.nan if lo.error is None else lo.error, i < n_rendered]
+        [i + 1, lo.locus_id, lo.kind, lo.test_family, lo.contig, lo.start0, lo.end0,
+         ESTIMATE.get(lo.test_family, "BH q"), math.nan if lo.error is None else lo.error,
+         i < n_rendered]
         for i, lo in enumerate(loci)
     ]  # fmt: skip
-    data = pd.DataFrame(rows, columns=list(INDEX_COLUMNS))
-    lines: list[tuple[str, str]] = [(INDEX_CAPTION, "italic")]
-    previous = -1
-    for i, lo in enumerate(loci):
-        t = tier(lo, cfg)
-        if t != previous:
-            lines.append((TIER_HEADERS[t], "bold"))
-            previous = t
-        mark = "" if i < n_rendered else " (not rendered)"
-        estimate = ESTIMATE.get(lo.test_family, "q")
-        lines.append((f"{i + 1}. {lo.locus_id} [{lo.kind}] {estimate} {style.fmt_q(lo.error)}"
-                      f"{mark}", "normal"))  # fmt: skip
-    # the caption wraps at the figure edge (one Text item), so it takes two line slots
-    slots = [2 if weight == "italic" else 1 for _, weight in lines]
-    fig = style.new_figure("single", 0.4 + 0.13 * sum(slots))
-    ax = fig.add_axes((0.02, 0.02, 0.96, 0.96))
-    ax.set_axis_off()
-    top = 0
-    for (text, weight), n in zip(lines, slots, strict=True):
-        y = 1.0 - (top + n / 2) / sum(slots)
-        top += n
-        ax.text(0.0, y, text, fontsize=6, va="center", transform=ax.transAxes, wrap=True,
-                fontweight="bold" if weight == "bold" else "normal",
-                fontstyle="italic" if weight == "italic" else "normal")  # fmt: skip
-    return base.Instance(None, fig, data, f"V3 loci: {n_rendered} of {len(loci)} rendered",
-                         ("start",))  # fmt: skip
+    if not rows:
+        return _empty(INDEX_COLUMNS)
+    return pd.DataFrame(rows, columns=list(INDEX_COLUMNS))
+
+
+def _n_rendered(loci: Sequence[Locus], cfg: GippaConfig) -> int:
+    return max(0, min(cfg.report.max_locus_plots, len(loci)))
+
+
+@base.data_table("V03")
+def locus_index(view: RunView, cfg: GippaConfig) -> base.DataTable:
+    """``data/V03_locus.tsv``: every selected locus in display order (no image, P-12)."""
+    loci = select_loci(view, cfg)
+    return base.DataTable(None, index_frame(loci, _n_rendered(loci, cfg)), ("start",))
 
 
 @base.plot("V03", "locus", needs=["genes_tsv"], optional=[*_OPTIONAL, *_OPTIONAL_TRACKS])
 def locus_plots(view: RunView, cfg: GippaConfig) -> list[base.Instance] | base.Skip:
-    """Every rendered locus instance, then the index instance."""
+    """Every rendered locus instance; none when no locus is selected (the index table, written
+    from ``locus_index``, says so)."""
     loci = select_loci(view, cfg)
-    if not loci:
-        return [base.empty_state("V03", "locus", EMPTY, INDEX_COLUMNS, "single")]
-    n = max(0, min(cfg.report.max_locus_plots, len(loci)))
     scale = run_scale(view.table("genes_tsv"))
-    shown = [render_locus(lo, view, cfg, scale) for lo in loci[:n]]
-    return [*shown, _index(loci, n, cfg)]
+    return [render_locus(lo, view, cfg, scale) for lo in loci[: _n_rendered(loci, cfg)]]

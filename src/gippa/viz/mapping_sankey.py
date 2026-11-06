@@ -6,6 +6,9 @@ unexplained). Units are distinct sequences: peptides by sequence (``peptide_hits
 ``unmapped.sequence``), proteins by ID (``protein_hits.protein_id``, ``unmapped.sequence_id``).
 A sequence both placed and unmapped counts once, as placed, and is counted in the ``conflicts``
 row (M9-05 table, index decision 14). Pure: tables come from the ``RunView``.
+
+With exactly one route and one outcome carrying flow (M12-04 PR 4, P-15) the alluvial is one
+horizontal bar at a third of the height, titled "All 774 peptides placed by exact match".
 """
 
 from __future__ import annotations
@@ -49,6 +52,15 @@ _X = (0.2, 0.47, 0.72)  # left edges of the class, route and outcome node column
 _W = 0.025  # node width (axes fraction)
 _GAP = 0.04  # vertical gap between nodes (axes fraction)
 _LABEL_SEP = (0.12, 0.06, 0.12)  # minimum label spacing per column (two-line labels at 0, 2)
+HEIGHT = 2.8  # the alluvial (inches)
+BAR_HEIGHT = 0.9  # the one-route bar: at most a third of ``HEIGHT`` (P-15)
+#: how the single-route bar title names the route
+ROUTE_WORDS: Mapping[str, str] = {
+    "exact": "placed by exact match",
+    "tolerant": "placed by tolerant match",
+    "miniprot": "placed (miniprot)",
+    "tblastn": "placed (tblastn)",
+}
 
 Flow = tuple[str, str, str]
 
@@ -117,6 +129,36 @@ def title(counts: Mapping[Flow, int]) -> str:
     text = "; ".join(parts)
     head, sep, rest = text.partition(";")
     return f"{head} placed in the genome{sep}{rest}"
+
+
+def single(counts: Mapping[Flow, int]) -> Flow | None:
+    """The one flow when exactly one route and one outcome carry flow, else ``None``."""
+    live = [key for key, n in counts.items() if n > 0]
+    return live[0] if len(live) == 1 else None
+
+
+def single_title(flow: Flow, n: int) -> str:
+    """``"All 774 peptides placed by exact match"`` / ``"All 106 proteins placed (miniprot)"``."""
+    cls, route, outcome = flow
+    noun = cls if n == 1 else f"{cls}s"
+    what = ROUTE_WORDS.get(route, "placed") if outcome == "placed" else f"unmapped: {outcome}"
+    return f"All {style.fmt_count(n)} {noun} {what}"
+
+
+def _bar(counts: Mapping[Flow, int], flow: Flow, n_conflicts: int) -> base.Instance:
+    n = counts[flow]
+    fig = style.new_figure("single", BAR_HEIGHT)
+    fig.set_label("V05_mapping_sankey")
+    ax = fig.add_axes((0.02, 0.08, 0.96, 0.42))
+    ax.set_xlim(0, 1)
+    ax.set_ylim(0, 1)
+    ax.set_axis_off()
+    ax.add_patch(Rectangle((0, 0), 1, 1, facecolor=OUTCOME_COLOUR[flow[2]], alpha=0.45, lw=0))
+    label = f"{flow[0]} → {flow[1]} → {flow[2]} ({style.fmt_count(n)})"
+    ax.text(0.5, 0.5, label, ha="center", va="center", fontsize=6)
+    text = single_title(flow, n)
+    fig.suptitle(text, y=0.95)
+    return base.Instance(None, fig, flow_table(counts, n_conflicts), text)
 
 
 def _ribbon(x0: float, y0: tuple[float, float], x1: float, y1: tuple[float, float]) -> Path:
@@ -219,8 +261,11 @@ def mapping_sankey(view: RunView, cfg: GippaConfig) -> list[base.Instance] | bas
     if sum(counts.values()) == 0:
         msg = "No sequences in the mapping tables"
         return [base.empty_state("V05", "mapping_sankey", msg, COLUMNS, "single")]
+    one = single(counts)
+    if one is not None:
+        return [_bar(counts, one, n_conflicts)]
     both = all(sum(n for k, n in counts.items() if k[0] == c) for c in CLASSES)
-    fig = style.new_figure("double" if both else "single", 2.8)
+    fig = style.new_figure("double" if both else "single", HEIGHT)
     fig.set_label("V05_mapping_sankey")
     ax = fig.add_axes((0.02, 0.03, 0.96, 0.82))
     ax.set_xlim(0, 1)

@@ -31,6 +31,7 @@ from __future__ import annotations
 
 import json
 import math
+import re
 from collections import Counter
 from pathlib import Path
 from typing import Any
@@ -370,7 +371,10 @@ def test_v10_flagged_rows_draw_nothing() -> None:
     s = tw.spec("V10", tw.v10_not_estimable())
     drawn = [y for t in tw.traces(s) for y in _finite(tw.floats(t.get("y")))]
     assert drawn == []
-    assert any("not estimable" in a for a in tw.annotations(s))
+    notes = [a for a in tw.annotations(s) if a.startswith("Not drawn")]
+    assert notes, tw.annotations(s)  # M12-04 PR 4: "Not drawn: <flags in plain words>"
+    tokens = re.compile(r"\b[a-z]+(?:_[a-z0-9]+)+\b")  # a raw flag token, e.g. few_values
+    assert not any(tokens.search(a) for a in notes), notes
 
 
 # ---------------------------------------------------------------- V11

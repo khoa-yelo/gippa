@@ -303,7 +303,11 @@ def test_example_6_too_few_rows_title(tmp_path: Path, cfg: GippaConfig) -> None:
         support=False,
     )
     t = _render(out, cfg).title
-    assert t == "Too few genes for the determinants model (60 rows, 20 TUs)"
+    # M12-04 P-14: the model's minimum and this run's counts
+    assert t == (
+        "Nothing to show: the determinants model needs ≥ 100 genes with abundance in ≥ 25 TUs "
+        "(this run: 60 genes, 20 TUs)."
+    )
 
 
 def test_title_never_says_expressed(tmp_path: Path, cfg: GippaConfig) -> None:
@@ -844,7 +848,10 @@ def test_n3_imputed_rows_are_not_model_rows(tmp_path: Path, cfg: GippaConfig) ->
     out = vd.build_out(tmp_path, model=vd.too_few_model_table(),
                        attribution=vd.too_few_attribution(60), features=feats,
                        support=False)  # fmt: skip
-    assert _render(out, cfg).title == "Too few genes for the determinants model (60 rows, 20 TUs)"
+    assert _render(out, cfg).title == (
+        "Nothing to show: the determinants model needs ≥ 100 genes with abundance in ≥ 25 TUs "
+        "(this run: 60 genes, 20 TUs)."
+    )
 
 
 def test_n3_imputed_rows_are_not_in_the_pd_rug(tmp_path: Path, cfg: GippaConfig) -> None:
