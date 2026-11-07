@@ -56,6 +56,7 @@ from helpers.example_a4 import (
     entries,
     make_pilot_e,
     region_contig,
+    set_route_e,
     with_rows,
 )
 from helpers.example_m12_01 import REPO, flat
@@ -116,6 +117,7 @@ def build(root: Path, tmp: Path, region: tuple[int, int] | None = None) -> Built
     if region is not None:
         argv += ["--start", str(region[0]), "--end", str(region[1])]
     mod, buf = _load(), io.StringIO()
+    set_route_e(mod, *(region or (START, END)))  # A4 sits in the shared region (amendment b)
     with (
         pytest.MonkeyPatch.context() as mp,
         contextlib.redirect_stdout(buf),

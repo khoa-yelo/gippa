@@ -47,7 +47,7 @@ import pandas as pd
 import pyarrow as pa
 import pyarrow.parquet as pq
 import pytest
-from helpers.example_a4 import write_a4
+from helpers.example_a4 import set_route_e, write_a4
 from helpers.example_m12_01 import REPO, flat
 
 SCRIPT_DIR = REPO / "scripts" / "example"
@@ -215,6 +215,7 @@ def _load(script: Path = SCRIPT) -> ModuleType:
 def run(root: Path, argv: list[str], script: Path = SCRIPT) -> tuple[int, str]:
     """``build_example.main(argv)`` with ``GIPPA_ROOT=root``: (exit code, stdout + stderr)."""
     mod = _load(script)
+    set_route_e(mod, S, E)  # A4 sits in the shared region (amendment b)
     out = io.StringIO()
     with (
         pytest.MonkeyPatch.context() as mp,

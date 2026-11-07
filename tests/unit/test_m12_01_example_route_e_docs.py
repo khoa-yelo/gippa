@@ -64,8 +64,13 @@ def test_route_e_section_holds_exactly_its_commands() -> None:
 
 def test_route_e_section_explains_the_six_frame_database() -> None:
     body = flat(_section(_text("get-started/example.md"), f"### {TITLE_E}"))
-    for needle in ("gippa makedb --six-frame-orfs", "(../user-guide/makedb.md)", "`mayu`",
-                   "floor", "1,965,000"):  # fmt: skip
+    for needle in (
+        "gippa makedb --six-frame-orfs",
+        "(../user-guide/makedb.md)",
+        "`mayu`",
+        "floor",
+        "1,400,000",
+    ):  # fmt: skip  (route E region, 2026-11-06)
         assert needle in body, needle
 
 
@@ -109,7 +114,7 @@ def test_release_step_14_prints_the_five_routes() -> None:
 
 def test_tutorial_title_five_routes() -> None:
     lines = _text("tutorials/example-routes.md").splitlines()
-    assert lines[0] == "# Tutorial: one Nissle region, five routes"
+    assert lines[0] == "# Tutorial: Nissle regions, five routes"  # route E region, 2026-11-06
 
 
 def test_tutorial_reads_route_e_novel_orfs() -> None:
@@ -118,13 +123,14 @@ def test_tutorial_reads_route_e_novel_orfs() -> None:
     assert "novel_orfs.tsv" in text
 
 
-def test_tutorial_compares_the_five_runs() -> None:
+def test_tutorial_compares_routes_a_to_d() -> None:
+    """AC 24 (route E region, 2026-11-06): E runs on another genome, so only A-D are compared."""
     ref = _cli_reference(CLI_MD.read_text(encoding="utf-8"))
     cmds = [c for c in _fenced(_text("tutorials/example-routes.md")) if c.split()[1] == "compare"]
     assert len(cmds) == 1, cmds
-    runs = " ".join(f"{OUT}/{r}" for r in "ABCDE")
+    runs = " ".join(f"{OUT}/{r}" for r in "ABCD")
     assert cmds[0].startswith(f"gippa compare {runs} "), cmds[0]
-    assert "--labels A,B,C,D,E" in cmds[0] and "--outdir " in cmds[0], cmds[0]
+    assert "--labels A,B,C,D " in cmds[0] + " " and "--outdir " in cmds[0], cmds[0]
     assert option_problems(cmds[0], ref) == []
 
 

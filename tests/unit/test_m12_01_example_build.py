@@ -45,7 +45,7 @@ import pyarrow as pa
 import pyarrow.parquet as pq
 import pytest
 import yaml
-from helpers.example_a4 import write_a4
+from helpers.example_a4 import set_route_e, write_a4
 from helpers.example_m12_01 import (
     ASSET_HOST,
     REPO,
@@ -202,6 +202,7 @@ def _run(root: Path, argv: list[str]) -> tuple[int, str]:
     review; the dirty-tree rule is pinned in test_m12_01_example_build_review.py)."""
     argv = [*argv, "--allow-dirty"]
     mod = _load_script()
+    set_route_e(mod, START, END)  # A4 sits in the shared region (amendment b)
     out = io.StringIO()
     with (
         pytest.MonkeyPatch.context() as mp,

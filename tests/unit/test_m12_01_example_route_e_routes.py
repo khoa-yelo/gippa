@@ -22,14 +22,14 @@ from helpers.example_m12_01 import REPO, fill, flat, load_routes, options, subco
 from helpers.example_route_e import route_e_misses
 
 TITLE_E = "Route E: DIA-NN report, six-frame database"
-COMMANDS_E = [  # section 2 > Route E's commands, verbatim
+COMMANDS_E = [  # section 2 > Route E's commands, verbatim (route E region, 2026-11-06: `_e` genome)
     "gippa convert --from diann {dir}/E_sixframe/report.parquet --out {out}/E/peptides.tsv "
     "--search-db same",
-    "gippa preflight --genome {dir}/genome/nissle_r200k.fna.gz --peptides {out}/E/peptides.tsv "
+    "gippa preflight --genome {dir}/genome/nissle_r200k_e.fna.gz --peptides {out}/E/peptides.tsv "
     "--set 'modules=[core,bgc]' --set annotation.bakta.db=light "
     "--set annotation.terminators.tool=transtermhp "
     "--set annotation.promoter_calculator.enabled=false",
-    "gippa run --genome {dir}/genome/nissle_r200k.fna.gz --peptides {out}/E/peptides.tsv "
+    "gippa run --genome {dir}/genome/nissle_r200k_e.fna.gz --peptides {out}/E/peptides.tsv "
     "--genome-relation same --outdir {out}/E --modules core,bgc "
     "--set annotation.bakta.db=light --terminators transtermhp "
     "--set annotation.promoter_calculator.enabled=false --threads 4",
@@ -61,8 +61,10 @@ def test_route_e_title_and_commands(routes: dict[str, dict[str, Any]]) -> None:
 
 
 def test_route_e_is_route_a_on_the_six_frame_report(routes: dict[str, dict[str, Any]]) -> None:
-    """They are route A's with ``A_diann`` -> ``E_sixframe`` and ``{out}/A`` -> ``{out}/E``."""
+    """They are route A's with ``A_diann`` -> ``E_sixframe``, ``{out}/A`` -> ``{out}/E`` and
+    (route E region, 2026-11-06) ``nissle_r200k.fna.gz`` -> ``nissle_r200k_e.fna.gz``."""
     want = [c.replace("A_diann", "E_sixframe").replace("{out}/A", "{out}/E")
+            .replace("nissle_r200k.fna.gz", "nissle_r200k_e.fna.gz")
             for c in routes["A"]["commands"]]  # fmt: skip
     assert routes["E"]["commands"] == want
 
@@ -214,7 +216,7 @@ _OK = {"detection_tier": "mayu", "n_novel_called": 0, "n_novel_candidates": 4,
 
 @pytest.mark.parametrize(
     ("change", "field"),
-    [({}, None), ({"n_novel_candidates": 0, "novel_classes": []}, None),
+    [({}, None), ({"n_novel_candidates": 0, "novel_classes": []}, "n_novel_candidates"),
      ({"detection_tier": "decoy_picked"}, "detection_tier"),
      ({"n_novel_called": 1}, "n_novel_called"),
      ({"n_novel_unpaired": 4}, "n_novel_unpaired"),

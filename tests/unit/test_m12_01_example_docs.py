@@ -14,7 +14,7 @@ AC 15: the fenced route commands of ``docs/get-started/example.md`` equal
 ``src/gippa/data/example_routes.yaml``'s, with ``{dir}`` written as ``gippa-example`` (the default
 ``--outdir``) and so ``{out}`` (``{dir}/runs``) as ``gippa-example/runs``.
 
-Q-K4 (default yes): ``docs/tutorials/example-routes.md``, "Tutorial: one Nissle region, five
+Q-K4 (default yes): ``docs/tutorials/example-routes.md``, "Tutorial: Nissle regions, five
 routes", replaces the empty ``docs/tutorials/ecoli-k12.md``; the K-12 tutorial goes to
 ``docs/backlog.md``.
 """
@@ -33,7 +33,7 @@ DOCS = REPO / "docs"
 EXAMPLE = "get-started/example.md"
 TUTORIAL = "tutorials/example-routes.md"
 OLD_TUTORIAL = "tutorials/ecoli-k12.md"
-TUTORIAL_TITLE = "# Tutorial: one Nissle region, five routes"
+TUTORIAL_TITLE = "# Tutorial: Nissle regions, five routes"  # route E region, 2026-11-06
 DIR = "gippa-example"
 OUT = f"{DIR}/runs"
 PEPTIDE_LIKE = re.compile(r"[ACDEFGHIKLMNPQRSTVWY]{7,}")  # the M10-05 / M11-08 guard regex
@@ -189,17 +189,19 @@ def test_tutorial_reads_genes_and_report_per_route() -> None:
         assert f"{OUT}/{rid}" in text, rid
 
 
-def test_tutorial_compares_the_five_runs(ref: dict[tuple[str, ...], set[str]]) -> None:
-    """``gippa compare`` of the five run directories in order A-E with ``--labels A,B,C,D,E``.
+def test_tutorial_compares_routes_a_to_d(ref: dict[tuple[str, ...], set[str]]) -> None:
+    """``gippa compare`` of the run directories A-D with ``--labels A,B,C,D`` (AC 24, route E
+    region, 2026-11-06: route E runs on another genome, which ``gippa compare`` refuses).
 
     ``--outdir`` is required by ``gippa compare`` (docs/reference/cli.md), so the fenced command
     carries it although the spec's one-liner omits it."""
     cmds = [c for c in _fenced_commands(_text(TUTORIAL)) if c.split()[1] == "compare"]
     assert len(cmds) == 1, cmds
     cmd = cmds[0]
-    runs = " ".join(f"{OUT}/{rid}" for rid in "ABCDE")
+    runs = " ".join(f"{OUT}/{rid}" for rid in "ABCD")
     assert cmd.startswith(f"gippa compare {runs} "), cmd
-    assert "--labels A,B,C,D,E" in cmd and "--outdir " in cmd, cmd
+    assert "--labels A,B,C,D " in cmd + " " and "--outdir " in cmd, cmd
+    assert f"{OUT}/E" not in cmd, cmd
     assert option_problems(cmd, ref) == []
 
 

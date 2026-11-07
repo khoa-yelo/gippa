@@ -50,6 +50,7 @@ from helpers.example_a4 import (
     Row,
     entries,
     make_pilot_e,
+    set_route_e,
 )
 from helpers.example_m12_01 import REPO, flat
 
@@ -126,7 +127,9 @@ def build(tmp: Path, **a4: Any) -> Built:
         mp.setenv("GIPPA_ROOT", str(root))
         mp.delenv("SLURM_JOB_ID", raising=False)
         try:
-            code = _load().main(argv)
+            mod = _load()
+            set_route_e(mod, S, E)  # A4 sits in the shared region (amendment b)
+            code = mod.main(argv)
         except SystemExit as exc:
             code = exc.code if isinstance(exc.code, int) else 1
         except Exception:  # reported; the test asserts the exit code
@@ -316,11 +319,12 @@ def test_readme_counts_the_kept_and_region_orf_entries(tmp_path: Path) -> None:
     text = flat(b.text("README.md"))
     n_region = sum(1 for e in ents.values() if e.kind == "orf" and e.in_region(S, E))
     assert n_region == len(REWRITTEN_KEYS) + 3
-    assert f"{len(REWRITTEN_KEYS)} ORF entries (of {n_region:,} in the region)" in text, text
+    want = f"{len(REWRITTEN_KEYS)} ORF entries (of {n_region:,} in route E's region)"
+    assert want in text, text  # wording: route E region, 2026-11-06
     assert "few dozen" not in text
 
 
 def test_example_page_counts_the_kept_and_region_orf_entries() -> None:
     text = flat((REPO / "docs" / "get-started" / "example.md").read_text(encoding="utf-8"))
-    assert "35 ORF entries (of 5,678 in the region)" in text
+    assert "53 ORF entries (of 5,609 in route E's region)" in text  # route E region, 2026-11-06
     assert "few dozen" not in text

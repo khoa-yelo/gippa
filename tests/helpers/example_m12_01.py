@@ -77,6 +77,7 @@ def bundle_files(version: str = "1.1") -> dict[str, bytes]:
         "bundle.json": (json.dumps(meta, sort_keys=True) + "\n").encode(),
         "SELECTION.json": b'{"rule": "test fixture"}\n',
         "genome/region.fna.gz": gzip.compress(b">region\nACGTACGTAC\n", mtime=0),
+        "genome/region_e.fna.gz": gzip.compress(b">region_e\nTTGACCATGA\n", mtime=0),
         "A_diann/report.parquet": b"PAR1 not a real parquet PAR1",
         "B_proteins/proteins.faa": b">p1\nMK\n",
         "B_proteins/abundance.tsv": b"protein_id\tabundance\np1\t1.0\n",

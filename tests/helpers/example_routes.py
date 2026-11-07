@@ -141,7 +141,8 @@ def measure(route: str, outdir: Path, peptides: Path | None = None) -> dict[str,
 
 
 def _novel(outdir: Path) -> dict[str, Any]:
-    """Route E's novel-ORF keys (spec section 2, `expected/`)."""
+    """Route E's novel-ORF keys (spec section 2, `expected/`). ``n_novel_unpaired`` is 0 when
+    ``novel/novel_class_fdr.parquet`` has no data rows or is absent from a finished run."""
     got: dict[str, Any] = {}
     if (orfs := outdir / "tables" / "novel_orfs.tsv").is_file():
         rows = _tsv(orfs)
@@ -150,8 +151,12 @@ def _novel(outdir: Path) -> dict[str, Any]:
     if (fdr := outdir / "novel" / "novel_class_fdr.parquet").is_file():
         import pandas as pd
 
-        reason = pd.read_parquet(fdr, columns=["reason"])["reason"]
-        got["n_novel_unpaired"] = int((reason == "no_makedb_pair").sum())
+        table = pd.read_parquet(fdr)
+        reason = table["reason"] if "reason" in table.columns else pd.Series([], dtype=object)
+        got["n_novel_unpaired"] = int((reason == "no_makedb_pair").sum())  # 0 with no data rows
+    elif orfs.is_file() or (outdir / "run_manifest.json").is_file():
+        # not written because the run has no candidate: 0, never null (amendment 2026-11-06 (b))
+        got["n_novel_unpaired"] = 0
     if (man := outdir / "run_manifest.json").is_file():
         block = json.loads(man.read_text(encoding="utf-8")).get("novel_orfs") or {}
         got["novel_classes"] = [{k: c.get(k) for k in NOVEL_CLASS_FIELDS}
