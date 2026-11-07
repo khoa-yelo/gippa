@@ -45,6 +45,7 @@ import pyarrow as pa
 import pyarrow.parquet as pq
 import pytest
 import yaml
+from helpers.example_a4 import set_route_e, write_a4
 from helpers.example_m12_01 import (
     ASSET_HOST,
     REPO,
@@ -176,6 +177,7 @@ def make_pilot(root: Path) -> None:
             fh.write("file\tscan\tcharge\tsequence\tscore-type\tscore\n")
             for i, pep in enumerate(peps):
                 fh.write(f"{PERSONAL}/{run}.mzML\t{100 + i}\t2\t{pep}\tUNKNOWN\t0.{9 - i}\n")
+    write_a4(root, chrom, START, END)  # route E (M12-01 amendment 2026-11-06)
 
 
 # ---------------------------------------------------------------- running the build
@@ -200,6 +202,7 @@ def _run(root: Path, argv: list[str]) -> tuple[int, str]:
     review; the dirty-tree rule is pinned in test_m12_01_example_build_review.py)."""
     argv = [*argv, "--allow-dirty"]
     mod = _load_script()
+    set_route_e(mod, START, END)  # A4 sits in the shared region (amendment b)
     out = io.StringIO()
     with (
         pytest.MonkeyPatch.context() as mp,

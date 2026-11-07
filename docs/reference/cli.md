@@ -48,7 +48,7 @@ Run the bundled synthetic SIM100K demo (no Nextflow, containers, databases or ne
 
 ## gippa example
 
-The real example dataset: a region of E. coli Nissle 1917 with four input routes.
+The real example dataset: a region of E. coli Nissle 1917 with five input routes.
 
 ## gippa example fetch
 

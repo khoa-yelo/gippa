@@ -35,6 +35,156 @@ Khoa's answers to this spec's questions (2026-11-03, in session):
   B works once that lands.
 - The data licence (Q-K1): "use the data", with the default statement (section 2).
 
+### Amendment 2026-11-06: route E, a six-frame database (Khoa, in session)
+
+> "we should add the 6 frame db as part of the suite as well, as that is one of the routes mostly
+> use by the user"
+
+Further decisions in the same session (Khoa, 2026-11-06):
+
+- Route E's data is the pilot's six-frame arm **A4**: the same PXD078459 runs WT_1–WT_3, searched
+  by DIA-NN 2.3.1 against the `gippa makedb --six-frame-orfs` database, cut to the same 200 kb
+  Nissle region. The 2026-11-03 lift of the "no row-level DIA-NN content" rule extends to **A4's
+  rows inside the region**, and only to them.
+- Route E ships in **1.1.0rc1**. The release-prep PR #572 waits for it; the 1.1 bundle is rebuilt
+  and re-pinned with route E in it.
+
+Every change this amendment makes is marked "(route E, 2026-11-06)" where it lands: the layout,
+the routes table, subset rules 3E, 7 and 9, PROVENANCE, the licence statement, `expected/`, the
+caveats, section 4, section 5 (slow test and AC 14, 15, 17, 20–24), the edge cases, the open
+questions Q-L9 to Q-L13 and Q-K8, and work-split rows 10–12. The second amendment below (route E's
+own region) supersedes the region numbers of this one for route E. Estimate of the addition: ≈ 150 code
+lines (build script, `example_routes.yaml`, help text) + ≈ 250 test lines + prose.
+
+**What A4 is** (read-only look at `$GIPPA_ROOT/runs/pilot/sixframe-fa49b8f`, 2026-11-06; counts
+only):
+
+| Item | Value |
+|---|---|
+| database | `db/strain_db.faa` from `gippa makedb --six-frame-orfs` (GIPPA 1.0.0, `--min-orf-aa 20`, no contaminants, code 11): 4,613 cds, 72 sorf, 143,068 orf records; the 4,685 cds/sorf records are byte-identical to A2's (`db_counts.json`) |
+| ORF IDs | `GIPPAORF_{class}_{contig}_{start1}_{end1}_{p\|m}`, classes `antisense`, `cds_outframe`, `intergenic`, `nterm_extension`; in `db_id_map.tsv` they have `kind = orf`, `class` set; `locus_tag` NA except `nterm_extension` (the full-DB Bakta gene it extends) |
+| search | DIA-NN 2.3.1 Academia, `jobs/diann_A4.cfg` = `diann_A2.cfg` with only `--fasta` changed (plus the 381 contaminant records), job 1918156; `A4/command_step1.txt`, `command_step2.txt`, `diann_version.txt`, `provenance.json` (image sha256 `1946452d…`) |
+| report | `A4/A4_report.parquet`: 91,076 rows (901 decoys), 71 columns |
+| genome-wide run | `gippa convert --from diann … --search-db same` (`jobs/convert_A4.sbatch`), then `gippa run --annotation <full-DB Bakta JSON> --peptides a4.tsv.gz` (job 1921228): tier `decoy_picked`, 109 novel-ORF candidates (all `picked_decoy`, paired share 1.0), **0 called**: each class had 8–64 target wins against the 100 needed for a q floor ≤ 0.01 (`docs/user-guide/makedb.md`, PROGRESS › A4) |
+
+**In the shared region** (same rule as the build will apply; measured 2026-11-06, aggregates
+only; *superseded for route E by the next amendment, which gives route E its own region*):
+
+| Item | Count |
+|---|---|
+| region entries of `db_id_map.tsv` (contained, either strand) | 153 cds, 1 sorf, 5,678 orf (3,023 antisense, 2,101 cds_outframe, 447 intergenic, 107 nterm_extension) |
+| entries crossing a region end (dropped) | 9 orf, 2 cds |
+| contained ORFs whose stop codon falls outside the region | 0 |
+| A4 rows kept by rule 3E | **2,218** (2,181 targets, **37 decoys**); per run 749 / 730 / 739 |
+| kept rows with at least one ORF ID | 63 (24 with ORF IDs only, of which 16 are decoys) |
+| distinct region ORF entries in the kept rows (targets and decoys) | 35 |
+| rows that rule A alone would keep on A4 (no ORF IDs) | 2,155 |
+| columns holding ORF IDs | `Protein.Ids`, `Protein.Group` |
+| `E_sixframe/report.parquet` (zstd, all 71 columns) | ≈ 387 kB, so the bundle grows from 0.48 MB to **≈ 0.9 MB** (estimate; parquet barely compresses further in the tar.gz) |
+
+**Why route E needs an ID rewrite (rule 9).** `gippa run` recognises six-frame entries from the
+IDs alone: `gippa.novel.class_call.makedb_id_map` parses every `GIPPAORF_…` ID of the peptide
+table with `gippa.novel.fdr.parse_orf_id`, and `picked_class_fdr` pairs a target ORF with the entry
+of the same `(contig, strand, stop)`. No FASTA, `db_id_map.tsv` or makedb manifest is read, and no
+extra flag is needed (`--search-db same` as for route A). The bundle's genome, however, is the
+region written as one contig named after its interval (route E's:
+`nissle1917_NZ_CP058217_1_1400000_1600000`, next amendment) with coordinates starting at 0
+(`build_example.py`). A4's IDs name `NZ_CP058217.1` and chromosome coordinates, so unchanged
+IDs never match a candidate's key: every candidate would get `no_makedb_pair` and route E would
+show nothing of the six-frame workflow. Rule 9 therefore rewrites each region ORF ID to the
+region's contig and coordinates (Q-L9).
+
+### Amendment 2026-11-06 (b): route E gets its own region (Khoa, in session)
+
+Khoa's decision: route E reads **its own 200 kb window** of `NZ_CP058217.1`, separate from the
+shared region of routes A–D. Routes A–D do not change, **byte for byte**: their input files, the
+shared genome `genome/nissle_r200k.fna.gz`, `expected/A.json` … `D.json` and every approved
+baseline. Each change below is marked "(route E region, 2026-11-06)".
+
+**Why.** The real-data dev build at `f65c3881` passes all five routes, but route E makes 0
+novel-ORF candidates: all 727 mapped hits are `cds_inframe` and `novel_orfs` logs `n_orfs 0`. The
+cause is the pipeline's precursor filter, which is DIA-NN's **`Global.Q.Value`**, not `Q.Value`:
+
+- `gippa convert --from diann` sets `q_value ← Global.Q.Value`, and falls back to `Q.Value` only
+  when that column is absent (`src/gippa/io/converters/diann.py:41`, `_MAP`); A4's report has
+  `Global.Q.Value`.
+- `gippa run` aggregates the table per peptide; a peptide's `q_value` is the minimum over its rows
+  (`src/gippa/io/peptides.py:381`, `aggregate_peptides`).
+- Mapping queries are the non-decoy peptides of length 7–40 (`mapping.exact.min_len`/`max_len`,
+  `src/gippa/config/model.py:209-210`) with `q_value <= input.q_value_max` = 0.01
+  (`src/gippa/steps/mapping.py:111-130`, `select_queries`; `src/gippa/config/model.py:77`).
+  Decoys are never queries.
+- A placed peptide makes a novel-ORF candidate row only when its locus class is a novel class, no
+  hit of it (or of its I/L twin) is `cds_inframe` or `rna_overlap` (`EXCLUDING_CLASSES`), it is
+  not a contaminant, and it has exactly one locus (`src/gippa/novel/candidates.py:37`,
+  `candidate_rows`, lines 81–102).
+
+In the shared region, 8 target ORF-only peptides pass `Q.Value ≤ 0.01` but **none** passes
+`Global.Q.Value ≤ 0.01`. No ORF-only peptide is a query, so every placed peptide is a CDS peptide.
+
+**Window scan** (2026-11-06, aggregates only; A4's `A4_report.parquet` and `db/db_id_map.tsv`).
+200 kb windows on a 10 kb grid over `NZ_CP058217.1` (5,055,406 bp; linear windows, none crosses
+the origin), plus the shared region. A row belongs to window W when every `Protein.Ids` entry is a
+`db_id_map.tsv` record of `NZ_CP058217.1` contained in W (rule 3E; rows that mix in-window and
+out-of-window entries are dropped). **Score** = distinct target peptides of length 7–40 whose
+minimum `Global.Q.Value` over the kept rows is ≤ 0.01 and whose kept rows all name ORF entries
+only (kind `orf`, so every class is non-`cds`). "Decoys" are the same count for decoy peptides.
+
+| W (0-based start) | targets (score) | decoys passing | ORF-only decoy peptides, any q | class mix of the scored targets | by plain `Q.Value` (targets / decoys) |
+|---|---|---|---|---|---|
+| **1,400,000** | **9** | 1 | 6 | 5 antisense, 2 nterm_extension, 1 cds_outframe, 1 intergenic | 18 / 6 |
+| 1,410,000 | 9 | 1 | 6 | the same 9 | 18 / 6 |
+| 1,420,000 | 9 | 1 | 6 | the same 9 | 18 / 6 |
+| 3,550,000 | 9 | 6 | 15 | 8 antisense, 1 cds_outframe | 17 / 15 |
+| 3,560,000 | 9 | 4 | 13 | 8 antisense, 1 cds_outframe | 17 / 13 |
+| 1,965,000 (shared region) | 0 | 6 | 16 | — | 8 / 16 |
+
+The windows near 400,000 that lead by plain `Q.Value` (25 targets at 400,000) score 7–8 with
+`Global.Q.Value`.
+
+**Choice: W = 1,400,000.** Six windows tie at 9; the build's tie rule (section 6, "the lower start
+wins") picks 1,400,000, and it is also the tied window that shows all four ORF classes (3.55 Mb
+shows two). Each of the 9 peptides has exactly one six-frame locus in the window (the
+single-locus rule) and names one ORF entry (9 distinct entries); no decoy names any of these 9
+entries. Its weak side is few decoys (6 ORF-only decoy peptides); the class floors stay above α on
+any 200 kb window, so this changes no call.
+
+**What the data cannot show.** The run classifies hits against live Bakta light's genes, not the
+full-DB annotation A4 was built on. The 9 peptides lie in no full-DB CDS (DIA-NN names ORF entries
+only), so a ban by `cds_inframe` needs light Bakta to call a gene, or a longer start, that the
+full-DB annotation did not; `rna_overlap` needs an RNA gene under the ORF. The 2
+`nterm_extension` peptides are the most exposed: a light-Bakta start further upstream makes them
+`cds_inframe`, and a different start makes their candidate `no_makedb_pair`. Hence the prediction
+of 7–9 candidates (at least 1, AC 22).
+
+**Route E's region (route E region, 2026-11-06).** `NZ_CP058217.1:1400001-1600000` (1-based
+closed; `[1400000, 1600000)` 0-based half-open; 200 kb), written as the linear contig
+`nissle1917_NZ_CP058217_1_1400000_1600000` in `genome/nissle_r200k_e.fna.gz`, by the same rules as
+the shared region (rule 1E). Like the shared region, it ships no annotation file: every route runs
+live Bakta light (AC 14), and the `db_id_map.tsv` region entries are a build input only (Q-L11).
+
+**Expected counts for route E** at W = 1,400,000. These are **predictions**: the scan above and a
+trial run of the current `build_example.py` with `--start 1400000 --end 1600000` (all routes
+moved, scratch output, deleted; rules 3E, 7 and 9, including the translation check, passed). The
+dev build (work-split row 12) confirms them, and `SELECTION.json` records the measured values.
+
+| Item | Predicted |
+|---|---|
+| rows kept by rule 3E | **3,650** (**3,619** targets, **31** decoys); per run 1,205 / 1,220 / 1,225 |
+| rows dropped because they mix in-window and out-of-window entries | 30 |
+| kept rows with at least one ORF ID | **161** (28 with ORF IDs only, of which 6 are decoys; 133 mix CDS and ORF IDs) |
+| kept rows with no ORF ID (what rule A alone would keep) | 3,489 |
+| decoy rows with no ORF ID | 25 (19 decoy peptides) |
+| distinct region ORF entries named in the kept rows (= rule-9 rewrites, `orf_id_rewrite.distinct_ids`) | **53** |
+| region entries of `db_id_map.tsv` (contained, either strand) | 174 cds, 3 sorf, **5,609** orf (2,938 antisense, 2,197 cds_outframe, 371 intergenic, 103 nterm_extension) |
+| entries crossing a region end (dropped) | 9 orf, 2 cds |
+| target peptides passing the pipeline filter with ORF IDs only | 9 (9 entries: 5 antisense, 2 nterm_extension, 1 cds_outframe, 1 intergenic) |
+| `n_novel_candidates` | 1–9 (most likely 7–9) |
+| `n_novel_called` | 0 (at most 9 target wins over all classes; a floor ≤ 0.01 needs 100 in one class) |
+| `E_sixframe/report.parquet` (zstd, all 71 columns) | 615,146 bytes (trial build) |
+| `genome/nissle_r200k_e.fna.gz` | 61,125 bytes (trial build) |
+| bundle | **≈ 1.1 MB** (review build at c67be0fb: 1,092,440 bytes without `expected/`; the earlier trial archive with every route at 1.4 Mb was 1,235,643 bytes) |
+
 ## Spec sections touched
 
 - §5.1 command line and exit codes (a new command group `gippa example`).
@@ -199,7 +349,8 @@ gippa-example-<X.Y>/
 ├── bundle.json            bundle version, GIPPA version and commit used for expected/, region, counts, tool and DB versions
 ├── SELECTION.json         the selection rule, counts, sha256 of every source and output (written by the build script)
 ├── genome/
-│   └── <name>.fna.gz      the Nissle region, one linear contig
+│   ├── <name>.fna.gz      the shared Nissle region (routes A–D), one linear contig
+│   └── <name>_e.fna.gz    route E's region, one linear contig (route E region, 2026-11-06)
 ├── A_diann/
 │   └── report.parquet     DIA-NN 2.3.1 report rows of the region (targets and decoys)
 ├── B_proteins/
@@ -211,16 +362,25 @@ gippa-example-<X.Y>/
 │   └── WT_3.ssl           Cascadia 0.0.7 rows of the region
 ├── D_generic/
 │   └── peptides.tsv       a generic peptide table as a user of another engine would write it
+├── E_sixframe/
+│   └── report.parquet     DIA-NN 2.3.1 report rows of the region from the six-frame search A4 (targets and decoys; ORF IDs in region coordinates, rule 9)
 └── expected/
-    ├── A.json  B.json  C.json  D.json
+    ├── A.json  B.json  C.json  D.json  E.json
     └── README.md          the same numbers as a table, with the file and column each comes from
 ```
 
-The bundle is **0.48 MB** (measured). The archive is a deterministic tar.gz: members sorted, mode 0644/0755, uid/gid 0, empty
+*Route E, 2026-11-06:* `E_sixframe/` holds only the report. The bundle ships **no** six-frame
+FASTA and no `db_id_map.tsv` subset: `gippa convert` and `gippa run` do not read them (the IDs
+carry class and coordinates; `nterm_extension` locus tags come from the run's own gene model,
+`makedb.build.nterm_entries`). PROVENANCE names the database by its sha256 and command (Q-L11).
+
+The bundle is **0.48 MB** (measured, routes A–D); with route E it is **≈ 1.1 MB** (route E
+region, 2026-11-06: predicted from a trial build, ≈ 615 kB report plus ≈ 61 kB genome; the rebuild
+in work-split row 12 measures it). The archive is a deterministic tar.gz: members sorted, mode 0644/0755, uid/gid 0, empty
 user/group names, mtime 0, gzip header without name and with mtime 0. Two builds from the same
 inputs give the same sha256.
 
-### Routes (one input set each, same region)
+### Routes (one input set each; A–D share one region, E has its own)
 
 | Route | Input | Commands (about three) | Tier (measured at 200 kb) |
 |---|---|---|---|
@@ -228,8 +388,36 @@ inputs give the same sha256.
 | B | `B_proteins/proteins.faa` + `abundance.tsv` | `gippa preflight --proteins … --abundance …`; `gippa run --proteins … --abundance … --abundance-type maxlfq` | `protein_list`, **after #536**. In GIPPA 1.0.0 `workflow/main.nf` runs MAPPING only with `inputs.peptides`, so this route runs ANNOTATE and REPORT and writes no gene table |
 | C | `C_cascadia/*.ssl` | `gippa convert --from cascadia … --out {out}/C/peptides.tsv`; `gippa preflight`; `gippa run --peptides …` | `two_peptide`, `c_assumed`; 76 rows, **4 genes detected**. A **format demo**, not a result |
 | D | `D_generic/peptides.tsv` | `gippa convert --from generic … --out {out}/D/peptides.tsv --source database --search-db same`; `gippa preflight`; `gippa run --peptides …` | the same decoys as A, so expected `mayu`; the measured value goes into `expected/D.json` (PR 7) |
+| E (route E, 2026-11-06) | `E_sixframe/report.parquet` | `gippa convert --from diann … --out {out}/E/peptides.tsv --search-db same`; `gippa preflight`; `gippa run --peptides …` (no extra flag; see below) | **`decoy_picked`** (Q-L15, measured in trial job 1943965 on route E's own region; the earlier prediction was `mayu`, Q-L10): enough decoys pair with a gene, so there is no `decoy_pairing_low` fallback. **Novel ORFs:** 1–9 `picked_decoy` candidates (predicted), **0 called** (below). Genome: route E's own region (`genome/nissle_r200k_e.fna.gz`) |
 
-Every `gippa run` uses `--genome {dir}/genome/<name>.fna.gz --genome-relation same --outdir
+**Route E's commands** (`example_routes.yaml`, title `Route E: DIA-NN report, six-frame
+database`), with the `gippa run` settings of every route:
+
+```
+gippa convert --from diann {dir}/E_sixframe/report.parquet --out {out}/E/peptides.tsv --search-db same
+gippa preflight --genome {dir}/genome/nissle_r200k_e.fna.gz --peptides {out}/E/peptides.tsv --set 'modules=[core,bgc]' --set annotation.bakta.db=light --set annotation.terminators.tool=transtermhp --set annotation.promoter_calculator.enabled=false
+gippa run --genome {dir}/genome/nissle_r200k_e.fna.gz --peptides {out}/E/peptides.tsv --genome-relation same --outdir {out}/E --modules core,bgc --set annotation.bakta.db=light --terminators transtermhp --set annotation.promoter_calculator.enabled=false --threads 4
+```
+
+They are route A's with `A_diann` → `E_sixframe`, `{out}/A` → `{out}/E` and (route E region,
+2026-11-06) `nissle_r200k.fna.gz` → `nissle_r200k_e.fna.gz`. The genome-wide A4
+run used `--annotation`; route E does not (no route does, AC 14): live Bakta light runs as in A,
+and the six-frame IDs do not depend on Bakta's locus tags. The database itself is not rebuilt by
+the route; the example page shows, in prose, the `gippa makedb --six-frame-orfs` command that made
+it (PROVENANCE has the exact one).
+
+**Route E's novel ORFs.** Novel ORFs run in `core` for every route; route E is the one whose
+decoys are class-tagged makedb entries, so its candidates take the `picked_decoy` regime and pair
+with their entries (rule 9). **No call is possible on the region:** a class's q floor is
+`1 / n_target_wins`, and (route E region, 2026-11-06) route E's kept rows name 53 distinct ORF
+entries (targets and decoys together), of which 9 carry a target peptide that passes the q filter,
+so every class has far fewer than the 100 target wins that a floor ≤ α = 0.01 needs.
+Genome-wide, A4 called 0 of 109 for the same reason. `n_novel_called = 0` is therefore exact
+(`expected/` below), and route E demonstrates the workflow (IDs, regime, class summaries, the
+`floor_above_alpha` flag), not a discovery.
+
+Every `gippa run` uses `--genome {dir}/genome/<name>.fna.gz` (route E: `<name>_e.fna.gz`)
+`--genome-relation same --outdir
 {out}/<route> --threads 4` and the example settings Khoa accepted:
 
 ```
@@ -250,7 +438,9 @@ writes new locus tags, so decoys pair only through peptide votes. Adding the sea
 
 **FDR caveat (README).** The q-values, PEPs and MaxLFQ values of routes A, B and D are DIA-NN's,
 computed on the whole-proteome search (4,685 strain proteins plus contaminants, three runs). The
-subset does not recompute them.
+subset does not recompute them. *Route E, 2026-11-06:* route E's are DIA-NN's on the whole
+six-frame search A4 (147,753 strain records plus 381 contaminants, the same three runs); a
+29-fold larger database changes the scores, so route E's gene numbers differ from route A's.
 
 **Route D's table.** Built from route A's rows, grouped by (stripped peptide, run), as an engine
 without a GIPPA converter would write it. The columns are `peptide`, `modified_peptide` (ProForma,
@@ -269,6 +459,14 @@ with the sha256 of every source and output file. In summary:
    NRPS/T1PKS/NRP-metallophore region over the first 117 kb. It is written as one linear contig
    (no topology tag) and does not cross the origin. **No plasmid** (Q-K6, resolved): the region is
    a piece of the chromosome. It holds no prophage, because geNOMAD is too slow to include.
+
+   **1E. Route E's region (route E region, 2026-11-06).** `NZ_CP058217.1:1400001-1600000`
+   (`[1400000, 1600000)`, 200 kb, start `S_E = 1400000`), chosen by the window scan of the second
+   2026-11-06 amendment. Written by rule 1's rules as the linear contig
+   `nissle1917_NZ_CP058217_1_1400000_1600000` to `genome/<name>_e.fna.gz`; it does not cross the
+   origin. Rules 3E, 7 (route E's part) and 9 use this region; rules 2–6 and route A's part of
+   rule 7 use the shared region only. The build's `--start`/`--end` move the shared region only;
+   route E's start is a separate constant.
 2. **Region proteins.** Records of the pass-3 A2 strain database (`db_id_map.tsv`, 1-based closed)
    on `NZ_CP058217.1` with `start - 1 >= region start` and `end <= region end` (CDS and sORF), on
    either strand.
@@ -276,6 +474,18 @@ with the sha256 of every source and output file. In summary:
    The same rule applies to target and decoy rows (DIA-NN decoys carry the target IDs with
    `Decoy = 1`), so the target/decoy balance of the region is not biased by the rule. Rows with a
    contaminant (`Cont_`) or out-of-region ID are dropped. All 71 columns are kept.
+
+   **3E. DIA-NN rows (E; route E, 2026-11-06).** Source: A4's `A4/A4_report.parquet` and
+   `db/db_id_map.tsv` under `$GIPPA_ROOT/runs/pilot/sixframe-fa49b8f/` (read in place, Q-L13).
+   **Region entries** are the `db_id_map.tsv` records on `NZ_CP058217.1` with
+   `start - 1 >= region start` and `end <= region end` (route E region, 2026-11-06: route E's
+   region, rule 1E), of kind `cds`, `sorf` **or `orf`**, on
+   either strand (rule 2, with `orf` added; an ORF is placed by its map coordinates, never by
+   parsing its ID). A row is kept iff **every** ID in `Protein.Ids` (split on `;`) is a region
+   entry. Target and decoy rows get the same rule (A4's decoys carry the target IDs with
+   `Decoy = 1`, as A2's). Rows with a contaminant (`Cont_`) ID, an out-of-region protein or an
+   out-of-region ORF (including one that crosses a region end) are dropped. All 71 columns are
+   kept; rule 9 then rewrites the ORF IDs. Route A is not changed: it still reads A2.
 4. **Protein table (B).** The protein groups of route A's target rows with a non-missing, non-zero
    `PG.MaxLFQ`; value = median over runs (the `gippa convert --abundance-out` rule). A group `A;B`
    is one row per member ID. The FASTA holds each member's sequence from the strain database.
@@ -285,10 +495,47 @@ with the sha256 of every source and output file. In summary:
    route C a format demo.
 6. **Route D.** As described above.
 7. **No empty route.** The build fails if any route keeps zero rows or zero proteins, or if route
-   A keeps no decoy.
+   A keeps no decoy. *Route E, 2026-11-06:* also if route E keeps no target row, no decoy row, or
+   no row with a region ORF ID (route E region, 2026-11-06, predicted: 3,619, 31 and 161; the
+   shared region had 2,181, 37 and 63).
 8. **Scrubbing (R12).** The `.ssl` `file` column is reduced to the mzML base name, whose stem is
-   the run name. Any DIA-NN column holding an absolute path is shortened the same way, and
-   `SELECTION.json` lists each rewritten column. No other value is changed.
+   the run name. Any DIA-NN column holding an absolute path is shortened the same way (route E
+   included), and `SELECTION.json` lists each rewritten column. No other value is changed,
+   except by rule 9.
+9. **ORF IDs in region coordinates (route E, 2026-11-06; Q-L9).** In `E_sixframe/report.parquet`
+   every ORF ID (`GIPPAORF_{class}_NZ_CP058217.1_{s1}_{e1}_{p|m}`, in `Protein.Ids` and
+   `Protein.Group`, and in any other string column that holds one) becomes
+   `GIPPAORF_{class}_{C}_{s1 - S}_{e1 - S}_{p|m}`, where `C` is the bundle genome's contig ID
+   (route E region, 2026-11-06: route E's contig `nissle1917_NZ_CP058217_1_1400000_1600000`) and
+   `S` route E's 0-based region start `S_E` (1400000, rule 1E): the region-frame 1-based closed
+   coordinates of the same interval. Class, strand and the ID order
+   within a cell are unchanged; CDS and sORF IDs are unchanged (they carry no coordinates).
+   Checks, each a build failure:
+   - the ID's parsed coordinates equal its `db_id_map.tsv` row (the ID is the map's);
+   - the rewritten ID parses with `gippa.novel.fdr.parse_orf_id` to `(class, C, s1 - S - 1,
+     e1 - S, strand)`;
+   - for every class but `nterm_extension`, the region sequence at the rewritten interval,
+     translated with code 11 on its strand, equals the ID's record in A4's `strain_db.faa`
+     except the first residue (a start codon read as M);
+   - no ORF ID naming `NZ_CP058217.1` is left in the file.
+   `SELECTION.json` records the rule, the columns rewritten and the number of distinct IDs
+   rewritten (53 predicted, route E region, 2026-11-06). The converted table (`{out}/E/peptides.tsv`) carries the rewritten
+   IDs, so a user's ORF IDs in route E name the bundle's contig, as the outputs do.
+
+   Examples (synthetic IDs and rows, `S = 1400000`, `C` as above):
+
+   | Input (A4 row's `Protein.Ids`, map coordinates 1-based closed) | Expected |
+   |---|---|
+   | `CDS_X` (region CDS), target | kept; IDs unchanged |
+   | `GIPPAORF_antisense_NZ_CP058217.1_1400101_1400400_m` (map 1400101–1400400), decoy | kept; becomes `GIPPAORF_antisense_C_101_400_m`; `parse_orf_id` gives `(antisense, C, 100, 400, -)` |
+   | `CDS_X;GIPPAORF_cds_outframe_NZ_CP058217.1_1435002_1435301_p`, target | kept; second ID becomes `GIPPAORF_cds_outframe_C_35002_35301_p`, order kept |
+   | `GIPPAORF_intergenic_NZ_CP058217.1_1599900_1600120_p` (crosses the region end) | dropped |
+   | `CDS_X;GIPPAORF_antisense_NZ_CP058217.1_10_309_m` (ORF outside the region) | dropped |
+   | `CDS_Y;GIPPAORF_antisense_NZ_CP058217.1_1400101_1400400_m` with `CDS_Y` in the shared region only (route E region, 2026-11-06) | dropped: `CDS_Y` is not a route E region entry |
+   | `GIPPAORF_antisense_NZ_CP058217.1_1965101_1965400_m` (in the shared region, outside route E's) | dropped from route E |
+   | `Cont_P1;GIPPAORF_antisense_NZ_CP058217.1_1400101_1400400_m` | dropped |
+   | `GIPPAORF_intergenic_NZ_CP058217.1_1400001_1400300_p` (ORF starts at the first region base) | kept; becomes `GIPPAORF_intergenic_C_1_300_p` |
+   | `GIPPAORF_intergenic_NZ_CP058217.1_1599701_1600000_p` (ends at the last region base) | kept; becomes `GIPPAORF_intergenic_C_199701_200000_p` |
 
 ### `PROVENANCE.md` (content)
 
@@ -301,6 +548,26 @@ with the sha256 of every source and output file. In summary:
 - Route B: the A2 convert table sha256s (`a2_abundance.tsv.gz`), protein counts.
 - Route C: Cascadia 0.0.7, the weights sha256, the three `.ssl` sha256s, rows kept per run.
 - Route D: how it was derived from route A.
+- Route E (route E, 2026-11-06): the database: `gippa makedb --six-frame-orfs` at GIPPA 1.0.0
+  (`makedb_manifest.json`: `--min-orf-aa 20`, no contaminants, code 11; the sha256 of
+  `strain_db.faa`, `db_id_map.tsv` and the Bakta JSON input, the counts 4,613 / 72 / 143,068);
+  the search: DIA-NN 2.3.1 Academia (`A4/diann_version.txt`), the same image sha256 as route A,
+  `jobs/diann_A4.cfg` (sha256; `diann_A2.cfg` with only `--fasta` changed) and the two commands
+  of `A4/command_step1.txt` and `command_step2.txt` with their paths shortened to base names
+  (R12), the Slurm job 1918156, the input report's sha256; row counts kept (targets, decoys,
+  rows with an ORF ID) and the rule-9 rewrite count. It says the genome-wide run of A4 called 0
+  novel ORFs. *Route E region, 2026-11-06:* route E's region in both coordinate conventions, its
+  contig name and genome file sha256, and why it differs from the shared region (the window scan's
+  rule, one sentence, no rows).
+  - *Shortening (lead, 2026-11-06, #574 review):* an absolute, `~/` or `../` path argument,
+    alone, after `=`, or glued to a flag (`-B/x:/y`), becomes its base name when its last
+    component has a file extension, and `<dir>` otherwise (a trailing `/` or no extension).
+    The leak guard also fails the build when the building user's login name
+    (`getpass.getuser()`, `Path.home().name`) occurs as a whole word in any written text file.
+  - *Rewrite count:* `orf_id_rewrite.distinct_ids` is the number of distinct region ORF IDs
+    rewritten in any text column of the written report (`Protein.Ids`, `Protein.Group` and any
+    other string column), dictionary- and view-typed string columns included. The build fails
+    when a column holding a region ORF ID cannot be rewritten.
 - The build: script path and commit, Slurm job ID, GIPPA version and commit that produced
   `expected/`, the Bakta DB (light 6.0) and image digests used, the run settings, and that UniOP was
   not installed.
@@ -311,22 +578,29 @@ with the sha256 of every source and output file. In summary:
 > The GIPPA software is MIT-licensed. This licence does **not** cover the data files of this
 > bundle.
 >
-> The files under `A_diann/`, `B_proteins/`, `C_cascadia/` and `D_generic/` are derived from the
-> ProteomeXchange dataset **PXD078459** (iProX **IPX0017169000**), announced 2026-05-16. The
-> dataset record states no licence, and its publication is pending. The files are redistributed
-> for the sole purpose of demonstrating and testing GIPPA, with attribution to the depositors of
-> PXD078459. The content is unchanged: rows were selected and file paths shortened. The GIPPA
+> The files under `A_diann/`, `B_proteins/`, `C_cascadia/`, `D_generic/` and `E_sixframe/` are
+> derived from the ProteomeXchange dataset **PXD078459** (iProX **IPX0017169000**), announced
+> 2026-05-16. The dataset record states no licence, and its publication is pending. The files are
+> redistributed for the sole purpose of demonstrating and testing GIPPA, with attribution to the
+> depositors of PXD078459. The content is unchanged: rows were selected, file paths shortened,
+> and in `E_sixframe/` the identifiers of six-frame ORFs (made by GIPPA, not by the depositors)
+> renumbered to route E's region's coordinates. The GIPPA
 > authors grant no licence to these files. Cite PXD078459 if you use them. If you are a rights
 > holder and object, open an issue and the bundle will be withdrawn.
 >
-> `genome/` holds a region of the *E. coli* Nissle 1917 assembly GCF_021559835.1 (GenBank
-> GCA_021559835.1), which is INSDC data with no use restrictions by NCBI. `expected/`, `README.md`,
+> `genome/` holds two regions of the *E. coli* Nissle 1917 assembly GCF_021559835.1 (GenBank
+> GCA_021559835.1), one shared by routes A–D and one for route E, which are INSDC data with no use restrictions by NCBI. `expected/`, `README.md`,
 > `PROVENANCE.md`, `SELECTION.json`, `bundle.json` and `CHECKSUMS.sha256` are written by GIPPA
 > tooling and are MIT-licensed, like GIPPA.
 
+*Route E, 2026-11-06:* the statement above adds `E_sixframe/` and the ORF-ID clause to Khoa's
+accepted 2026-11-03 text; Khoa confirms the wording (Q-K8), and ADR-0074 gets the same amendment
+(Q-L12).
+
 ### `expected/` (key numbers)
 
-One JSON file per route, with a `tolerance` per key, made by running the four routes with the
+One JSON file per route, with a `tolerance` per key, made by running the routes (five, with
+route E) with the
 release's GIPPA at the release-prep commit, with the example settings (Bakta light DB 6.0, no
 UniOP, default seed).
 
@@ -335,14 +609,25 @@ UniOP, default seed).
 | `status` | `run_manifest.json › status` | exact |
 | `detection_tier` | `run_manifest.json › detection_tier` | exact |
 | `layers_missing` | `run_manifest.json › layers_missing` (as a set) | exact |
-| `convert_rows` | data rows of the converted `peptides.tsv` (A, C, D) | exact (conversion is deterministic) |
+| `convert_rows` | data rows of the converted `peptides.tsv` (A, C, D, E) | exact (conversion is deterministic) |
 | `n_genes` | rows of `tables/genes.tsv` | abs ≤ max(1, 1 %) |
 | `n_detected` | `genes.tsv` rows with `detected = true` | abs ≤ max(1, 2 %) |
 | `n_detected_2pep` | `detected_2pep = true` | abs ≤ max(1, 2 %) |
 | `n_peptides_placed` | distinct `peptide` in `mapping/peptide_hits.tsv` | abs ≤ max(1, 2 %) |
-| `n_abundance` | `genes.tsv` rows with `abundance_raw` present and `abundance_imputed = false` (A, B, D) | abs ≤ max(1, 2 %) |
+| `n_abundance` | `genes.tsv` rows with `abundance_raw` present and `abundance_imputed = false` (A, B, D, E) | abs ≤ max(1, 2 %) |
+| `n_novel_candidates` | **E only**: data rows of `tables/novel_orfs.tsv` (`#` lines skipped) | abs ≤ max(1, 2 %) |
+| `n_novel_called` | **E only**: `tables/novel_orfs.tsv` rows with `called = true` | exact (0: no class can reach 100 target wins on the region, section 2 › Routes) |
+| `n_novel_unpaired` | **E only**: rows of `novel/novel_class_fdr.parquet` with `reason = no_makedb_pair` | abs ≤ max(1, 2 %) |
+| `novel_classes` | **E only**: `run_manifest.json › novel_orfs › classes`, per entry `regime`, `class`, `estimated`, `n_targets`, `n_target_wins`, `n_decoys`, `q_floor`, `floor_above_alpha` | informational, not compared |
 | `warnings` | `run_manifest.json › warnings` codes | informational, not compared |
 | `wall_time_s` | the measured wall time of the route | informational, not compared |
+
+*Route E, 2026-11-06:* `expected/E.json` holds every key of the table (all apply to E); A–D keep their key sets (the four novel keys are not required for them). `n_novel_unpaired`
+is compared, not asserted to be 0: live Bakta light can call a gene differently from the full-DB
+annotation A4 was built on, and a peptide of such a gene then makes a candidate with no makedb
+entry. AC 22 checks that the rewrite works. *Route E region, 2026-11-06:* when
+`novel/novel_class_fdr.parquet` has no data rows, or is not written because the run has no
+candidate, `n_novel_unpaired` is measured as **0**, not null (`measure()`).
 
 R7 makes a run byte-identical for the same inputs, seed, versions and images, so on FarmShare the
 numbers should match exactly. The tolerances are for users on other machines, thread counts or
@@ -368,6 +653,23 @@ full DB, or an installed UniOP, can change the gene and operon numbers.
   defaults is slower; the measured default times are in section 3 and are repeated in the README.
 - Preflight info rows expected on the region (for example `genome.small_replicons`, a short total
   length or N50) are listed, so users do not read them as faults.
+- *Route E, 2026-11-06:* **Route E shows the six-frame workflow, not discoveries.** Expect a few
+  novel-ORF candidates and **no call**: a class needs at least 100 target wins over its decoys
+  before its q floor can reach 0.01, and the kept rows name 53 ORF entries (of 5,609 in route E's
+  region; route E region, 2026-11-06). The genome-wide
+  A4 run called 0 of 109 for the same reason (8–64 wins per class); `docs/user-guide/makedb.md`
+  explains the floor. The novel-ORF line of the caveat above ("novel ORFs (0)") is for routes
+  A–D.
+- *Route E, 2026-11-06:* route E's ORF IDs name the bundle's region contig and region
+  coordinates (rule 9), not `NZ_CP058217.1`; add 1,400,000 to get chromosome coordinates (route E
+  region, 2026-11-06).
+- *Route E region, 2026-11-06:* **route E runs on another region.** Its genome is
+  `NZ_CP058217.1:1400001-1600000` (`genome/nissle_r200k_e.fna.gz`), not the shared region of
+  routes A–D: the shared region has no ORF-only peptide that passes DIA-NN's global q-value at
+  0.01, so it would show no candidate. Route E's gene numbers cannot be compared with A–D's, and
+  `gippa compare` refuses runs on different genomes, so it compares A–D only.
+- *Route E, 2026-11-06 (b):* route E's tier is `decoy_picked` (Q-L15, measured): on its own
+  region enough decoys pair with a gene, so there is no `decoy_pairing_low` fallback to `mayu`.
 
 ## 3. How the bundle is built
 
@@ -384,6 +686,14 @@ Still to add (PR 3 or 7): the release layout above, the archive, and the writing
   twice and compares).
 - `--check` mode: rebuild and compare with the recorded sha256 in `bundles.tsv`.
 - `expected/` is filled from the slow route test's outputs (section 5), not computed by hand.
+- *Route E, 2026-11-06:* `sources()` gains `a4_report` (`runs/pilot/sixframe-fa49b8f/A4/A4_report.parquet`),
+  `a4_db_id_map` (`…/db/db_id_map.tsv`) and `a4_strain_db` (`…/db/strain_db.faa`, read only for
+  the rule-9 translation check), all under `$GIPPA_ROOT` so the `_rel` guard holds. The build
+  writes `genome/<name>_e.fna.gz` (rule 1E; route E region, 2026-11-06) and
+  `E_sixframe/report.parquet` (rules 3E, 8, 9), adds route E to the rule-7 check, to
+  `SELECTION.json`, `bundle.json` counts, README, PROVENANCE and LICENSE-DATA (`bundle_text.py`),
+  and to the per-route sizing tars. It still runs in seconds (the A4 map is 15 MB, the report
+  11 MB).
 
 `validation/example/bundles.tsv` (committed; the "release asset manifest"): one row per bundle,
 columns `version`, `file`, `size_bytes`, `sha256`, `url`, `release_tag`, `build_commit`,
@@ -408,7 +718,9 @@ images already pulled. Setup and image pulls are not counted, and the docs say s
 in sequence along the critical path, and each `gippa _step` task takes about 10 s, mostly start-up.
 So 4 and 8 CPUs give the same time, and so do 100 and 200 kb. The docs and printed commands use
 `--threads 4`. The docs give the time as "about 5 min (Nextflow), about 6 min as a Slurm job".
-Route B is re-measured after #536 (PR 7).
+Route B is re-measured after #536 (PR 7). *Route E, 2026-11-06:* not measured yet; expected
+close to route A (same steps, a few more novel-ORF windows for Promotech and OSTIR). Work-split
+row 12 measures it and fills the row.
 
 **The four faster settings (accepted by Khoa, 2026-11-03).** Each one replaces a step whose time
 does not fall when the region gets smaller:
@@ -461,6 +773,40 @@ above, expect well over 30 min. The docs say "not measured", not a number.
 - **`docs/release.md`.** New steps (section 5, item 4).
 - Changelog fragment `changelog.d/<PR>.feature.md` in the implementation PR.
 
+*Route E, 2026-11-06:*
+
+- **Example page:** a section `### Route E: DIA-NN report, six-frame database` holding exactly
+  route E's three commands from `example_routes.yaml` (AC 15, per route); one paragraph on when a
+  user picks a six-frame database (looking for unannotated ORFs), the `gippa makedb
+  --six-frame-orfs` command that built it shown in prose and pointing to
+  `../user-guide/makedb.md`; the route E caveats of section 2 (few candidates, no call, the
+  floor; IDs in region coordinates; tier `mayu`; route E region, 2026-11-06: its own region and
+  genome file, add 1,400,000, not comparable with A–D). "four routes" becomes "five routes" on the page,
+  in the quick-start line (`five input routes`) and in the `gippa example` group help (`cli.py`,
+  then `docs/reference/cli.md` regenerated). `from-spectra.md`'s "four routes" are another set
+  (spectra to `gippa run`) and stay.
+- **Tutorial** (`docs/tutorials/example-routes.md`): title `# Tutorial: one Nissle region, five
+  routes`; it runs route E too, reads `{out}/E/tables/novel_orfs.tsv` and the report's novel-ORF
+  section (aggregates: candidates per class, called 0, the floor). *Route E region, 2026-11-06:*
+  the title becomes `# Tutorial: Nissle regions, five routes`; the intro says that route E runs on
+  its own region; route E's commands use `genome/nissle_r200k_e.fna.gz`; the "35 ORF entries (of
+  5,678 in the region)" sentence becomes "53 ORF entries (of 5,609 in route E's region)"; and the
+  comparison covers routes A–D only, `gippa compare {out}/A {out}/B {out}/C {out}/D --labels
+  A,B,C,D --outdir {out}/compare` (`--outdir` is required; `gippa compare` exits with "runs … are
+  on different genomes" when E is added, `src/gippa/io/compare_io.py` `_check_genome`), with one
+  sentence saying why E is left out. Still aggregates only (`PEPTIDE_LIKE`); no ORF ID is
+  printed on the page (they are row-level content).
+- **`docs/release.md`** step 14: "prints the five routes".
+- *Route E region, 2026-11-06:* the example page's route E section uses
+  `gippa-example/genome/nissle_r200k_e.fna.gz` in both commands (AC 15), says "add 1,400,000"
+  instead of "add 1,965,000", "53 ORF entries (of 5,609 in route E's region)" instead of "35 … of
+  5,678", and adds one sentence: route E runs on its own 200 kb region of the same chromosome
+  because the shared region has no ORF-only peptide passing the global q-value. The bundle README
+  (`bundle_text.py`) gets the same sentences and names both genome files; `scripts/example/README.md`
+  names route E's region. "Same region" wording for all five routes (`bundle_text.py`'s "The same
+  region is given through five input routes") becomes "routes A–D share one region; route E has
+  its own".
+
 ## 5. Tests and acceptance criteria
 
 ### Unit tests (network mocked; `tests/unit/test_m12_01_example_fetch.py`)
@@ -491,6 +837,21 @@ printed commands of each route, and compares each run with `expected/<route>.jso
 tolerances there. Route B is part of the test only once #536 has landed; until then it is
 listed as a known gap in the test's docstring, not skipped silently. It writes the per-route wall times to a TSV next to the outputs; times are
 recorded, not asserted (a shared node is noisy; the table in section 3 is filled from them).
+
+*Route E, 2026-11-06:*
+
+- `tests/helpers/example_routes.py`: `ROUTES = ("A", "B", "C", "D", "E")`; `CONVERTED` and
+  `ABUNDANCE` gain E (route E converts, and its peptide intensities give `n_abundance` as in A);
+  a `NOVEL = frozenset("E")` set adds `n_novel_candidates`, `n_novel_called`, `n_novel_unpaired`
+  and `novel_classes` to `required_keys("E")` only, with the tolerances of section 2;
+  `measure()` reads them from `tables/novel_orfs.tsv`, `novel/novel_class_fdr.parquet` and
+  `run_manifest.json`. `tests/helpers/example_m12_01.py`'s fixture bundle gains
+  `E_sixframe/report.parquet` and `expected/E.json`. *Route E region, 2026-11-06:* the fixture
+  also gains `genome/<name>_e.fna.gz`; `measure()` gives `n_novel_unpaired = 0` when
+  `novel/novel_class_fdr.parquet` is absent or has no rows.
+- `tests/e2e/test_m12_01_example_routes.py`: `TIERS["E"] = "decoy_picked"` (Q-L15; was `"mayu"`, Q-L10), and for route E the
+  AC 22 assertion. The route runs in the same job; `example_routes.sbatch` keeps 4 CPUs, 16 GB and
+  its 2 h limit (five routes of about 6 min each fit).
 
 ### Acceptance criteria
 
@@ -525,6 +886,25 @@ recorded, not asserted (a shared node is noisy; the table in section 3 is filled
 | 17b | `example_routes.yaml` route commands | every `gippa run` carries the four example settings, `--modules core,bgc`, `--threads 4` | unit |
 | 18 | `build_example.py` twice at one commit | same sha256; `--check` passes against `bundles.tsv` | the build script's own tests + the sbatch |
 | 19 | `docs/release.md` | has the build, attach and verify steps below | unit (docs) |
+
+*Route E, 2026-11-06:* AC 1 reads "five route headings"; AC 14 adds "route E has `--from diann`,
+`--search-db same`, input `{dir}/E_sixframe/report.parquet`, `--out {out}/E/peptides.tsv`, and
+the same three-command sequence and settings as A, with `--genome {dir}/genome/nissle_r200k_e.fna.gz`
+(route E region, 2026-11-06); A–D keep `nissle_r200k.fna.gz`" (AC 17b covers E through the route list); AC 15
+adds the route E section; AC 17 reads "all five routes … route E `detection_tier = mayu`" (amended by Q-L15: route E `decoy_picked`). New
+criteria:
+
+| # | Input | Expected | Test |
+|---|---|---|---|
+| 20 | build on a synthetic A4 fixture: rows with (a) region CDS + region ORF, (b) a region ORF only, target and decoy, (c) an ORF crossing the region end, (d) an ORF outside, (e) a `Cont_` ID with a region ORF, (f) a region CDS + an out-of-region ORF | `E_sixframe/report.parquet` keeps exactly (a) and (b), target and decoy alike; all 71 (fixture: all) columns kept | build tests (test-author) |
+| 21 | same fixture, the ORF IDs of the kept rows | every ORF ID in `Protein.Ids` and `Protein.Group` is rewritten (rule 9): `parse_orf_id` gives the region contig and `start1 - S - 1`, `end1 - S`, class and strand unchanged; CDS IDs and ID order unchanged; no `NZ_CP058217.1` ORF ID left; `SELECTION.json` lists the columns and the count | build tests |
+| 21b | a fixture whose map coordinates disagree with an ID, or whose region translation differs from the `strain_db.faa` record (beyond the first residue) | the build fails naming the ID | build tests |
+| 21c | a fixture where route E keeps no decoy, or no ORF row | the build fails (rule 7) naming route E | build tests |
+| 22 | the slow route test, route E (route E region, 2026-11-06) | exit 0, `status: completed`, tier `mayu`; **`n_novel_candidates ≥ 1`**; `n_novel_called = 0`; `n_novel_unpaired < n_novel_candidates`; `run_manifest.json › novel_orfs › classes` has at least one entry with `regime = picked_decoy` (the rewrite makes candidates pair); `n_novel_unpaired` is an integer, 0 when `novel/novel_class_fdr.parquet` is absent or empty (never null); every compared key of `expected/E.json` within tolerance | e2e (Slurm) |
+| 23 | `expected/E.json` (`required_keys("E")`) | holds the base keys including `convert_rows` and `n_abundance`, plus the four novel keys; `required_keys` of A–D unchanged | unit (helpers, `test_m12_01_example_routes_compare.py`) |
+| 24 | the tutorial (route E region, 2026-11-06) | title "five routes"; mentions `{out}/E` and `novel_orfs.tsv`; exactly one `gippa compare`, with `{out}/A {out}/B {out}/C {out}/D`, `--labels A,B,C,D` and `--outdir`, and no `{out}/E` in it; no `PEPTIDE_LIKE` match and no `GIPPAORF_` string | unit (docs) |
+| 25 | build on the synthetic fixture with route E (route E region, 2026-11-06) | `A_diann/`, `B_proteins/`, `C_cascadia/`, `D_generic/` and `genome/<name>.fna.gz` are byte-identical (sha256) to a build of the same fixture with route E's sources absent or with route E's start moved; `SELECTION.json`'s A–D counts unchanged | build tests |
+| 26 | same fixture (route E region, 2026-11-06) | `genome/<name>_e.fna.gz` holds one record, ID `nissle1917_NZ_CP058217_1_<S_E>_<S_E + 200000>`, equal to the source chromosome's `[S_E, S_E + 200000)`; every rewritten ORF ID in `E_sixframe/report.parquet` names that contig and uses `S = S_E`; rule 3E keeps no row whose entry lies outside route E's region, even when it lies in the shared region | build tests |
 
 ### Release procedure (`docs/release.md`)
 
@@ -567,6 +947,21 @@ recorded, not asserted (a shared node is noisy; the table in section 3 is filled
 | User passes `--strict` | the region's preflight warnings give exit 3; the printed commands never use it |
 | Bundle on a compute node without internet | `--from-file`, documented on the page and in the no-network message |
 | Disk full in the middle of unpacking | exit 2; staging removed; `DIR` not created |
+| *Route E:* ORF overlapping a CDS (`cds_outframe`, `antisense`; 5,135 of the 5,609 ORFs of route E's region) | kept by its own coordinates (rule 3E). A row shared by the CDS and the ORF is kept when both are region entries; the peptide places on the CDS gene as in A, and its ORF ID leaves the decoy counts only if it maps to no gene (decision 28). 133 kept rows mix CDS and ORF IDs (predicted) |
+| *Route E:* ORF crossing a region end (9 entries) | not a region entry, so every row naming it is dropped (target or decoy), even when its other IDs are in the region; the region contig cannot hold its interval |
+| *Route E:* ORF whose closing stop codon lies outside the region although the ORF is contained | measured 0 on this region. Had there been one: on the linear region it is a 3'-open candidate; `_orf_key` and `_stop` both wrap by the region length, so it still pairs. Not a build failure |
+| *Route E:* minus-strand ORF | containment (rule 3E) uses `start - 1 >= S` and `end <= E` on either strand; rule 9 shifts both ends by `S` and keeps the `m` tag; the translation check reverse-complements |
+| *Route E:* `nterm_extension` entry (107 in the region) | its ID is rewritten like the others; the run pairs it by locus tag through its own `nterm_entries`, which only works when live Bakta light calls the same gene start as the full-DB annotation A4 was built on. Otherwise the candidate is `no_makedb_pair` and counts in `n_novel_unpaired`. Not checked by translation (upstream part + junction) |
+| *Route E:* a decoy whose only IDs are ORF entries mapping to no gene (6 rows kept, predicted) | no gene-level decoy row (decision 28); it still counts as a makedb decoy for its class in the novel-ORF FDR |
+| *Route E:* `Cont_` with a region ORF in one cell | dropped (rule 3E), as in A |
+| *Route E:* ties | the build has no ranking; rule 3E is a filter. In the run, picked ties go to the decoy (`_class_rank`), unchanged. *Route E region:* the window choice had a six-way tie at 9 targets (1,400,000–1,420,000 and 3,550,000–3,570,000); the lower start wins, as for regions |
+| *Route E region:* an A4 row whose entries lie in the shared region but not in route E's | dropped from route E (rule 3E uses rule 1E's region); A–D are built from A2 and the shared region, unchanged |
+| *Route E region:* `gippa compare` with route E and A–D | exit with "runs … are on different genomes"; the tutorial compares A–D only (AC 24) |
+| *Route E region:* empty novel FDR table | `n_novel_unpaired` = 0 (AC 22); with W = 1,400,000 at least one candidate is expected |
+| *Route E region:* circular vs linear | route E's region is linear like the shared one (no topology tag, no origin crossing; the scan only used windows inside `[0, 5,055,406)`) |
+| *Route E:* empty route | the build fails (rule 7: no target, no decoy or no ORF row) |
+| *Route E:* bundle size | (route E region, 2026-11-06) `E_sixframe/report.parquet` ≈ 615 kB (zstd) and `genome/<name>_e.fna.gz` ≈ 61 kB; the bundle ≈ 1.1 MB (1,092,440 bytes measured without `expected/`), under the pin's `size_gib: 1` cap with room |
+| *Route E:* a user's own six-frame genome-wide run vs route E | numbers differ (region, live Bakta light, rewritten IDs); the README says not to compare them with the pilot |
 
 ## 7. Open questions
 
@@ -582,6 +977,7 @@ Still open, each with its reversible default:
 | Q-K4 | Replace the empty `tutorials/ecoli-k12.md` with the example tutorial? | yes; the K-12 tutorial goes to the backlog |
 | Q-K5 | The asset upload is a manual step by you (13b), because the bundle is built on FarmShare and `release.yml` cannot see it. Fine? | manual step 13b by Khoa |
 | Q-K7 | File paths in the data are shortened to base names. Acceptable? | yes |
+| Q-K8 (route E, 2026-11-06) | The licence statement adds `E_sixframe/` and "the identifiers of six-frame ORFs (made by GIPPA, not by the depositors) renumbered to the region's coordinates". Fine? | yes, the amended text of section 2; route E region (Khoa, 2026-11-07): "genome/ holds two regions" and "route E's region's coordinates" |
 
 ### For the lead
 
@@ -595,6 +991,15 @@ Still open, each with its reversible default:
 | Q-L4 | Group rendering in `gen_reference.py` and the `test_m11_08_docs.py` option-drift parser (`## gippa <name>` assumes one word) both need changes for `gippa example fetch` | yes; the test-author updates the parser in PR 4 |
 | Q-L5 | The nav and page lists in `test_m11_07_mkdocs_config.py` and `test_m11_08_docs.py` are exact; adding `get-started/example.md` and renaming the tutorial needs test edits | test-author PR 6a, before the docs PR |
 | Q-L6 | An M12 index (`docs/specs/M12-index.md`)? | not now; this is M12's first issue |
+| Q-L9 (route E) | **ORF IDs vs the region contig.** `gippa run` pairs a candidate with its makedb entry by `(contig, strand, stop)` parsed from the ID, and route E's contig is `nissle1917_NZ_CP058217_1_1400000_1600000` (route E region, 2026-11-06) with region coordinates. Unchanged A4 IDs pair nothing. Rewrite the IDs in the bundle (rule 9), or ship them unchanged and accept that every candidate is `no_makedb_pair`? (A third way, a run option for a coordinate offset, is a code change outside M12-01.) | rewrite (rule 9); reversible: drop rule 9 and the ORF-ID clause of the licence |
+| Q-L10 (route E) | Route E's tier: `mayu` (as A) is a prediction from decision 28 and route A, not a measurement | `TIERS["E"] = "mayu"`; if work-split row 12 measures another tier, validation records it in `expected/E.json`, and the lead amends this spec and `TIERS` in the same PR |
+| Q-L11 (route E) | Ship a region subset of A4's `strain_db.faa` or `db_id_map.tsv`? `gippa run` and the report need neither | no; PROVENANCE names them by sha256, and the page shows the makedb command |
+| Q-L12 (route E) | ADR-0074 records the lifted row-level rule and the licence statement; route E extends both | the lead adds a dated amendment to ADR-0074 before row 11 merges |
+| Q-L13 (route E) | A4 lives at `$GIPPA_ROOT/runs/pilot/sixframe-fa49b8f/`, not under `$GIPPA_ROOT/pilot/` with the other sources | read it in place (it is under `$GIPPA_ROOT`, so the `_rel` guard holds; SELECTION records the sha256s); copy it to `$GIPPA_ROOT/pilot/A4/` later if the runs tree is pruned |
+| Q-L14 (route E region) | The brief says route E's bundle carries its region's "genome FASTA and annotation subset". The bundle ships no annotation file for any route (live Bakta light, AC 14) | genome FASTA only; the `db_id_map.tsv` region entries are a build input (Q-L11). Ship a Bakta JSON or GFF subset only if the lead says so |
+| Q-L15 (route E region) | Route E's tier at 1,400,000: 25 decoy rows (19 peptides) without ORF IDs, versus 21 rows in the shared region; `mayu` is still a prediction (Q-L10) | **Resolved (lead, 2026-11-07):** the trial run at 1,400,000 (job 1943965) measured `decoy_picked`, with 8 candidates, 0 called, all four novel classes `picked_decoy` and 0 unpaired; `TIERS["E"] = TIER_E = "decoy_picked"`, and the README, page and tutorial say so |
+| Q-L16 (route E region) | Name of route E's genome file and the `bundle.json` / `SELECTION.json` key for the second region | `genome/nissle_r200k_e.fna.gz`; a `region_e` object next to `region`, same fields |
+| Q-L17 (route E region) | The candidate prediction (7–9, at least 1) depends on live Bakta light's gene calls, which no data in hand shows | AC 22 asserts at least 1; if row 12 measures 0, validation stops and reports to the lead instead of pinning 0 |
 
 ## 8. Work split (≤ ~400 lines each, in order)
 
@@ -610,6 +1015,14 @@ Still open, each with its reversible default:
 | 8a | `test(docs): example page and tutorial` | test-author | nav lists, `TUTORIALS`, AC 15, 16, 19; red | 0 / ≈ 80 | 4 |
 | 8b | `docs: try the example, tutorial, quick start` | docs | `get-started/example.md`, `tutorials/example-routes.md` (replacing `ecoli-k12.md`), `mkdocs.yml`, quick start, from-spectra and convert links, backlog entry | 0 (prose) | 7, 8a |
 | 9 | `docs(release): build and attach the example bundle` | docs | `docs/release.md` steps 6, 13b, 14, 15 | 0 (prose) | 7 |
+| 10 | `docs(spec): M12-01 route E, six-frame database` (route E, 2026-11-06) | spec-writer | this amendment | 0 | — |
+| 11a | `test(example): route E` | test-author | build tests on a synthetic A4 fixture (AC 20–21c); `tests/helpers/example_routes.py` (E in `ROUTES`, `CONVERTED`, `ABUNDANCE`, the novel keys, AC 23) and its tests; `tests/helpers/example_m12_01.py` fixture (E files); `test_m12_01_example_routes_yaml.py` (AC 14 for E, `ROUTE_IDS`); `test_m12_01_example_docs.py` (AC 15 for E, AC 24, five routes); `tests/e2e/test_m12_01_example_routes.py` (`TIERS["E"]`, AC 22); route E region, 2026-11-06: AC 25, 26, the amended AC 22 and 24, the `measure()` 0 rule; red | 0 / ≈ 250 | 10 |
+| 11b | `feat(example): route E, six-frame database` | implementer | `scripts/example/build_example.py` (sources, rules 3E, 7, 9, SELECTION, counts) and `bundle_text.py` (README, PROVENANCE, LICENSE-DATA, caveats); `src/gippa/data/example_routes.yaml` (route E); the `gippa example` help text in `cli.py` and regenerated `docs/reference/cli.md`; `docs/get-started/example.md`, `docs/tutorials/example-routes.md`, the quick-start line, `docs/release.md` step 14 (the YAML and the page must change together: AC 15 compares them); changelog fragment | ≈ 150 / 0 (+ prose) | 11a, Q-L12 |
+| 10b | `docs(spec): M12-01 route E's own region` (route E region, 2026-11-06) | spec-writer | the second amendment | 0 | 10 |
+| 12 | `chore(example): rebuild and re-pin bundle 1.1 with route E` | validation | `sbatch scripts/slurm/build_example.sbatch`, then `example_routes.sbatch` on the new bundle (five routes), fill `expected/` (E.json included) and rebuild (route E region: confirm the predicted counts of the second amendment and that A–D's files and `expected/A–D.json` are unchanged); the `example_1_1` row and the `bundles.tsv` row with the new sha256 and size; the measured route E time in section 3's table and on the docs page; folded into or merged before the release-prep PR #572 | ≈ 20 / 0 | 11b |
+
+*Route E, 2026-11-06:* rows 10–12 come before the 1.1.0rc1 release-prep (#572), which waits for
+row 12: the 1.1 bundle and its pin are made once, with route E in it.
 
 PR 7 is part of the 1.1.0 release-prep (step 6), since `expected/` must come from the release
 commit. Before PR 7 merges, `gippa example fetch` on a 1.1 dev install exits 2 (`no example bundle

@@ -1272,7 +1272,7 @@ def _bundle_version(
 @cli.group(invoke_without_command=True)
 @click.pass_context
 def example(ctx: click.Context) -> None:
-    """The real example dataset: a region of E. coli Nissle 1917 with four input routes."""
+    """The real example dataset: a region of E. coli Nissle 1917 with five input routes."""
     if ctx.invoked_subcommand is None:  # `gippa example` alone: the group help, exit 0
         click.echo(ctx.get_help())
 

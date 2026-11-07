@@ -64,3 +64,22 @@ Three standing rules are touched:
   the `function` module; the default pipeline stays covered by the weekly end-to-end suite.
 - If the PXD078459 authors ask, the bundle is withdrawn and replaced with a public K-12 dataset
   (backlog).
+
+## Amendment, 2026-11-06: route E (six-frame database)
+
+Khoa (in session, 2026-11-06): "we should add the 6 frame db as part of the suite as well, as that
+is one of the routes mostly use by the user". The bundle gains route E, a region subset of the
+pilot's six-frame DIA-NN search (arm A4, the same PXD078459 runs WT_1–WT_3, DIA-NN 2.3.1 against
+`gippa makedb --six-frame-orfs`). Khoa extended the row-level lift to A4's rows inside the region;
+everything else of the pilot stays aggregate-only. Six-frame ORF identifiers, which GIPPA made and
+the depositors did not, are renumbered to the region's coordinates so that `gippa run` pairs them
+with the bundle genome (spec M12-01 rule 9). Route E demonstrates the six-frame workflow; with 35
+distinct ORF entries in the region no novel ORF can reach q ≤ 0.01, so `expected/E.json` pins 0
+calls. The 1.1 bundle is rebuilt and re-pinned before 1.1.0rc1.
+
+- 2026-11-06 (Khoa, in session): route E gets its own 200 kb region,
+  `NZ_CP058217.1:1400001-1600000` (contig `nissle1917_NZ_CP058217_1_1400000_1600000`, its own
+  genome file in the bundle), because the shared region holds no ORF-only peptide that passes
+  DIA-NN's `Global.Q.Value` ≤ 0.01, the filter `gippa run` applies, so route E showed no candidate.
+  The row-level lift covers A4's rows inside route E's region instead of the shared one. Routes
+  A–D, their files and their baselines are unchanged (spec M12-01, second 2026-11-06 amendment).

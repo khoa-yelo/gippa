@@ -1,16 +1,18 @@
-"""Build the quick-start example bundle: one Nissle 1917 chromosome region, four input routes.
+"""Build the quick-start example bundle: one Nissle 1917 chromosome region, five input routes.
 
 The example is a cut-down subset of the M10 pilot (validation/pilot/README.md, pass 3): E. coli
 Nissle 1917 (GCF_021559835.1, chromosome NZ_CP058217.1), PXD078459 runs WT_1-WT_3. Nothing is
 re-searched. The script subsets the pilot's existing outputs to one contiguous region and writes
 the release tree OUT/<name>/gippa-example-<X.Y>/ (spec M12-01 section 2 > Layout):
 
-    genome/<name>.fna.gz          the region as one linear contig (no topology tag)
+    genome/<name>.fna.gz          the shared region (routes A-D) as one linear contig (no tag)
+    genome/<name>_e.fna.gz        route E's region, written by the same rules
     A_diann/report.parquet        DIA-NN 2.3.1 report rows whose proteins all lie in the region
     B_proteins/proteins.faa       the region proteins DIA-NN quantified (A2 strain database)
     B_proteins/abundance.tsv      their PG.MaxLFQ (median over runs), as `gippa convert` computes it
     C_cascadia/WT_{1,2,3}.ssl     Cascadia rows whose peptide occurs in the region's six frames
     D_generic/peptides.tsv        a generic peptide table, peptide level, built from route A's rows
+    E_sixframe/report.parquet     DIA-NN rows of the six-frame search A4 in the region (rule 3E, 9)
     SELECTION.json                the rule, the counts and the sha256 of every source and output
     README.md, PROVENANCE.md, LICENSE-DATA.md, bundle.json, CHECKSUMS.sha256, expected/ (optional)
 
@@ -24,7 +26,9 @@ released; a failed or refused build leaves the old tree, the old archive and no 
 
 Selection rule (recorded verbatim in SELECTION.json):
 
-* Region: NZ_CP058217.1 [start, end) in 0-based half-open coordinates.
+* Region: NZ_CP058217.1 [start, end) in 0-based half-open coordinates, shared by routes A-D.
+* Route E's region: NZ_CP058217.1 [start_e, end_e), written by the same rules to its own genome
+  file; the route E rules below use it in place of the shared region.
 * Region proteins: records of the pass-3 A2 strain database (`db_id_map.tsv`, 1-based closed)
   on NZ_CP058217.1 with start - 1 >= region start and end <= region end (CDS and sORF).
 * Route A: a DIA-NN row is kept iff every ID in `Protein.Ids` (split on ';') is a region protein.
@@ -46,19 +50,35 @@ Selection rule (recorded verbatim in SELECTION.json):
   (`(UniMod:n)` -> `[UNIMOD:n]`). Columns: peptide, modified_peptide, protein_ids, q_value, pep,
   is_decoy, intensity, run. Numbers keep full precision in every table.
 
+* Route E: the DIA-NN rows of the six-frame search A4 (`gippa makedb --six-frame-orfs`
+  database). Region entries are the A4 `db_id_map.tsv` records on NZ_CP058217.1 with
+  start - 1 >= region start and end <= region end, of kind cds, sorf or orf, on either strand (an
+  ORF is placed by its map coordinates). A row is kept iff every ID in `Protein.Ids` (split on
+  ';') is a region entry, targets and decoys alike; rows with a contaminant (`Cont_`) ID, an
+  out-of-region protein or an out-of-region ORF (including one crossing a region end) are
+  dropped. All columns are kept.
+* Route E ORF IDs in region coordinates: every ORF ID
+  `GIPPAORF_{class}_NZ_CP058217.1_{s1}_{e1}_{p|m}` of a kept row, in any text column, becomes
+  `GIPPAORF_{class}_{C}_{s1 - S}_{e1 - S}_{p|m}` (C = route E's genome contig, S = route E's 0-based
+  region start). Class, strand and the ID order within a cell are unchanged; CDS and sORF IDs are
+  unchanged. The build fails if an ID's coordinates differ from its `db_id_map.tsv` row, if the
+  rewritten ID does not parse back (gippa.novel.fdr.parse_orf_id) to its region interval, if the
+  region sequence there (code 11, on its strand) differs from the ID's `strain_db.faa` record beyond
+  the first residue (not checked for nterm_extension), or if an ORF ID naming NZ_CP058217.1 is left.
 * Scrubbing (R12): the `.ssl` `file` column and every DIA-NN text column holding an absolute
   path are reduced to base names; SELECTION.json lists the rewritten columns. No other value is
-  changed. The build fails if any bundle file (a cell, parquet metadata or an `expected/` file)
-  still holds a personal or build path.
-* No empty route: the build fails if any route keeps zero rows or zero proteins, or if route A
-  keeps no decoy.
+  changed, except by the route E ORF-ID rewrite. The build fails if any bundle file (a cell,
+  parquet metadata or an `expected/` file) still holds a personal or build path.
+* No empty route: the build fails if any route keeps zero rows or zero proteins, if route A
+  keeps no decoy, or if route E keeps no target row, no decoy row or no row with a region ORF ID.
 
-Usage (venv python, PYTHONPATH=<checkout>/src; small, runs in seconds). Defaults: region
-NZ_CP058217.1:1965001-2165000, --name nissle_r200k, --out and --bundle-out $GIPPA_ROOT/example,
-bundle version = the installed GIPPA MAJOR.MINOR. A checkout with uncommitted changes fails
-unless --allow-dirty (the commit is then recorded as <sha>-dirty). --check rebuilds in a
-temporary dir and compares the archive with its validation/example/bundles.tsv row; it writes
-nothing to --out or --bundle-out:
+Usage (venv python, PYTHONPATH=<checkout>/src; small, runs in seconds). Defaults: shared region
+NZ_CP058217.1:1965001-2165000 (--start/--end move it), route E's region
+NZ_CP058217.1:1400001-1600000 (START_E/END_E, not an option), --name nissle_r200k, --out and
+--bundle-out $GIPPA_ROOT/example, bundle version = the installed GIPPA MAJOR.MINOR. A checkout
+with uncommitted changes fails unless --allow-dirty (the commit is then recorded as
+<sha>-dirty). --check rebuilds in a temporary dir and compares the archive with its
+validation/example/bundles.tsv row; it writes nothing to --out or --bundle-out:
 
     python scripts/example/build_example.py [--expected DIR] [--bundle-out DIR] [--allow-dirty]
     python scripts/example/build_example.py --check [--bundles-tsv TSV] [--expected DIR]
@@ -67,7 +87,9 @@ nothing to --out or --bundle-out:
 from __future__ import annotations
 
 import argparse
+import contextlib
 import csv
+import getpass
 import gzip
 import hashlib
 import importlib.util
@@ -93,6 +115,8 @@ import pyarrow.parquet as pq
 CHROM = "NZ_CP058217.1"
 RUNS = ("WT_1", "WT_2", "WT_3")
 START, END, NAME = 1_965_000, 2_165_000, "nissle_r200k"
+# Route E's own region (rule 1E); read at build time, so a test may set them on the module
+START_E, END_E = 1_400_000, 1_600_000
 HERE = Path(__file__).resolve().parent
 REPO = HERE.parents[1]
 BUNDLES_TSV = REPO / "validation" / "example" / "bundles.tsv"
@@ -152,15 +176,25 @@ def _root() -> Path:
     return Path(os.environ.get("GIPPA_ROOT", "/home/classes/bios/270/khoa/giap/local"))
 
 
+A4_DIR = Path("runs") / "pilot" / "sixframe-fa49b8f"  # the pilot's six-frame arm (route E)
+# Route E's PROVENANCE extras under $GIPPA_ROOT/A4_DIR: sha256 recorded when present (not sources)
+A4_EXTRAS = ("jobs/diann_A4.cfg", "db/makedb_manifest.json", "A4/diann_version.txt")
+A4_COMMANDS = ("A4/command_step1.txt", "A4/command_step2.txt")
+
+
 def sources(root: Path) -> dict[str, Path]:
     p3 = root / "pilot" / "pass3"
     a3 = root / "pilot" / "A3_cascadia_cpu"
+    a4 = root / A4_DIR
     return {
         "genome": p3 / "genome" / "nissle1917_wt.fna.gz",
         "db_id_map": p3 / "db_a2" / "db_id_map.tsv",
         "strain_db": p3 / "db_a2" / "strain_db.faa.gz",
         "diann_report": p3 / "A2" / "A2_report.parquet",
         **{f"ssl_{r}": a3 / r / f"{r}.ssl" for r in RUNS},
+        "a4_report": a4 / "A4" / "A4_report.parquet",
+        "a4_db_id_map": a4 / "db" / "db_id_map.tsv",
+        "a4_strain_db": a4 / "db" / "strain_db.faa",
     }
 
 
@@ -247,6 +281,9 @@ def region_proteins(db_map: Path, start: int, end: int) -> pd.DataFrame:
 
 def subset_diann(report: Path, keep_ids: set[str]) -> tuple[pa.Table, dict[str, int]]:
     t = pq.read_table(report)
+    for i, f in enumerate(t.schema):  # Arrow cannot filter string_view columns: read as string
+        if pa.types.is_string_view(f.type):
+            t = t.set_column(i, pa.field(f.name, pa.string()), t.column(i).cast(pa.string()))
     ids = t.column("Protein.Ids").to_pylist()
     mask = [bool(x) and all(p in keep_ids for p in str(x).split(";")) for x in ids]
     sub = t.filter(pa.array(mask))
@@ -267,6 +304,143 @@ def subset_diann(report: Path, keep_ids: set[str]) -> tuple[pa.Table, dict[str, 
         ),
     }
     return sub, counts
+
+
+_ORF_CHROM = re.compile(rf"GIPPAORF_(\w+?)_{re.escape(CHROM)}_(\d+)_(\d+)_([pm])")
+_ORF_ID = re.compile(rf"^{_ORF_CHROM.pattern}$")
+
+
+def region_entries(db_map: Path, start: int, end: int) -> pd.DataFrame:
+    """Rule 3E: the A4 map records (cds, sorf, orf) contained in the region, either strand."""
+    m = region_proteins(db_map, start, end)
+    return m[m["kind"].isin(["cds", "sorf", "orf"])].reset_index(drop=True)
+
+
+def _is_text(typ: pa.DataType) -> bool:
+    """A string column: plain, large, view or dictionary-encoded."""
+    if pa.types.is_dictionary(typ):
+        return _is_text(typ.value_type)
+    return bool(pa.types.is_string(typ) or pa.types.is_large_string(typ)
+                or pa.types.is_string_view(typ))  # fmt: skip
+
+
+def _text_columns(t: pa.Table) -> list[int]:
+    return [i for i, f in enumerate(t.schema) if _is_text(f.type)]
+
+
+def _set_text(t: pa.Table, i: int, values: list[Any]) -> pa.Table:
+    """Column ``i`` of ``t`` replaced by ``values`` in the column's own type (BuildError when the
+    type cannot hold them)."""
+    field = t.schema.field(i)
+    try:
+        if pa.types.is_dictionary(field.type):
+            arr = pa.array(values, type=field.type.value_type).dictionary_encode()
+            arr = arr.cast(field.type)
+        else:
+            arr = pa.array(values, type=field.type)
+    except (pa.ArrowInvalid, pa.ArrowNotImplementedError, pa.ArrowTypeError) as exc:
+        raise BuildError(f"column {field.name} ({field.type}) cannot be rewritten: {exc}") from exc
+    return t.set_column(i, field, arr)
+
+
+def orf_id_rewrite(
+    t: pa.Table, orfs: pd.DataFrame, region_nt: str, start: int, contig: str,
+    records: Mapping[str, str],
+) -> tuple[pa.Table, list[str], int]:  # fmt: skip
+    """Rule 9: the region ORF IDs of ``t`` (``orfs``: their map rows) in region coordinates;
+    (table, rewritten columns, distinct IDs rewritten). A failed check raises BuildError."""
+    from gippa.mapping.sixframe import translate_text
+    from gippa.novel.fdr import parse_orf_id
+
+    by_id = {str(r.db_id): r for r in orfs.itertuples(index=False)}
+    new_id: dict[str, str] = {}
+
+    def renamed(old: str) -> str:
+        if old in new_id:
+            return new_id[old]
+        m = _ORF_ID.match(old)
+        row = by_id[old]
+        if m is None:
+            raise BuildError(f"route E: region ORF ID {old} is not "
+                             f"GIPPAORF_{{class}}_{CHROM}_{{s1}}_{{e1}}_{{p|m}}")  # fmt: skip
+        cls, s1, e1, sfx = m.group(1), int(m.group(2)), int(m.group(3)), m.group(4)
+        strand = "+" if sfx == "p" else "-"
+        new = f"GIPPAORF_{cls}_{contig}_{s1 - start}_{e1 - start}_{sfx}"
+        if (int(row.start), int(row.end), str(row.strand)) != (s1, e1, strand):
+            raise BuildError(f"route E: ORF ID {old} (rewritten {new}) disagrees with its "
+                             f"db_id_map.tsv row {row.start}-{row.end} {row.strand}")  # fmt: skip
+        want = (cls, contig, s1 - start - 1, e1 - start, strand)
+        if parse_orf_id(new) != want:
+            raise BuildError(f"route E: rewritten ORF ID {new} (from {old}) does not parse back "
+                             f"to {want}")  # fmt: skip
+        if cls != "nterm_extension":
+            nt = region_nt[s1 - start - 1 : e1 - start]
+            aa = translate_text(revcomp(nt) if strand == "-" else nt, 11)
+            rec = records.get(old)
+            if rec is None or len(rec) != len(aa) or rec[1:] != aa[1:]:
+                raise BuildError(f"route E: the region translation of {new} (from {old}) differs "
+                                 "from its strain_db.faa record")  # fmt: skip
+        new_id[old] = new
+        return new
+
+    rewritten = []
+    for i in _text_columns(t):
+        vals = t.column(i).to_pylist()
+        out = [";".join(renamed(p) if p in by_id else p for p in v.split(";"))
+               if isinstance(v, str) else v for v in vals]  # fmt: skip
+        if out != vals:
+            t = _set_text(t, i, out)
+            rewritten.append(t.schema.field(i).name)
+    left = sorted({m.group(0) for i in range(t.num_columns) for v in t.column(i).to_pylist()
+                   if isinstance(v, str) for m in _ORF_CHROM.finditer(v)})  # fmt: skip
+    if left:
+        raise BuildError(f"route E: ORF IDs naming {CHROM} left after the rewrite (not "
+                         f"region entries, or in a column not rewritten): {left[:5]}")  # fmt: skip
+    return t, rewritten, len(new_id)
+
+
+# a path argument: absolute, ~/ or ../; alone, after `=` or `:`, or glued to a flag (`-B/x:/y`)
+_PATH_ARG = re.compile(
+    r"(?:^|(?<=[\s=:'\"]))(?P<flag>-{1,2}[A-Za-z][\w-]*)?"
+    r"(?P<path>(?:~|\.\.)?/(?!/)[^\s:'\"=,;]*)",
+    re.M,
+)
+_EXTENSION = re.compile(r"[^.]\.[A-Za-z0-9]+$")
+
+
+def shorten_paths(text: str) -> str:
+    """R12: each path argument of ``text`` becomes its base name when its last component has a
+    file extension, and ``<dir>`` otherwise (a trailing ``/`` or no extension)."""
+
+    def short(m: re.Match[str]) -> str:
+        path = m.group("path")
+        last = path.rsplit("/", 1)[-1]
+        name = last if _EXTENSION.search(last) else "<dir>"
+        return (m.group("flag") or "") + name
+
+    return _PATH_ARG.sub(short, text)
+
+
+def login_names() -> list[str]:
+    """The building user's login names (``getpass.getuser()``, the home directory's name)."""
+    names = []
+    with contextlib.suppress(Exception):  # getuser raises when no name is set
+        names.append(getpass.getuser())
+    names.append(Path.home().name)
+    return sorted({n for n in names if n and n not in (".", "/")})
+
+
+def a4_extras(root: Path) -> dict[str, Any]:
+    """PROVENANCE's route E extras (present files only): sha256s and the shortened commands."""
+    a4 = root / A4_DIR
+    digests = {rel: sha256(a4 / rel) for rel in A4_EXTRAS if (a4 / rel).is_file()}
+    commands = {Path(rel).name: shorten_paths((a4 / rel).read_text(encoding="utf-8")).strip()
+                for rel in A4_COMMANDS if (a4 / rel).is_file()}  # fmt: skip
+    for rel in (*A4_EXTRAS, *A4_COMMANDS):
+        if not (a4 / rel).is_file():
+            print(f"build_example: warning: $GIPPA_ROOT/{(A4_DIR / rel).as_posix()} not found; "
+                  "PROVENANCE.md omits it", file=sys.stderr)  # fmt: skip
+    return {"digests": digests, "commands": commands}
 
 
 def abundance(sub: pd.DataFrame) -> tuple[pd.DataFrame, int]:
@@ -347,16 +521,14 @@ def scrub_paths(t: pa.Table) -> tuple[pa.Table, list[str]]:
     """Rule 8: every text column holding an absolute path, with each such value reduced to its
     base name (``/`` or backslash separated); the names of the rewritten columns."""
     rewritten = []
-    for i, field in enumerate(t.schema):
-        if not (pa.types.is_string(field.type) or pa.types.is_large_string(field.type)):
-            continue
+    for i in _text_columns(t):
         vals = t.column(i).to_pylist()
         if not any(isinstance(v, str) and _ABS.match(v) for v in vals):
             continue
         new = [re.split(r"[\\/]", v)[-1] if isinstance(v, str) and _ABS.match(v) else v
                for v in vals]  # fmt: skip
-        t = t.set_column(i, field, pa.array(new, type=field.type))
-        rewritten.append(field.name)
+        t = _set_text(t, i, new)
+        rewritten.append(t.schema.field(i).name)
     return t, rewritten
 
 
@@ -364,11 +536,14 @@ def _leaks(text: str, literals: Iterable[str]) -> bool:
     return bool(_PERSONAL.search(text)) or any(lit and lit in text for lit in literals)
 
 
-def personal_paths(top: Path, literals: Iterable[str | Path]) -> list[str]:
+def personal_paths(
+    top: Path, literals: Iterable[str | Path], words: Iterable[str] = ()
+) -> list[str]:
     """R12 leak guard: ``<file> (<where>)`` for every bundle file holding a personal or build
-    path (a parquet cell or metadata entry, a gzipped or plain text file). Values are not
-    reported."""
+    path (a parquet cell or metadata entry, a gzipped or plain text file), or, in a text file,
+    one of ``words`` (the login names) as a whole word. Values are not reported."""
     lits = [str(x) for x in literals if str(x) not in ("", "/", ".")]
+    word = re.compile("|".join(rf"(?<!\w){re.escape(w)}(?!\w)" for w in words if w) or r"(?!)")
     hits: list[str] = []
     for p in sorted(top.rglob("*")):
         if not p.is_file():
@@ -390,8 +565,11 @@ def personal_paths(top: Path, literals: Iterable[str | Path]) -> list[str]:
         raw = p.read_bytes()
         if p.suffix == ".gz":
             raw = gzip.decompress(raw)
-        if _leaks(raw.decode("utf-8", "replace"), lits):
+        text = raw.decode("utf-8", "replace")
+        if _leaks(text, lits):
             hits.append(rel)
+        elif word.search(text):
+            hits.append(f"{rel} (the login name)")
     return hits
 
 
@@ -502,11 +680,14 @@ def checksums(top: Path) -> str:
 
 
 def _check_routes(a: Mapping[str, Any], c: Mapping[str, Mapping[str, int]], n_b: int, n_d: int,
-                  n_prot: int) -> None:  # fmt: skip
-    """Rule 7: no empty route, and route A keeps a decoy."""
+                  n_prot: int, e: Mapping[str, Any]) -> None:  # fmt: skip
+    """Rule 7: no empty route, route A keeps a decoy, route E a target, a decoy and an ORF row."""
     empty = [k for k, n in (("region proteins", n_prot), ("A rows", a["target_rows_kept"]),
                             ("A decoys", a["decoy_rows_kept"]), ("B proteins", n_b),
-                            ("D rows", n_d)) if n == 0]  # fmt: skip
+                            ("D rows", n_d), ("E target rows", e["target_rows_kept"]),
+                            ("E decoys", e["decoy_rows_kept"]),
+                            ("E rows with an ORF ID", e["rows_with_orf_ids"]))
+             if n == 0]  # fmt: skip
     empty += [f"C rows of {r}" for r, v in c.items() if v["rows_kept"] == 0]
     if empty:
         raise BuildError("empty route (rule 7): " + ", ".join(empty))
@@ -542,18 +723,36 @@ def static_digests(root: Path) -> dict[str, dict[str, str]]:
     return out
 
 
+def region_info(start: int, end: int) -> dict[str, Any]:
+    """``SELECTION.json``'s description of the region ``[start, end)`` of ``CHROM``."""
+    return {
+        "contig": CHROM,
+        "start_0based": start,
+        "end_exclusive": end,
+        "length_bp": end - start,
+        "one_based_closed": f"{CHROM}:{start + 1}-{end}",
+        "output_contig_id": f"nissle1917_{CHROM.replace('.', '_')}_{start}_{end}",
+        "topology": "linear (no tag)",
+    }
+
+
 def build(
     start: int, end: int, name: str, stage: Path, root: Path, *, version: str, commit: str,
     expected: Path | None = None, expected_commit: str = "",
 ) -> dict[str, Any]:  # fmt: skip
     """The release tree ``stage/gippa-example-<version>/`` and the per-route sizing tars in
-    ``stage/bundles/`` (``stage`` must not exist); returns the counts and the tree."""
+    ``stage/bundles/`` (``stage`` must not exist); returns the counts and the tree. Route E's
+    region is the module's ``START_E``/``END_E`` (read here, at call time)."""
     import gippa
+
+    start_e, end_e = START_E, END_E
+    if not 0 <= start_e < end_e:
+        raise BuildError(f"route E's region [{start_e}, {end_e}) is empty or negative")
 
     src = sources(root)
     src_rel = {k: _rel(v, root) for k, v in src.items()}  # before anything is read (L2)
     out = stage / f"gippa-example-{version}"
-    for sub in ("genome", "A_diann", "B_proteins", "C_cascadia", "D_generic"):
+    for sub in ("genome", "A_diann", "B_proteins", "C_cascadia", "D_generic", "E_sixframe"):
         (out / sub).mkdir(parents=True)
     (stage / "bundles").mkdir()
 
@@ -563,10 +762,15 @@ def build(
     chrom = genome[CHROM].upper()
     if end > len(chrom):
         raise BuildError(f"--end {end} is beyond {CHROM} ({len(chrom)} bp)")
+    if end_e > len(chrom):
+        raise BuildError(f"route E's region end {end_e} is beyond {CHROM} ({len(chrom)} bp)")
+    region, region_e = region_info(start, end), region_info(start_e, end_e)
     region_nt = chrom[start:end]
-    contig = f"nissle1917_{CHROM.replace('.', '_')}_{start}_{end}"
     g_path = out / "genome" / f"{name}.fna.gz"
-    write_fasta(g_path, [(contig, region_nt)])
+    write_fasta(g_path, [(region["output_contig_id"], region_nt)])
+    region_nt_e, contig_e = chrom[start_e:end_e], region_e["output_contig_id"]
+    g_path_e = out / "genome" / f"{name}_e.fna.gz"
+    write_fasta(g_path_e, [(contig_e, region_nt_e)])
 
     prot = region_proteins(src["db_id_map"], start, end)
     keep_ids = set(prot["db_id"])
@@ -602,18 +806,28 @@ def build(
     gen = generic_table(sub)
     d_path = out / "D_generic" / "peptides.tsv"
     write_table(gen, d_path)
-    _check_routes(a_counts, c_counts, len(ab), len(gen), len(prot))
+
+    # Route E (rules 3E, 8, 9)
+    ent = region_entries(src["a4_db_id_map"], start_e, end_e)
+    orfs = ent[ent["kind"] == "orf"]
+    orf_ids = set(orfs["db_id"])
+    e_t, e_kept = subset_diann(src["a4_report"], set(ent["db_id"]))
+    e_counts: dict[str, Any] = dict(e_kept)
+    e_counts["rows_with_orf_ids"] = sum(
+        1 for x in e_t.column("Protein.Ids").to_pylist() if set(str(x).split(";")) & orf_ids
+    )
+    e_counts["rows_per_run"] = {
+        str(k): int(v) for k, v in e_t.column("Run").to_pandas().value_counts().sort_index().items()
+    }
+    _check_routes(a_counts, c_counts, len(ab), len(gen), len(prot), e_counts)
+    e_t, e_scrubbed = scrub_paths(e_t)
+    e_t, e_rw_cols, n_rw = orf_id_rewrite(
+        e_t, orfs, region_nt_e, start_e, contig_e, read_fasta(src["a4_strain_db"])
+    )
+    e_path = out / "E_sixframe" / "report.parquet"
+    pq.write_table(e_t, e_path, compression="zstd")
 
     targets = sub[sub["Decoy"] == 0]
-    region = {
-        "contig": CHROM,
-        "start_0based": start,
-        "end_exclusive": end,
-        "length_bp": end - start,
-        "one_based_closed": f"{CHROM}:{start + 1}-{end}",
-        "output_contig_id": contig,
-        "topology": "linear (no tag)",
-    }
     counts: dict[str, Any] = {
         "region_proteins": len(prot),
         "region_proteins_cds": int((prot["kind"] == "cds").sum()),
@@ -636,23 +850,41 @@ def build(
         },
         "C": c_counts,
         "D": {"rows": len(gen), "decoy_rows": int((gen["is_decoy"] == "true").sum())},
+        "E": {
+            **e_counts,
+            "region_entries": len(ent),
+            "region_orf_entries": len(orfs),
+            "orf_entries_named": n_rw,
+        },
     }
-    rewritten = {"A_diann/report.parquet": a_scrubbed, "C_cascadia/*.ssl": ["file"]}
+    rewritten = {"A_diann/report.parquet": a_scrubbed, "C_cascadia/*.ssl": ["file"],
+                 "E_sixframe/report.parquet": e_scrubbed}  # fmt: skip
     rewritten = {k: v for k, v in rewritten.items() if v}
     src_meta = {k: {"path": src_rel[k], "sha256": sha256(v)} for k, v in src.items()}
     sel: dict[str, Any] = {
         "name": name,
         "region": region,
+        "region_e": region_e,
         "rule": __doc__.split("Selection rule (recorded verbatim in SELECTION.json):")[1]
         .split("Usage")[0]
         .strip(),
         "fdr_note": (
             "q-values, PEPs and MaxLFQ in routes A, B and D are DIA-NN's, computed on the "
-            "whole-proteome A2 search (4,685 strain proteins + contaminants, three runs); Cascadia "
-            "scores are per spectrum. Nothing was re-searched or re-scored for the subset."
+            "whole-proteome A2 search (4,685 strain proteins + contaminants, three runs); route "
+            "E's are DIA-NN's on the whole six-frame search A4 (147,753 strain records + 381 "
+            "contaminants, the same runs); Cascadia scores are per spectrum. Nothing was "
+            "re-searched or re-scored for the subset."
         ),
         "counts": counts,
         "rewritten_columns": rewritten,
+        "orf_id_rewrite": {
+            "rule": "route E ORF IDs in region coordinates (see rule)",
+            "file": "E_sixframe/report.parquet",
+            "contig": contig_e,
+            "offset": start_e,
+            "columns": e_rw_cols,
+            "distinct_ids": n_rw,
+        },
         "sources": src_meta,
         "sources_relative_to": "$GIPPA_ROOT",
     }
@@ -661,6 +893,7 @@ def build(
         "B_proteins": [f_path, ab_path],
         "C_cascadia": [out / "C_cascadia" / f"{r}.ssl" for r in RUNS],
         "D_generic": [d_path],
+        "E_sixframe": [g_path_e, e_path],
     }
     data_files = [g_path, *(p for ps in route_files.values() for p in ps)]
     sel["outputs"] = {
@@ -685,12 +918,13 @@ def build(
     exp_note = (f"from {expected_commit or 'an unrecorded commit'}" if expected is not None
                 else "not included in this build")  # fmt: skip
     (out / "README.md").write_text(T.readme(version, region["one_based_closed"],
-                                            region["length_bp"], rs, expected is not None),
-                                   encoding="utf-8")  # fmt: skip
+                                            region["length_bp"], rs, expected is not None,
+                                            region_e, counts["E"], f"{name}.fna.gz",
+                                            f"{name}_e.fna.gz"), encoding="utf-8")  # fmt: skip
     (out / "PROVENANCE.md").write_text(T.provenance(
         version, region, src_meta, counts,
         {"commit": commit, "gippa_version": installed, "expected": exp_note}, rewritten,
-        static_digests(root),
+        static_digests(root), a4_extras(root), n_rw, region_e, sha256(g_path_e),
     ), encoding="utf-8")  # fmt: skip
     (out / "LICENSE-DATA.md").write_text(T.LICENSE_DATA, encoding="utf-8")
     meta = {
@@ -700,6 +934,8 @@ def build(
         "expected_commit": expected_commit if expected is not None else None,
         "region": region["one_based_closed"],
         "region_0based_half_open": [CHROM, start, end],
+        "region_e": region_e["one_based_closed"],
+        "region_e_0based_half_open": [CHROM, start_e, end_e],
         "name": name,
         "counts": counts,
         "tools": T.TOOLS,
@@ -709,14 +945,16 @@ def build(
                                      encoding="utf-8")  # fmt: skip
     (out / "CHECKSUMS.sha256").write_text(checksums(out), encoding="utf-8")
 
-    leaks = personal_paths(out, [root, root.resolve(), Path.home(), stage.resolve()])
+    leaks = personal_paths(out, [root, root.resolve(), Path.home(), stage.resolve()],
+                           login_names())  # fmt: skip
     if leaks:
         raise BuildError("personal or build path in the bundle (R12): " + "; ".join(leaks))
 
     sizes: dict[str, int] = {}
     for route, ps in route_files.items():
         tar = stage / "bundles" / f"{name}_{route}.tar.gz"
-        deterministic_tar(tar, out, [g_path, sel_path, *ps])
+        shared = [] if route == "E_sixframe" else [g_path]  # route E ships its own genome
+        deterministic_tar(tar, out, [*shared, sel_path, *ps])
         sizes[route] = tar.stat().st_size
     (stage / "bundles" / "sizes.json").write_text(json.dumps(sizes, indent=2) + "\n",
                                                   encoding="utf-8")  # fmt: skip
@@ -797,8 +1035,10 @@ def check(a: argparse.Namespace, root: Path, version: str, commit: str) -> int:
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     ap.add_argument("--start", type=int, default=START,
-                    help=f"0-based region start on {CHROM} (default {START})")  # fmt: skip
-    ap.add_argument("--end", type=int, default=END, help=f"exclusive region end (default {END})")
+                    help=f"0-based start of the shared region (routes A-D) on {CHROM} "
+                         f"(default {START}); route E's region is START_E")  # fmt: skip
+    ap.add_argument("--end", type=int, default=END,
+                    help=f"exclusive end of the shared region (default {END})")  # fmt: skip
     ap.add_argument("--name", default=NAME, help=f"default {NAME}")
     ap.add_argument("--out", type=Path, default=None, help="work dir; default $GIPPA_ROOT/example")
     ap.add_argument("--bundle-out", type=Path, default=None,

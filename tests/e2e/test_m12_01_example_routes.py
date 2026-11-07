@@ -23,6 +23,7 @@ from typing import Any
 
 import pytest
 from helpers import example_routes as er
+from helpers.example_route_e import route_e_misses
 
 pytestmark = [
     pytest.mark.e2e,
@@ -32,7 +33,12 @@ pytestmark = [
     pytest.mark.needs_promotech_models,
 ]
 
-TIERS = {"A": "mayu", "B": "protein_list", "C": "two_peptide"}  # AC 17
+TIERS = {
+    "A": "mayu",
+    "B": "protein_list",
+    "C": "two_peptide",
+    "E": "decoy_picked",
+}  # AC 17, Q-L10, Q-L15
 TIMEOUT_S = 3600  # one command; the measured `gippa run` takes about 5 min
 STEP6 = ("before the pin exists (release step 6), measure an unpacked build tree with "
          "GIPPA_EXAMPLE_DIR=<dir> instead")  # fmt: skip
@@ -170,6 +176,8 @@ def test_route(runs: dict[str, RouteRun], bundle: Bundle, route: str) -> None:
     assert rr.measured.get("status") == "completed", (rr.measured, log)
     if route in TIERS:
         assert rr.measured.get("detection_tier") == TIERS[route], rr.measured
+    if route == "E":  # AC 22 (amended 2026-11-06 (b)); route_e_misses is unit-tested
+        assert not (misses := route_e_misses(rr.measured)), misses
     if bundle.fetched:
         path = bundle.directory / "expected" / f"{route}.json"
         assert path.is_file(), f"{path} missing from the bundle"
