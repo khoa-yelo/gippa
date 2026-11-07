@@ -4,7 +4,7 @@
 > resume prompt (GIPPA_SPEC.md §0.3). Every worktree's next feature-loop step is printed; uncommitted
 > files mean an agent stopped mid-step — inspect them, then re-dispatch that step (test-author →
 > implementer → code-reviewer). Slurm jobs survive the session; their logs are in `local/logs/`.
-_Last updated: 2026-11-01 · session https://claude.ai/code/session_015h628ytdvWRVxo1imHPbUy_
+_Last updated: 2026-11-07 · session https://claude.ai/code/session_015h628zDx1sogQ9z4HHwVta_
 
 > **Renamed to GIPPA (ADR-0064, branch `refactor/gippa-rename`):** the project, package, CLI
 > (`gippa`), simulator (`gippasim`), env vars (`GIPPA_*`), Slurm job names (`gippa-*`), micromamba
@@ -13,7 +13,7 @@ _Last updated: 2026-11-01 · session https://claude.ai/code/session_015h628ytdvW
 
 ## Milestone progress
 <!-- progress:start -->
-🟩 done (merged) · ⬛ superseded by an accepted ADR (counts as done) · 🟨 running (open branch) · ⬜ pending; designed issues: 191/199 done (96 %), 1 running · generated 2026-11-06 08:42 by `scripts/dev/progress_bars.py`
+🟩 done (merged) · ⬛ superseded by an accepted ADR (counts as done) · 🟨 running (open branch) · ⬜ pending; designed issues: 191/199 done (96 %), 1 running · generated 2026-11-07 03:07 by `scripts/dev/progress_bars.py`
 
 | Milestone | Progress | Done | Running | Pending |
 |---|---|---|---|---|
@@ -284,6 +284,23 @@ packet: `$GIPPA_ROOT/review/m10-pilot/r1/` (#524), round r1.
   Needs Khoa: no: ADR-0053, ADR-0059, ADR-0062, ADR-0063, ADR-0066.
 
 ## In progress
+- **1.1.0rc1 (2026-11-07): release freeze from R = `04c22e4b` (#572).** Only paperwork PRs merge until step 13.
+  - Route E (six-frame DIA-NN) is in the bundle on its own region, NZ_CP058217.1 [1,400,000, 1,600,000): #573 (spec), #574 (tests, code, review), #575 (licence names two regions; Khoa 2026-11-07).
+    - The old region had 0 ORF-only peptides passing Global.Q ≤ 0.01.
+    - Trial 1943965 and the dev run 1944436: 8 candidates, 0 called, four classes all `picked_decoy`, tier `decoy_picked` (Q-L15).
+    - Earlier dev builds: 1942047/1942050/1942161/1942162.
+  - Bundle 1.1 (five routes), on 52ddd95f:
+    - builds 1945694 and 1945852 (with `expected/`); measure run 1945698; fetch-mode run 1945869, 6/6 passed;
+    - sha256 195c810d…92cb, 1,093,577 B, at `$GIPPA_ROOT/example/gippa-example-1.1.tar.gz` (the old 4-route archive is kept as `*.superseded`).
+  - Khoa reviewed the outputs (job 1944436) and said "run the evidence run for now"; visualization fixes will follow, which means a new R and re-run evidence.
+  - Step 7 on R:
+    - test_branch 1946262 (`--time=05:00:00`; the 3 h run 1940683 timed out);
+    - nightly task 2, 1946273 (NIGHTLY_CAL_SHARDS=4, shard 1 `--time=10:00:00`; shards 1946275–1946277);
+    - calibration_full and weekly are launched by a waiter once the R14 budget allows (calibration first, before 16:50 so it ends before the 01:30 nightly).
+    - 1946245, 1946246 and 1946247 were cancelled or failed. test_branch.sbatch and weekly.sbatch have no barley/rye `--exclude`, so pass it (SBATCH_EXCLUDE).
+  - **Gate risks:**
+    - The nightly integration run (task 0) has failed 3 tests since 11-06 (1937850_0, 1945587_0: operons KeyError 'class', report V03 'not shown', function note). This blocks R6. The test-author is diagnosing on `test/integration-m1204-stale`.
+    - calibration_nightly shard 1/3 hits the 6 h SIGTERM (1934803_2, 1937850_2), so R3 fails without a passing calibration_nightly row.
 - (merged 2026-11-06) M12-04 PR 10 (#566, `putative_start`): AC 10.0 evidence is K-12 on main, Slurm job 1933797 (`gippa-run-k12main`; variants task 1934116 COMPLETED; the driver ended FAILED after `report_html` from the unpinned main checkout; report re-run 1934834). Manifest commit cae1a731, variants code identical to main. After the rule: 126 rows flagged, high 64 → 55. Statistician C7 (variants calsuite fast tier before/after): jobs 1937787 (main a1736ae4) and 1937788 (pr10 359c1488); 1937766/1937767 crashed on PYTHONPATH. New scenario nightly tier: job 1937768, 16 passed.
 - Benchmark window: array 1916711 ended 2026-11-01 (repeats 1 and 2 on wheat-01; repeat 3 cancelled, ADR-0072).
 - Arm A4 six-frame run: exploratory and outside the gate. `gippa run` job 1921228 finished 2026-11-01, exit 0, 109 candidates, 0 called; no call was possible at its class sizes (statistician review; numbers in `docs/user-guide/makedb.md`).
