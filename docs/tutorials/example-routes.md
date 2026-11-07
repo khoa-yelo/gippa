@@ -22,7 +22,7 @@ path. Every run writes to its own directory under `gippa-example/runs`.
 ## 2. Run the five routes
 
 Run each route's commands in order. The routes do not depend on each other. Each `gippa run` takes
-about 5 min on 4 CPUs (route B about 8.5 min) after `gippa setup`.
+about 3 to 4 min on 8 CPUs (routes B and E about 7 min) after `gippa setup`.
 
 ### Route A: a DIA-NN report
 

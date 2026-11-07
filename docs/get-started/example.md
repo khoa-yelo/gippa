@@ -154,17 +154,17 @@ genomes, compares A–D only.
 
 ## How long it takes
 
-About 5 min per route for `gippa run` on 4 CPUs (route B about 8.5 min), after `gippa setup` and with the container images
+About 3 to 4 min per route for `gippa run` on 8 CPUs (routes B and E about 7 min), after `gippa setup` and with the container images
 already pulled (setup and image pulls are not counted). `gippa convert` and `gippa preflight` take
 seconds. Measured with the commands above:
 
 | Route | `gippa run` (pipeline time) |
 |---|---|
-| A | 5:22 |
-| B | 8:24 |
-| C | 4:04 |
-| D | 4:24 |
-| E | not measured yet; expected close to route A |
+| A | 3:59 |
+| B | 6:45 |
+| C | 3:25 |
+| D | 3:05 |
+| E | 7:15 |
 
 More CPUs do not make it faster: the steps run one after another, and each one spends most of
 its few seconds starting up.
