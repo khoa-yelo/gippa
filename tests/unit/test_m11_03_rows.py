@@ -450,6 +450,13 @@ def test_h3_no_release_section_fails(fx: Fixture) -> None:
     assert row(doc, "H3")["status"] == "fail"
 
 
+def test_h3_rc_reads_its_base_section(fx: Fixture) -> None:
+    """docs/release.md step 6: an rc has no ``## GIPPA <v>rc<n>`` heading; it is released from
+    the ``## GIPPA <base>`` section."""
+    _, doc = fx.compute("--version", "1.0.0rc1")
+    assert row(doc, "H3")["status"] == "pass", text_of(row(doc, "H3"))
+
+
 # ------------------------------------------------------------------ H4, H5 (example 13)
 
 

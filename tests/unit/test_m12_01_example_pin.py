@@ -6,6 +6,7 @@
   one row of ``validation/example/bundles.tsv`` with the same version, sha256, size and URL, and
   vice versa (CI-safe, no network). With no bundle rows yet the row checks pass on the empty set;
   the pin PR (PR 7) adds the "current minor has a row" assertion.
+- The installed minor has a pin (M12-01 PR 7): ``gippa example fetch`` on this version works.
 """
 
 from __future__ import annotations
@@ -179,3 +180,14 @@ def test_bundles_tsv_rows_are_consistent() -> None:
         assert HEX64.fullmatch(_hex(b["sha256"])), b
         if b["asset_digest"]:
             assert _hex(b["asset_digest"]) == _hex(b["sha256"]), b
+
+
+def test_current_minor_has_a_pin() -> None:
+    """M12-01 PR 7: the release-prep PR pins this minor's bundle (docs/release.md step 6)."""
+    import gippa
+
+    x, y = gippa.__version__.split(".")[:2]
+    row = _raw_rows().get(f"example_{x}_{y}")
+    assert row is not None, f"no example_{x}_{y} row in db_sources.yaml"
+    assert str(row["version"]) == f"{x}.{y}"
+    assert any(b["version"] == f"{x}.{y}" for b in _bundles())

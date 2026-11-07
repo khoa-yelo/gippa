@@ -1,1 +1,0 @@
-The report reads plainly: each figure caption states its question and how to read the plot, internal references become links to the methods pages, the genes preview shows 8 curated columns sorted by abundance, empty previews and empty plots say so, sections that do not apply to the run are listed under "Not applicable in this run", and Methods has a glossary.

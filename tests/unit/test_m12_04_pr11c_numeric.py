@@ -506,8 +506,9 @@ def test_runview_maps_a_1_0_novel_orfs_table(tmp_path: Path) -> None:
 
 
 def test_changelog_removal_fragment_states_the_type_change() -> None:
-    text = "\n".join(p.read_text(encoding="utf-8")
-                     for p in sorted((REPO / "changelog.d").glob("*.removal.md")))  # fmt: skip
+    from helpers.removal_notes import removal_texts
+
+    text = "\n".join(removal_texts())
     for token in (f"`{CE}`", f"`{FDR}`", f"`{CE_FLAG}`", f"`{FDR_FLAG}`"):
         assert token in text, f"{token} not in a changelog.d/*.removal.md fragment"
 

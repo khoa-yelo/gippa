@@ -119,3 +119,13 @@ nextflow:                                            # M11-15 item 5: the offici
   size_gib: 1
   executable: true
   redirect_hosts: [release-assets.githubusercontent.com]   # GitHub's 302 target, verified 2026-10-27; this row only
+example_1_1:  # M12-01: the example bundle of GIPPA 1.1 (ADR-0074); never installed by setup
+  version: "1.1"
+  url: https://github.com/khoa-yelo/gippa/releases/download/v1.1.0/gippa-example-1.1.tar.gz
+  checksum: sha256:195c810d5eee005507a3beba72ab6f7abbba29261050a64b671908eb512f92cb  # validation/example/bundles.tsv; build job 1945852
+  size_bytes: 1093577
+  path: example/gippa-example-1.1.tar.gz  # unused by setup; must be safe and relative
+  tool: null
+  check: sha256
+  size_gib: 1
+  redirect_hosts: [release-assets.githubusercontent.com]

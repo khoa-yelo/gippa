@@ -1,1 +1,2 @@
 version	file	size_bytes	sha256	url	release_tag	build_commit	build_job	expected_commit	asset_digest
+1.1	gippa-example-1.1.tar.gz	1093577	sha256:195c810d5eee005507a3beba72ab6f7abbba29261050a64b671908eb512f92cb	https://github.com/khoa-yelo/gippa/releases/download/v1.1.0/gippa-example-1.1.tar.gz	v1.1.0	52ddd95fadb6bdbe0639c1654129f68944673a6a	1945852	52ddd95fadb6bdbe0639c1654129f68944673a6a	

@@ -4,6 +4,158 @@ All notable changes are recorded here by towncrier from `changelog.d/` fragments
 
 <!-- towncrier release notes start -->
 
+## GIPPA 1.1.0 (2026-11-06)
+
+### Features
+
+- **The report's Methods section now describes what the run did.** It shows a short note for the run's detection tier and one for each analysis that ran (placement FDR, de novo precision, abundance, operons, islands, variants, novel ORFs, function enrichment, determinants), each ending with a "Full note" link to its methods page. Reports of older runs, whose manifest lists no steps, show the notes of the tables present. The output tables reference page now gives the path of every table and no longer cites the internal specification.
+- New command `gippa example fetch [--outdir DIR] [--version X.Y] [--from-file FILE]` (ADR-0074): it downloads the real example bundle of this GIPPA minor (a 200 kb region of *E. coli* Nissle 1917 with PXD078459 results) from the GitHub release, checks its pinned size and sha256 and every file against `CHECKSUMS.sha256`, unpacks it safely into `DIR` (default `gippa-example`) and prints the commands of its four input routes (DIA-NN report, protein FASTA plus abundance, Cascadia, generic peptide table). `--from-file` does the same offline with a bundle copied from another machine; a re-fetch of the same bundle is a no-op; a failure leaves nothing behind. The CLI reference now documents command groups (`gippa example fetch`).
+- The example bundle gains route E, a DIA-NN report searched against a `gippa makedb --six-frame-orfs` database (the pilot's six-frame arm, cut to its own 200 kb Nissle region, `genome/nissle_r200k_e.fna.gz`, because the shared region of routes A–D has no ORF-only peptide passing DIA-NN's global q-value): `gippa example fetch` now prints five input routes. Route E's six-frame ORF IDs are rewritten to the bundle's region contig and coordinates, so its candidates pair with their entries and show the `picked_decoy` novel-ORF workflow (a few candidates, none called on the region). The example page and the tutorial cover the five routes, and the tutorial compares routes A–D (route E runs on another genome).
+- The HTML report opens with a "This run" box: the genome, replicons, gene count, input kind and count, abundance measure, modules run, the detection tier in plain words, up to three key findings, and the GIPPA version that built the report (and the one that made the run, when they differ). A sticky table of contents with row counts follows it. Summary cards now follow the inputs: no peptide or protein card for an input the run did not have, never "0 of 0", a Mayu card that says its FDR is gene-level from peptides at the q threshold, numbers rounded for reading, and a "Model R²:" card that states "no predictive power" or why the model was not fitted.
+- The `function` module runs without KEGG (`gippa setup --no-kegg`, for users outside academia without a KEGG licence): it runs the GO and COG analyses and skips only the KEGG pathway analyses. Preflight reports the warning `environment.kegg` instead of an `environment.tools` error (exit 3 only under `--strict`), and `run_manifest.json` records `layers_missing: kegg` and the warning. KEGG counts as installed only when both KEGG items are, so a lone `kegg_ko_pathway` is never staged. The report's function section says "KEGG not installed: pathway enrichment skipped", and its provenance says "KEGG not installed". With KEGG installed, outputs are unchanged.
+- The report reads plainly: each figure caption states its question and how to read the plot, internal references become links to the methods pages, the genes preview shows 8 curated columns sorted by abundance, empty previews and empty plots say so, sections that do not apply to the run are listed under "Not applicable in this run", and Methods has a glossary.
+- Variant sites that look like translation starting at an unannotated alternative start codon (a GTG, TTG or other configured non-ATG start read as methionine by peptides that all begin at that residue, and, inside a gene, not directly after K or R) now carry the new flag `putative_start` in `variants.tsv` and the VCF, and their confidence is capped at `candidate`; counts, calls and class error rates are unchanged. The variants figure now writes the residue J as "I/L", shows the top 15 sites with "(top 15 of N; all in tables/variants.tsv)" in its title when there are more, and states "class error not estimated" once instead of on every line.
+- `gippa report --redact` writes a shareable report: absolute paths in the provenance command line and in unreadable-table notes become `<input>/<file name>` (or `<outdir>/<relative path>` under the output directory), the profile becomes `<profile>`, and URLs are left unchanged. The Gene detection section shows the detection summary as two views (genes detected by q threshold, and observed over expected detection by group) instead of its first rows. When the fully inlined report would reach 20 MB, the novel ORF locus views are linked to their SVG files under `plots/` instead of being inlined.
+- `gippa setup` installs everything in one non-interactive command: `gippa setup --db-dir <db-dir> --profile apptainer --accept-download-plan --install-uniop-from-git`. `--accept-download-plan` skips the confirmation of the download plan and accepts no licence terms. `--install-uniop-from-git` accepts the UniOP terms (UniOP has no licence file), so the normal setup builds UniOP from its authors' GitHub repository at the pinned commit, sha256-checked, along with the databases and images, without a prompt; add `--uniop` to install UniOP only. It is a usage error with `--no-uniop`, and with `--no-images` unless `--uniop` is given. `--yes` and `--accept-uniop-terms` still work but are deprecated and hidden from `--help`, each with a warning naming its replacement. The "terms not accepted" message and the preflight hint name `--install-uniop-from-git`.
+
+### Fixes
+
+- `gippa run --proteins` without `--peptides` (with or without `--abundance`) now produces the gene table and the core analyses through the protein path: miniprot, then tblastn, the mapping files, `tables/genes.tsv`, the context, operon and determinant tables, and the report. Before, such a run produced only the annotation and the report. The detection tier is `protein_list` and the gene q-value is not estimated. Variants and novel ORFs need peptides and are skipped. Protein records of 7-40 aa go to the peptide path only with `--peptides`; without it they are not used, and the new preflight warning `proteins.short_records_unused` gives their count (a `--strict` run exits 3). ([#536](https://github.com/khoa-yelo/gippa/pull/536))
+- **Plots with little or nothing to draw now say so plainly** instead of drawing empty axes or overlapping labels:
+
+  - Peptide mapping FDR: when every peptide was placed by exact match, the plot is one line ("All 774 peptides placed by exact match; the tolerant-route FDR is not needed."). With de novo peptides, the target and decoy panels collapse to one line. When no de novo precision was measured (no reference peptides), the precision panel says so and draws no points; the data TSV keeps the values and gains a `drawn` column. Strata with no targets share one note, and the axis says "(CI)" only when an interval is drawn.
+  - Where the sequences went: when every sequence took one route to one outcome, the plot is a single short bar ("All 106 proteins placed (miniprot)").
+  - Abundance landscape: a run without abundance shows a detection strip along each replicon, with ticks at each gene's start coloured by detection status.
+  - Autocorrelation: when Moran's I cannot be estimated, the plot is one message naming the detected genes ("Too few detected genes (4 of 158) to estimate autocorrelation."); flags in partly estimable panels are written in words. A flags column mixing empty and filled cells no longer crashes the plot.
+  - Operon partners: a run with no measured pairs gives one message; titles and legends name only the pair classes drawn ("OP (same operon)"), non-operon pairs are green and same-operon pairs are drawn on top.
+  - Locus views: the text-only index image `plots/V03_locus.{svg,png,pdf}` is gone; `plots/data/V03_locus.tsv` is still written (now with `family` and `estimate` columns), and the report shows it as the table "Locus views, in display order".
+  - Variants, novel ORFs, enrichment and determinants: empty plots read "Nothing to show: <reason>. <what would change it>.", for example "Nothing to show: the determinants model needs ≥ 100 genes with abundance in ≥ 25 TUs (this run: 99 genes, 34 TUs)."
+- Observed-versus-expected forest (V07): double width, x axis in percentage points of each group's genes (new `o_minus_e_pp`, `ci_low_pp` and `ci_high_pp` data columns), bold group headers, COG rows with a short name, no rows with zero eligible genes, a title that counts the tested regions, replicons, feature classes and COG categories, and at most 40 drawn rows with a note for the rest; the interactive version plots the same percentage points. Statistical diagnostics (V18): test families with fewer than 10 tests are listed in a note instead of drawn, with plain panel titles, whole-number count ticks, "(a)" panel letters, a shorter reliability row without a calibration curve, shortened contig names and an empty state when no family is large enough. Input QC (V17): feature names in plain words, the reason a feature was not computed, correct plurals, both measured and detected shares in the title, and shortened long contig names.
+- Plots use one palette, label and number style. In the locus views (V03, V13) undetected genes are white with a grey outline and hatching, so they no longer look like mid-range abundance; the locus data TSVs gain a `fill` column, and a run without abundance draws detected genes in blue with no colour bar. Abundance axes name the run's measure, for example "log2 iBAQ (molar)" or "log2 MaxLFQ (relative)" (V02, V03/V13 colour bar, V08, V11, V15 and their interactive versions). Numbers in titles and figure text use two significant digits for q-values ("q < 0.001" below 0.001) and a true minus sign. The V02 and V10 titles report the lag-1 Moran's I against the TU-block null and name the null. In V08 genes without a COG letter are light grey and hatched, the column counts are labelled "detected / total", and the title's gene count matches the count over the column.
+- The determinants plot no longer shows feature effects (SHAP and partial dependence panels) when the model has no predictive power; it shows the block ΔR² and observed-vs-predicted panels under a banner, and its title says "no predictive power". Partial dependence axes use plain feature names, missing-layer notes say "not computed" and why, footers are plain caveats, the observed-vs-predicted legend sits outside the axes, and titles wrap at the panel width.
+- The genome circle plot (`V01_circos`) numbers every ring at the start of the first replicon and lists the numbers in a ring key, adds a colour bar for the abundance ring, and leaves out the abundance ring when the run has no abundance. Promoter, terminator, ALT-site and novel-ORF tracks with more than 500 markers are drawn as counts per bin (at most 500 bins per replicon, recorded as `bin` rows in the plot's data table). Terminator ticks are black and no marker uses a region colour (promoters slate blue, novel ORFs dark purple). On a single circular replicon the origin tick reads "0" and the length is no longer printed on top of it.
+- When no gene received a COG, GO or KEGG term, the Function section of the report is now a single notice (with a hint when the Bakta light database was used), the COG abundance plot is skipped and the enrichment plot says why it is empty. Annotation coverage is read from the function step log, so it is no longer reported as "not recorded", and the KEGG licence note appears only when KEGG terms were assigned.
+- `gippa convert` creates missing parent folders of `--out` and `--abundance-out` instead of failing with an internal error (exit 5). The example's printed commands for routes A, C and D hit this.
+- `tables/detection_summary.tsv` and `tables/regions_stats.tsv` now write their number columns with six significant digits (`%.6g`), like every other table; infinities stay `INF`/`-INF` and integer columns keep every digit. Before, these two tables wrote values such as `0.0006486894965844569`. A protein hit gets the `cross_strain_protein` flag only when its protein ID is not a locus tag of the gene model and its match is not identical, so proteins taken from a related annotation that match exactly are no longer flagged per hit and per gene. Instead, the run manifest gains the run flag `foreign_protein_ids` once whenever a protein ID is not a locus tag.
+
+### Documentation
+
+- New page "Try the example" (`docs/get-started/example.md`) (ADR-0074): what the real example bundle holds (a 200 kb *E. coli* Nissle 1917 region with PXD078459 DIA-NN and Cascadia results), `gippa example fetch` and offline `--from-file`, its exit codes, the four routes A–D with their commands, the measured run times with the example settings and with the defaults, the expected tier and counts per route, and the data licence and citation statement. The quick start links to it.
+
+### Removals and breaking changes
+
+- **Breaking:** GIPPA 1.1 makes one clean break in its output tables ([ADR-0075](https://github.com/khoa-yelo/gippa/blob/main/docs/adr/ADR-0075-outputs-revision-1-1.md)): ten table columns are renamed, two columns are retyped from a number or the word `unestimated` to a number or `NA`, `tables/genes.tsv` has a new column order, and files passed between steps move under `OUT/intermediate/`. The output schema version is now 1.3. Scripts that read GIPPA 1.0 tables must be updated: every change, from the 1.0 name to the 1.1 name, is listed in [Outputs › Changes in 1.1](https://github.com/khoa-yelo/gippa/blob/main/docs/user-guide/outputs.md#changes-in-11). `gippa report` and `gippa compare` still read 1.0 output folders. The entries below give the details.
+- **Breaking:** `tables/genes.tsv` has a new column order. The columns, their names and their types are unchanged, but they now come in the groups identity, detection, abundance, function, context, features and flags, in that order. For example, `detected` moves from column 48 to 15 and `abundance_log2` from 61 to 27. Scripts that select `genes.tsv` columns by name keep working; scripts that select them by position must be updated. This is a one-time exception to the rule that column changes wait for a major version, and the output schema version becomes 1.3. `gippa report` and `gippa compare` still read `genes.tsv` files in the old order. The flag `detectability_constant` is no longer written on every row of `genes.tsv`: it now appears once in `run_manifest.json` › `flags` (and, as before, in the `detection_summary.tsv` overall row). Five columns that hold the same value on every row (`detection_tier`, `abundance_type`, `abundance_scale`, `imputation_policy`, `annotation_source`) are marked run-level in the schema and in the tables reference.
+- **Breaking:** two table columns are now numbers. `tables/variants.tsv` › `class_error_rate` and `tables/novel_orfs.tsv` › `class_fdr` held a number or the word `unestimated`; they now hold a number, or `NA` when the value is not estimated, and such a row carries a flag: `class_error_unestimated` (new, Variants vocabulary) or `class_fdr_unestimated` (as before). A rate of exactly 0 or 1 stays a number. In `variants.vcf` the `CLASS_ERR` INFO field is now `Type=Float` (it was `String`), with `.` when not estimated. A record with an unestimated allele carries `class_error_unestimated` in the VCF `FLAGS` field. Scripts that tested the cell for the word `unestimated` must test for `NA` (or the flag) instead. `gippa report` and `gippa compare` still read 1.0 output folders: an `unestimated` cell reads as NA and the row gets the flag. See "Changes in 1.1" on the outputs page.
+- **GIPPA 1.1 renames ten table columns** (one name per quantity). This is a one-time exception to the rule that column changes wait for a major version. Old names are not kept as aliases; `gippa report` and `gippa compare` still read 1.0 output folders by renaming on read. The renames:
+
+  - `tables/novel_orfs.tsv`: `ostir_tir` → `tir_ostir`
+  - `tables/determinants_features.tsv`: `mw` → `mw_da`
+  - `tables/determinants_features.tsv`: `promotech_max` → `promoter_score`
+  - `tables/determinants_features.tsv`: `promotech_tu` → `promoter_score_tu`
+  - `mapping/peptide_hits.tsv`: `peptide_len` → `peptide_len_aa`
+  - `tables/pairs.tsv`: `class` → `pair_class`
+  - `tables/pairs.tsv`: `promoter_between` → `promoter_score_between`
+  - `tables/pairs.tsv`: `terminator_between` → `terminator_score_between`
+  - `tables/operon_flags.tsv`: `uniop_class` → `pair_class`
+  - `tables/operon_flags.tsv`: `flag` → `flags`
+
+  Feature names held as values change the same way (`promotech_max` → `promoter_score`, `promotech_tu` → `promoter_score_tu`, `mw` → `mw_da`) in `tables/determinants_model.tsv` › `feature_or_block` and in the `feature` column of `plots/support/determinants_pd.tsv` and `determinants_shap.tsv`; the partial-dependence axis of the determinants plot now reads "promoter score". `pairs.tsv` and `operon_flags.tsv` now share `pair_class` and `flags`, so a join on `pair_id` needs suffixes. The output schema version is now 1.3. See "Changes in 1.1" on the outputs page.
+- Files passed between steps (`codon.parquet`, `genetable/`, `context/`, `novel/`, `windows/` and the like) are now written under `OUT/intermediate/` instead of the top of the output folder; published results keep their paths. Every run, including a failed one and `gippa demo`, writes `OUT/README.txt`, a short plain-text guide to the entries the run left. `gippa report` and `gippa compare` still read 1.0 output folders, and a `--resume` into one keeps the old top-level intermediates and logs one warning with their count.
+
+### Other
+
+- FarmShare profile: Slurm tasks also avoid barley-02, barley-04 and rye-01, where jobs fail at start (exit 0:53) or are held.
+- Internal helpers for plain-language figure and report text: number formatting for q-values, signed numbers with a true minus sign and grouped integers, an abundance axis label from the abundance type and scale, and one dictionary that turns flags, skip reasons, feature columns and detection tiers into plain words. Empty-state figures are now marked as empty. Outputs are unchanged.
+- Known limitations of version 1.1:
+    - licences: geNOMAD is for non-commercial use only. `gippa setup` downloads its database
+      unless you pass `--no-genomad` (or `--minimal`). KEGG is for academic use;
+      `gippa setup --kegg` downloads it on your machine, and GIPPA does not redistribute it. With
+      `gippa setup --no-kegg` the function step runs the GO and COG analyses and skips the KEGG
+      pathway analyses. The GPL and AGPL tools (Bakta, Promotech, Promoter Calculator, OSTIR,
+      TransTermHP, BacTermFinder, antiSMASH) run as separate programs; GIPPA does not import
+      them, and the wheel and sdist contain none of their code. UniOP has no licence file, so it
+      is never published; `gippa setup --install-uniop-from-git` builds it on your machine from
+      its authors' repository (see `NOTICE.md`);
+    - one sample per run: several samples in the abundance table, co-expression and differential
+      context tests are not supported yet;
+    - the V4 locus browser (igv-reports) and the V9 mass-fraction treemap are not built, so 16
+      plots are made instead of 18;
+    - no RO-Crate export;
+    - mapping attack `flat_c200` (a flat contaminant weight) reads FDP 0.015 at q 0.01, over its
+      bound; the contaminant weight is not decided (gate M3 not met);
+    - variant calling: G1 (F1 on simulated variants) is still below its bound of 0.9 (0.864
+      pooled over the 20 fast-tier replicates on the 1.1 code), and G1 and A6a–c remain expected
+      failures until the variant-precision scope of ADR-0049 is decided (gate M7 not met);
+    - six-frame novel ORFs: In the only real six-frame search so far (one *E. coli* Nissle 1917
+      strain, three runs), GIPPA called no novel ORFs, but this does not show the strain has none:
+      each ORF class had only 8 to 64 candidates that beat their decoys, and a class needs at least
+      100 such candidates ranked above every decoy before any ORF can reach q ≤ 0.01, so no call
+      was possible. Decoy wins also outnumbered target wins in every class, and the lowest q
+      reached was 0.125 to 0.50 by class. The first segment of the known gene *prfB* had the best
+      peptide score in its class and was still not called (q = 0.25), and this route's error rate
+      has been measured only on simulated data;
+    - runtime: a standard K-12 run on 16 threads and 64 GB takes about 3-4 h on a 16-thread Intel
+      Xeon Gold 6148 node; see the
+      [runtimes page](https://github.com/khoa-yelo/gippa/blob/main/docs/user-guide/runtimes.md) and
+      [ADR-0072](https://github.com/khoa-yelo/gippa/blob/main/docs/adr/ADR-0072-benchmark-baseline-1-0-0.md);
+    - mapping FDR: on a same-database search (`--search-db same`) exact matches are exempt from
+      decoy estimation, so GIPPA adds no estimate of identification error; it comes from your
+      search engine. The pilot's mapping FDR on arm A2 was therefore not measured; the release
+      criterion was waived for 1.0.0
+      ([ADR-0071](https://github.com/khoa-yelo/gippa/blob/main/docs/adr/ADR-0071-r2-mapping-fdr-waiver-1-0-0.md));
+    - abundance: the pilot fails true example TE4 for one protein pair (log2 RplL/RplJ is −0.48;
+      about 2 is expected, and [1, 3] is required); the failure was waived for 1.0.0
+      ([ADR-0070](https://github.com/khoa-yelo/gippa/blob/main/docs/adr/ADR-0070-te4-rplL-rplJ-waiver-1-0-0.md)).
+      Do not read an iBAQ ratio of a single protein pair as stoichiometry;
+    - full validation (K-12 PXD075568, UTI89 beyond the pilot, the EDL933 holdout, FDRBench
+      entrapment) is still planned; GIPPA is calibrated on simulations;
+    - stop codons: a peptide is placed across a stop codon only at a gene's annotated terminal
+      stop, or at a selenocysteine (`U` over TGA) or pyrrolysine (`O` over TAG) codon that Bakta
+      annotates, and only if it has at least 10 residues; other stop codons are never read
+      through. Such a peptide has one difference from the genome, so it is judged in a small
+      placement-FDR stratum and is rejected when that stratum holds few peptides. On E. coli
+      Nissle 1917 the selenocysteine peptides of the two fdnG copies are rejected this way
+      (q = 0.25), so their Sec sites are not reported. A C-terminal read-through extension
+      (`cterm_extension`, labelled `readthrough_candidate`) is called only when a peptide crosses
+      the annotated stop into the 3′ flank and the ORF has at least two distinct peptides; it is
+      written to `annotation_patch.gff3`, where `gippa makedb --patch` reads the old stop as `X`.
+      Under genetic codes 4 and 25 a `U` over TGA is not recoded;
+    - genetic codes: the code comes from `annotation.translation_table` (11, 4 or 25) in the
+      configuration and is never inferred. Preflight warns (`genome.genetic_code`) when TGA looks
+      like a sense codon at table 11, or like a stop at tables 4 and 25, but the genome cannot
+      tell code 4 (TGA = Trp) from code 25 (TGA = Gly), so you choose. With only 20–40 long open
+      reading frames (a plasmid alone, a partial assembly) the warning is wrong about 1 % of the
+      time. When Bakta calls no tRNA-Trp(UCA) gene, as on Mycoplasma hyorhinis, the tRNA
+      adaptation index (tAI) at code 4 is approximate. `gippa compare` does not check that its
+      runs used the same genetic code;
+    - spectrum inputs: `gippa convert` reads DIA-NN, Cascadia and the generic table only;
+      `--from casanovo` and `--from instanovo` are accepted but not implemented, and DDA search
+      results must be written as the generic table;
+    - variant calls: precision is checked on unflagged substitution calls; `mass_equivalent`
+      calls and block, swap and frameshift calls are reported but not covered by that check;
+    - low-power tests: missed operons (with the shipped decoys), low islands at normal detection
+      rates and operon discordance at realistic effect sizes have little or no power by
+      construction, so an empty result there is not evidence of absence;
+    - older Linux (glibc < 2.28, such as CentOS 7): `pip install gippa` fails to build numpy,
+      numba or pyarrow from source; use `pip install --prefer-binary gippa`. The older versions
+      it picks are not in the tested matrix
+      ([issue 502](https://github.com/khoa-yelo/gippa/issues/502));
+    - `gippa setup` retries a failed Apptainer image pull once automatically; on some clusters
+      `mksquashfs` exit status 139 still needs `APPTAINER_CACHEDIR` set
+      ([issue 504](https://github.com/khoa-yelo/gippa/issues/504));
+    - execution profiles: there is no `singularity` profile yet, so `--profile auto` on a host
+      that has Singularity but not Apptainer does not give a working profile; install Apptainer,
+      or choose Docker or conda with `--profile`;
+    - Slurm options: the generic `slurm` profile reads the queue, account, extra `sbatch` options,
+      job cap and time limit from `params.slurm_*`, but no `gippa run` flag sets them yet; set
+      `process.queue` and `process.clusterOptions` in `$NXF_HOME/config` instead (see Install ›
+      Run on a cluster);
+    - development only: the CI and release Linux runners stay pinned to ubuntu-24.04 until a
+      test fixture that fails on Ubuntu 26.04 runners is fixed, and the README still has the
+      maintainers' "Development on FarmShare" section. Neither affects installed GIPPA.
+
+
 ## GIPPA 1.0.0 (2026-11-02)
 
 ### Features
