@@ -1,9 +1,10 @@
-# Tutorial: one Nissle region, five routes
+# Tutorial: Nissle regions, five routes
 
-This tutorial runs the five routes of the example on one 200 kb region of the *E. coli* Nissle
-1917 genome. Each route feeds a different kind of input into GIPPA. You then read `genes.tsv` and
-the report of each run, see how the detection tier changes with the input, and compare the five
-runs with `gippa compare`.
+This tutorial runs the five routes of the example on 200 kb regions of the *E. coli* Nissle 1917
+genome. Routes A–D share one region; route E runs on its own 200 kb region of the same chromosome,
+because the shared region has no ORF-only peptide that passes DIA-NN's global q-value. Each route
+feeds a different kind of input into GIPPA. You then read `genes.tsv` and the report of each run,
+see how the detection tier changes with the input, and compare runs A–D with `gippa compare`.
 
 The bundle, its licence terms and the prerequisites are described in
 [Try the example](../get-started/example.md). Read that page first. This tutorial quotes only
@@ -68,13 +69,13 @@ gippa run --genome gippa-example/genome/nissle_r200k.fna.gz --peptides gippa-exa
 ### Route E: a DIA-NN report from a six-frame database
 
 The same runs as route A, searched against a database that also holds every six-frame ORF of the
-genome (`gippa makedb --six-frame-orfs`). It is converted and run exactly like route A. The output
-goes to `gippa-example/runs/E`.
+genome (`gippa makedb --six-frame-orfs`). It is converted and run like route A, on route E's own
+region (`genome/nissle_r200k_e.fna.gz`). The output goes to `gippa-example/runs/E`.
 
 ```bash
 gippa convert --from diann gippa-example/E_sixframe/report.parquet --out gippa-example/runs/E/peptides.tsv --search-db same
-gippa preflight --genome gippa-example/genome/nissle_r200k.fna.gz --peptides gippa-example/runs/E/peptides.tsv --set 'modules=[core,bgc]' --set annotation.bakta.db=light --set annotation.terminators.tool=transtermhp --set annotation.promoter_calculator.enabled=false
-gippa run --genome gippa-example/genome/nissle_r200k.fna.gz --peptides gippa-example/runs/E/peptides.tsv --genome-relation same --outdir gippa-example/runs/E --modules core,bgc --set annotation.bakta.db=light --terminators transtermhp --set annotation.promoter_calculator.enabled=false --threads 4
+gippa preflight --genome gippa-example/genome/nissle_r200k_e.fna.gz --peptides gippa-example/runs/E/peptides.tsv --set 'modules=[core,bgc]' --set annotation.bakta.db=light --set annotation.terminators.tool=transtermhp --set annotation.promoter_calculator.enabled=false
+gippa run --genome gippa-example/genome/nissle_r200k_e.fna.gz --peptides gippa-example/runs/E/peptides.tsv --genome-relation same --outdir gippa-example/runs/E --modules core,bgc --set annotation.bakta.db=light --terminators transtermhp --set annotation.promoter_calculator.enabled=false --threads 4
 ```
 
 ## 3. Read `genes.tsv` per route
@@ -149,8 +150,8 @@ EOF
 ```
 
 Expect a few candidates and 0 called. A class's q-value cannot go below a floor of one over its
-number of target wins, so a floor of 0.01 needs at least 100 wins; the kept rows name 35 ORF
-entries (of 5,678 in the region). `run_manifest.json` (`novel_orfs` › `classes`) lists each
+number of target wins, so a floor of 0.01 needs at least 100 wins; the kept rows name 53 ORF
+entries (of 5,609 in route E's region). `run_manifest.json` (`novel_orfs` › `classes`) lists each
 class with its regime (`picked_decoy`), its counts, its `q_floor` and `floor_above_alpha`. The
 report's novel-ORF section shows the same class summaries.
 
@@ -173,13 +174,14 @@ Open `report/report.html` of each run in a browser, for example
 
 See [Plots and report](../user-guide/plots-and-report.md) for every section.
 
-## 6. Compare the five runs
+## 6. Compare routes A–D
 
-The five runs share one genome and one gene model (the same Bakta database and settings), so
-`gippa compare` can put them side by side:
+Runs A–D share one genome and one gene model (the same Bakta database and settings), so
+`gippa compare` can put them side by side. Route E is left out: it runs on another region, and
+`gippa compare` refuses runs on different genomes.
 
 ```bash
-gippa compare gippa-example/runs/A gippa-example/runs/B gippa-example/runs/C gippa-example/runs/D gippa-example/runs/E --labels A,B,C,D,E --outdir gippa-example/runs/compare
+gippa compare gippa-example/runs/A gippa-example/runs/B gippa-example/runs/C gippa-example/runs/D --labels A,B,C,D --outdir gippa-example/runs/compare
 ```
 
 It writes to `gippa-example/runs/compare`:
@@ -191,9 +193,7 @@ It writes to `gippa-example/runs/compare`:
 - `tables/compare_stability.tsv`: the overlap of flagged sets, such as operon flags;
 - `report/compare.html`: the comparison page with plot V16.
 
-Route D was made from route A's rows, so the two runs are a check on the generic converter.
-Route E searched the same spectra against a much larger database, so A against E shows what the
-six-frame search changes at the gene level. See
+Route D was made from route A's rows, so the two runs are a check on the generic converter. See
 [Comparing runs](../user-guide/compare.md) for the columns.
 
 ## Next steps

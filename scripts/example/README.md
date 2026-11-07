@@ -41,6 +41,12 @@ The subset does not recompute them.
 - Region: `NZ_CP058217.1:1965001-2165000` (200 kb; `--start 1965000 --end 2165000`). It holds
   the colibactin *pks* island and the yersiniabactin HPI. antiSMASH calls both as one
   NRPS/T1PKS/NRP-metallophore region over the first 117 kb.
+  Routes A–D share it (`genome/nissle_r200k.fna.gz`).
+- Route E's region: `NZ_CP058217.1:1400001-1600000` (200 kb; `[1400000, 1600000)`), written to
+  `genome/nissle_r200k_e.fna.gz` (`START_E`/`END_E` in `build_example.py`; `--start`/`--end` move
+  the shared region only). The shared region has no ORF-only peptide that passes DIA-NN's global
+  q-value at 0.01, so route E would make no novel-ORF candidate there (spec M12-01, amendment
+  2026-11-06 (b)).
 - Run options:
   `--modules core,bgc --set annotation.bakta.db=light --terminators transtermhp --set annotation.promoter_calculator.enabled=false`
 - CPUs: 8 (Slurm granted 9). The run takes about 5 min wall.

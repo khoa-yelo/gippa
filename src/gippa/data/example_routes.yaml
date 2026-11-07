@@ -33,5 +33,5 @@ routes:
     title: "Route E: DIA-NN report, six-frame database"
     commands:
       - gippa convert --from diann {dir}/E_sixframe/report.parquet --out {out}/E/peptides.tsv --search-db same
-      - gippa preflight --genome {dir}/genome/nissle_r200k.fna.gz --peptides {out}/E/peptides.tsv --set 'modules=[core,bgc]' --set annotation.bakta.db=light --set annotation.terminators.tool=transtermhp --set annotation.promoter_calculator.enabled=false
-      - gippa run --genome {dir}/genome/nissle_r200k.fna.gz --peptides {out}/E/peptides.tsv --genome-relation same --outdir {out}/E --modules core,bgc --set annotation.bakta.db=light --terminators transtermhp --set annotation.promoter_calculator.enabled=false --threads 4
+      - gippa preflight --genome {dir}/genome/nissle_r200k_e.fna.gz --peptides {out}/E/peptides.tsv --set 'modules=[core,bgc]' --set annotation.bakta.db=light --set annotation.terminators.tool=transtermhp --set annotation.promoter_calculator.enabled=false
+      - gippa run --genome {dir}/genome/nissle_r200k_e.fna.gz --peptides {out}/E/peptides.tsv --genome-relation same --outdir {out}/E --modules core,bgc --set annotation.bakta.db=light --terminators transtermhp --set annotation.promoter_calculator.enabled=false --threads 4

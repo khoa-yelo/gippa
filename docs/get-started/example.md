@@ -13,9 +13,11 @@ cut to that region: the DIA-NN 2.3.1 report rows of two searches (the annotated 
 six-frame database) and the Cascadia 0.0.7 de novo results. Nothing
 was searched again. The region holds the colibactin *pks* island and the yersiniabactin
 high-pathogenicity island, so the `bgc` module has a gene cluster to find. It has no plasmid and
-no prophage.
+no prophage. Routes A–D share this region (`genome/nissle_r200k.fna.gz`); route E has its own
+200 kb region of the same chromosome (`NZ_CP058217.1:1400001-1600000`,
+`genome/nissle_r200k_e.fna.gz`), described [below](#route-e-dia-nn-report-six-frame-database).
 
-The archive is about 0.9 MB. One bundle is published with each minor release of GIPPA (1.1, 1.2,
+The archive is about 1.2 MB. One bundle is published with each minor release of GIPPA (1.1, 1.2,
 …) as a GitHub release file; patch releases use their minor's bundle. It is not part of the
 installed package. The data comes with licence terms of its own: see
 [Licence and citation](#licence-and-citation) before you use it.
@@ -116,8 +118,8 @@ it. To make such inputs from your own spectra, see [From raw spectra](from-spect
 
 ```bash
 gippa convert --from diann gippa-example/E_sixframe/report.parquet --out gippa-example/runs/E/peptides.tsv --search-db same
-gippa preflight --genome gippa-example/genome/nissle_r200k.fna.gz --peptides gippa-example/runs/E/peptides.tsv --set 'modules=[core,bgc]' --set annotation.bakta.db=light --set annotation.terminators.tool=transtermhp --set annotation.promoter_calculator.enabled=false
-gippa run --genome gippa-example/genome/nissle_r200k.fna.gz --peptides gippa-example/runs/E/peptides.tsv --genome-relation same --outdir gippa-example/runs/E --modules core,bgc --set annotation.bakta.db=light --terminators transtermhp --set annotation.promoter_calculator.enabled=false --threads 4
+gippa preflight --genome gippa-example/genome/nissle_r200k_e.fna.gz --peptides gippa-example/runs/E/peptides.tsv --set 'modules=[core,bgc]' --set annotation.bakta.db=light --set annotation.terminators.tool=transtermhp --set annotation.promoter_calculator.enabled=false
+gippa run --genome gippa-example/genome/nissle_r200k_e.fna.gz --peptides gippa-example/runs/E/peptides.tsv --genome-relation same --outdir gippa-example/runs/E --modules core,bgc --set annotation.bakta.db=light --terminators transtermhp --set annotation.promoter_calculator.enabled=false --threads 4
 ```
 
 Pick a six-frame database when you look for proteins the annotation misses: unannotated ORFs,
@@ -129,13 +131,19 @@ genome and its Bakta annotation (the bundle's provenance file has the details an
 `gippa run` needs no extra option: it reads the class and coordinates of each six-frame entry
 from its ID.
 
+Route E runs on its own 200 kb region of the same chromosome, `NZ_CP058217.1:1400001-1600000`
+(`genome/nissle_r200k_e.fna.gz`), because the shared region of routes A–D has no ORF-only peptide
+that passes DIA-NN's global q-value at 0.01, so it would show no candidate. Route E's gene numbers
+cannot be compared with those of routes A–D, and `gippa compare`, which refuses runs on different
+genomes, compares A–D only.
+
 - **Few candidates, no call.** Expect a few novel-ORF candidates and none called. A class needs
   at least 100 target wins over its decoys before its q floor can reach 0.01, and the kept rows
-  name 35 ORF entries (of 5,678 in the region). The genome-wide search called 0 of 109
+  name 53 ORF entries (of 5,609 in route E's region). The genome-wide search called 0 of 109
   candidates for the same reason. Route E shows the six-frame workflow (IDs, the `picked_decoy` regime, the
   class summaries and the floor), not a discovery.
-- **IDs in region coordinates.** Route E's ORF IDs name the bundle's region contig and region
-  coordinates, so they match the genome you run on. Add 1,965,000 to a coordinate to get its
+- **IDs in region coordinates.** Route E's ORF IDs name route E's region contig and region
+  coordinates, so they match the genome you run on. Add 1,400,000 to a coordinate to get its
   position on `NZ_CP058217.1`.
 - **Tier `mayu`, like route A.** The decoys of six-frame entries pair with no gene, and the other
   decoys pair through peptide votes, as in route A.
@@ -218,8 +226,8 @@ For a whole genome with the defaults, see the [quick start](quickstart.md).
 machines, thread counts or container runtimes may differ within those tolerances. A Bakta full
 database or an installed UniOP can change the gene and operon numbers.
 
-To read the five runs and compare them, follow the tutorial
-[One Nissle region, five routes](../tutorials/example-routes.md).
+To read the five runs and compare routes A–D, follow the tutorial
+[Nissle regions, five routes](../tutorials/example-routes.md).
 
 ## Licence and citation
 

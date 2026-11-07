@@ -5,7 +5,8 @@ Nissle 1917 (GCF_021559835.1, chromosome NZ_CP058217.1), PXD078459 runs WT_1-WT_
 re-searched. The script subsets the pilot's existing outputs to one contiguous region and writes
 the release tree OUT/<name>/gippa-example-<X.Y>/ (spec M12-01 section 2 > Layout):
 
-    genome/<name>.fna.gz          the region as one linear contig (no topology tag)
+    genome/<name>.fna.gz          the shared region (routes A-D) as one linear contig (no tag)
+    genome/<name>_e.fna.gz        route E's region, written by the same rules
     A_diann/report.parquet        DIA-NN 2.3.1 report rows whose proteins all lie in the region
     B_proteins/proteins.faa       the region proteins DIA-NN quantified (A2 strain database)
     B_proteins/abundance.tsv      their PG.MaxLFQ (median over runs), as `gippa convert` computes it
@@ -25,7 +26,9 @@ released; a failed or refused build leaves the old tree, the old archive and no 
 
 Selection rule (recorded verbatim in SELECTION.json):
 
-* Region: NZ_CP058217.1 [start, end) in 0-based half-open coordinates.
+* Region: NZ_CP058217.1 [start, end) in 0-based half-open coordinates, shared by routes A-D.
+* Route E's region: NZ_CP058217.1 [start_e, end_e), written by the same rules to its own genome
+  file; the route E rules below use it in place of the shared region.
 * Region proteins: records of the pass-3 A2 strain database (`db_id_map.tsv`, 1-based closed)
   on NZ_CP058217.1 with start - 1 >= region start and end <= region end (CDS and sORF).
 * Route A: a DIA-NN row is kept iff every ID in `Protein.Ids` (split on ';') is a region protein.
@@ -56,13 +59,12 @@ Selection rule (recorded verbatim in SELECTION.json):
   dropped. All columns are kept.
 * Route E ORF IDs in region coordinates: every ORF ID
   `GIPPAORF_{class}_NZ_CP058217.1_{s1}_{e1}_{p|m}` of a kept row, in any text column, becomes
-  `GIPPAORF_{class}_{C}_{s1 - S}_{e1 - S}_{p|m}` (C = the bundle genome's contig, S = the 0-based
+  `GIPPAORF_{class}_{C}_{s1 - S}_{e1 - S}_{p|m}` (C = route E's genome contig, S = route E's 0-based
   region start). Class, strand and the ID order within a cell are unchanged; CDS and sORF IDs are
   unchanged. The build fails if an ID's coordinates differ from its `db_id_map.tsv` row, if the
   rewritten ID does not parse back (gippa.novel.fdr.parse_orf_id) to its region interval, if the
-  region sequence there (code 11, on its strand) differs from the ID's `strain_db.faa` record
-  beyond the first residue (not checked for nterm_extension), or if an ORF ID naming
-  NZ_CP058217.1 is left.
+  region sequence there (code 11, on its strand) differs from the ID's `strain_db.faa` record beyond
+  the first residue (not checked for nterm_extension), or if an ORF ID naming NZ_CP058217.1 is left.
 * Scrubbing (R12): the `.ssl` `file` column and every DIA-NN text column holding an absolute
   path are reduced to base names; SELECTION.json lists the rewritten columns. No other value is
   changed, except by the route E ORF-ID rewrite. The build fails if any bundle file (a cell,
@@ -70,12 +72,13 @@ Selection rule (recorded verbatim in SELECTION.json):
 * No empty route: the build fails if any route keeps zero rows or zero proteins, if route A
   keeps no decoy, or if route E keeps no target row, no decoy row or no row with a region ORF ID.
 
-Usage (venv python, PYTHONPATH=<checkout>/src; small, runs in seconds). Defaults: region
-NZ_CP058217.1:1965001-2165000, --name nissle_r200k, --out and --bundle-out $GIPPA_ROOT/example,
-bundle version = the installed GIPPA MAJOR.MINOR. A checkout with uncommitted changes fails
-unless --allow-dirty (the commit is then recorded as <sha>-dirty). --check rebuilds in a
-temporary dir and compares the archive with its validation/example/bundles.tsv row; it writes
-nothing to --out or --bundle-out:
+Usage (venv python, PYTHONPATH=<checkout>/src; small, runs in seconds). Defaults: shared region
+NZ_CP058217.1:1965001-2165000 (--start/--end move it), route E's region
+NZ_CP058217.1:1400001-1600000 (START_E/END_E, not an option), --name nissle_r200k, --out and
+--bundle-out $GIPPA_ROOT/example, bundle version = the installed GIPPA MAJOR.MINOR. A checkout
+with uncommitted changes fails unless --allow-dirty (the commit is then recorded as
+<sha>-dirty). --check rebuilds in a temporary dir and compares the archive with its
+validation/example/bundles.tsv row; it writes nothing to --out or --bundle-out:
 
     python scripts/example/build_example.py [--expected DIR] [--bundle-out DIR] [--allow-dirty]
     python scripts/example/build_example.py --check [--bundles-tsv TSV] [--expected DIR]
@@ -112,6 +115,8 @@ import pyarrow.parquet as pq
 CHROM = "NZ_CP058217.1"
 RUNS = ("WT_1", "WT_2", "WT_3")
 START, END, NAME = 1_965_000, 2_165_000, "nissle_r200k"
+# Route E's own region (rule 1E); read at build time, so a test may set them on the module
+START_E, END_E = 1_400_000, 1_600_000
 HERE = Path(__file__).resolve().parent
 REPO = HERE.parents[1]
 BUNDLES_TSV = REPO / "validation" / "example" / "bundles.tsv"
@@ -718,13 +723,31 @@ def static_digests(root: Path) -> dict[str, dict[str, str]]:
     return out
 
 
+def region_info(start: int, end: int) -> dict[str, Any]:
+    """``SELECTION.json``'s description of the region ``[start, end)`` of ``CHROM``."""
+    return {
+        "contig": CHROM,
+        "start_0based": start,
+        "end_exclusive": end,
+        "length_bp": end - start,
+        "one_based_closed": f"{CHROM}:{start + 1}-{end}",
+        "output_contig_id": f"nissle1917_{CHROM.replace('.', '_')}_{start}_{end}",
+        "topology": "linear (no tag)",
+    }
+
+
 def build(
     start: int, end: int, name: str, stage: Path, root: Path, *, version: str, commit: str,
     expected: Path | None = None, expected_commit: str = "",
 ) -> dict[str, Any]:  # fmt: skip
     """The release tree ``stage/gippa-example-<version>/`` and the per-route sizing tars in
-    ``stage/bundles/`` (``stage`` must not exist); returns the counts and the tree."""
+    ``stage/bundles/`` (``stage`` must not exist); returns the counts and the tree. Route E's
+    region is the module's ``START_E``/``END_E`` (read here, at call time)."""
     import gippa
+
+    start_e, end_e = START_E, END_E
+    if not 0 <= start_e < end_e:
+        raise BuildError(f"route E's region [{start_e}, {end_e}) is empty or negative")
 
     src = sources(root)
     src_rel = {k: _rel(v, root) for k, v in src.items()}  # before anything is read (L2)
@@ -739,10 +762,15 @@ def build(
     chrom = genome[CHROM].upper()
     if end > len(chrom):
         raise BuildError(f"--end {end} is beyond {CHROM} ({len(chrom)} bp)")
+    if end_e > len(chrom):
+        raise BuildError(f"route E's region end {end_e} is beyond {CHROM} ({len(chrom)} bp)")
+    region, region_e = region_info(start, end), region_info(start_e, end_e)
     region_nt = chrom[start:end]
-    contig = f"nissle1917_{CHROM.replace('.', '_')}_{start}_{end}"
     g_path = out / "genome" / f"{name}.fna.gz"
-    write_fasta(g_path, [(contig, region_nt)])
+    write_fasta(g_path, [(region["output_contig_id"], region_nt)])
+    region_nt_e, contig_e = chrom[start_e:end_e], region_e["output_contig_id"]
+    g_path_e = out / "genome" / f"{name}_e.fna.gz"
+    write_fasta(g_path_e, [(contig_e, region_nt_e)])
 
     prot = region_proteins(src["db_id_map"], start, end)
     keep_ids = set(prot["db_id"])
@@ -780,7 +808,7 @@ def build(
     write_table(gen, d_path)
 
     # Route E (rules 3E, 8, 9)
-    ent = region_entries(src["a4_db_id_map"], start, end)
+    ent = region_entries(src["a4_db_id_map"], start_e, end_e)
     orfs = ent[ent["kind"] == "orf"]
     orf_ids = set(orfs["db_id"])
     e_t, e_kept = subset_diann(src["a4_report"], set(ent["db_id"]))
@@ -794,21 +822,12 @@ def build(
     _check_routes(a_counts, c_counts, len(ab), len(gen), len(prot), e_counts)
     e_t, e_scrubbed = scrub_paths(e_t)
     e_t, e_rw_cols, n_rw = orf_id_rewrite(
-        e_t, orfs, region_nt, start, contig, read_fasta(src["a4_strain_db"])
+        e_t, orfs, region_nt_e, start_e, contig_e, read_fasta(src["a4_strain_db"])
     )
     e_path = out / "E_sixframe" / "report.parquet"
     pq.write_table(e_t, e_path, compression="zstd")
 
     targets = sub[sub["Decoy"] == 0]
-    region = {
-        "contig": CHROM,
-        "start_0based": start,
-        "end_exclusive": end,
-        "length_bp": end - start,
-        "one_based_closed": f"{CHROM}:{start + 1}-{end}",
-        "output_contig_id": contig,
-        "topology": "linear (no tag)",
-    }
     counts: dict[str, Any] = {
         "region_proteins": len(prot),
         "region_proteins_cds": int((prot["kind"] == "cds").sum()),
@@ -845,6 +864,7 @@ def build(
     sel: dict[str, Any] = {
         "name": name,
         "region": region,
+        "region_e": region_e,
         "rule": __doc__.split("Selection rule (recorded verbatim in SELECTION.json):")[1]
         .split("Usage")[0]
         .strip(),
@@ -860,8 +880,8 @@ def build(
         "orf_id_rewrite": {
             "rule": "route E ORF IDs in region coordinates (see rule)",
             "file": "E_sixframe/report.parquet",
-            "contig": contig,
-            "offset": start,
+            "contig": contig_e,
+            "offset": start_e,
             "columns": e_rw_cols,
             "distinct_ids": n_rw,
         },
@@ -873,7 +893,7 @@ def build(
         "B_proteins": [f_path, ab_path],
         "C_cascadia": [out / "C_cascadia" / f"{r}.ssl" for r in RUNS],
         "D_generic": [d_path],
-        "E_sixframe": [e_path],
+        "E_sixframe": [g_path_e, e_path],
     }
     data_files = [g_path, *(p for ps in route_files.values() for p in ps)]
     sel["outputs"] = {
@@ -899,11 +919,12 @@ def build(
                 else "not included in this build")  # fmt: skip
     (out / "README.md").write_text(T.readme(version, region["one_based_closed"],
                                             region["length_bp"], rs, expected is not None,
-                                            start, counts["E"]), encoding="utf-8")  # fmt: skip
+                                            region_e, counts["E"], f"{name}.fna.gz",
+                                            f"{name}_e.fna.gz"), encoding="utf-8")  # fmt: skip
     (out / "PROVENANCE.md").write_text(T.provenance(
         version, region, src_meta, counts,
         {"commit": commit, "gippa_version": installed, "expected": exp_note}, rewritten,
-        static_digests(root), a4_extras(root), n_rw,
+        static_digests(root), a4_extras(root), n_rw, region_e, sha256(g_path_e),
     ), encoding="utf-8")  # fmt: skip
     (out / "LICENSE-DATA.md").write_text(T.LICENSE_DATA, encoding="utf-8")
     meta = {
@@ -913,6 +934,8 @@ def build(
         "expected_commit": expected_commit if expected is not None else None,
         "region": region["one_based_closed"],
         "region_0based_half_open": [CHROM, start, end],
+        "region_e": region_e["one_based_closed"],
+        "region_e_0based_half_open": [CHROM, start_e, end_e],
         "name": name,
         "counts": counts,
         "tools": T.TOOLS,
@@ -930,7 +953,8 @@ def build(
     sizes: dict[str, int] = {}
     for route, ps in route_files.items():
         tar = stage / "bundles" / f"{name}_{route}.tar.gz"
-        deterministic_tar(tar, out, [g_path, sel_path, *ps])
+        shared = [] if route == "E_sixframe" else [g_path]  # route E ships its own genome
+        deterministic_tar(tar, out, [*shared, sel_path, *ps])
         sizes[route] = tar.stat().st_size
     (stage / "bundles" / "sizes.json").write_text(json.dumps(sizes, indent=2) + "\n",
                                                   encoding="utf-8")  # fmt: skip
