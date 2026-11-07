@@ -28,10 +28,12 @@ from click.testing import CliRunner
 from helpers.report_fixtures import (
     DOCS_METHODS,
     SECTION_IDS,
+    Node,
     expected_section_ids,
     external_refs,
     parse,
     section_or_reason,
+    table_rows,
 )
 
 pytestmark = [pytest.mark.slow]
@@ -90,7 +92,34 @@ def _data(out: Path) -> dict[str, bytes]:
     return {p.name: p.read_bytes() for p in sorted((out / "plots" / "data").glob("*.tsv"))}
 
 
+def _check_index_table(local: Path, page: Any, pid: str) -> None:
+    """An image-free index (V03; M12-04 PR 4, P-12): ``plots/data/<stem>.tsv`` is written and the
+    slot holds its report table, one body row per TSV row, or, with no row, exactly one note
+    "<caption>: none (data TSV)"; never an index image."""
+    import csv
+
+    from gippa.report.content import INDEX_TABLES, LOCUS_INDEX_HEADER
+
+    stem, cap = INDEX_TABLES[pid]
+    assert not list((local / "plots").glob(f"{stem}.*")), (pid, "index image written")
+    data = local / "plots" / "data" / f"{stem}.tsv"
+    assert data.is_file(), pid
+    with data.open(encoding="utf-8", newline="") as fh:
+        n = len(list(csv.reader(fh, delimiter="\t"))) - 1
+    slot = page.slot(pid)
+    tables = [t for t in slot.by_tag("table") if t.attrs.get("data-index") == pid]
+    notes = slot.by_attr("data-index-none", pid)
+    if n:
+        assert len(tables) == 1 and not notes, (pid, n, len(tables), len(notes))
+        header, body = table_rows(tables[0])
+        assert header == list(LOCUS_INDEX_HEADER) and len(body) == n, (pid, header, len(body))
+    else:
+        assert not tables, pid
+        assert [x.text() for x in notes] == [f"{cap}: none (data TSV)"], pid
+
+
 def test_example_1_plots_and_report_published(local: Path) -> None:
+    from gippa.report.content import INDEX_TABLES
     from gippa.viz.base import registered
 
     assert (local / "plots").is_dir()
@@ -98,10 +127,13 @@ def test_example_1_plots_and_report_published(local: Path) -> None:
     assert html.is_file()
     page = parse(html.read_text(encoding="utf-8"))
     for pid, spec in registered().items():
+        shown = bool(page.root.by_attr("data-plot", pid))
+        if pid in INDEX_TABLES and shown:
+            _check_index_table(local, page, pid)
         svgs = list((local / "plots").glob(f"{pid}_*.svg"))
         if svgs:
             assert (local / "plots" / "data" / f"{svgs[0].stem}.tsv").is_file(), pid
-        elif page.root.by_attr("data-plot", pid):
+        elif shown and pid not in INDEX_TABLES:
             assert "not shown" in page.slot(pid).text(), (pid, spec.name)
 
 
@@ -110,8 +142,14 @@ def test_example_6_thirteen_sections(local: Path) -> None:
     assert [s.attrs.get("id") for s in page.sections()] == expected_section_ids(page)
     for sid in SECTION_IDS:  # rendered, or listed as not applicable with a reason
         assert section_or_reason(page, sid), sid
-    # --modules core: the function module did not run
-    assert section_or_reason(page, "function") == "the function module was not run"
+    # --modules core: the function module did not run, but V08 (COG categories from the
+    # annotation) is drawn, so Function stays a section (M12-04 PR 2 review r1 M1) and its V14
+    # slot gives the plain skip reason
+    function = section_or_reason(page, "function")
+    assert isinstance(function, Node), function
+    assert list((local / "plots").glob("V08_*.svg")), "V08 not drawn"
+    (v14,) = function.by_attr("data-plot", "V14")
+    assert v14.text().strip() == "V14: not shown: the function module was not run"
 
 
 def test_example_7_offline_and_links_resolve(local: Path) -> None:
