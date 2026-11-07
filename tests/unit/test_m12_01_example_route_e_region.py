@@ -413,6 +413,11 @@ def test_readme_route_e_region_wording(default: Built) -> None:
     assert "The same region is given through five input routes" not in text
 
 
+def test_readme_intro_names_route_e_genome(default: Built) -> None:
+    text = flat(default.text("README.md"))
+    assert f"`NZ_CP058217.1:{START_E + 1}-{END_E}`, in `{GENOME_E}`" in text
+
+
 def test_readme_counts_orf_entries_of_route_e_region(default: Built) -> None:
     e = default.json("SELECTION.json")["counts"]["E"]
     named, in_region = e["orf_entries_named"], e["region_orf_entries"]
@@ -497,12 +502,6 @@ def test_ac22_route_e_misses(change: dict[str, Any], field: str | None) -> None:
     assert [m.split(":")[0] for m in route_e_misses(_OK | change)] == ([field] if field else [])
 
 
-def test_e2e_asserts_ac22() -> None:
-    text = (REPO / "tests" / "e2e" / "test_m12_01_example_routes.py").read_text()
-    for needle in ("n >= 1", "unpaired < n", '"picked_decoy"', "isinstance(unpaired, int)"):
-        assert needle in text, needle
-
-
 # ---------------------------------------------------------------- docs
 
 DOCS = REPO / "docs"
@@ -582,3 +581,53 @@ def test_tutorial_compares_a_to_d_only() -> None:
     assert words[words.index("--labels") + 1] == "A,B,C,D"
     assert "--outdir" in words and f"{OUT}/E" not in cmds[0]
     assert "GIPPAORF_" not in text
+
+
+# ---------------------------------------------------------------- sizing tars and guards (review)
+
+
+def _tar_genomes(b: Built, route: str) -> set[str]:
+    tar = b.work / NAME / "bundles" / f"{NAME}_{route}.tar.gz"
+    with tarfile.open(tar) as t:
+        return {m.split("/", 1)[-1] for m in t.getnames() if "/genome/" in f"/{m}"}
+
+
+@pytest.mark.parametrize("route", ["A_diann", "B_proteins", "C_cascadia", "D_generic"])
+def test_sizing_tar_a_to_d_hold_the_shared_genome_only(default: Built, route: str) -> None:
+    assert _tar_genomes(default, route) == {GENOME}
+
+
+def test_sizing_tar_e_holds_its_own_genome_only(default: Built) -> None:
+    assert _tar_genomes(default, "E_sixframe") == {GENOME_E}
+
+
+def _rerun(pilot: Built, tmp: Path, e_region: tuple[int, int]) -> tuple[int, str]:
+    """``main`` on an existing small pilot, route E's seam set to ``e_region``."""
+    argv = ["--out", str(tmp / "work"), "--bundle-out", str(tmp / "rel"), "--allow-dirty",
+            "--start", str(S2), "--end", str(E2)]  # fmt: skip
+    mod, buf = _load(), io.StringIO()
+    set_route_e(mod, *e_region)
+    with (
+        pytest.MonkeyPatch.context() as mp,
+        contextlib.redirect_stdout(buf),
+        contextlib.redirect_stderr(buf),
+    ):
+        mp.setenv("GIPPA_ROOT", str(pilot.root))
+        mp.delenv("SLURM_JOB_ID", raising=False)
+        try:
+            code = mod.main(argv)
+        except SystemExit as exc:
+            code = exc.code if isinstance(exc.code, int) else 1
+    return int(code or 0), buf.getvalue()
+
+
+@pytest.mark.parametrize(
+    ("e_region", "message"),
+    [((90_000, 60_000), "is empty or negative"), ((120_000, L2 + 1), "is beyond")],
+)
+def test_route_e_region_guards(
+    moved: tuple[Built, Built], tmp_path: Path, e_region: tuple[int, int], message: str
+) -> None:
+    code, out = _rerun(moved[0], tmp_path, e_region)
+    assert code != 0, out
+    assert message in out and "route E" in out, out

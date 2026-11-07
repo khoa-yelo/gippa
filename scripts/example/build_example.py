@@ -1035,8 +1035,10 @@ def check(a: argparse.Namespace, root: Path, version: str, commit: str) -> int:
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     ap.add_argument("--start", type=int, default=START,
-                    help=f"0-based region start on {CHROM} (default {START})")  # fmt: skip
-    ap.add_argument("--end", type=int, default=END, help=f"exclusive region end (default {END})")
+                    help=f"0-based start of the shared region (routes A-D) on {CHROM} "
+                         f"(default {START}); route E's region is START_E")  # fmt: skip
+    ap.add_argument("--end", type=int, default=END,
+                    help=f"exclusive end of the shared region (default {END})")  # fmt: skip
     ap.add_argument("--name", default=NAME, help=f"default {NAME}")
     ap.add_argument("--out", type=Path, default=None, help="work dir; default $GIPPA_ROOT/example")
     ap.add_argument("--bundle-out", type=Path, default=None,

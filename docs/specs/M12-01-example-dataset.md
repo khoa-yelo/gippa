@@ -183,7 +183,7 @@ dev build (work-split row 12) confirms them, and `SELECTION.json` records the me
 | `n_novel_called` | 0 (at most 9 target wins over all classes; a floor ≤ 0.01 needs 100 in one class) |
 | `E_sixframe/report.parquet` (zstd, all 71 columns) | 615,146 bytes (trial build) |
 | `genome/nissle_r200k_e.fna.gz` | 61,125 bytes (trial build) |
-| bundle | **≈ 1.2 MB** (0.48 MB measured for A–D + ≈ 0.68 MB for route E's two files; the trial archive with every route at 1.4 Mb was 1,235,643 bytes) |
+| bundle | **≈ 1.1 MB** (review build at c67be0fb: 1,092,440 bytes without `expected/`; the earlier trial archive with every route at 1.4 Mb was 1,235,643 bytes) |
 
 ## Spec sections touched
 
@@ -374,7 +374,7 @@ FASTA and no `db_id_map.tsv` subset: `gippa convert` and `gippa run` do not read
 carry class and coordinates; `nterm_extension` locus tags come from the run's own gene model,
 `makedb.build.nterm_entries`). PROVENANCE names the database by its sha256 and command (Q-L11).
 
-The bundle is **0.48 MB** (measured, routes A–D); with route E it is **≈ 1.2 MB** (route E
+The bundle is **0.48 MB** (measured, routes A–D); with route E it is **≈ 1.1 MB** (route E
 region, 2026-11-06: predicted from a trial build, ≈ 615 kB report plus ≈ 61 kB genome; the rebuild
 in work-split row 12 measures it). The archive is a deterministic tar.gz: members sorted, mode 0644/0755, uid/gid 0, empty
 user/group names, mtime 0, gzip header without name and with mtime 0. Two builds from the same
@@ -960,7 +960,7 @@ criteria:
 | *Route E region:* empty novel FDR table | `n_novel_unpaired` = 0 (AC 22); with W = 1,400,000 at least one candidate is expected |
 | *Route E region:* circular vs linear | route E's region is linear like the shared one (no topology tag, no origin crossing; the scan only used windows inside `[0, 5,055,406)`) |
 | *Route E:* empty route | the build fails (rule 7: no target, no decoy or no ORF row) |
-| *Route E:* bundle size | (route E region, 2026-11-06) `E_sixframe/report.parquet` ≈ 615 kB (zstd) and `genome/<name>_e.fna.gz` ≈ 61 kB; the bundle ≈ 1.2 MB, under the pin's `size_gib: 1` cap with room |
+| *Route E:* bundle size | (route E region, 2026-11-06) `E_sixframe/report.parquet` ≈ 615 kB (zstd) and `genome/<name>_e.fna.gz` ≈ 61 kB; the bundle ≈ 1.1 MB (1,092,440 bytes measured without `expected/`), under the pin's `size_gib: 1` cap with room |
 | *Route E:* a user's own six-frame genome-wide run vs route E | numbers differ (region, live Bakta light, rewritten IDs); the README says not to compare them with the pilot |
 
 ## 7. Open questions

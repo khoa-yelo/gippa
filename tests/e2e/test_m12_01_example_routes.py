@@ -171,17 +171,8 @@ def test_route(runs: dict[str, RouteRun], bundle: Bundle, route: str) -> None:
     assert rr.measured.get("status") == "completed", (rr.measured, log)
     if route in TIERS:
         assert rr.measured.get("detection_tier") == TIERS[route], rr.measured
-    if route == "E":  # AC 22 (amended 2026-11-06 (b), route E's own region)
-        m = rr.measured
-        n, unpaired = m.get("n_novel_candidates"), m.get("n_novel_unpaired")
-        assert isinstance(n, int) and n >= 1, f"n_novel_candidates {n!r}: want >= 1"
-        assert m.get("n_novel_called") == 0, m
-        assert isinstance(unpaired, int) and not isinstance(unpaired, bool), (
-            f"n_novel_unpaired {unpaired!r}: an integer, 0 when the FDR table is empty or absent"
-        )
-        assert unpaired < n, f"n_novel_unpaired {unpaired} >= {n} candidates: rule 9 pairs them"
-        assert any(c.get("regime") == "picked_decoy" for c in m.get("novel_classes") or []), m
-        assert not (misses := route_e_misses(m)), misses
+    if route == "E":  # AC 22 (amended 2026-11-06 (b)); route_e_misses is unit-tested
+        assert not (misses := route_e_misses(rr.measured)), misses
     if bundle.fetched:
         path = bundle.directory / "expected" / f"{route}.json"
         assert path.is_file(), f"{path} missing from the bundle"

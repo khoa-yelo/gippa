@@ -9,15 +9,16 @@ table and a DIA-NN report searched against a six-frame database. Every annotatio
 The bundle holds a 200 kb region of the *E. coli* Nissle 1917 chromosome
 (`NZ_CP058217.1:1965001-2165000`, 1-based and closed; assembly GCF_021559835.1) and the results
 of GIPPA's pilot for the ProteomeXchange dataset **PXD078459** (three wild-type runs, WT_1 to WT_3),
-cut to that region: the DIA-NN 2.3.1 report rows of two searches (the annotated proteome and a
-six-frame database) and the Cascadia 0.0.7 de novo results. Nothing
+cut to that region: the DIA-NN 2.3.1 report rows of the annotated-proteome search and the
+Cascadia 0.0.7 de novo results. The rows of the six-frame search are cut to route E's own
+region (below). Nothing
 was searched again. The region holds the colibactin *pks* island and the yersiniabactin
 high-pathogenicity island, so the `bgc` module has a gene cluster to find. It has no plasmid and
 no prophage. Routes A–D share this region (`genome/nissle_r200k.fna.gz`); route E has its own
 200 kb region of the same chromosome (`NZ_CP058217.1:1400001-1600000`,
 `genome/nissle_r200k_e.fna.gz`), described [below](#route-e-dia-nn-report-six-frame-database).
 
-The archive is about 1.2 MB. One bundle is published with each minor release of GIPPA (1.1, 1.2,
+The archive is about 1.1 MB. One bundle is published with each minor release of GIPPA (1.1, 1.2,
 …) as a GitHub release file; patch releases use their minor's bundle. It is not part of the
 installed package. The data comes with licence terms of its own: see
 [Licence and citation](#licence-and-citation) before you use it.
@@ -235,7 +236,7 @@ To read the five runs and compare routes A–D, follow the tutorial
   `C_cascadia/`, `D_generic/`, `E_sixframe/`). The dataset record states no licence. The files are
   provided only to demonstrate and test GIPPA, with attribution to the depositors; rows were
   selected and file paths shortened, and in `E_sixframe/` the six-frame ORF IDs (made by GIPPA)
-  were renumbered to the region's coordinates.
+  were renumbered to route E's region's coordinates.
 - **Cite PXD078459** (iProX **IPX0017169000**) if you use them.
 - **Withdrawn on request.** If you hold rights to the data and object, open an issue and the
   bundle will be withdrawn.
