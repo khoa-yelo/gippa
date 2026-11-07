@@ -450,7 +450,7 @@ def test_readme_states_the_route_e_caveats(base: Built) -> None:
     assert base.tree is not None
     text = flat((base.tree / "README.md").read_text())
     assert "Route E: DIA-NN report, six-frame database" in text
-    for needle in ("six-frame", "1,965,000", "`mayu`", "floor"):
+    for needle in ("six-frame", "1,965,000", "`decoy_picked`", "floor"):
         assert needle in text, needle
 
 

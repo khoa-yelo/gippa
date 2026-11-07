@@ -33,7 +33,12 @@ pytestmark = [
     pytest.mark.needs_promotech_models,
 ]
 
-TIERS = {"A": "mayu", "B": "protein_list", "C": "two_peptide", "E": "mayu"}  # AC 17, Q-L10
+TIERS = {
+    "A": "mayu",
+    "B": "protein_list",
+    "C": "two_peptide",
+    "E": "decoy_picked",
+}  # AC 17, Q-L10, Q-L15
 TIMEOUT_S = 3600  # one command; the measured `gippa run` takes about 5 min
 STEP6 = ("before the pin exists (release step 6), measure an unpacked build tree with "
          "GIPPA_EXAMPLE_DIR=<dir> instead")  # fmt: skip

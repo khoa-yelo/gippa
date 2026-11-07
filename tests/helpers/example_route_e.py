@@ -7,7 +7,7 @@ from __future__ import annotations
 from collections.abc import Mapping
 from typing import Any
 
-TIER_E = "mayu"  # Q-L10
+TIER_E = "decoy_picked"  # Q-L15, measured in trial job 1943965
 
 
 def _is_int(v: Any) -> bool:
@@ -16,7 +16,7 @@ def _is_int(v: Any) -> bool:
 
 def route_e_misses(measured: Mapping[str, Any]) -> list[str]:
     """Empty when route E shows the six-frame workflow as AC 22 requires (amended 2026-11-06 (b),
-    route E's own region): tier ``mayu``; ``n_novel_called = 0``; at least one candidate; an
+    route E's own region): tier ``decoy_picked``; ``n_novel_called = 0``; at least one candidate; an
     integer ``n_novel_unpaired`` (0 when the FDR table is empty or absent, never null) below the
     number of candidates; and at least one ``picked_decoy`` class (the rule-9 rewrite makes them
     pair)."""

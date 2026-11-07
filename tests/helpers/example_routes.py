@@ -141,14 +141,20 @@ def measure(route: str, outdir: Path, peptides: Path | None = None) -> dict[str,
 
 
 def _novel(outdir: Path) -> dict[str, Any]:
-    """Route E's novel-ORF keys (spec section 2, `expected/`). ``n_novel_unpaired`` is 0 when
-    ``novel/novel_class_fdr.parquet`` has no data rows or is absent from a finished run."""
+    """Route E's novel-ORF keys (spec section 2, `expected/`). ``n_novel_unpaired`` counts the
+    ``no_makedb_pair`` rows of ``intermediate/novel/novel_class_fdr.parquet``: 0 when it has no
+    data rows or is absent from a finished run."""
     got: dict[str, Any] = {}
     if (orfs := outdir / "tables" / "novel_orfs.tsv").is_file():
         rows = _tsv(orfs)
         got["n_novel_candidates"] = len(rows)
         got["n_novel_called"] = sum(_true(r.get("called")) for r in rows)
-    if (fdr := outdir / "novel" / "novel_class_fdr.parquet").is_file():
+    fdr = next(  # the runner writes it under intermediate/ (runner/local.py)
+        (p for p in (outdir / "intermediate" / "novel" / "novel_class_fdr.parquet",
+                     outdir / "novel" / "novel_class_fdr.parquet") if p.is_file()),
+        None,
+    )  # fmt: skip
+    if fdr is not None:
         import pandas as pd
 
         table = pd.read_parquet(fdr)

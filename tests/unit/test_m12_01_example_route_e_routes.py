@@ -202,7 +202,7 @@ def test_e2e_tier_of_route_e() -> None:
         spec.loader.exec_module(mod)
     finally:
         del sys.modules[spec.name]
-    assert mod.TIERS["E"] == "mayu"
+    assert mod.TIERS["E"] == "decoy_picked"
 
 
 def test_e2e_applies_the_ac22_check() -> None:
@@ -210,14 +210,14 @@ def test_e2e_applies_the_ac22_check() -> None:
     assert "route_e_misses" in text
 
 
-_OK = {"detection_tier": "mayu", "n_novel_called": 0, "n_novel_candidates": 4,
+_OK = {"detection_tier": "decoy_picked", "n_novel_called": 0, "n_novel_candidates": 4,
        "n_novel_unpaired": 1, "novel_classes": [{"regime": "picked_decoy"}]}  # fmt: skip
 
 
 @pytest.mark.parametrize(
     ("change", "field"),
     [({}, None), ({"n_novel_candidates": 0, "novel_classes": []}, "n_novel_candidates"),
-     ({"detection_tier": "decoy_picked"}, "detection_tier"),
+     ({"detection_tier": "mayu"}, "detection_tier"),
      ({"n_novel_called": 1}, "n_novel_called"),
      ({"n_novel_unpaired": 4}, "n_novel_unpaired"),
      ({"novel_classes": [{"regime": "denovo_subgroup"}]}, "novel_classes"),

@@ -483,9 +483,18 @@ def test_measure_unpaired_is_zero_without_fdr_rows(tmp_path: Path, fdr: str) -> 
     assert got["n_novel_candidates"] == 0
 
 
+def test_measure_reads_the_fdr_table_under_intermediate(tmp_path: Path) -> None:
+    run = _run_dir(tmp_path, fdr="absent")
+    where = run / "intermediate" / "novel"
+    where.mkdir(parents=True)
+    pd.DataFrame({"orf_id": ["a", "b", "c"], "reason": [None, "no_makedb_pair", None]}
+                 ).to_parquet(where / "novel_class_fdr.parquet")  # fmt: skip
+    assert er.measure("E", run)["n_novel_unpaired"] == 1
+
+
 # ---------------------------------------------------------------- AC 22 (amended)
 
-_OK = {"detection_tier": "mayu", "n_novel_called": 0, "n_novel_candidates": 7,
+_OK = {"detection_tier": "decoy_picked", "n_novel_called": 0, "n_novel_candidates": 7,
        "n_novel_unpaired": 0, "novel_classes": [{"regime": "picked_decoy"}]}  # fmt: skip
 
 

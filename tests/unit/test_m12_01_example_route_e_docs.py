@@ -67,7 +67,7 @@ def test_route_e_section_explains_the_six_frame_database() -> None:
     for needle in (
         "gippa makedb --six-frame-orfs",
         "(../user-guide/makedb.md)",
-        "`mayu`",
+        "`decoy_picked`",
         "floor",
         "1,400,000",
     ):  # fmt: skip  (route E region, 2026-11-06)

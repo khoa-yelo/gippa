@@ -130,8 +130,9 @@ longer (see the GIPPA docs, "Try the example").
   `NZ_CP058217.1`; add {start:,} to get chromosome coordinates.
 - Route E runs on another region than routes A-D, so its gene numbers cannot be compared with
   theirs, and `gippa compare` (which refuses runs on different genomes) compares A-D only.
-- Route E's tier is expected to be `mayu`, like route A's: its ORF decoys pair no gene, and its
-  other decoys pair through peptide votes.
+- Route E's tier is `decoy_picked`, unlike route A's `mayu`: on route E's own region enough
+  decoys pair with a gene (no `decoy_pairing_low` warning). Its ORF decoys pair with their
+  targets through the novel-ORF classes, each `picked_decoy`.
 - Route E's q-values and PEPs are DIA-NN's on the whole six-frame search (147,753 strain records
   plus 381 contaminants, the same three runs); a 29-fold larger database changes the scores, so
   its gene numbers differ from route A's.

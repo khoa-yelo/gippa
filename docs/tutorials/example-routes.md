@@ -116,7 +116,7 @@ GIPPA picks the strongest tier the input allows
 | B | protein FASTA and abundance table | `protein_list` | proteins only, no peptides |
 | C | Cascadia results | `two_peptide` | peptide sequences only: a gene needs two distinct peptides |
 | D | generic peptide table | `mayu` | the same rows and decoys as route A |
-| E | DIA-NN report, six-frame database | `mayu` | as route A: the six-frame decoys pair with no gene |
+| E | DIA-NN report, six-frame database | `decoy_picked` | on route E's own region enough decoys pair with a gene, so there is no `decoy_pairing_low` fallback |
 
 - **A and D.** On the whole genome, DIA-NN's decoys would give `decoy_picked`. A 200 kb region
   keeps too few of them, so GIPPA warns and falls back to `mayu`. The gene q-value is still

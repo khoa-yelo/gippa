@@ -388,7 +388,7 @@ inputs give the same sha256.
 | B | `B_proteins/proteins.faa` + `abundance.tsv` | `gippa preflight --proteins … --abundance …`; `gippa run --proteins … --abundance … --abundance-type maxlfq` | `protein_list`, **after #536**. In GIPPA 1.0.0 `workflow/main.nf` runs MAPPING only with `inputs.peptides`, so this route runs ANNOTATE and REPORT and writes no gene table |
 | C | `C_cascadia/*.ssl` | `gippa convert --from cascadia … --out {out}/C/peptides.tsv`; `gippa preflight`; `gippa run --peptides …` | `two_peptide`, `c_assumed`; 76 rows, **4 genes detected**. A **format demo**, not a result |
 | D | `D_generic/peptides.tsv` | `gippa convert --from generic … --out {out}/D/peptides.tsv --source database --search-db same`; `gippa preflight`; `gippa run --peptides …` | the same decoys as A, so expected `mayu`; the measured value goes into `expected/D.json` (PR 7) |
-| E (route E, 2026-11-06) | `E_sixframe/report.parquet` | `gippa convert --from diann … --out {out}/E/peptides.tsv --search-db same`; `gippa preflight`; `gippa run --peptides …` (no extra flag; see below) | expected **`mayu`**, as A: decoys of ORF entries that map to no gene leave the gene-level decoy counts (M7-12 decision 28), so its decoys with no ORF ID (route E region, 2026-11-06: 25 rows, 19 peptides, predicted) pair through peptide votes as in A (Q-L10). **Novel ORFs:** 1–9 `picked_decoy` candidates (predicted), **0 called** (below). Genome: route E's own region (`genome/nissle_r200k_e.fna.gz`) |
+| E (route E, 2026-11-06) | `E_sixframe/report.parquet` | `gippa convert --from diann … --out {out}/E/peptides.tsv --search-db same`; `gippa preflight`; `gippa run --peptides …` (no extra flag; see below) | **`decoy_picked`** (Q-L15, measured in trial job 1943965 on route E's own region; the earlier prediction was `mayu`, Q-L10): enough decoys pair with a gene, so there is no `decoy_pairing_low` fallback. **Novel ORFs:** 1–9 `picked_decoy` candidates (predicted), **0 called** (below). Genome: route E's own region (`genome/nissle_r200k_e.fna.gz`) |
 
 **Route E's commands** (`example_routes.yaml`, title `Route E: DIA-NN report, six-frame
 database`), with the `gippa run` settings of every route:
@@ -668,8 +668,8 @@ full DB, or an installed UniOP, can change the gene and operon numbers.
   routes A–D: the shared region has no ORF-only peptide that passes DIA-NN's global q-value at
   0.01, so it would show no candidate. Route E's gene numbers cannot be compared with A–D's, and
   `gippa compare` refuses runs on different genomes, so it compares A–D only.
-- *Route E, 2026-11-06:* route E's tier is expected to be `mayu`, like route A's: its ORF decoys
-  pair no gene, and its other decoys pair through peptide votes.
+- *Route E, 2026-11-06 (b):* route E's tier is `decoy_picked` (Q-L15, measured): on its own
+  region enough decoys pair with a gene, so there is no `decoy_pairing_low` fallback to `mayu`.
 
 ## 3. How the bundle is built
 
@@ -849,7 +849,7 @@ recorded, not asserted (a shared node is noisy; the table in section 3 is filled
   `E_sixframe/report.parquet` and `expected/E.json`. *Route E region, 2026-11-06:* the fixture
   also gains `genome/<name>_e.fna.gz`; `measure()` gives `n_novel_unpaired = 0` when
   `novel/novel_class_fdr.parquet` is absent or has no rows.
-- `tests/e2e/test_m12_01_example_routes.py`: `TIERS["E"] = "mayu"` (Q-L10), and for route E the
+- `tests/e2e/test_m12_01_example_routes.py`: `TIERS["E"] = "decoy_picked"` (Q-L15; was `"mayu"`, Q-L10), and for route E the
   AC 22 assertion. The route runs in the same job; `example_routes.sbatch` keeps 4 CPUs, 16 GB and
   its 2 h limit (five routes of about 6 min each fit).
 
@@ -891,7 +891,7 @@ recorded, not asserted (a shared node is noisy; the table in section 3 is filled
 `--search-db same`, input `{dir}/E_sixframe/report.parquet`, `--out {out}/E/peptides.tsv`, and
 the same three-command sequence and settings as A, with `--genome {dir}/genome/nissle_r200k_e.fna.gz`
 (route E region, 2026-11-06); A–D keep `nissle_r200k.fna.gz`" (AC 17b covers E through the route list); AC 15
-adds the route E section; AC 17 reads "all five routes … route E `detection_tier = mayu`". New
+adds the route E section; AC 17 reads "all five routes … route E `detection_tier = mayu`" (amended by Q-L15: route E `decoy_picked`). New
 criteria:
 
 | # | Input | Expected | Test |
@@ -997,7 +997,7 @@ Still open, each with its reversible default:
 | Q-L12 (route E) | ADR-0074 records the lifted row-level rule and the licence statement; route E extends both | the lead adds a dated amendment to ADR-0074 before row 11 merges |
 | Q-L13 (route E) | A4 lives at `$GIPPA_ROOT/runs/pilot/sixframe-fa49b8f/`, not under `$GIPPA_ROOT/pilot/` with the other sources | read it in place (it is under `$GIPPA_ROOT`, so the `_rel` guard holds; SELECTION records the sha256s); copy it to `$GIPPA_ROOT/pilot/A4/` later if the runs tree is pruned |
 | Q-L14 (route E region) | The brief says route E's bundle carries its region's "genome FASTA and annotation subset". The bundle ships no annotation file for any route (live Bakta light, AC 14) | genome FASTA only; the `db_id_map.tsv` region entries are a build input (Q-L11). Ship a Bakta JSON or GFF subset only if the lead says so |
-| Q-L15 (route E region) | Route E's tier at 1,400,000: 25 decoy rows (19 peptides) without ORF IDs, versus 21 rows in the shared region; `mayu` is still a prediction (Q-L10) | keep `TIERS["E"] = "mayu"`; Q-L10's procedure applies if row 12 measures another tier |
+| Q-L15 (route E region) | Route E's tier at 1,400,000: 25 decoy rows (19 peptides) without ORF IDs, versus 21 rows in the shared region; `mayu` is still a prediction (Q-L10) | **Resolved (lead, 2026-11-07):** the trial run at 1,400,000 (job 1943965) measured `decoy_picked`, with 8 candidates, 0 called, all four novel classes `picked_decoy` and 0 unpaired; `TIERS["E"] = TIER_E = "decoy_picked"`, and the README, page and tutorial say so |
 | Q-L16 (route E region) | Name of route E's genome file and the `bundle.json` / `SELECTION.json` key for the second region | `genome/nissle_r200k_e.fna.gz`; a `region_e` object next to `region`, same fields |
 | Q-L17 (route E region) | The candidate prediction (7–9, at least 1) depends on live Bakta light's gene calls, which no data in hand shows | AC 22 asserts at least 1; if row 12 measures 0, validation stops and reports to the lead instead of pinning 0 |
 

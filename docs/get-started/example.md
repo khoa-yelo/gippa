@@ -146,8 +146,9 @@ genomes, compares A–D only.
 - **IDs in region coordinates.** Route E's ORF IDs name route E's region contig and region
   coordinates, so they match the genome you run on. Add 1,400,000 to a coordinate to get its
   position on `NZ_CP058217.1`.
-- **Tier `mayu`, like route A.** The decoys of six-frame entries pair with no gene, and the other
-  decoys pair through peptide votes, as in route A.
+- **Tier `decoy_picked`, unlike route A.** On route E's own region enough decoys pair with a gene,
+  so GIPPA does not fall back to `mayu` (no `decoy_pairing_low` warning). The novel-ORF classes
+  are `picked_decoy`; with one peptide each, their q floor stays above 0.01, so none is called.
 - **Other scores.** The q-values and PEPs come from the six-frame search, whose database is about
   29 times larger than route A's, so route E's gene numbers differ from route A's.
 
@@ -200,7 +201,7 @@ For a whole genome with the defaults, see the [quick start](quickstart.md).
 | B | `protein_list` | 158 | 106 |
 | C | `two_peptide` | | 4 (from 76 converted rows) |
 | D | `mayu` | see `expected/D.json` | see `expected/D.json` |
-| E | `mayu` | see `expected/E.json` | see `expected/E.json`; 0 novel ORFs called |
+| E | `decoy_picked` | see `expected/E.json` | see `expected/E.json`; 0 novel ORFs called |
 
 - **Routes A and D are `mayu`, not `decoy_picked`.** A 200 kb region keeps too few decoys: 37
   decoy rows remain, but only 4 of 10 decoy peptides pair with a gene, below the 80 % that
