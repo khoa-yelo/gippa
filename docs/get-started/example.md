@@ -1,20 +1,24 @@
 # Try the example
 
-The example is real data, cut small enough to run in minutes. It shows the four ways into GIPPA:
-a DIA-NN report, a protein FASTA with an abundance table, de novo results and a generic peptide
-table. Every annotation tool runs live on it; nothing is precomputed.
+The example is real data, cut small enough to run in minutes. It shows five ways into GIPPA:
+a DIA-NN report, a protein FASTA with an abundance table, de novo results, a generic peptide
+table and a DIA-NN report searched against a six-frame database. Every annotation tool runs live on it; nothing is precomputed.
 
 ## What the example is
 
 The bundle holds a 200 kb region of the *E. coli* Nissle 1917 chromosome
 (`NZ_CP058217.1:1965001-2165000`, 1-based and closed; assembly GCF_021559835.1) and the results
 of GIPPA's pilot for the ProteomeXchange dataset **PXD078459** (three wild-type runs, WT_1 to WT_3),
-cut to that region: the DIA-NN 2.3.1 report rows and the Cascadia 0.0.7 de novo results. Nothing
+cut to that region: the DIA-NN 2.3.1 report rows of the annotated-proteome search and the
+Cascadia 0.0.7 de novo results. The rows of the six-frame search are cut to route E's own
+region (below). Nothing
 was searched again. The region holds the colibactin *pks* island and the yersiniabactin
 high-pathogenicity island, so the `bgc` module has a gene cluster to find. It has no plasmid and
-no prophage.
+no prophage. Routes A–D share this region (`genome/nissle_r200k.fna.gz`); route E has its own
+200 kb region of the same chromosome (`NZ_CP058217.1:1400001-1600000`,
+`genome/nissle_r200k_e.fna.gz`), described [below](#route-e-dia-nn-report-six-frame-database).
 
-The archive is about 0.5 MB. One bundle is published with each minor release of GIPPA (1.1, 1.2,
+The archive is about 1.1 MB. One bundle is published with each minor release of GIPPA (1.1, 1.2,
 …) as a GitHub release file; patch releases use their minor's bundle. It is not part of the
 installed package. The data comes with licence terms of its own: see
 [Licence and citation](#licence-and-citation) before you use it.
@@ -36,7 +40,7 @@ gippa example fetch --outdir <dir>
 
 `gippa example fetch` downloads the bundle of your GIPPA version, checks its size and sha256
 against the value pinned in GIPPA, unpacks it into `gippa-example` (or `--outdir <dir>`) and
-checks every file against the bundle's `CHECKSUMS.sha256`. It then prints the commands of the four
+checks every file against the bundle's `CHECKSUMS.sha256`. It then prints the commands of the five
 routes with `<dir>` filled in as an absolute path. The output directory must be absent or empty.
 Running the command again on a finished fetch prints `already fetched` and the commands, with no
 network access; your outputs under `<dir>/runs` are left alone.
@@ -69,7 +73,7 @@ itself is not changed.
 
 A failed fetch leaves no partial directory behind. See [all exit codes](../user-guide/run.md#exit-codes).
 
-## The four routes
+## The five routes
 
 The commands below assume the default bundle directory, `gippa-example`, in the current
 directory. Each route writes its outputs to `gippa-example/runs/<route>`. They are the commands
@@ -111,6 +115,43 @@ gippa run --genome gippa-example/genome/nissle_r200k.fna.gz --peptides gippa-exa
 Route D's table was made from route A's rows, as an engine without a GIPPA converter would write
 it. To make such inputs from your own spectra, see [From raw spectra](from-spectra.md).
 
+### Route E: DIA-NN report, six-frame database
+
+```bash
+gippa convert --from diann gippa-example/E_sixframe/report.parquet --out gippa-example/runs/E/peptides.tsv --search-db same
+gippa preflight --genome gippa-example/genome/nissle_r200k_e.fna.gz --peptides gippa-example/runs/E/peptides.tsv --set 'modules=[core,bgc]' --set annotation.bakta.db=light --set annotation.terminators.tool=transtermhp --set annotation.promoter_calculator.enabled=false
+gippa run --genome gippa-example/genome/nissle_r200k_e.fna.gz --peptides gippa-example/runs/E/peptides.tsv --genome-relation same --outdir gippa-example/runs/E --modules core,bgc --set annotation.bakta.db=light --terminators transtermhp --set annotation.promoter_calculator.enabled=false --threads 4
+```
+
+Pick a six-frame database when you look for proteins the annotation misses: unannotated ORFs,
+antisense and out-of-frame ORFs, and N-terminal extensions of known genes. Route E's report comes
+from the same three runs as route A, searched by DIA-NN 2.3.1 against a database that
+`gippa makedb --six-frame-orfs --min-orf-aa 20 --no-contaminants` built from the whole Nissle
+genome and its Bakta annotation (the bundle's provenance file has the details and checksums); see
+[Building a search database](../user-guide/makedb.md). The route does not rebuild the database, and
+`gippa run` needs no extra option: it reads the class and coordinates of each six-frame entry
+from its ID.
+
+Route E runs on its own 200 kb region of the same chromosome, `NZ_CP058217.1:1400001-1600000`
+(`genome/nissle_r200k_e.fna.gz`), because the shared region of routes A–D has no ORF-only peptide
+that passes DIA-NN's global q-value at 0.01, so it would show no candidate. Route E's gene numbers
+cannot be compared with those of routes A–D, and `gippa compare`, which refuses runs on different
+genomes, compares A–D only.
+
+- **Few candidates, no call.** Expect a few novel-ORF candidates and none called. A class needs
+  at least 100 target wins over its decoys before its q floor can reach 0.01, and the kept rows
+  name 53 ORF entries (of 5,609 in route E's region). The genome-wide search called 0 of 109
+  candidates for the same reason. Route E shows the six-frame workflow (IDs, the `picked_decoy` regime, the
+  class summaries and the floor), not a discovery.
+- **IDs in region coordinates.** Route E's ORF IDs name route E's region contig and region
+  coordinates, so they match the genome you run on. Add 1,400,000 to a coordinate to get its
+  position on `NZ_CP058217.1`.
+- **Tier `decoy_picked`, unlike route A.** On route E's own region enough decoys pair with a gene,
+  so GIPPA does not fall back to `mayu` (no `decoy_pairing_low` warning). The novel-ORF classes
+  are `picked_decoy`; with one peptide each, their q floor stays above 0.01, so none is called.
+- **Other scores.** The q-values and PEPs come from the six-frame search, whose database is about
+  29 times larger than route A's, so route E's gene numbers differ from route A's.
+
 ## How long it takes
 
 About 5 min per route for `gippa run` on 4 CPUs (route B about 8.5 min), after `gippa setup` and with the container images
@@ -123,6 +164,7 @@ seconds. Measured with the commands above:
 | B | 8:31 |
 | C | 5:07 |
 | D | 4:59 |
+| E | not measured yet; expected close to route A |
 
 More CPUs do not make it faster: the steps run one after another, and each one spends most of
 its few seconds starting up.
@@ -159,6 +201,7 @@ For a whole genome with the defaults, see the [quick start](quickstart.md).
 | B | `protein_list` | 158 | 106 |
 | C | `two_peptide` | | 4 (from 76 converted rows) |
 | D | `mayu` | see `expected/D.json` | see `expected/D.json` |
+| E | `decoy_picked` | see `expected/E.json` | see `expected/E.json`; 0 novel ORFs called |
 
 - **Routes A and D are `mayu`, not `decoy_picked`.** A 200 kb region keeps too few decoys: 37
   decoy rows remain, but only 4 of 10 decoy peptides pair with a gene, below the 80 % that
@@ -170,27 +213,31 @@ For a whole genome with the defaults, see the [quick start](quickstart.md).
 - **Region effects.** The q-values, PEPs and MaxLFQ values come from DIA-NN's search of the whole
   proteome; the subset does not recompute them. A peptide shared with a gene outside the region
   looks unique here. Do not compare these numbers with whole-genome runs.
-- **Empty on this region:** genomic islands, variants and novel ORFs (0 each), enrichment and GSEA
+- **Route E** is described [above](#route-e-dia-nn-report-six-frame-database): a few novel-ORF
+  candidates, none called.
+- **Empty on this region:** genomic islands, variants and novel ORFs (0 each; route E has a few
+  candidates and 0 called), enrichment and GSEA
   (the light database has no categories), and autocorrelation (`not_estimable`). Route A finds 46
   operons (4 flagged) and one gene cluster with 30 of its 71 genes detected, against 42.4
   expected.
 - Preflight info rows such as a short genome or small replicons are expected on a region; they are
   not faults.
 
-`gippa-example/expected/` holds each route's numbers (`A.json` to `D.json`) and their tolerances, and
+`gippa-example/expected/` holds each route's numbers (`A.json` to `E.json`) and their tolerances, and
 `expected/README.md` shows them as a table with the file and column each one comes from. Other
 machines, thread counts or container runtimes may differ within those tolerances. A Bakta full
 database or an installed UniOP can change the gene and operon numbers.
 
-To read the four runs and compare them, follow the tutorial
-[One Nissle region, four routes](../tutorials/example-routes.md).
+To read the five runs and compare routes A–D, follow the tutorial
+[Nissle regions, five routes](../tutorials/example-routes.md).
 
 ## Licence and citation
 
 - **No licence is granted for the PXD078459-derived files** (`A_diann/`, `B_proteins/`,
-  `C_cascadia/`, `D_generic/`). The dataset record states no licence. The files are provided only
-  to demonstrate and test GIPPA, with attribution to the depositors; rows were selected and file
-  paths shortened, nothing else was changed.
+  `C_cascadia/`, `D_generic/`, `E_sixframe/`). The dataset record states no licence. The files are
+  provided only to demonstrate and test GIPPA, with attribution to the depositors; rows were
+  selected and file paths shortened, and in `E_sixframe/` the six-frame ORF IDs (made by GIPPA)
+  were renumbered to route E's region's coordinates.
 - **Cite PXD078459** (iProX **IPX0017169000**) if you use them.
 - **Withdrawn on request.** If you hold rights to the data and object, open an issue and the
   bundle will be withdrawn.

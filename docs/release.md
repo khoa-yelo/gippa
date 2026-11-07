@@ -357,7 +357,7 @@ gh run download <run id> -n release -D local/review/m11-release/r<k>/
     - `gippa --version` prints `gippa, version <v>`;
     - the JSON has `"gippa": "<v>"`;
     - preflight exits 0;
-    - `gippa example fetch` exits 0 and prints the four routes (a patch fetches the bundle of
+    - `gippa example fetch` exits 0 and prints the five routes (a patch fetches the bundle of
       `v<X.Y>.0`);
     - the pin test passes.
 - Evidence: a PROGRESS line with the five outputs.

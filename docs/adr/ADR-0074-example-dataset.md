@@ -76,3 +76,10 @@ the depositors did not, are renumbered to the region's coordinates so that `gipp
 with the bundle genome (spec M12-01 rule 9). Route E demonstrates the six-frame workflow; with 35
 distinct ORF entries in the region no novel ORF can reach q ≤ 0.01, so `expected/E.json` pins 0
 calls. The 1.1 bundle is rebuilt and re-pinned before 1.1.0rc1.
+
+- 2026-11-06 (Khoa, in session): route E gets its own 200 kb region,
+  `NZ_CP058217.1:1400001-1600000` (contig `nissle1917_NZ_CP058217_1_1400000_1600000`, its own
+  genome file in the bundle), because the shared region holds no ORF-only peptide that passes
+  DIA-NN's `Global.Q.Value` ≤ 0.01, the filter `gippa run` applies, so route E showed no candidate.
+  The row-level lift covers A4's rows inside route E's region instead of the shared one. Routes
+  A–D, their files and their baselines are unchanged (spec M12-01, second 2026-11-06 amendment).

@@ -14,9 +14,21 @@ from collections.abc import Iterable, Mapping
 from pathlib import Path
 from typing import Any
 
-ROUTES = ("A", "B", "C", "D")
-CONVERTED = frozenset("ACD")  # first command `gippa convert`
-ABUNDANCE = frozenset("ABD")
+ROUTES = ("A", "B", "C", "D", "E")
+CONVERTED = frozenset("ACDE")  # first command `gippa convert`
+ABUNDANCE = frozenset("ABDE")
+NOVEL = frozenset("E")  # the six-frame route: the novel-ORF keys (route E, 2026-11-06)
+NOVEL_KEYS = ("n_novel_candidates", "n_novel_called", "n_novel_unpaired", "novel_classes")
+NOVEL_CLASS_FIELDS = (
+    "regime",
+    "class",
+    "estimated",
+    "n_targets",
+    "n_target_wins",
+    "n_decoys",
+    "q_floor",
+    "floor_above_alpha",
+)
 _COUNT_2 = {"abs": 1, "rel": 0.02}
 TOLERANCES: dict[str, Any] = {  # spec section 2, `expected/` (key numbers)
     "status": "exact",
@@ -28,6 +40,10 @@ TOLERANCES: dict[str, Any] = {  # spec section 2, `expected/` (key numbers)
     "n_detected_2pep": _COUNT_2,
     "n_peptides_placed": _COUNT_2,
     "n_abundance": _COUNT_2,
+    "n_novel_candidates": _COUNT_2,
+    "n_novel_called": "exact",
+    "n_novel_unpaired": _COUNT_2,
+    "novel_classes": "informational",
     "warnings": "informational",
     "wall_time_s": "informational",
 }
@@ -39,6 +55,8 @@ def required_keys(route: str) -> set[str]:
         keys.discard("convert_rows")
     if route not in ABUNDANCE:
         keys.discard("n_abundance")
+    if route not in NOVEL:
+        keys -= set(NOVEL_KEYS)
     return keys
 
 
@@ -117,6 +135,38 @@ def measure(route: str, outdir: Path, peptides: Path | None = None) -> dict[str,
                                      for g in genes)  # fmt: skip
     if (hits := outdir / "mapping" / "peptide_hits.tsv").is_file():
         got["n_peptides_placed"] = len({h["peptide"] for h in _tsv(hits)})
+    if route in NOVEL:
+        got |= _novel(outdir)
+    return got
+
+
+def _novel(outdir: Path) -> dict[str, Any]:
+    """Route E's novel-ORF keys (spec section 2, `expected/`). ``n_novel_unpaired`` counts the
+    ``no_makedb_pair`` rows of ``intermediate/novel/novel_class_fdr.parquet``: 0 when it has no
+    data rows or is absent from a finished run."""
+    got: dict[str, Any] = {}
+    if (orfs := outdir / "tables" / "novel_orfs.tsv").is_file():
+        rows = _tsv(orfs)
+        got["n_novel_candidates"] = len(rows)
+        got["n_novel_called"] = sum(_true(r.get("called")) for r in rows)
+    fdr = next(  # the runner writes it under intermediate/ (runner/local.py)
+        (p for p in (outdir / "intermediate" / "novel" / "novel_class_fdr.parquet",
+                     outdir / "novel" / "novel_class_fdr.parquet") if p.is_file()),
+        None,
+    )  # fmt: skip
+    if fdr is not None:
+        import pandas as pd
+
+        table = pd.read_parquet(fdr)
+        reason = table["reason"] if "reason" in table.columns else pd.Series([], dtype=object)
+        got["n_novel_unpaired"] = int((reason == "no_makedb_pair").sum())  # 0 with no data rows
+    elif orfs.is_file() or (outdir / "run_manifest.json").is_file():
+        # not written because the run has no candidate: 0, never null (amendment 2026-11-06 (b))
+        got["n_novel_unpaired"] = 0
+    if (man := outdir / "run_manifest.json").is_file():
+        block = json.loads(man.read_text(encoding="utf-8")).get("novel_orfs") or {}
+        got["novel_classes"] = [{k: c.get(k) for k in NOVEL_CLASS_FIELDS}
+                                for c in block.get("classes") or []]  # fmt: skip
     return got
 
 

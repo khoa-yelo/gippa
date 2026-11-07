@@ -56,26 +56,40 @@ def readme(
     length_bp: int,
     routes: Sequence[Mapping[str, Any]],
     expected: bool,
+    region_e: Mapping[str, Any],
+    e_counts: Mapping[str, Any],
+    genome: str,
+    genome_e: str,
 ) -> str:
+    """``region``/``length_bp``: the shared region of routes A-D; ``region_e``: route E's region
+    (``SELECTION.json > region_e``); ``e_counts``: ``SELECTION.json > counts > E``;
+    ``genome``/``genome_e``: the file names under ``genome/`` of the two regions."""
     blocks = []
     for route in routes:
         cmds = "\n".join(fill(str(c)) for c in route["commands"])
         blocks.append(f"### {route['title']}\n\n```bash\n{cmds}\n```\n")
     exp = (
-        "`expected/` holds the key numbers of each route (`A.json` to `D.json`, with a tolerance "
+        "`expected/` holds the key numbers of each route (`A.json` to `E.json`, with a tolerance "
         "per key) and `expected/README.md` shows them as a table, with the file and column each "
         "comes from."
         if expected
         else "This build has no `expected/` directory (the numbers are added at release prep)."
     )
     length = region_length(length_bp)
+    named, in_region = e_counts["orf_entries_named"], e_counts["region_orf_entries"]
+    start = int(region_e["start_0based"])
+    e_region, e_length = region_e["one_based_closed"], region_length(int(region_e["length_bp"]))
     return f"""# GIPPA example bundle {version}
 
-A real, cut-down dataset for trying GIPPA: one region of the *E. coli* Nissle 1917 chromosome,
-`{region}` (1-based closed; {length}), and the peptides of the ProteomeXchange dataset {PXD}
-(runs WT_1 to WT_3) that fall in it. The same region is given through four input routes: a DIA-NN
-report (A), a protein FASTA with an abundance table (B), Cascadia de novo results (C) and a generic
-peptide table (D). Nothing was re-searched; `SELECTION.json` holds the selection rule and the
+A real, cut-down dataset for trying GIPPA: regions of the *E. coli* Nissle 1917 chromosome and
+the peptides of the ProteomeXchange dataset {PXD} (runs WT_1 to WT_3) that fall in them, given
+through five input routes: a DIA-NN report (A), a protein FASTA with an abundance table (B),
+Cascadia de novo results (C), a generic peptide table (D) and a DIA-NN report of a search against
+a six-frame database (E). The routes A-D share one region, `{region}` (1-based closed; {length}),
+in `genome/{genome}`; route E has its own {e_length} region of the same chromosome, `{e_region}`,
+in `genome/{genome_e}`, because the shared region has no ORF-only peptide that passes DIA-NN's
+global q-value at 0.01, so route E would show no novel-ORF candidate there. Nothing was
+re-searched; `SELECTION.json` holds the selection rule and the
 sha256 of every source and output, and `PROVENANCE.md` says where each file comes from. The data
 licence is in `LICENSE-DATA.md` (the data are not MIT-licensed).
 
@@ -107,6 +121,21 @@ longer (see the GIPPA docs, "Try the example").
   whole-proteome search (4,685 strain proteins plus contaminants, three runs). The subset does not
   recompute them.
 - A Bakta full database, or an installed UniOP, can change the gene and operon numbers.
+- Route E shows the six-frame workflow, not discoveries: expect a few novel-ORF candidates and no
+  call. A class needs at least 100 target wins over its decoys before its q floor can reach 0.01,
+  and the kept rows name {named:,} ORF entries (of {in_region:,} in route E's region); the
+  genome-wide six-frame run called 0 of 109 for the same reason. Empty novel-ORF results of
+  routes A to D are expected too.
+- Route E's ORF IDs name route E's region contig and region coordinates, not
+  `NZ_CP058217.1`; add {start:,} to get chromosome coordinates.
+- Route E runs on another region than routes A-D, so its gene numbers cannot be compared with
+  theirs, and `gippa compare` (which refuses runs on different genomes) compares A-D only.
+- Route E's tier is `decoy_picked`, unlike route A's `mayu`: on route E's own region enough
+  decoys pair with a gene (no `decoy_pairing_low` warning). Its ORF decoys pair with their
+  targets through the novel-ORF classes, each `picked_decoy`.
+- Route E's q-values and PEPs are DIA-NN's on the whole six-frame search (147,753 strain records
+  plus 381 contaminants, the same three runs); a 29-fold larger database changes the scores, so
+  its gene numbers differ from route A's.
 """
 
 
@@ -118,15 +147,30 @@ def provenance(
     build: Mapping[str, str],
     rewritten: Mapping[str, Sequence[str]],
     static: Mapping[str, Mapping[str, str]],
+    a4: Mapping[str, Any],
+    n_rewritten: int,
+    region_e: Mapping[str, Any],
+    genome_e_sha256: str,
 ) -> str:
     """``static``: the ``diann_image``, ``diann_cfg``, ``a2_abundance`` and ``cascadia_weights``
-    labels and sha256s (``build_example.static_digests``)."""
+    labels and sha256s (``build_example.static_digests``); ``a4``: route E's ``digests`` (path
+    under the A4 directory -> sha256) and shortened ``commands`` (``build_example.a4_extras``);
+    ``n_rewritten``: the distinct ORF IDs rule 9 rewrote; ``region_e``/``genome_e_sha256``: route
+    E's region (``SELECTION.json > region_e``) and the sha256 of its genome file."""
     st = {k: v["sha256"] for k, v in static.items()}
     lb = {k: v["label"] for k, v in static.items()}
     src = "\n".join(f"| `{k}` | `{v['path']}` | `{v['sha256']}` |" for k, v in sources.items())
     runs = "\n".join(f"- {r}: `{f}`" for r, f in RUN_FILES.items())
     a, c = counts["A"], counts["C"]
     c_rows = ", ".join(f"{r} {v['rows_kept']} of {v['rows_total']}" for r, v in c.items())
+    e = counts["E"]
+    a4_dig = "\n".join(f"  - `{k}`: sha256 `{v}`" for k, v in a4.get("digests", {}).items())
+    a4_cmd = "\n".join(
+        f"  - `{k}` (paths shortened to base names):\n\n    ```\n    "
+        + v.replace("\n", "\n    ")
+        + "\n    ```\n"
+        for k, v in a4.get("commands", {}).items()
+    )
     scrub = "; ".join(f"`{k}`: {', '.join(f'`{c}`' for c in v)}" for k, v in rewritten.items())
     return f"""# Provenance of the GIPPA example bundle {version}
 
@@ -140,9 +184,16 @@ def provenance(
 ## Genome
 
 - *E. coli* Nissle 1917, {ASSEMBLY} (GenBank twin {GENBANK}), chromosome `{region["contig"]}`.
-- Region: `{region["one_based_closed"]}` (1-based closed) = `[{region["start_0based"]},
-  {region["end_exclusive"]})` (0-based half-open), {region["length_bp"]} bp, written as one linear
-  contig `{region["output_contig_id"]}` (no topology tag).
+- Region of routes A-D: `{region["one_based_closed"]}` (1-based closed) =
+  `[{region["start_0based"]}, {region["end_exclusive"]})` (0-based half-open),
+  {region["length_bp"]} bp, written as one linear contig `{region["output_contig_id"]}` (no
+  topology tag).
+- Route E's region: `{region_e["one_based_closed"]}` (1-based closed) =
+  `[{region_e["start_0based"]}, {region_e["end_exclusive"]})` (0-based half-open),
+  {region_e["length_bp"]} bp, written by the same rules as the linear contig
+  `{region_e["output_contig_id"]}`; its genome file has sha256 `{genome_e_sha256}`. Route E has
+  its own region because the shared one has no ORF-only peptide that passes DIA-NN's global
+  q-value at 0.01.
 
 ## Routes
 
@@ -154,6 +205,20 @@ def provenance(
 - C: Cascadia {TOOLS["cascadia"]} rows whose peptide occurs in the region's six-frame translation:
   {c_rows}.
 - D: route A's rows grouped by (stripped peptide, run); {counts["D"]["rows"]} rows.
+- E: DIA-NN {TOOLS["diann"]} report rows of the pilot's six-frame arm A4 whose IDs all lie in
+  route E's region; {e["target_rows_kept"]} target and {e["decoy_rows_kept"]} decoy rows of
+  {e["rows_total"]}, {e["rows_with_orf_ids"]} with an ORF ID; {n_rewritten} distinct ORF IDs
+  rewritten to region coordinates (`SELECTION.json` > `orf_id_rewrite`).
+  - Database: `gippa makedb --six-frame-orfs` at GIPPA 1.0.0 (`--min-orf-aa 20`, no
+    contaminants, genetic code 11; 4,613 cds, 72 sorf and 143,068 orf records), the sources
+    `a4_strain_db` and `a4_db_id_map` below.
+  - Search: DIA-NN {TOOLS["diann"]}, the same image as route A, `jobs/diann_A4.cfg`
+    (`diann_A2.cfg` with only `--fasta` changed, plus the 381 contaminant records), Slurm job
+    1918156; the report is the source `a4_report` below.
+{a4_dig}
+{a4_cmd}
+  - The genome-wide run of A4 called 0 novel ORFs (109 candidates; no class reached the 100
+    target wins a q floor of 0.01 needs).
 - Paths shortened to base names (R12): {scrub or "none"}.
 
 ## Tools and tables
@@ -191,17 +256,18 @@ LICENSE_DATA = f"""# Data licence
 
 The GIPPA software is MIT-licensed. This licence does **not** cover the data files of this bundle.
 
-The files under `A_diann/`, `B_proteins/`, `C_cascadia/` and `D_generic/` are derived from the
-ProteomeXchange dataset {PXD} (iProX {IPX}), announced 2026-05-16. The dataset record states no
-licence, and its publication is pending. The files are redistributed for the sole purpose of
-demonstrating and testing GIPPA, with attribution to the depositors of {PXD}. The rows of
-`A_diann/` and `C_cascadia/` are unchanged: rows were selected and file paths shortened to base
-names. The files under `B_proteins/` and `D_generic/` (routes B and D) are derived tables computed
-from the route A rows: the median abundance over runs of each protein group, the grouping of the
-rows by peptide and run, and the ProForma rewrite of the modified sequences; `proteins.faa` holds
-the strain database sequences of those proteins. The GIPPA authors grant no licence to these
-files. Cite {PXD} if you use them. If you are a rights holder and object, open an issue and the
-bundle will be withdrawn.
+The files under `A_diann/`, `B_proteins/`, `C_cascadia/`, `D_generic/` and `E_sixframe/` are
+derived from the ProteomeXchange dataset {PXD} (iProX {IPX}), announced 2026-05-16. The dataset
+record states no licence, and its publication is pending. The files are redistributed for the sole
+purpose of demonstrating and testing GIPPA, with attribution to the depositors of {PXD}. The rows
+of `A_diann/`, `C_cascadia/` and `E_sixframe/` are unchanged: rows were selected, file paths
+shortened to base names, and in `E_sixframe/` the identifiers of six-frame ORFs (made by GIPPA,
+not by the depositors) renumbered to the region's coordinates. The files under `B_proteins/` and
+`D_generic/` (routes B and D) are derived tables computed from the route A rows: the median
+abundance over runs of each protein group, the grouping of the rows by peptide and run, and the
+ProForma rewrite of the modified sequences; `proteins.faa` holds the strain database sequences of
+those proteins. The GIPPA authors grant no licence to these files. Cite {PXD} if you use them. If
+you are a rights holder and object, open an issue and the bundle will be withdrawn.
 
 `genome/` holds a region of the *E. coli* Nissle 1917 assembly {ASSEMBLY} (GenBank {GENBANK}),
 which is INSDC data with no use restrictions by NCBI. `expected/`, `README.md`, `PROVENANCE.md`,

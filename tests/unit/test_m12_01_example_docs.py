@@ -14,7 +14,7 @@ AC 15: the fenced route commands of ``docs/get-started/example.md`` equal
 ``src/gippa/data/example_routes.yaml``'s, with ``{dir}`` written as ``gippa-example`` (the default
 ``--outdir``) and so ``{out}`` (``{dir}/runs``) as ``gippa-example/runs``.
 
-Q-K4 (default yes): ``docs/tutorials/example-routes.md``, "Tutorial: one Nissle region, four
+Q-K4 (default yes): ``docs/tutorials/example-routes.md``, "Tutorial: Nissle regions, five
 routes", replaces the empty ``docs/tutorials/ecoli-k12.md``; the K-12 tutorial goes to
 ``docs/backlog.md``.
 """
@@ -33,7 +33,7 @@ DOCS = REPO / "docs"
 EXAMPLE = "get-started/example.md"
 TUTORIAL = "tutorials/example-routes.md"
 OLD_TUTORIAL = "tutorials/ecoli-k12.md"
-TUTORIAL_TITLE = "# Tutorial: one Nissle region, four routes"
+TUTORIAL_TITLE = "# Tutorial: Nissle regions, five routes"  # route E region, 2026-11-06
 DIR = "gippa-example"
 OUT = f"{DIR}/runs"
 PEPTIDE_LIKE = re.compile(r"[ACDEFGHIKLMNPQRSTVWY]{7,}")  # the M10-05 / M11-08 guard regex
@@ -119,7 +119,7 @@ def test_example_page_route_commands_equal_the_yaml(routes: dict[str, dict[str, 
     assert _route_commands(_fenced_commands(_text(EXAMPLE))) == want
 
 
-@pytest.mark.parametrize("rid", ["A", "B", "C", "D"])
+@pytest.mark.parametrize("rid", ["A", "B", "C", "D", "E"])
 def test_example_page_route_section_holds_its_commands(
     routes: dict[str, dict[str, object]], rid: str
 ) -> None:
@@ -179,18 +179,19 @@ def test_tutorial_title_and_not_a_stub() -> None:
 
 
 def test_tutorial_reads_genes_and_report_per_route() -> None:
-    """Run the four routes, read ``genes.tsv`` and the report; the tier changes with the input."""
+    """Run the five routes, read ``genes.tsv`` and the report; the tier changes with the input."""
     text = _text(TUTORIAL)
     for needle in ("genes.tsv", "report.html", "../get-started/example.md"):
         assert needle in text, needle
     for tier in TIERS:
         assert f"`{tier}`" in text, tier
-    for rid in "ABCD":
+    for rid in "ABCDE":
         assert f"{OUT}/{rid}" in text, rid
 
 
-def test_tutorial_compares_the_four_runs(ref: dict[tuple[str, ...], set[str]]) -> None:
-    """``gippa compare`` of the four run directories in order A-D with ``--labels A,B,C,D``.
+def test_tutorial_compares_routes_a_to_d(ref: dict[tuple[str, ...], set[str]]) -> None:
+    """``gippa compare`` of the run directories A-D with ``--labels A,B,C,D`` (AC 24, route E
+    region, 2026-11-06: route E runs on another genome, which ``gippa compare`` refuses).
 
     ``--outdir`` is required by ``gippa compare`` (docs/reference/cli.md), so the fenced command
     carries it although the spec's one-liner omits it."""
@@ -199,7 +200,8 @@ def test_tutorial_compares_the_four_runs(ref: dict[tuple[str, ...], set[str]]) -
     cmd = cmds[0]
     runs = " ".join(f"{OUT}/{rid}" for rid in "ABCD")
     assert cmd.startswith(f"gippa compare {runs} "), cmd
-    assert "--labels A,B,C,D" in cmd and "--outdir " in cmd, cmd
+    assert "--labels A,B,C,D " in cmd + " " and "--outdir " in cmd, cmd
+    assert f"{OUT}/E" not in cmd, cmd
     assert option_problems(cmd, ref) == []
 
 
