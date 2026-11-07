@@ -442,7 +442,8 @@ def test_licence_covers_e_sixframe_and_the_renumbering(base: Built) -> None:
     assert base.tree is not None
     text = flat((base.tree / "LICENSE-DATA.md").read_text())
     for needle in ("`E_sixframe/`", "six-frame ORFs", "made by GIPPA, not by the depositors",
-                   "renumbered to the region's coordinates", "PXD078459"):  # fmt: skip
+                   "renumbered to route E's region's coordinates", "PXD078459",
+                   "holds two regions", "one for route E"):  # fmt: skip
         assert needle in text, needle
 
 

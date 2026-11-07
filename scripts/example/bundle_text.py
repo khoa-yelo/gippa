@@ -261,18 +261,18 @@ derived from the ProteomeXchange dataset {PXD} (iProX {IPX}), announced 2026-05-
 record states no licence, and its publication is pending. The files are redistributed for the sole
 purpose of demonstrating and testing GIPPA, with attribution to the depositors of {PXD}. The rows
 of `A_diann/`, `C_cascadia/` and `E_sixframe/` are unchanged: rows were selected, file paths
-shortened to base names, and in `E_sixframe/` the identifiers of six-frame ORFs (made by GIPPA,
-not by the depositors) renumbered to the region's coordinates. The files under `B_proteins/` and
+shortened to base names, and in `E_sixframe/` the identifiers of six-frame ORFs (made by GIPPA, not
+by the depositors) renumbered to route E's region's coordinates. The files under `B_proteins/` and
 `D_generic/` (routes B and D) are derived tables computed from the route A rows: the median
 abundance over runs of each protein group, the grouping of the rows by peptide and run, and the
 ProForma rewrite of the modified sequences; `proteins.faa` holds the strain database sequences of
 those proteins. The GIPPA authors grant no licence to these files. Cite {PXD} if you use them. If
 you are a rights holder and object, open an issue and the bundle will be withdrawn.
 
-`genome/` holds a region of the *E. coli* Nissle 1917 assembly {ASSEMBLY} (GenBank {GENBANK}),
-which is INSDC data with no use restrictions by NCBI. `expected/`, `README.md`, `PROVENANCE.md`,
-`SELECTION.json`, `bundle.json` and `CHECKSUMS.sha256` are written by GIPPA tooling and are
-MIT-licensed, like GIPPA.
+`genome/` holds two regions of the *E. coli* Nissle 1917 assembly {ASSEMBLY} (GenBank {GENBANK}),
+one shared by routes A-D and one for route E, which are INSDC data with no use restrictions by
+NCBI. `expected/`, `README.md`, `PROVENANCE.md`, `SELECTION.json`, `bundle.json` and
+`CHECKSUMS.sha256` are written by GIPPA tooling and are MIT-licensed, like GIPPA.
 """
 
 
