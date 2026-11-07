@@ -584,12 +584,12 @@ with the sha256 of every source and output file. In summary:
 > redistributed for the sole purpose of demonstrating and testing GIPPA, with attribution to the
 > depositors of PXD078459. The content is unchanged: rows were selected, file paths shortened,
 > and in `E_sixframe/` the identifiers of six-frame ORFs (made by GIPPA, not by the depositors)
-> renumbered to the region's coordinates. The GIPPA
+> renumbered to route E's region's coordinates. The GIPPA
 > authors grant no licence to these files. Cite PXD078459 if you use them. If you are a rights
 > holder and object, open an issue and the bundle will be withdrawn.
 >
-> `genome/` holds a region of the *E. coli* Nissle 1917 assembly GCF_021559835.1 (GenBank
-> GCA_021559835.1), which is INSDC data with no use restrictions by NCBI. `expected/`, `README.md`,
+> `genome/` holds two regions of the *E. coli* Nissle 1917 assembly GCF_021559835.1 (GenBank
+> GCA_021559835.1), one shared by routes A–D and one for route E, which are INSDC data with no use restrictions by NCBI. `expected/`, `README.md`,
 > `PROVENANCE.md`, `SELECTION.json`, `bundle.json` and `CHECKSUMS.sha256` are written by GIPPA
 > tooling and are MIT-licensed, like GIPPA.
 
@@ -977,7 +977,7 @@ Still open, each with its reversible default:
 | Q-K4 | Replace the empty `tutorials/ecoli-k12.md` with the example tutorial? | yes; the K-12 tutorial goes to the backlog |
 | Q-K5 | The asset upload is a manual step by you (13b), because the bundle is built on FarmShare and `release.yml` cannot see it. Fine? | manual step 13b by Khoa |
 | Q-K7 | File paths in the data are shortened to base names. Acceptable? | yes |
-| Q-K8 (route E, 2026-11-06) | The licence statement adds `E_sixframe/` and "the identifiers of six-frame ORFs (made by GIPPA, not by the depositors) renumbered to the region's coordinates". Fine? | yes, the amended text of section 2 |
+| Q-K8 (route E, 2026-11-06) | The licence statement adds `E_sixframe/` and "the identifiers of six-frame ORFs (made by GIPPA, not by the depositors) renumbered to the region's coordinates". Fine? | yes, the amended text of section 2; route E region (Khoa, 2026-11-07): "genome/ holds two regions" and "route E's region's coordinates" |
 
 ### For the lead
 
