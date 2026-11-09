@@ -1,5 +1,5 @@
 # ADR-0076: 1.1 carries forward the 1.0.0 waivers of R2, R5 (TE4 only) and R7
-- Status: proposed (Khoa chose "New 1.1 waiver ADRs" on 2026-11-09; this becomes accepted-by-khoa when Khoa accepts the text)
+- Status: accepted-by-khoa (2026-11-09, in session: "New 1.1 waiver ADRs (Recommended)"; "accept ADR-0076 and merge it")
 - Date: 2026-11-09
 - Spec sections: §13.2, §11.6, §7.2.5; `scripts/release/readiness.py` rows R2, R5, R7; ADR-0070, ADR-0071, ADR-0072
 - Needs Khoa: yes (release criteria that fail or cannot be evaluated)
