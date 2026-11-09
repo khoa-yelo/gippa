@@ -14,7 +14,7 @@ where the ORF sits. No row gives a gene name, and no row gives a neighbour.
 
 ## Spec sections touched
 
-- GIPPA_SPEC.md §9.3 `tables/novel_orfs.tsv`: eight columns added after `overlapping_gene`.
+- GIPPA_SPEC.md §9.3 `tables/novel_orfs.tsv`: nine columns added after `overlapping_gene`.
   `flags` stays last. Adding columns is a minor change (§9.2 "Versioning"). ADR-0075 already
   allows column changes in 1.1, so this spec needs no new ADR.
 - §6.5: internal 0-based half-open coordinates. The new columns hold no coordinates, only locus
@@ -100,7 +100,7 @@ where the ORF sits. No row gives a gene name, and no row gives a neighbour.
    features (tRNA, rRNA, CRISPR) and other novel ORFs are not genes here (Q1). Partial genes at a
    linear end count, at their stored interval.
 
-8. **Reading older trees.** A 1.0 or 1.1.0rc1 `novel_orfs.tsv` lacks the eight columns.
+8. **Reading older trees.** A 1.0 or 1.1.0rc1 `novel_orfs.tsv` lacks the nine columns.
    `gippa.io.migration` gains `ADDED_COLUMNS = {"novel_orfs": (...)}`, and
    `RunView.read_schema_tsv` fills every absent added column with `NA`, `overlap_relation`
    included, because the relation was not computed. A tree that lacks some other schema column
@@ -121,7 +121,7 @@ where the ORF sits. No row gives a gene name, and no row gives a neighbour.
 10. **Writer.** The new cells are strings or integers, so `write_novel_orfs` adds nothing to
     `POSITION_COLUMNS` and the distances are not shifted. The new cells are computed by a pure
     function, `gippa.novel.gene_context.gene_context(table, gm) -> pd.DataFrame`. It returns the
-    eight columns, indexed like `table`, and `steps/novel.py` calls it after `orf_table`.
+    nine columns, indexed like `table`, and `steps/novel.py` calls it after `orf_table`.
     `orf_table` keeps its signature.
 
 ## Worked examples
@@ -158,7 +158,7 @@ internal 60 and T_0001 starts at 100, so the distance is 40.
 
 ## Edge cases
 
-- **Empty table** (no ORF, `sim_empty`): the header has all 34 columns and there are no rows.
+- **Empty table** (no ORF, `sim_empty`): the header has all 35 columns and there are no rows.
 - **Replicon with no genes, or with only the host gene** on a linear replicon: the flanks are
   `NA`. On a circular replicon, the other genes are used as in E8.
 - **ORF overlapping several genes:** the host is still `overlapping_gene`, and every other
@@ -179,7 +179,7 @@ internal 60 and T_0001 starts at 100, so the distance is 40.
 - AC1: `gene_context` on the synthetic model returns E1–E10 exactly.
 - AC2: `gene_label` returns `dnaA` for a named gene, the locus tag for `None`, `""`, `"  "`,
   `"NA"` and `"na"`, and never returns `"NA"`.
-- AC3: `NOVEL_ORFS_COLUMNS` equals the 1.1.0rc1 list with the eight columns inserted after
+- AC3: `NOVEL_ORFS_COLUMNS` equals the 1.1.0rc1 list with the nine columns inserted after
   `overlapping_gene`. `novel_orfs.schema.json` lists them with the types in rule 2, the enum for
   `overlap_relation` and `minimum: 0` for the distances.
   `test_this_repository_is_schema_compatible_with_its_last_release` passes.
@@ -190,16 +190,16 @@ internal 60 and T_0001 starts at 100, so the distance is 40.
 - AC6: every non-NA tag in `overlapping_gene`, `other_overlapping_genes`, `upstream_gene` and
   `downstream_gene` is a `genes.tsv` `locus_tag` of the same run (sim golden run).
 - AC7: `RunView` reads `novel_orfs.tsv` with the 1.1.0rc1 header (route E copy, or a fixture
-  without the eight columns) and the 1.0 header. The eight columns come back NA. A file missing
+  without the nine columns) and the 1.0 header. The nine columns come back NA. A file missing
   `class` still raises.
 - AC8: the report's Novel ORFs preview header equals `NOVEL_PREVIEW`, restricted to the columns
   present. NA labels render as `none` and `—` (rule 9).
-- AC9: `scripts/docs/gen_reference.py` regenerates `docs/reference/tables.md` with the eight rows,
+- AC9: `scripts/docs/gen_reference.py` regenerates `docs/reference/tables.md` with the nine rows,
   and the reference-sources test passes.
 
 ## Changes beyond the table (PR B)
 
-- `src/gippa/schemas/tables/novel_orfs.schema.json`: eight fields, with descriptions that state
+- `src/gippa/schemas/tables/novel_orfs.schema.json`: nine fields, with descriptions that state
   the strand convention. `datapackage.json` `output_schema_version` stays `1.3`, because 1.3 is
   still unreleased and already above v1.0.0, which is what the schema-diff check needs (Q3).
 - `src/gippa/io/migration.py`: `ADDED_COLUMNS` and its docstring line. `run_view.py` does the

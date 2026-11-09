@@ -1,7 +1,8 @@
 /* GIPPA report tables: click a header to sort, type in the box to filter (M9-14 behaviour 4).
    The rules are those of gippa/report/tables.py: numeric sort when every non-NA cell is a
-   number, else string; ties keep their order; NA last; filter = case-insensitive substring. Cells sort by their shown text (textContent), so an
-   italic locus tag in the genes preview sorts as that tag, never as NA. */
+   number, else string; ties keep their order; NA last; filter = case-insensitive substring.
+   Cells sort by their shown text (textContent), so an italic locus tag in the genes preview
+   sorts as that tag, never as NA. */
 (function () {
   "use strict";
   var NA = "NA";
