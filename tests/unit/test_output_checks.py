@@ -67,6 +67,15 @@ ORF_ROW: dict[str, str] = {
     "called": "true",
     "rank": "1",
     "overlapping_gene": "NA",
+    "overlapping_gene_label": "NA",
+    "overlap_relation": "none",
+    "other_overlapping_genes": "NA",
+    "upstream_gene": "G1",
+    "upstream_gene_label": "G1",
+    "upstream_distance_nt": "4",
+    "downstream_gene": "G2",
+    "downstream_gene_label": "G2",
+    "downstream_distance_nt": "20",
     "flags": "rbs_supported",
 }
 

@@ -82,8 +82,9 @@ FIXTURES: tuple[tuple[str, str], ...] = (
 )
 #: the goldens hold numbers only, so 11c leaves them byte-identical (spec example)
 GOLDEN_SHA256 = {
+    # M12-05b appends nine gene-context columns; the 26 earlier columns are byte-identical
     "tests/data/golden/sim50k_m7/novel_orfs.tsv":
-        "29d294727bdf9ef862e06512a464e2d636690052fd21e98be46d740221e52989",
+        "08a29207c88dcfdc56ea76b41b69995011e169ebdbdba94701ab2f914b3f5065",
     # PR 10 (putative_start) caps the TTG->M row, so this golden's content changes there
     "tests/data/golden/sim50k_m7/variants.tsv":
         "22c3d32ce87cdc899ad594a63ec3835aa79adec5c30226328bb91370f00426f2",
