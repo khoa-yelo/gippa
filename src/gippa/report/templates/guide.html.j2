@@ -1,0 +1,34 @@
+{# The figure caption of one plot instance: its structured guide (M12-05c § 3), or the stem and
+   file links when it has none (an empty-state figure of the compare report). #}
+{% macro figcaption(i) %}
+{% if i.guide %}
+{% set d = i.guide %}
+<figcaption class="links guide" data-stem="{{ i.stem }}">
+<dl class="guide{% if not d.full %} guide-short{% endif %}"{% if d.full %} id="guide-{{ d.pid }}"{% endif %} data-plot="{{ d.pid }}">
+<dt>Question</dt>
+<dd>{{ d.g.question }}</dd>
+{% if d.full %}
+<dt>Panels</dt>
+<dd><ul>
+{% for p in d.g.panels %}
+<li>{{ p }}</li>
+{% endfor %}
+</ul></dd>
+<dt>How to read</dt>
+<dd>{{ d.g.read }}</dd>
+{% if d.g.caveats %}
+<dt>Caveats</dt>
+<dd>{{ d.g.caveats }}</dd>
+{% endif %}
+{% else %}
+<dt>How to read</dt>
+<dd>{% if d.read %}{{ d.read }} (<a href="#guide-{{ d.pid }}">see the guide above</a>){% else %}As for the first {{ d.name }} (<a href="#guide-{{ d.pid }}">see the guide above</a>).{% endif %}</dd>
+{% endif %}
+<dt>Data</dt>
+<dd>{% if d.data %}<a href="{{ d.data[1] }}">{{ d.data[0] }}</a>{% else %}no data table for this figure{% endif %}; figure files:{% for label, href in d.images %} <a href="{{ href }}">{{ label }}</a>{% endfor %}</dd>
+</dl>
+</figcaption>
+{% else %}
+<figcaption class="links" data-stem="{{ i.stem }}">{{ i.stem }}{% for label, href in i.links %} <a href="{{ href }}">{{ label }}</a>{% endfor %}</figcaption>
+{% endif %}
+{% endmacro %}

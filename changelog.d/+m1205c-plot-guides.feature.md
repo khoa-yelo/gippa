@@ -1,0 +1,1 @@
+Each figure in the report now has a labelled guide: Question, Panels, How to read, Caveats, Data. The first figure of a plot carries the full guide, later figures of the same plot (locus views) a short one that links to it, and the comparison report's V16 figure gets its guide too.

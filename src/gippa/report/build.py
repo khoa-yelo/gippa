@@ -154,6 +154,19 @@ def not_applicable(
     return out
 
 
+def _guide(
+    pid: str, stem: str, data: str | None, images: list[tuple[str, str]], full: bool
+) -> dict[str, Any]:
+    """The template data of one figure's guide (M12-05c § 3): ``content.GUIDES[pid]`` (looked up
+    now, so a plot without a guide raises ``KeyError``), whether it is the ``full`` guide, the
+    short guide's own How to read (``None``: point to the full guide), the data TSV link
+    ``(text, href)`` and the image links."""
+    return {"pid": pid, "g": content.GUIDES[pid], "full": full,
+            "read": None if full else content.short_read(pid, stem),
+            "name": content.guide_name(pid), "images": images,
+            "data": None if data is None else (f"plots/{data}", f"../plots/{data}")}  # fmt: skip
+
+
 def _plot_slot(
     pid: str,
     files: PlotFiles | None,
@@ -163,16 +176,21 @@ def _plot_slot(
     linked: bool = False,
 ) -> dict[str, Any]:
     """One plot's slot; with ``notices`` an empty-state instance is a ``notice`` (its title, no
-    image, no twin; M12-04 PR 2) and each drawn instance carries its ``caption``; with ``linked``
-    a ``LINKED_PREFIX`` instance with an SVG file is an ``img`` of it, not inlined (PR 13)."""
+    image, no twin; M12-04 PR 2); with ``linked`` a ``LINKED_PREFIX`` instance with an SVG file is
+    an ``img`` of it, not inlined (PR 13). Each figure carries its ``guide`` (M12-05c): the full
+    guide on the first figure of the plot, a short one on the later ones; without ``notices`` an
+    empty-state figure has none. Raises ``KeyError`` for a figure of a plot not in
+    ``content.GUIDES``."""
     if files is None or not files.instances:
         note = f"not shown: {plain(skipped[pid])}" if pid in skipped else "plot file absent"
         return {"pid": pid, "note": note, "instances": [], "notices": [], "tables": []}
     insts: list[dict[str, Any]] = []
     empty: list[dict[str, Any]] = []
     tables: list[dict[str, Any]] = []
+    guided = False
     for inst in files.instances:
-        links = [(rel.rsplit(".", 1)[1].upper(), f"../plots/{rel}") for rel in inst.images]
+        images = [(rel.rsplit(".", 1)[1].upper(), f"../plots/{rel}") for rel in inst.images]
+        links = list(images)
         if inst.data is not None:
             links.append(("data TSV", f"../plots/{inst.data}"))
         index = content.INDEX_TABLES.get(pid)
@@ -192,8 +210,12 @@ def _plot_slot(
         svg = None if inst.svg is None or img else Markup(embed_svg(inst.svg, inst.stem))
         twin = twins.get(inst.stem)
         spec = None if twin is None else {"id": twin[0], "spec": Markup(_script_json(twin[1]))}
+        guide = None
+        if notices or not inst.empty:  # the compare report's empty V16 keeps its plain caption
+            guide = _guide(pid, inst.stem, inst.data, images, full=not guided)
+            guided = True
         insts.append({"stem": inst.stem, "svg": svg, "img": img, "links": links, "twin": spec,
-                      "caption": content.caption(pid, inst.stem)})  # fmt: skip
+                      "guide": guide})  # fmt: skip
     drawn = empty or tables or any(i["svg"] is not None or i["img"] for i in insts)
     return {"pid": pid, "note": None if drawn else "plot file absent", "instances": insts,
             "notices": empty, "tables": tables}  # fmt: skip
