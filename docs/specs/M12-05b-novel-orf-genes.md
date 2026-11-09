@@ -233,3 +233,10 @@ the viz label helper merges first, B imports it.
 | Q4 | Should `other_overlapping_genes` carry the strand relation per tag (e.g. `T_0002:antisense`)? | no: plain tags, strand in `genes.tsv` |
 | Q5 | Should the flanks also give the flanking gene's strand (operon context)? | no (keep light); add later if asked |
 | Q6 | Preview tokens `none` / `—` for NA labels: should M12-05c's caption wording decide them instead? | as in rule 9 |
+
+## Lead decisions (2026-11-09)
+- Khoa: Q1 "Protein genes only": only genes in `genes.tsv` count as overlapping or flanking genes. Q2 to Q6: the defaults above.
+- **Genes preview (Khoa, 2026-11-09, "Locus tag in italics").** In the report's genes preview (`src/gippa/report/build.py` `_genes_preview`), the `gene` cell shows the gene name when there is one. Otherwise it shows the locus tag in italics (`<em>`), with a `title` tooltip of the product and, when Bakta gives one, the UniRef50 ID. This uses the same `gene_label` helper. `genes.tsv` keeps `NA` (§9.2). The preview's sorter (`src/gippa/report/tables.py`, `templates/tables.js`) sorts by the shown label, so these cells are never treated as missing.
+  - Why: in the example (Bakta light), 74 of 158 route A CDS have no symbol. Bakta's genome.json holds no gene name for them in any field: 59 are UniRef50 (PSCC) hits with a product only, 17 are hypothetical, 9 have Pfam domains.
+  - Acceptance criterion: no preview cell in the `gene` column reads `NA`; a gene with no name shows `<em>{locus_tag}</em>` with the product in its title.
+  - This goes in PR A (tests) and PR B (implementation) of this spec.
