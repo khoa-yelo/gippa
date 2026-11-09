@@ -285,7 +285,6 @@ def _legends(fig: Figure) -> list[Legend]:
     return out
 
 
-@pytest.mark.xfail(strict=True, reason="M12-05a PR B: one key text per call status")
 def test_every_locus_view_has_a_novel_orf_key(
     tmp_path: Path, cfg: GippaConfig, nov: ModuleType
 ) -> None:
