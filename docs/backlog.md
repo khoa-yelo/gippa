@@ -1462,3 +1462,8 @@ the user guide is [Inputs › Genetic code](user-guide/inputs.md#genetic-code) a
   1.0.0-only records ADR-0070 to ADR-0073 waived 1.1.0rc1 rows too. Read a scope line (e.g.
   `Waives readiness R3 for 1.0.0`) and apply a waiver only to the versions it names. Change it after
   the release: a change to `readiness.py` makes no evidence reusable.
+
+## Novel-ORF gene context speed (2026-11-09, M12-05b review)
+- `novel/gene_context.py` compares each ORF with every gene on its replicon: about 7.5 s for 1000
+  candidates on a 4.4k-gene genome. Use `gm.overlapping(span)` for overlaps and per-contig numpy
+  start/end arrays for the flank distances. Outputs must stay byte-identical.
