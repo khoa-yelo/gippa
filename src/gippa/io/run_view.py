@@ -20,6 +20,7 @@ TSVs that have a Frictionless schema (``gippa/schemas/tables/<stem>.schema.json`
 its types and its ``missingValues``; a schema column missing from the file raises ``ValueError``.
 A 1.0 tree reads with the 1.1 names: ``gippa.io.migration`` renames its header before the schema
 check and its feature values (``determinants_model``, ``determinants_pd``, ``determinants_shap``).
+A 1.0 or 1.1.0rc1 tree lacking a column of ``migration.ADDED_COLUMNS`` reads it as NA (M12-05b).
 List columns stay ``;``-joined strings (M9-01 lead decision 2).
 
 Coordinates: ``table`` returns 0-based half-open coordinates for every key (§6.5, PR #191 B1).
@@ -43,7 +44,7 @@ import yaml
 
 from gippa.config.model import Module
 from gippa.io._open import open_text
-from gippa.io.migration import migrate_cells, migrate_columns, migrate_values
+from gippa.io.migration import ADDED_COLUMNS, migrate_cells, migrate_columns, migrate_values
 from gippa.io.tsv import read_tsv
 from gippa.runner.local import PUBLISHED, PUBLISHED_FILES, out_path
 
@@ -145,14 +146,17 @@ def read_schema_tsv(path: Path, table: str, schema: Mapping[str, Any]) -> pd.Dat
     header = migrate_columns(table, header)
     rows = migrate_cells(table, header, rows)
     fields = {f["name"]: str(f.get("type", "string")) for f in schema["fields"]}
+    added = ADDED_COLUMNS.get(table, ())
     for name in fields:
-        if name not in header:
+        if name not in header and name not in added:
             raise ValueError(f"table {table} ({path}): schema column {name!r} is missing")
     missing = frozenset(schema.get("missingValues", [""]))
     cols = {
         name: _typed([r[i] for r in rows], fields.get(name, "string"), missing, f"{table}.{name}")
         for i, name in enumerate(header)
     }
+    for name in (c for c in added if c in fields and c not in header):  # an older tree: NA
+        cols[name] = _typed([None] * len(rows), fields[name], missing, f"{table}.{name}")
     order = [*fields, *(c for c in header if c not in fields)]
     return pd.DataFrame(cols, columns=order)
 

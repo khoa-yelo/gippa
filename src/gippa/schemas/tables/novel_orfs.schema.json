@@ -29,6 +29,15 @@
     {"name": "called", "type": "boolean", "description": "The ORF is called (§7.6.4)", "constraints": {"required": true}},
     {"name": "rank", "type": "integer", "description": "Rank among novel ORFs (M7-09); not the row order", "constraints": {"minimum": 1}},
     {"name": "overlapping_gene", "type": "string", "description": "Locus tag of the overlapped or extended gene"},
+    {"name": "overlapping_gene_label", "type": "string", "description": "Label of overlapping_gene: its gene name, or its locus tag when it has no usable name; NA iff overlapping_gene is NA"},
+    {"name": "overlap_relation", "type": "string", "description": "Strand of overlapping_gene relative to the ORF: same_strand, antisense, or none when there is no host gene", "constraints": {"enum": ["same_strand", "antisense", "none"]}},
+    {"name": "other_overlapping_genes", "type": "string", "description": "Semicolon-joined locus tags of the other genes.tsv genes overlapping the ORF span (longest start through the stop codon), either strand, in gene-model order; NA when none"},
+    {"name": "upstream_gene", "type": "string", "description": "Locus tag of the nearest non-overlapping gene on the ORF's 5' side, relative to the ORF's strand (lower coordinates on '+', higher on '-'; the gene's own strand does not matter); wraps through the origin of a circular replicon; NA when none"},
+    {"name": "upstream_gene_label", "type": "string", "description": "Label of upstream_gene (gene name, else locus tag)"},
+    {"name": "upstream_distance_nt", "type": "integer", "description": "Bases strictly between the ORF span and upstream_gene, nt", "constraints": {"minimum": 0}},
+    {"name": "downstream_gene", "type": "string", "description": "Locus tag of the nearest non-overlapping gene on the ORF's 3' side, relative to the ORF's strand (higher coordinates on '+', lower on '-'; the gene's own strand does not matter); wraps through the origin of a circular replicon; NA when none"},
+    {"name": "downstream_gene_label", "type": "string", "description": "Label of downstream_gene (gene name, else locus tag)"},
+    {"name": "downstream_distance_nt", "type": "integer", "description": "Bases strictly between the ORF span and downstream_gene, nt", "constraints": {"minimum": 0}},
     {"name": "flags", "type": "string", "description": "Semicolon-joined flags from the controlled vocabulary (§9.4); `denovo_only_unsupported`: every peptide is de novo, none is a database PSM, and there is no RBS support beyond the class rule (ADR-0050)", "constraints": {"pattern": "(?:junction_spanned|homopolymer_junction|class_fdr_unestimated|rbs_supported|no_start_codon|partial|ostir_missing|rbs_threshold_unestimated|junction_unknown|promoter_supported|terminator_supported|readthrough_candidate|denovo_only_unsupported)(?:;(?:junction_spanned|homopolymer_junction|class_fdr_unestimated|rbs_supported|no_start_codon|partial|ostir_missing|rbs_threshold_unestimated|junction_unknown|promoter_supported|terminator_supported|readthrough_candidate|denovo_only_unsupported))*"}}
   ]
 }

@@ -202,6 +202,14 @@ on `pair_id` needs suffixes (for example `suffixes=("_pair", "_flag")` in pandas
 Unchanged on purpose: `operon_flags.tsv` › `promoter_between_yes` and `terminator_between_yes`
 (yes/no calls) and `pairs.tsv` › `tx_rate_between`.
 
+### Added columns
+
+| Table | Columns | What they hold |
+|---|---|---|
+| `tables/novel_orfs.tsv` | `overlapping_gene_label`, `overlap_relation`, `other_overlapping_genes`, `upstream_gene`, `upstream_gene_label`, `upstream_distance_nt`, `downstream_gene`, `downstream_gene_label`, `downstream_distance_nt` (after `overlapping_gene`) | the host gene's name (or locus tag) and its strand relative to the ORF (`none` without a host), the other genes overlapping the ORF, and the nearest gene on each side in the ORF's transcription direction with the bases between ([method](../methods/novel-orfs.md#host-and-flanking-genes)) |
+
+Output folders written by 1.0 or 1.1.0rc1 still read: the added columns read as `NA`.
+
 ### `tables/genes.tsv` column order
 
 The same 73 columns, now in groups: identity → detection → abundance → function → context →

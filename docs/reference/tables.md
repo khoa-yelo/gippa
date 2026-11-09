@@ -91,6 +91,15 @@ One row per novel ORF candidate.
 | `called` | boolean | — | The ORF is called (§7.6.4) | required |
 | `rank` | integer | — | Rank among novel ORFs (M7-09); not the row order | minimum 1 |
 | `overlapping_gene` | string | — | Locus tag of the overlapped or extended gene | — |
+| `overlapping_gene_label` | string | — | Label of overlapping_gene: its gene name, or its locus tag when it has no usable name; NA iff overlapping_gene is NA | — |
+| `overlap_relation` | string | — | Strand of overlapping_gene relative to the ORF: same_strand, antisense, or none when there is no host gene | one of `same_strand`, `antisense`, `none` |
+| `other_overlapping_genes` | string | — | Semicolon-joined locus tags of the other genes.tsv genes overlapping the ORF span (longest start through the stop codon), either strand, in gene-model order; NA when none | — |
+| `upstream_gene` | string | — | Locus tag of the nearest non-overlapping gene on the ORF's 5' side, relative to the ORF's strand (lower coordinates on '+', higher on '-'; the gene's own strand does not matter); wraps through the origin of a circular replicon; NA when none | — |
+| `upstream_gene_label` | string | — | Label of upstream_gene (gene name, else locus tag) | — |
+| `upstream_distance_nt` | integer | — | Bases strictly between the ORF span and upstream_gene, nt | minimum 0 |
+| `downstream_gene` | string | — | Locus tag of the nearest non-overlapping gene on the ORF's 3' side, relative to the ORF's strand (higher coordinates on '+', lower on '-'; the gene's own strand does not matter); wraps through the origin of a circular replicon; NA when none | — |
+| `downstream_gene_label` | string | — | Label of downstream_gene (gene name, else locus tag) | — |
+| `downstream_distance_nt` | integer | — | Bases strictly between the ORF span and downstream_gene, nt | minimum 0 |
 | `flags` | string | — | Semicolon-joined flags from the controlled vocabulary (§9.4); `denovo_only_unsupported`: every peptide is de novo, none is a database PSM, and there is no RBS support beyond the class rule (ADR-0050) | pattern `(?:junction_spanned|homopolymer_junction|class_fdr_unestimated|rbs_supported|no_start_codon|partial|ostir_missing|rbs_threshold_unestimated|junction_unknown|promoter_supported|terminator_supported|readthrough_candidate|denovo_only_unsupported)(?:;(?:junction_spanned|homopolymer_junction|class_fdr_unestimated|rbs_supported|no_start_codon|partial|ostir_missing|rbs_threshold_unestimated|junction_unknown|promoter_supported|terminator_supported|readthrough_candidate|denovo_only_unsupported))*` |
 
 ## `replicon_landmarks`

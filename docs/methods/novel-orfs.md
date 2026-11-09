@@ -302,6 +302,23 @@ makedb` six-frame database, or by independent evidence.
   M7-11b step uses `orf_regimes` per ORF. The regime of each ORF is in the side table, and the
   per-class events hold the list counts. No separate regime-count event is logged.
 
+## Host and flanking genes
+
+Each `novel_orfs.tsv` row names the genes around its ORF (M12-05b;
+`src/gippa/novel/gene_context.py`). The ORF span is the longest ORF, from `start_longest` (or the
+first peptide's codon without a start) through the stop codon. Only the genes of `genes.tsv`
+count; tRNA, rRNA, CRISPR arrays and other novel ORFs do not. A gene that shares at least one base
+with the span is an overlapping gene: the host is `overlapping_gene`, with `overlap_relation`
+`same_strand` or `antisense` taken from the two strands, and the others are listed in
+`other_overlapping_genes`. Every other gene of the same replicon is a flank candidate. Upstream
+and downstream follow the ORF's strand, in transcription direction: on `+` upstream means lower
+coordinates, on `-` higher ones; the gene's own strand does not matter. The flank on each side is
+the gene whose near edge comes first, and the distance is the number of bases strictly between
+it and the span (0 for an adjacent gene). On a circular replicon the walk wraps through the
+origin at most once, so a lone other gene can be both flanks at two distances; on a linear one it
+stops at the end, and the flank is `NA`. Equal distances go to the smallest locus tag. A label is
+the gene name, or the locus tag when the name is missing, blank or `NA`.
+
 ## C-terminal extensions (M7-16 rule 12, ADR-0058)
 
 A `cterm_extension` ORF is called when some peptide interval strictly contains the gene's

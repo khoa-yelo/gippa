@@ -10,7 +10,9 @@ maps the 1.0 feature names held as *values* (``determinants_model.feature_or_blo
 ``feature`` column of the ``determinants_pd`` and ``determinants_shap`` support files) to their
 1.1 names, the same renames as the ``determinants_features`` columns. ``UNESTIMATED_CELLS``
 maps a table to the column that 1.0 filled with the word ``unestimated`` and the flag 1.1 sets
-instead (M12-04 PR 11c): such a cell reads as NA and the row gains the flag. Pure functions only.
+instead (M12-04 PR 11c): such a cell reads as NA and the row gains the flag. ``ADDED_COLUMNS``
+maps a table to the columns added after 1.1.0rc1 (M12-05b); ``RunView`` reads them as NA from an
+older tree that lacks them. Pure functions only.
 """
 
 from __future__ import annotations
@@ -20,6 +22,7 @@ from collections.abc import Mapping, Sequence
 import pandas as pd
 
 __all__ = [
+    "ADDED_COLUMNS",
     "COLUMN_RENAMES",
     "UNESTIMATED_CELLS",
     "VALUE_COLUMNS",
@@ -45,6 +48,15 @@ COLUMN_RENAMES: Mapping[str, Mapping[str, str]] = {
     },
     "operon_flags": {"uniop_class": "pair_class", "flag": "flags"},
 }
+
+#: table -> columns added in 1.1 after 1.1.0rc1, read as NA when absent (M12-05b rule 8)
+ADDED_COLUMNS: Mapping[str, tuple[str, ...]] = {
+    "novel_orfs": (
+        "overlapping_gene_label", "overlap_relation", "other_overlapping_genes",
+        "upstream_gene", "upstream_gene_label", "upstream_distance_nt",
+        "downstream_gene", "downstream_gene_label", "downstream_distance_nt",
+    ),
+}  # fmt: skip
 
 #: 1.0 feature name -> 1.1 feature name, for the columns of ``VALUE_COLUMNS``
 VALUE_RENAMES: Mapping[str, str] = dict(COLUMN_RENAMES["determinants_features"])

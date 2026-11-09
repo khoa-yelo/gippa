@@ -73,6 +73,19 @@ class NcFeature:
     nt: str | None = None  # rRNA (16S -> anti-SD)
 
 
+def name_label(locus_tag: str, name: str | None) -> str:
+    """``name`` when usable, else ``locus_tag`` (M12-05b rule 5): a name that is ``None``, blank
+    or the literal ``NA`` (any case) is not usable, so a label is never ``NA``."""
+    if name is None or not name.strip() or name.strip().upper() == "NA":
+        return locus_tag
+    return name
+
+
+def gene_label(gene: Gene) -> str:
+    """The label of ``gene``: its name when usable, else its locus tag (``name_label``)."""
+    return name_label(gene.locus_tag, gene.gene)
+
+
 _Item = Gene | NcFeature
 
 
