@@ -4,9 +4,12 @@
 Panel (a) counts the candidates per ``class`` (schema enum order), stacked by status: ``called``
 is authoritative (decision 5); an uncalled row whose ``class_fdr`` is NA, the literal
 ``unestimated`` or flagged ``class_fdr_unestimated`` is ``unestimated``; the rest are
-``not_called``. Panel (b) draws the ``TOP_N`` called rows with the smallest ``rank`` with the V3
-renderer (``gippa.viz.locus.render_locus``, ``Locus(kind="novel_orf")``), one instance each, plus
-an index instance. ``start_longest`` and ``end`` are in transcription direction; ``RunView``
+``not_called``. Panel (b) draws the first ``TOP_N`` candidates, called or not, in the display
+order (M12-05a § 2: class FDR, best peptide q, called first, ``rank``, then
+``gippa.novel.evidence.rank_key``; NA last at every step) with the V3 renderer
+(``gippa.viz.locus.render_locus``, ``Locus(kind="novel_orf")``), one instance each, plus an index
+instance listing every candidate. A called ORF is a filled arrow, an uncalled one a dashed
+outline (M12-05a § 3). ``start_longest`` and ``end`` are in transcription direction; ``RunView``
 already subtracted 1 from ``start_longest`` / ``start_best_ostir``, which on ``-`` are the high
 ends, so 1 is added back there (decision 6). A row crosses the origin when ``end <
 start_longest`` on ``+`` or ``start_longest < end`` on ``-``; its span is unwrapped past the
@@ -17,15 +20,16 @@ from __future__ import annotations
 
 import dataclasses
 import math
-from collections.abc import Sequence
 from typing import TYPE_CHECKING, Any
 
 import numpy as np
 import pandas as pd
 from matplotlib.ticker import MaxNLocator
 
+from gippa.novel.evidence import rank_key
 from gippa.viz import base, locus, style
 from gippa.viz.locus import Locus, OrfMark, render_locus
+from gippa.viz.words import NOVEL_CLASS_LABEL
 
 if TYPE_CHECKING:
     from gippa.config import GippaConfig
@@ -42,8 +46,11 @@ STATUS_COLOUR = {
     "unestimated": style.DETECTION["unestimated"],
 }
 COUNT_COLUMNS = ("class", "status", "n", "class_fdr_max_called")
-INDEX_COLUMNS = ("rank", "orf_id", "rendered")
+#: the index data TSV (M12-05a § 6.1): every candidate, in display order
+INDEX_COLUMNS = ("order", "orf_id", "class", "called", "class_fdr", "best_peptide_q", "n_peptides",
+                 "rank", "rendered")  # fmt: skip
 TOP_N = 20
+INDEX_TITLE = "Novel ORF loci, lowest class FDR first"
 #: the empty state (M12-04 PR 4, P-14)
 EMPTY = ("Nothing to show: no novel ORF candidates in this run. Peptides that map outside "
          "the annotated genes would give candidates.")  # fmt: skip
@@ -59,8 +66,23 @@ def _fdr(v: object) -> float | None:
         return None
 
 
+def _is_called(v: object) -> bool:
+    """``called``; NA (and NaN) counts as not called."""
+    return (
+        v is not None
+        and v is not pd.NA
+        and not (isinstance(v, float) and math.isnan(v))
+        and bool(v)
+    )
+
+
+def _label(cls: object) -> str:
+    """The class in plain words (no raw enum identifier in figure text)."""
+    return NOVEL_CLASS_LABEL.get(str(cls), str(cls).replace("_", " "))
+
+
 def _status(row: Any) -> str:
-    if row.called is not pd.NA and bool(row.called):
+    if _is_called(row.called):
         return "called"
     flags = str(row.flags).split(";") if isinstance(row.flags, str) else []
     if _fdr(row.class_fdr) is None or "class_fdr_unestimated" in flags:
@@ -121,7 +143,7 @@ def _panel_a(orfs: pd.DataFrame) -> base.Instance:
         if left[i]:
             label = _bar_label(data[data["class"] == c])
             ax.text(left[i] + 0.02 * left.max(), i, label, va="center", fontsize=6)
-    ax.set_yticks(range(len(CLASSES)), list(CLASSES))
+    ax.set_yticks(range(len(CLASSES)), [_label(c) for c in CLASSES])
     ax.invert_yaxis()
     ax.set_xlim(0, math.ceil(1.6 * left.max()))
     ax.xaxis.set_major_locator(MaxNLocator(integer=True))
@@ -178,41 +200,102 @@ def _view(row: Any, view: RunView, cfg: GippaConfig, scale: tuple[float, float])
     span = _span(row, view, length)
     q, fdr = locus._num(row.best_peptide_q), _fdr(row.class_fdr)
     n = _int(row.n_peptides)
-    label = (f"{row.orf_id} ({row.cls}): {'NA' if n is None else n} "
+    called = _is_called(row.called)
+    status = "called" if called else "not called"
+    label = (f"{row.orf_id} ({_label(row.cls)}, {status}): {'NA' if n is None else n} "
              f"peptides, best q {style.fmt_q(q)}, class FDR {_fmt(fdr)}")  # fmt: skip
     lo = Locus(str(row.orf_id), "novel_orf", str(row.contig), *span, fdr, label)
     peps = frozenset(str(row.peptides).split(";")) if isinstance(row.peptides, str) else frozenset()
-    mark = OrfMark(str(row.strand), _tick(row, span, length), peps)
+    mark = OrfMark(str(row.strand), _tick(row, span, length), peps, called)
     inst = render_locus(lo, view, cfg, scale, orf=mark)
     return dataclasses.replace(inst, suffix=f"locus_{row.orf_id}")
 
 
-def _index(ranks: Sequence[int], ids: Sequence[str]) -> base.Instance:
-    data = pd.DataFrame({"rank": list(ranks), "orf_id": list(ids), "rendered": True},
-                        columns=list(INDEX_COLUMNS))  # fmt: skip
-    fig = style.new_figure("single", 0.4 + 0.13 * len(ids))
-    ax = fig.add_axes((0.02, 0.02, 0.96, 0.96))
+def _order_key(row: dict[str, Any]) -> tuple[object, ...]:
+    """The display order (M12-05a § 2, lead decision Q1): class FDR, best peptide q, called
+    first, ``rank``, then ``rank_key``; NA (and ``unestimated``) last at every step."""
+    fdr, q, rank = _fdr(row["class_fdr"]), locus._num(row.get("best_peptide_q")), _int(row["rank"])
+    return (
+        math.inf if fdr is None else fdr,
+        math.inf if q is None else q,
+        not _is_called(row["called"]),
+        math.inf if rank is None else rank,
+        rank_key(row),
+    )
+
+
+def display_order(orfs: pd.DataFrame) -> pd.DataFrame:
+    """Every candidate, sorted by ``_order_key``; total since ``orf_id`` is unique."""
+    rows = orfs.to_dict("records")
+    keys = [_order_key({**r, "class": r["cls"]}) for r in rows]
+    order = sorted(range(len(rows)), key=lambda i: keys[i])
+    return orfs.iloc[order].reset_index(drop=True)
+
+
+def _index_title(m: int) -> str:
+    if m > TOP_N:
+        return f"{INDEX_TITLE} (top {TOP_N} of {m}; all in tables/novel_orfs.tsv)"
+    return f"{INDEX_TITLE} ({m} candidate{'' if m == 1 else 's'})"
+
+
+def _index_data(ordered: pd.DataFrame) -> pd.DataFrame:
+    m = len(ordered)
+    fdr = [_fdr(v) for v in ordered["class_fdr"]]
+    data = pd.DataFrame(
+        {
+            "order": range(1, m + 1),
+            "orf_id": [str(v) for v in ordered["orf_id"]],
+            "class": [str(v) for v in ordered["cls"]],
+            "called": [_is_called(v) for v in ordered["called"]],
+            "class_fdr": [math.nan if f is None else f for f in fdr],
+            "best_peptide_q": [
+                math.nan if (q := locus._num(v)) is None else q for v in ordered["best_peptide_q"]
+            ],
+            "n_peptides": pd.array([_int(v) for v in ordered["n_peptides"]], dtype="Int64"),
+            "rank": pd.array([_int(v) for v in ordered["rank"]], dtype="Int64"),
+            "rendered": [i < TOP_N for i in range(m)],
+        },
+        columns=list(INDEX_COLUMNS),
+    )
+    return data.astype({"order": "int64", "class_fdr": float, "best_peptide_q": float})
+
+
+#: the four text columns of an index line, in axes fractions (M12-05a § 5)
+_INDEX_X = (0.0, 0.49, 0.69, 0.80)
+
+
+def _index(ordered: pd.DataFrame) -> base.Instance:
+    """The index image (the first ``TOP_N`` lines) and its data (all candidates)."""
+    data = _index_data(ordered)
+    shown = data.head(TOP_N)
+    n = len(shown)
+    title = _index_title(len(data))
+    head_in, body_in = 0.3, 0.2 + 0.13 * n
+    fig = style.new_figure("double", head_in + body_in)
+    top = body_in / (head_in + body_in)
+    ax = fig.add_axes((0.02, 0.02, 0.96, top - 0.02))
     ax.set_axis_off()
-    for i, (r, oid) in enumerate(zip(ranks, ids, strict=True)):
-        ax.text(0.0, 1.0 - (i + 0.5) / len(ids), f"{r}. {oid}", fontsize=6, va="center",
-                transform=ax.transAxes)  # fmt: skip
-    return base.Instance("locus", fig, data, f"V13 novel ORF loci: top {len(ids)} by rank")
+    for i, r in enumerate(shown.to_dict("records")):
+        fdr = None if math.isnan(r["class_fdr"]) else float(r["class_fdr"])
+        cells = (f"{r['order']}. {r['orf_id']}", _label(r["class"]),
+                 "called" if r["called"] else "not called", f"class FDR {_fmt(fdr)}")  # fmt: skip
+        y = 1.0 - (i + 0.5) / n
+        for x, text in zip(_INDEX_X, cells, strict=True):
+            ax.text(x, y, text, fontsize=6, va="center", transform=ax.transAxes)
+    fig.suptitle(title, fontsize=7, y=1.0 - 0.05 / (head_in + body_in), va="top")
+    return base.Instance("locus", fig, data, title)
 
 
 @base.plot("V13", "novel_orfs", needs=["novel_orfs"], optional=list(_OPTIONAL))
 def novel_orfs(view: RunView, cfg: GippaConfig) -> list[base.Instance] | base.Skip:
-    """Panel (a), then one locus view per top-ranked called ORF, then the index."""
+    """Panel (a), then one locus view per candidate among the first ``TOP_N`` in display
+    order, called or not, then the index of every candidate."""
     orfs = view.table("novel_orfs")
     if orfs is None or orfs.empty:
         return [base.empty_state("V13", "novel_orfs", EMPTY, COUNT_COLUMNS, "single")]
     orfs = orfs.rename(columns={"class": "cls"})  # ``class`` is no attribute name
     out = [_panel_a(orfs)]
-    called = orfs[orfs["called"].fillna(False).astype(bool)]
-    called = called.assign(_r=called["rank"].astype("Float64").fillna(math.inf))
-    top = called.sort_values(["_r", "orf_id"], kind="stable").head(TOP_N)
-    if top.empty:
-        return out
+    ordered = display_order(orfs)
     scale = locus.run_scale(view.table("genes_tsv"))
-    out += [_view(r, view, cfg, scale) for r in top.itertuples(index=False)]
-    ranks = [-1 if (k := _int(r)) is None else k for r in top["rank"]]
-    return [*out, _index(ranks, [str(i) for i in top["orf_id"]])]
+    out += [_view(r, view, cfg, scale) for r in ordered.head(TOP_N).itertuples(index=False)]
+    return [*out, _index(ordered)]

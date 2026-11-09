@@ -329,7 +329,6 @@ def test_rows_sorted_by_class_enum_then_status(
     assert int(d["n"].sum()) == 30
 
 
-@pytest.mark.xfail(strict=True, reason="M12-05a PR B: class ticks in plain words")
 def test_category_ticks_follow_the_class_enum_order(
     tmp_path: Path, cfg: GippaConfig, nov: ModuleType
 ) -> None:
@@ -359,7 +358,6 @@ def test_category_ticks_follow_the_class_enum_order(
 # --- the literal `unestimated` and the flag ------------------------------------------------------
 
 
-@pytest.mark.xfail(strict=True, reason="M12-05a PR B: every candidate gets a view")
 @pytest.mark.parametrize(
     ("fdr", "flags"),
     [("unestimated", None), (None, None), ("0.05", "class_fdr_unestimated"),
@@ -388,7 +386,6 @@ def test_literal_unestimated_is_read_as_na(
     assert sorted(vals.dropna().tolist()) == [pytest.approx(0.004)]
 
 
-@pytest.mark.xfail(strict=True, reason="M12-05a PR B: the status word in the title")
 def test_called_row_with_unestimated_fdr_titles_class_fdr_unestimated(
     tmp_path: Path, cfg: GippaConfig, nov: ModuleType
 ) -> None:
@@ -422,7 +419,6 @@ def test_example4_header_only_is_the_empty_state(
         assert not [p for p in paths if p.name.startswith("V13_novel_orfs_locus_")]
 
 
-@pytest.mark.xfail(strict=True, reason="M12-05a PR B: the panel (a) only rule is removed")
 def test_no_called_but_unestimated_still_draws_every_view(
     tmp_path: Path, cfg: GippaConfig, nov: ModuleType
 ) -> None:
@@ -442,7 +438,6 @@ def test_no_called_but_unestimated_still_draws_every_view(
     assert ix.data["orf_id"].tolist() == ["NOVEL_chr1_1001_p", "NOVEL_chr1_3001_p"]
 
 
-@pytest.mark.xfail(strict=True, reason="M12-05a PR B: views count every candidate")
 def test_fewer_than_20_candidates_gives_that_many_views(
     tmp_path: Path, cfg: GippaConfig, nov: ModuleType
 ) -> None:
@@ -464,7 +459,6 @@ def test_fewer_than_20_candidates_gives_that_many_views(
     assert [None if pd.isna(r) else int(r) for r in ix.data["rank"]] == [1, 2, 3, None]
 
 
-@pytest.mark.xfail(strict=True, reason="M12-05a PR B: uncalled rows get views")
 def test_evidence_columns_na_leave_panel_a_unchanged_and_views_render(
     tmp_path: Path, cfg: GippaConfig, nov: ModuleType
 ) -> None:
@@ -500,9 +494,6 @@ def _many(n_called: int, *, uncalled: bool = False) -> list[dict[str, object]]:
     return rows
 
 
-@pytest.mark.xfail(
-    strict=True, reason="M12-05a PR B: the index lists all candidates in the new columns"
-)
 def test_example2_25_called_gives_20_views_ranks_1_to_20(
     tmp_path: Path, cfg: GippaConfig, nov: ModuleType
 ) -> None:
@@ -518,7 +509,6 @@ def test_example2_25_called_gives_20_views_ranks_1_to_20(
     assert ix.data["rendered"].astype(bool).tolist() == [True] * 20 + [False] * 5
 
 
-@pytest.mark.xfail(strict=True, reason="M12-05a PR B: uncalled rows get views, in q order")
 def test_uncalled_rows_get_views_after_lower_q_calls(
     tmp_path: Path, cfg: GippaConfig, nov: ModuleType
 ) -> None:
@@ -586,7 +576,6 @@ def test_views_have_the_v3_layout_plus_a_novel_orf_track(
     ]
 
 
-@pytest.mark.xfail(strict=True, reason="M12-05a PR B: the status word in the title")
 def test_locus_title(tmp_path: Path, cfg: GippaConfig, nov: ModuleType) -> None:
     rows = [orf("NOVEL_chr1_5001_p", n_peptides=3, best_q=0.0001, class_fdr="0.004")]
     (view,) = _views(_run(_out(tmp_path, rows), cfg, nov))

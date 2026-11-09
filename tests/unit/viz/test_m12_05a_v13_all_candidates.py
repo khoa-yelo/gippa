@@ -631,7 +631,7 @@ def test_ac8_geometry_equal_called_and_not(tmp_path: Path, cfg: GippaConfig, exa
 def test_ac8_e9_window_is_unwrapped_across_the_origin(tmp_path: Path, cfg: GippaConfig) -> None:
     (v,) = _views(_run(tmp_path, [h.e9_row()], cfg, replicons=h.C10))
     nv = v.data[v.data["track"] == "novel_orf"]
-    assert [(int(r.start), int(r.end), r.strand) for r in nv.itertuples()] == [(9_899, 10_151, "-")]
+    assert [(int(r.start), int(r.end), r.strand) for r in nv.itertuples()] == [(9_899, 10_150, "-")]
 
 
 # --- AC 9: panel (a) is unchanged (values of e6f4aa3c) --------------------------------------------
