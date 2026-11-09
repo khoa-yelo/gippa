@@ -419,3 +419,7 @@ Each question has a reversible default, which the PRs use unless the lead says o
 | Q4 | The V13 index stays an image (M12-04 Q5 kept it). Alternatively, it could become an image-free report table like V03's (P-12), which would show all M candidates in the report rather than 20 lines. | keep the image; the TSV holds all M |
 | Q5 | Reordering the report's V13 locus views (§ 6.3) is outside "plot-only" in the narrow sense, since it touches `report/build.py`. Without it, the § 2 order is invisible in the report (alphabetical stems). Same change for V03 (backlog Q4)? | V13 now; V03 stays in the backlog |
 | Q6 | No ADR: §10.2's "top 20" wording is kept and only the M9-12/M7-09 readings change. Confirm, or record it in an ADR alongside M12-05b/c. | no ADR; changelog `feature` fragment only |
+
+## Lead decisions (2026-11-09)
+- Khoa: Q1 "Class q, then peptide q": sort by `class_fdr` ascending, ties by best peptide q (then the rest of the tie-break above). Q2 to Q6: the defaults above.
+- Added from the M12-05c review: V13 panel (a) currently prints raw class names (`nterm_extension`, `cterm_extension`, `cds_outframe`, `sorf`) on its axis. Use the plain words the report already uses for these classes (`src/gippa/viz/words.py`, or the report's class labels), and add an acceptance criterion: no raw class identifier appears in the V13 SVG text.
