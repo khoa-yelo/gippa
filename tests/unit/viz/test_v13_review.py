@@ -39,6 +39,11 @@ from gippa.viz.base import Instance, Skip
 ORF_EDGE = "#CC79A7"
 PROMOTER, TERMINATOR = "#009E73", "#D55E00"
 EXACT = 0.5  # bp
+#: M12-05a § 3
+KEY_CALLED = "called novel ORF; tick: OSTIR start; purple pileup: its peptides"
+KEY_UNCALLED = (
+    "novel ORF candidate, not called (dashed); tick: OSTIR start; purple pileup: its peptides"
+)
 
 
 @pytest.fixture(autouse=True)
@@ -280,16 +285,21 @@ def _legends(fig: Figure) -> list[Legend]:
     return out
 
 
+@pytest.mark.xfail(strict=True, reason="M12-05a PR B: one key text per call status")
 def test_every_locus_view_has_a_novel_orf_key(
     tmp_path: Path, cfg: GippaConfig, nov: ModuleType
 ) -> None:
+    """M12-05a § 3: the one entry is ``ORF_KEY_CALLED`` or ``ORF_KEY_UNCALLED``, as the row."""
     rows = [
         orf("NOVEL_chr1_5001_p", start_longest=5_001, start_best_ostir=5_031, end=5_300, rank=1),
         orf("NOVEL_chr1_1201_m", cls="antisense", strand="-", start_longest=1_500, end=1_201,
             rank=2),
+        orf("NOVEL_chr1_9001_p", start_longest=9_001, end=9_300, rank=None, called=False,
+            class_fdr="0.3"),
     ]  # fmt: skip
+    called = {str(r["orf_id"]): bool(r["called"]) for r in rows}
     views = _views(_rows_run(tmp_path, cfg, nov, rows))
-    assert len(views) == 2
+    assert len(views) == 3
     for view in views:
         _agg(view.figure)
         entries = [
@@ -300,6 +310,8 @@ def test_every_locus_view_has_a_novel_orf_key(
         ]
         assert len(entries) == 1, (view.suffix, [e[2] for e in entries])
         lg, i, text = entries[0]
+        want = KEY_CALLED if called[str(view.suffix).removeprefix("locus_")] else KEY_UNCALLED
+        assert text == want, (view.suffix, text)
         assert "OSTIR" in text and "tick" in text, text
         assert "pileup" in text and "peptides" in text, text
         handle = lg.legend_handles[i]
