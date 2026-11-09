@@ -640,8 +640,9 @@ CAPTIONS: Mapping[str, str] = {
     "confidence, and panel (b) aligns the covering peptide of each top site to the reference "
     "with the ALT residue highlighted.",
     "V13": "Which new genes or upstream extensions are supported? Panel (a) counts the "
-    "candidates of each class by call status, and panel (b) draws the top called candidates in "
-    "their genomic neighbourhood.",
+    "candidates of each class by call status, and panel (b) draws up to 20 candidates, called or "
+    "not, in their genomic neighbourhood, lowest class FDR first. A filled arrow is a called ORF, "
+    "a dashed outline a candidate that was not called.",
     "V14": "Which functions are high or low? Panel (a) shows the GSEA running sums of the top "
     "sets, panel (b) plots each set's normalised enrichment score against −log10 q, and panel "
     "(c) shows detection over-representation as observed over expected.",
@@ -663,7 +664,8 @@ CAPTIONS: Mapping[str, str] = {
 #: index is a table, not an image (``locus_index``; M12-04 PR 4, P-12)
 INDEX_STEMS: Mapping[str, str] = {"V13": "V13_novel_orfs_locus"}
 INDEX_CAPTIONS: Mapping[str, str] = {
-    "V13": "This index lists the top called candidates drawn as locus views, by rank.",
+    "V13": "This index lists the candidates drawn as locus views, lowest class FDR first, with "
+    "their call status.",
 }
 #: plot ID -> (the stem of its image-free index table, the table's caption)
 INDEX_TABLES: Mapping[str, tuple[str, str]] = {
@@ -700,6 +702,39 @@ def caption(pid: str, stem: str) -> str:
     if INDEX_STEMS.get(pid) == stem:
         return f"{question(pid)} {INDEX_CAPTIONS[pid]}"
     return CAPTIONS.get(pid, stem)
+
+
+#: V13's locus view stems: the index stem, then ``_<orf_id>`` (M12-05a § 6.3)
+V13_LOCUS_PREFIX = "V13_novel_orfs_locus_"
+
+
+def display_order(
+    stems: Sequence[str], index_rows: Sequence[Mapping[str, str | None]]
+) -> list[str]:
+    """The V13 instance stems in report order (M12-05a § 6.3): panel (a), the index, the locus
+    views of the ``rendered = true`` index rows in ``order``, then every other stem in
+    alphabetical order (stale files). Without index rows, ``stems`` as given. Pure."""
+    if not index_rows:
+        return list(stems)
+
+    def order(row: Mapping[str, str | None]) -> float:
+        try:
+            return float(row.get("order") or "inf")
+        except ValueError:
+            return math.inf
+
+    listed = [r for r in index_rows if (r.get("rendered") or "").lower() == "true"]
+    listed = sorted(listed, key=order)  # stable: TSV order among equal or missing ``order``
+    have = set(stems)
+    main, index = "V13_novel_orfs", INDEX_STEMS["V13"]
+    head = [s for s in (main, index) if s in have]
+    views: list[str] = []
+    for r in listed:
+        stem = f"{V13_LOCUS_PREFIX}{r.get('orf_id') or ''}"
+        if stem in have and stem not in views:
+            views.append(stem)
+    shown = {*head, *views}
+    return [*head, *views, *sorted(s for s in stems if s not in shown)]
 
 
 #: the Methods glossary (behaviour 2): term -> plain definition

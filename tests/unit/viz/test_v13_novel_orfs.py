@@ -69,7 +69,11 @@ CLASSES = (
 )  # fmt: skip
 STATUSES = ("called", "not_called", "unestimated")
 COUNT_COLUMNS = ["class", "status", "n", "class_fdr_max_called"]
-INDEX_COLUMNS = ["rank", "orf_id", "rendered"]
+#: M12-05a § 6.1 (supersedes the M9-12 ``rank, orf_id, rendered``)
+INDEX_COLUMNS = ["order", "orf_id", "class", "called", "class_fdr", "best_peptide_q", "n_peptides",
+                 "rank", "rendered"]  # fmt: skip
+#: M12-05a lead decision 2026-11-09: these class names never reach the figure text
+RAW_CLASSES = ("nterm_extension", "cterm_extension", "cds_outframe", "sorf")
 #: the V03 locus columns; M12-04 P-01 appends ``fill``
 LOCUS_COLUMNS = ["track", "id", "contig", "start", "end", "strand", "value", "category", "fill"]
 _n = style.fmt_num  # M12-04 P-18: in-figure numbers keep trailing zeros
@@ -165,6 +169,10 @@ def _main(insts: Sequence[Instance]) -> Instance:
 
 def _views(insts: Sequence[Instance]) -> list[Instance]:
     return [i for i in insts if i.suffix is not None and i.suffix.startswith("locus_")]
+
+
+def _view_ids(insts: Sequence[Instance]) -> list[str]:
+    return [str(v.suffix).removeprefix("locus_") for v in _views(insts)]
 
 
 def _index(insts: Sequence[Instance]) -> Instance:
@@ -324,6 +332,8 @@ def test_rows_sorted_by_class_enum_then_status(
 def test_category_ticks_follow_the_class_enum_order(
     tmp_path: Path, cfg: GippaConfig, nov: ModuleType
 ) -> None:
+    """M12-05a lead decision 2026-11-09: the ticks are plain words (no raw class identifier),
+    still one per class in the enum order."""
     rows = [
         orf("NOVEL_chr1_1001_p", cls="sorf", start_longest=1001, end=1100),
         orf("NOVEL_chr1_2001_p", cls="nterm_extension", start_longest=2001, end=2300),
@@ -335,10 +345,12 @@ def test_category_ticks_follow_the_class_enum_order(
     xs = [(t.get_window_extent(r).x0, t.get_text()) for t in ax.get_xticklabels()]
     ys = [(-t.get_window_extent(r).y0, t.get_text()) for t in ax.get_yticklabels()]
     for labels in (xs, ys):
-        shown = [txt for _, txt in sorted(labels) if txt in CLASSES]
-        if shown:
-            assert {"sorf", "nterm_extension", "antisense"} <= set(shown)
-            assert shown == sorted(shown, key=CLASSES.index)
+        shown = [txt for _, txt in sorted(labels) if txt.strip()]
+        if "antisense" in shown:
+            assert len(shown) == len(CLASSES), shown
+            assert not [t for t in shown if t in RAW_CLASSES or "_" in t], shown
+            assert shown.index("antisense") == CLASSES.index("antisense")
+            assert shown.index("intergenic") == CLASSES.index("intergenic")
             return
     pytest.fail("no class tick labels on the counts axes")
 
@@ -357,7 +369,7 @@ def test_unestimated_class_fdr_is_status_unestimated(
     rows = [orf("NOVEL_chr1_1001_p", class_fdr=fdr, called=False, flags=flags)]
     insts = _run(_out(tmp_path, rows), cfg, nov)
     assert _counts(_main(insts)) == [("intergenic", "unestimated", 1)]
-    assert _views(insts) == []
+    assert _view_ids(insts) == ["NOVEL_chr1_1001_p"]  # M12-05a: every candidate is drawn
 
 
 def test_literal_unestimated_is_read_as_na(
@@ -380,7 +392,7 @@ def test_called_row_with_unestimated_fdr_titles_class_fdr_unestimated(
     rows = [orf("NOVEL_chr1_5001_p", class_fdr="unestimated", n_peptides=3, best_q=0.002)]
     (view,) = _views(_run(_out(tmp_path, rows), cfg, nov))
     assert _collapse(view.title) == (
-        f"NOVEL_chr1_5001_p (intergenic): 3 peptides, best q {style.fmt_q(0.002)}, "
+        f"NOVEL_chr1_5001_p (intergenic, called): 3 peptides, best q {style.fmt_q(0.002)}, "
         "class FDR unestimated"
     )
 
@@ -407,9 +419,10 @@ def test_example4_header_only_is_the_empty_state(
         assert not [p for p in paths if p.name.startswith("V13_novel_orfs_locus_")]
 
 
-def test_no_called_but_unestimated_is_panel_a_only(
+def test_no_called_but_unestimated_still_draws_every_view(
     tmp_path: Path, cfg: GippaConfig, nov: ModuleType
 ) -> None:
+    """M12-05a § 1 (supersedes M9-12 "panel (a) only"): uncalled rows get views, in order."""
     rows = [
         orf("NOVEL_chr1_1001_p", class_fdr="unestimated", called=False, rank=1),
         orf("NOVEL_chr1_3001_p", start_longest=3001, end=3300, class_fdr=None, called=False,
@@ -419,23 +432,31 @@ def test_no_called_but_unestimated_is_panel_a_only(
     main = _main(insts)
     assert _collapse(main.title) == "No novel ORF called; 2 candidates unestimated"
     assert _counts(main) == [("intergenic", "unestimated", 2)]
-    assert _views(insts) == []
-    assert all(len(i.data) == 0 for i in insts if i.suffix == "locus")
+    assert _view_ids(insts) == ["NOVEL_chr1_1001_p", "NOVEL_chr1_3001_p"]
+    ix = _index(insts)
+    assert list(ix.data.columns) == INDEX_COLUMNS
+    assert ix.data["orf_id"].tolist() == ["NOVEL_chr1_1001_p", "NOVEL_chr1_3001_p"]
 
 
-def test_fewer_than_20_called_gives_that_many_views(
+def test_fewer_than_20_candidates_gives_that_many_views(
     tmp_path: Path, cfg: GippaConfig, nov: ModuleType
 ) -> None:
+    """M12-05a: the views count every candidate, called (q 0.004) before uncalled (q 0.3)."""
     rows = [
         orf(f"NOVEL_chr1_{1001 + 5000 * i}_p", start_longest=1001 + 5000 * i, end=1300 + 5000 * i,
             rank=i + 1)
         for i in range(3)
     ]  # fmt: skip
+    rows.insert(0, orf("NOVEL_chr1_30001_p", start_longest=30_001, end=30_300, called=False,
+                       rank=None, class_fdr="0.3"))  # fmt: skip
     insts = _run(_out(tmp_path, rows), cfg, nov)
-    assert [v.suffix for v in _views(insts)] == [f"locus_{r['orf_id']}" for r in rows]
+    assert [v.suffix for v in _views(insts)] == [
+        f"locus_{r['orf_id']}" for r in rows[1:] + rows[:1]
+    ]
     ix = _index(insts)
     assert list(ix.data.columns) == INDEX_COLUMNS
-    assert ix.data["rank"].tolist() == [1, 2, 3]
+    assert ix.data["order"].tolist() == [1, 2, 3, 4]
+    assert [None if pd.isna(r) else int(r) for r in ix.data["rank"]] == [1, 2, 3, None]
 
 
 def test_evidence_columns_na_leave_panel_a_unchanged_and_views_render(
@@ -453,7 +474,7 @@ def test_evidence_columns_na_leave_panel_a_unchanged_and_views_render(
     pd.testing.assert_frame_equal(_main(a).data, _main(b).data)
     assert _main(a).title == _main(b).title
     assert [v.suffix for v in _views(a)] == [v.suffix for v in _views(b)]
-    assert len(_views(b)) == 2
+    assert len(_views(b)) == 5  # M12-05a: every candidate (was: the 2 called rows)
 
 
 # --- example 2 and decision 1: top 20 by rank among called rows -----------------------------------
@@ -480,24 +501,27 @@ def test_example2_25_called_gives_20_views_ranks_1_to_20(
     insts = _run(_out(tmp_path, rows), cfg, nov)
     by_rank = {int(str(r["rank"])): str(r["orf_id"]) for r in rows}
     assert [v.suffix for v in _views(insts)] == [f"locus_{by_rank[k]}" for k in range(1, 21)]
-    ix = _index(insts)
+    ix = _index(insts)  # M12-05a § 6.1: equal q, so rank order; the index lists all 25
     assert list(ix.data.columns) == INDEX_COLUMNS
-    assert ix.data["rank"].tolist() == list(range(1, 21))
-    assert ix.data["orf_id"].tolist() == [by_rank[k] for k in range(1, 21)]
-    assert ix.data["rendered"].astype(bool).tolist() == [True] * 20
+    assert ix.data["order"].tolist() == list(range(1, 26))
+    assert ix.data["rank"].tolist() == list(range(1, 26))
+    assert ix.data["orf_id"].tolist() == [by_rank[k] for k in range(1, 26)]
+    assert ix.data["rendered"].astype(bool).tolist() == [True] * 20 + [False] * 5
 
 
-def test_uncalled_rows_never_get_a_view_even_with_smaller_rank(
+def test_uncalled_rows_get_views_after_lower_q_calls(
     tmp_path: Path, cfg: GippaConfig, nov: ModuleType
 ) -> None:
-    rows = _many(22, uncalled=True)
+    """M12-05a § 2 (inverts M9-12 decision 1): the uncalled rows (q 0.3) are drawn too, after
+    the called rows (q 0.004), whatever their smaller ``rank``; within a q, by ``rank``."""
+    rows = _many(5, uncalled=True)
     insts = _run(_out(tmp_path, rows), cfg, nov)
-    called = {str(r["orf_id"]): int(str(r["rank"])) for r in rows if r["called"]}
-    ids = [v.suffix.removeprefix("locus_") for v in _views(insts) if v.suffix]
-    assert len(ids) == 20
-    assert set(ids) <= set(called)
-    assert [called[i] for i in ids] == list(range(2, 42, 2))
-    assert _index(insts).data["rank"].tolist() == list(range(2, 42, 2))
+    by_id = {str(r["orf_id"]): r for r in rows}
+    ids = _view_ids(insts)
+    assert len(ids) == 10
+    assert [bool(by_id[i]["called"]) for i in ids] == [True] * 5 + [False] * 5
+    assert [int(str(by_id[i]["rank"])) for i in ids] == [2, 4, 6, 8, 10, 1, 3, 5, 7, 9]
+    assert _index(insts).data["orf_id"].tolist() == ids
 
 
 def test_example2_index_file_name(tmp_path: Path, cfg: GippaConfig, nov: ModuleType) -> None:
@@ -555,7 +579,7 @@ def test_views_have_the_v3_layout_plus_a_novel_orf_track(
 def test_locus_title(tmp_path: Path, cfg: GippaConfig, nov: ModuleType) -> None:
     rows = [orf("NOVEL_chr1_5001_p", n_peptides=3, best_q=0.0001, class_fdr="0.004")]
     (view,) = _views(_run(_out(tmp_path, rows), cfg, nov))
-    want = (f"NOVEL_chr1_5001_p (intergenic): 3 peptides, best q {style.fmt_q(1e-4)}, "
+    want = (f"NOVEL_chr1_5001_p (intergenic, called): 3 peptides, best q {style.fmt_q(1e-4)}, "
             f"class FDR {_n(0.004)}")  # fmt: skip
     assert _collapse(view.title) == want
     assert want in _collapse(" ".join(t.get_text() for t in _texts(view.figure)))

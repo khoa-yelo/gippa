@@ -38,7 +38,7 @@ import pandas as pd
 import pytest
 from helpers import m12_04_pr5 as h
 from helpers import viz_locus as vl
-from hypothesis import HealthCheck, given, settings
+from hypothesis import HealthCheck, example, given, settings
 from hypothesis import strategies as st
 
 from gippa.config import GippaConfig, resolve_config
@@ -242,6 +242,9 @@ def _genes(draw: Any) -> list[tuple[str, str, float | None]]:
 
 @settings(max_examples=25, deadline=None, suppress_health_check=[HealthCheck.too_slow])
 @given(spec=_genes())
+# nightly 1965586_2: 18.9374995 is written to genes.tsv as 18.9375 (%.6g), which is exactly
+# the cividis LUT boundary 40/256 on the 18-24 scale; the true value falls in bin 39
+@example(spec=[("detected", "+", 18.937499490317126)])
 def test_any_status_mix_gives_the_right_fill_per_gene(
     spec: list[tuple[str, str, float | None]],
 ) -> None:
@@ -265,7 +268,9 @@ def test_any_status_mix_gives_the_right_fill_per_gene(
                 _assert_undetected(p)
                 assert fill == "white"
             elif status == "detected" and log2 is not None:
-                assert p.face == h.hexc(CIVIDIS((min(max(log2, 18.0), 24.0) - 18.0) / 6.0))
+                # V03 colours the published value: genes.tsv floats are %.6g (spec, Number formats)
+                shown = float(f"{log2:.6g}")
+                assert p.face == h.hexc(CIVIDIS((min(max(shown, 18.0), 24.0) - 18.0) / 6.0))
                 assert p.hatch != HATCH
             elif status == "single_peptide_unestimated":
                 assert p.edge == ORANGE
