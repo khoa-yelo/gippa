@@ -67,14 +67,15 @@ V02_GUIDE: tuple[str, tuple[str, ...], str, str | None] = (
 V07_GUIDE: tuple[str, tuple[str, ...], str, str | None] = (
     "Which regions and categories are detected less than detectability predicts?",
     (
-        "One row per group, in blocks: replicon, feature class, COG category, region. The point "
-        "is observed minus expected detected genes in percentage points of the group's genes, "
-        "the bar its 95 % confidence interval; the group size n is in the row label and the q at "
-        "the right.",
+        "One row per group, in blocks: replicon, feature class, COG category, region; at most 40 "
+        "rows, and a note names the rest. The point is observed minus expected detected genes in "
+        "percentage points of the group's genes, the bar its 95 % confidence interval; the group "
+        "size n is in the row label, and region rows also carry their q at the right.",
     ),
     "A row left of zero has fewer detected genes than its genes' detectability predicts, a row "
-    "right of zero more. Only rows whose q is at or below the level in the title are findings; "
-    "the title counts them.",
+    "right of zero more. Region rows carry a q: only those at or below the level in the title are "
+    "findings, and the title names the strongest. Other rows have a confidence interval only: "
+    "one that excludes 0 is a departure.",
     "The expected counts come from the detectability model, so check its reliability in V18 (a) "
     "first: where the model is off, every group can drift.",
 )
