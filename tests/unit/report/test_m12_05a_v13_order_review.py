@@ -23,12 +23,12 @@ STALE = [
 
 
 def _rows(ids: list[str]) -> list[dict[str, str | None]]:
-    return [
-        {"order": str(k), "orf_id": oid, "class": "antisense", "called": "false",
-         "class_fdr": "0.4", "best_peptide_q": "0.001", "n_peptides": "1", "rank": None,
-         "rendered": "true"}  # fmt: skip
-        for k, oid in enumerate(ids, start=1)
-    ]
+    out: list[dict[str, str | None]] = []
+    for k, oid in enumerate(ids, start=1):
+        out.append({"order": str(k), "orf_id": oid, "class": "antisense", "called": "false",
+                    "class_fdr": "0.4", "best_peptide_q": "0.001", "n_peptides": "1",
+                    "rank": None, "rendered": "true"})  # fmt: skip
+    return out
 
 
 def _shuffled(rows: list[dict[str, str | None]], seed: int) -> list[dict[str, str | None]]:
