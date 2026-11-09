@@ -25,6 +25,7 @@ from __future__ import annotations
 import re
 from collections.abc import Mapping
 from dataclasses import dataclass
+from pathlib import Path, PurePosixPath
 from typing import Any
 
 import jinja2
@@ -36,7 +37,7 @@ from gippa.config import GippaConfig
 from gippa.determinants.models import MIN_ROWS, MIN_TUS
 from gippa.io.plot_files import PlotFiles, svg_title
 from gippa.io.run_view import PATHS, RunView
-from gippa.io.tsv import format_value
+from gippa.io.tsv import format_value, read_tsv
 from gippa.report import content, detection, head
 from gippa.viz import style
 from gippa.viz.determinants import no_predictive_power
@@ -527,6 +528,35 @@ def cards(view: RunView, cfg: GippaConfig) -> tuple[list[dict[str, Any]], list[s
     return out, list(notes.values())
 
 
+def _v13_index_rows(view: RunView, plots_dir: Path | None) -> list[dict[str, str | None]]:
+    """The rows of ``data/V13_novel_orfs_locus.tsv`` under ``plots_dir`` (M12-05a § 6.3), by
+    default the ``plots/`` beside the run's ``tables/``; none when that index TSV is missing or
+    unreadable."""
+    if plots_dir is None:
+        path = view.path("novel_orfs")
+        if path is None:
+            return []
+        plots_dir = path.parents[len(PurePosixPath(PATHS["novel_orfs"]).parts) - 1] / "plots"
+    try:
+        header, rows = read_tsv(plots_dir / "data" / f"{content.INDEX_STEMS['V13']}.tsv")
+    except (OSError, ValueError):
+        return []
+    return [dict(zip(header, r, strict=True)) for r in rows]
+
+
+def _v13_ordered(
+    view: RunView, plots: Mapping[str, PlotFiles], plots_dir: Path | None
+) -> Mapping[str, PlotFiles]:
+    """``plots`` with the V13 instances in ``content.display_order``."""
+    files = plots.get("V13")
+    if files is None or not files.instances:
+        return plots
+    by_stem = {i.stem: i for i in files.instances}
+    stems = content.display_order(list(by_stem), _v13_index_rows(view, plots_dir))
+    ordered = PlotFiles(files.pid, tuple(by_stem[s] for s in stems))
+    return {**plots, "V13": ordered}
+
+
 def build_report(
     view: RunView,
     plots: Mapping[str, PlotFiles],
@@ -534,10 +564,14 @@ def build_report(
     cfg: GippaConfig,
     twins: Mapping[str, Twin] | None = None,
     redact: bool = False,
+    plots_dir: Path | None = None,
 ) -> str:
     """The report page (behaviour 2-6); deterministic, offline, no absolute path. ``redact``
     rewrites the provenance command line (R-09). At or over ``REPORT_LINK_THRESHOLD`` UTF-8 bytes
-    fully inlined, the page is built again with the V13 locus views linked (PR 13)."""
+    fully inlined, the page is built again with the V13 locus views linked (PR 13). The V13
+    instances follow the index order of ``plots_dir`` (the directory ``plots`` was read from;
+    default ``plots/`` beside the run's tables; M12-05a § 6.3)."""
+    plots = _v13_ordered(view, plots, plots_dir)
     page = _page(view, plots, skipped, cfg, twins or {}, redact, linked=False)
     if len(page.encode("utf-8")) < REPORT_LINK_THRESHOLD:
         return page

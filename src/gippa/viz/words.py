@@ -19,6 +19,7 @@ from types import MappingProxyType
 __all__ = [
     "FEATURE_LABEL",
     "FLAG_TEXT",
+    "NOVEL_CLASS_LABEL",
     "SCOPED_TEXT",
     "SKIP_TEXT",
     "TIER_NAME",
@@ -258,6 +259,19 @@ FEATURE_LABEL: Mapping[str, str] = MappingProxyType(
         "in_prophage": "in a prophage",
         "in_bgc": "in a biosynthetic gene cluster",
         "gc_local_dev": "local GC deviation",
+    }
+)
+
+#: ``novel_orfs.tsv`` ``class`` -> plain words for figure text (V13; M12-05a lead decision)
+NOVEL_CLASS_LABEL: Mapping[str, str] = MappingProxyType(
+    {
+        "nterm_extension": "N-terminal extension",
+        "cterm_extension": "C-terminal extension",
+        "intergenic": "intergenic",
+        "cds_outframe": "out-of-frame in a gene",
+        "antisense": "antisense",
+        "pseudogene": "pseudogene",
+        "sorf": "small ORF",
     }
 )
 

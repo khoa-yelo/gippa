@@ -222,7 +222,9 @@ def _report_html(
     live = None
     if plots_dir is not None and cfg.report.interactive:
         live = twins(plots_dir, files, twin_meta(view, cfg))
-    return build_report(view, files, skipped_plots(view), cfg, live, redact=redact)
+    return build_report(
+        view, files, skipped_plots(view), cfg, live, redact=redact, plots_dir=plots_dir
+    )
 
 
 def _check_size(page: Path, log: logging.Logger) -> None:

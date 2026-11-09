@@ -16,7 +16,7 @@ from pathlib import Path
 
 import pytest
 from helpers.release_readiness import REPO, SCRIPT, Fixture, load_module, metrics_doc
-from hypothesis import given
+from hypothesis import HealthCheck, given, settings
 from hypothesis import strategies as st
 
 PEPTIDE_LIKE = re.compile(r"[ACDEFGHIKLMNPQRSTVWY]{7,}")  # the M10-05 guard rule
@@ -68,6 +68,9 @@ def test_no_peptide_like_strings(tmp_path: Path) -> None:
     assert not leaks, leaks
 
 
+# nightly 1956149_2: one 1.34 s draw on a loaded shard tripped too_slow; the deadline would
+# trip the same way on the first call, which loads readiness.py (repo convention for both)
+@settings(deadline=None, suppress_health_check=[HealthCheck.too_slow])
 @given(st.lists(st.sampled_from(["pass", "fail", "pending", "deferred", "waived"]), max_size=20))
 def test_property_overall(statuses: list[str]) -> None:
     got = load_module().overall(statuses)
