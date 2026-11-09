@@ -16,8 +16,9 @@ Interface pinned here (PR 2 review r1 test author, beyond the spec text):
   curly single quotes), and no raw flag token;
 - L2: the index instance of a multi-instance plot (V03: suffix ``None``, stem ``V03_locus``;
   V13: suffix ``locus``, stem ``V13_novel_orfs_locus``, its suffix-``None`` instance is panel
-  (a)) has its own caption: it starts with the plot's Question, says "index" and differs from
-  the caption of the drawn instances;
+  (a)) has its own caption: it starts with the plot's Question, its How to read says "index"
+  and differs from the drawn instances' (M12-05c: the caption is a structured guide, full on
+  the first drawn figure, short on the later ones);
 - L3: the skip reason ``not_registered`` reads "this plot is not available in this GIPPA
   version" (case-insensitive) in the slot note;
 - L4: the sensitivity sentence appears only when every row has non-NA ``n_primary`` and
@@ -281,12 +282,15 @@ INDEX_STEMS = {"V13": "V13_novel_orfs_locus"}
 V03_INDEX_CAPTION = "Locus views, in display order"
 
 
-def _captions_by_stem(page_: Page, pid: str) -> dict[str, str]:
+def _captions_by_stem(page_: Page, pid: str) -> dict[str, tuple[str, str]]:
+    """``data-stem`` -> (figcaption text, How to read text) of each figure of ``pid``."""
+    from helpers.m12_05c import field, guide_of
+
     out = {}
-    for cap in page_.slot(pid).by_tag("figcaption"):
-        labels = " ".join(words(a.text()) for a in cap.by_tag("a"))
-        text = words(cap.text())
-        out[cap.attrs.get("data-stem", "")] = text[: len(text) - len(labels)].strip()
+    for fig in page_.slot(pid).by_tag("figure"):
+        (cap,) = fig.by_tag("figcaption")
+        read = words(field(guide_of(fig), "How to read").text())
+        out[cap.attrs.get("data-stem", "")] = (words(cap.text()), read)
     return out
 
 
@@ -306,7 +310,7 @@ def _plot_files(pid: str, suffixes: list[str | None], tmp: Path) -> Any:
 @pytest.mark.parametrize(("pid", "suffixes"), [("V13", [None, "locus_N1", "locus"])])
 def test_index_instance_has_its_own_caption(pid: str, suffixes: list[str | None],
                                             tmp_path: Path) -> None:  # fmt: skip
-    from gippa.report.content import CAPTIONS
+    from gippa.report.content import GUIDES
 
     run = build("P", tmp_path)
     if pid == "V13":
@@ -320,25 +324,34 @@ def test_index_instance_has_its_own_caption(pid: str, suffixes: list[str | None]
     assert index in caps, sorted(caps)
     others = {s: c for s, c in caps.items() if s != index}
     assert others, caps
-    for stem, cap in others.items():
-        assert cap == words(CAPTIONS[pid]), (stem, cap)
-    idx = caps[index]
-    assert idx.startswith(QUESTIONS[pid]), idx
+    first = run.plots[pid].instances[0].stem
+    assert first != index and first in others, (first, sorted(caps))
+    for stem, (_, read) in others.items():
+        if stem == first:  # the full guide
+            assert read == words(GUIDES[pid].read), (stem, read)
+        else:  # a short guide pointing to it
+            assert read.startswith("As for the first"), (stem, read)
+    text, idx = caps[index]
+    assert text.startswith(f"Question {QUESTIONS[pid]} "), text
     assert re.search(r"\bindex\b", idx, re.I), idx
-    assert idx != words(CAPTIONS[pid]), "the index instance reuses the drawn caption"
-    assert not flag_tokens(idx), idx
+    assert idx != words(GUIDES[pid].read), "the index instance reuses the drawn caption"
+    assert not idx.startswith("As for the first"), idx
+    assert not flag_tokens(text), text
 
 
 def test_sim_plots_v03_index_is_a_table_with_its_own_caption() -> None:
     """M12-04 PR 4 (P-12): the V03 index is a table under its own caption; every V03 figure is a
-    drawn locus view with the drawn caption."""
-    from gippa.report.content import CAPTIONS
+    drawn locus view with the drawn guide (full on the first, short on the others)."""
+    from gippa.report.content import GUIDES
 
     page_, _ = sim_report("sim_plots")
     caps = _captions_by_stem(page_, "V03")
     assert caps, "sim_plots has no drawn V03 locus"
     assert "V03_locus" not in caps, sorted(caps)
-    assert all(c == words(CAPTIONS["V03"]) for c in caps.values()), caps
+    reads = [read for _, read in caps.values()]
+    assert reads[0] == words(GUIDES["V03"].read), reads[0]
+    assert all(r.startswith("As for the first") for r in reads[1:]), reads
+    assert all(t.startswith(f"Question {QUESTIONS['V03']} ") for t, _ in caps.values()), caps
     tables = page_.slot("V03").find_all(lambda n: n.tag == "table"
                                         and n.attrs.get("data-index") == "V03")  # fmt: skip
     assert len(tables) == 1

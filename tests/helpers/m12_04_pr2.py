@@ -8,8 +8,8 @@ P_core, decoy, both) and the M9-25 snapshot fixtures (``sim_plots``, ``sim_empty
 
 Interface pinned here (PR 2 test author, beyond the spec text):
 - ``QUESTIONS``: the 16 §10.2 "Question" cells, as a literal (the code keeps none; lead decision
-  2). ``gippa.report.content.CAPTIONS`` maps each registered plot ID to its caption, which starts
-  with the Question;
+  2). ``gippa.report.content.GUIDES`` (M12-05c, replacing ``CAPTIONS``) maps each registered
+  plot ID to its structured guide, whose ``question`` is the Question;
 - the AC 2.1 flag vocabulary is every key of ``gippa.viz.words.FLAG_TEXT``, ``SKIP_TEXT`` and
   ``SCOPED_TEXT`` that holds an underscore or a colon (lead decision 1). A ``prefix:`` key
   matches the prefix followed by a parameter (``layer_missing:kegg``);
