@@ -1456,3 +1456,9 @@ the user guide is [Inputs › Genetic code](user-guide/inputs.md#genetic-code) a
 
 ### 2026-11-06 (docs, M12-01 PR 8b)
 - **K-12 tutorial (Q-K4):** the empty `docs/tutorials/ecoli-k12.md` was replaced by `tutorials/example-routes.md`. Write a K-12 tutorial from public inputs, command by command, once a public K-12 peptide set and its run times are recorded.
+
+## After 1.1.0: version-scoped waivers (2026-11-09, ADR-0076)
+- `readiness.py apply_waivers` applies any accepted "Waives readiness <id>" ADR to every version. The
+  1.0.0-only records ADR-0070 to ADR-0073 waived 1.1.0rc1 rows too. Read a scope line (e.g.
+  `Waives readiness R3 for 1.0.0`) and apply a waiver only to the versions it names. Change it after
+  the release: a change to `readiness.py` makes no evidence reusable.
