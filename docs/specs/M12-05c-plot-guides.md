@@ -450,3 +450,6 @@ PR 2 merges (review outputs first).
 - **Finding (not in scope):** route E's V13 panel (a) prints raw class tokens
   (`nterm_extension`, `cterm_extension`, `cds_outframe`, `sorf`) on the axis; M12-04 AC 2.1 checks
   report prose, not SVG text. Suggest M12-05a renders them through `words.plain`.
+
+## Lead decisions (2026-11-09)
+- Khoa: Q1 and Q2 "Five labels, visible": Question, Panels, How to read, Caveats, Data, always shown, with no extra heading and no `<details>`. Q3 to Q5: the defaults above. M12-05a merges first; this spec's V13 guide follows M12-05a (every candidate, class q first, then best peptide q).
