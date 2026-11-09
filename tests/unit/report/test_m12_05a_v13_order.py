@@ -176,24 +176,31 @@ def test_report_v13_linked_views_follow_the_index_order(
 # --- AC 11: captions ------------------------------------------------------------------------------
 
 
-@pytest.mark.parametrize("stem", [MAIN, PREFIX + h.E1_ORDER[0]])
-def test_v13_caption(stem: str) -> None:
-    from gippa.report.content import CAPTIONS, caption
+# M12-05c replaced the one-string captions by structured guides; these check the V13 guide and the
+# index's own How to read in their place (lead, 2026-11-09).
+def _v13_texts() -> list[str]:
+    from gippa.report.content import GUIDES, INDEX_READS
 
-    assert CAPTIONS["V13"] == h.CAPTION_V13
-    assert caption("V13", stem) == h.CAPTION_V13
-
-
-def test_v13_index_caption() -> None:
-    from gippa.report.content import INDEX_CAPTIONS, caption
-
-    assert INDEX_CAPTIONS["V13"] == h.INDEX_CAPTION_V13
-    assert caption("V13", INDEX) == f"{h.QUESTION_V13} {h.INDEX_CAPTION_V13}"
+    g = GUIDES["V13"]
+    return [g.question, *g.panels, g.read, g.caveats or "", INDEX_READS["V13"]]
 
 
-@pytest.mark.parametrize("text", [h.CAPTION_V13, h.INDEX_CAPTION_V13])
-def test_v13_captions_pass_the_prose_checks(text: str) -> None:
-    """Guard on the pinned strings (M12-04 rule 2): no ADR, §, flag token, path or raw class."""
+def test_v13_guide_describes_every_candidate_lowest_q_first() -> None:
+    from gippa.report.content import GUIDES, INDEX_READS, question
+
+    g = GUIDES["V13"]
+    assert question("V13") == h.QUESTION_V13
+    text = " ".join(g.panels)
+    assert "every candidate, called or not" in text
+    assert "smallest q first" in text
+    assert "dashed outline" in text
+    assert "index" in INDEX_READS["V13"]
+
+
+@pytest.mark.parametrize("k", range(6))
+def test_v13_guide_passes_the_prose_checks(k: int) -> None:
+    """Guard on the guide strings (M12-04 rule 2): no ADR, §, flag token, path or raw class."""
+    text = _v13_texts()[k]
     assert not internal_refs(text), internal_refs(text)
     assert not flag_tokens(text), flag_tokens(text)
     assert "tables/" not in text and "_" not in text

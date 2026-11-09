@@ -135,7 +135,7 @@ read top to bottom as "Question / text / Panels / list / …".
   rings are dense are the parts of the genome the proteome covers. A region arc over undetected
   genes and no peptides is a region the sample did not detect; V07 tests whether that is more
   than detectability predicts.
-- **Caveats:** A ring with nothing to draw is left out, and the title names the missing layers.
+- **Caveats:** A ring with nothing to draw is left out, and the note under the key names the missing layers.
   The circle is descriptive; the tests are in V02, V07 and the Genome context tables.
 
 ### V02 abundance_landscape
@@ -146,8 +146,8 @@ read top to bottom as "Question / text / Panels / list / …".
   origin and terminus when they are known. With no measured abundance, each panel is one strip of
   ticks coloured by detection status.
 - **How to read:** A shaded band is a run of neighbouring genes more (or less) abundant than the
-  rest of the replicon, beyond chance at a family-wise error of 0.05. The title gives the number
-  of islands and the lag-1 Moran's I with its q. A wavy trend line without bands is not evidence
+  rest of the replicon, beyond chance at the family-wise error level in the title. The title gives
+  the number of islands and the lag-1 Moran's I with its q. A wavy trend line without bands is not evidence
   of clustering.
 - **Caveats:** The trend line is a visual guide and is not tested. The island test shuffles whole
   transcription units, so operon partners looking alike do not by themselves make an island.
@@ -195,12 +195,14 @@ read top to bottom as "Question / text / Panels / list / …".
 
 ### V07 obs_vs_exp
 - **Question:** Which regions and categories are detected less than detectability predicts?
-- **Panels:** One row per group, in blocks: replicon, feature class, COG category, region. The
-  point is observed minus expected detected genes in percentage points of the group's genes, the
-  bar its 95 % confidence interval; the group size n is in the row label and the q at the right.
+- **Panels:** One row per group, in blocks: replicon, feature class, COG category, region; at
+  most 40 rows, and a note names the rest. The point is observed minus expected detected genes in
+  percentage points of the group's genes, the bar its 95 % confidence interval; the group size n
+  is in the row label, and region rows also carry their q at the right.
 - **How to read:** A row left of zero has fewer detected genes than its genes' detectability
-  predicts, a row right of zero more. Only rows whose q is at or below the level in the title are
-  findings; the title counts them.
+  predicts, a row right of zero more. Region rows carry a q: only those at or below the level in
+  the title are findings, and the title names the strongest. Other rows have a confidence
+  interval only: one that excludes 0 is a departure.
 - **Caveats:** The expected counts come from the detectability model, so check its reliability in
   V18 (a) first: where the model is off, every group can drift.
 
@@ -453,3 +455,15 @@ PR 2 merges (review outputs first).
 
 ## Lead decisions (2026-11-09)
 - Khoa: Q1 and Q2 "Five labels, visible": Question, Panels, How to read, Caveats, Data, always shown, with no extra heading and no `<details>`. Q3 to Q5: the defaults above. M12-05a merges first; this spec's V13 guide follows M12-05a (every candidate, class q first, then best peptide q).
+
+## Review round 1 (lead, 2026-11-09)
+The code review found guide text that does not match the plots. The § 4 V07 and V02 guides, which AC 11 asserts verbatim, and the V01 caveat are corrected above (V02 no longer hard-codes the 0.05 level). The other entries are fixed in `content.py` to the plots' real behaviour:
+- V03: the views are the first rows of the "Locus views, in display order" table, not in its order on the page.
+- V11: (b) ranks non-operon pairs by lfdr; flags use q.
+- V13: ties go to the smaller best peptide q, then the called candidate.
+- V15: (b)–(d) use LightGBM, the check model, and the (d) title gives both models' R².
+- V12, V10, V17, V05 and V06: wording.
+- V02 and V03: no hard-coded config values.
+- V13 index short guide: links back to `#guide-V13`.
+- V13 and V18: panel names where the figure prints no letter.
+
