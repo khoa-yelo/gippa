@@ -1,3 +1,4 @@
+{% import "guide.html.j2" as guide %}
 {% macro table(t) %}
 <h3>{{ t.name }} ({{ t.rows | length }} rows shown; <a href="{{ t.href }}">full table</a>)</h3>
 <input type="search" data-filter="{{ t.key }}" placeholder="filter rows" aria-label="filter {{ t.name }}">
@@ -57,8 +58,7 @@
 {% if i.svg is not none %}
 {{ i.svg }}
 {% endif %}
-<figcaption class="links">{{ i.stem }}{% for label, href in i.links %} <a href="{{ href }}">{{ label }}</a>{% endfor %}</figcaption>
-</figure>
+{{ guide.figcaption(i) }}</figure>
 {% endfor %}
 {% if slot.note %}
 <p class="note">V16: {{ slot.note }}</p>

@@ -1,3 +1,4 @@
+{% import "guide.html.j2" as guide %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -95,8 +96,7 @@
 {% elif i.img %}
 <a href="{{ i.img }}"><img src="{{ i.img }}" alt="{{ i.stem }} (linked: the report would be too large with it inlined)"></a>
 {% endif %}
-<figcaption class="links" data-stem="{{ i.stem }}">{{ i.caption }}{% for label, href in i.links %} <a href="{{ href }}">{{ label }}</a>{% endfor %}</figcaption>
-</figure>
+{{ guide.figcaption(i) }}</figure>
 {% endfor %}
 {% for n in p.notices %}
 <p class="notice">{{ n.title }}{% for label, href in n.links %} <a href="{{ href }}">{{ label }}</a>{% endfor %}</p>
