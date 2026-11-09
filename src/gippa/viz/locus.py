@@ -61,7 +61,12 @@ NOVEL_ORF = style.OKABE_ITO["reddish_purple"]
 ORF_Y = 1.7  # the novel ORF arrow's centre line: its own band above gene labels and marks (V13)
 ORF_TOP = 2.2  # the genes axes' top with a novel ORF band
 ORF_EXTRA_IN = 0.7  # extra figure height for the band and the key
-ORF_KEY = "novel ORF; tick: OSTIR start; purple pileup: its peptides"
+#: the one ORF key entry per view, by call status (M12-05a § 3)
+ORF_KEY_CALLED = "called novel ORF; tick: OSTIR start; purple pileup: its peptides"
+ORF_KEY_UNCALLED = (
+    "novel ORF candidate, not called (dashed); tick: OSTIR start; purple pileup: its peptides"
+)
+ORF_DASH = (0, (3, 2))  # an uncalled candidate's outline (M12-05a § 3)
 IMPUTED_HATCH = "xxx"
 #: ``fill`` is the gene arrow's face colour (NA on the other tracks; M12-04 P-01)
 COLUMNS = ("track", "id", "contig", "start", "end", "strand", "value", "category", "fill")
@@ -100,11 +105,21 @@ class Locus:
 @dataclass(frozen=True)
 class OrfMark:
     """V13's novel ORF on top of a ``Locus(kind="novel_orf")``: its strand, the
-    ``start_best_ostir`` tick in the window frame (``None`` = no tick) and its peptides."""
+    ``start_best_ostir`` tick in the window frame (``None`` = no tick), its peptides and
+    whether it is called (M12-05a § 3: an uncalled candidate is a hollow, dashed outline)."""
 
     strand: str
     tick: int | None = None
     peptides: frozenset[str] = frozenset()
+    called: bool = True
+
+
+def _orf_style(orf: OrfMark) -> dict[str, Any]:
+    """The arrow's (and its key swatch's) patch keywords: filled and solid when called, hollow
+    and dashed when not; one hue either way."""
+    face = to_rgba(NOVEL_ORF, 0.35 if orf.called else 0.0)
+    ls: Any = "solid" if orf.called else ORF_DASH
+    return {"facecolor": face, "edgecolor": NOVEL_ORF, "linewidth": 1.0, "linestyle": ls}
 
 
 def _kb(bp: float) -> str:
@@ -343,16 +358,16 @@ def _draw_orf(ax: Axes, pile: Axes, locus: Locus, orf: OrfMark, hits: list[tuple
     """The novel ORF arrow in its own band above the gene arrows, their labels and the ``+``
     marks (decision 11), its OSTIR start tick and its peptides' pileup."""
     s, e = locus.start0, locus.end0
-    ax.add_patch(Polygon(_arrow(s, e, orf.strand, head, ORF_Y), closed=True, edgecolor=NOVEL_ORF,
-                         facecolor=to_rgba(NOVEL_ORF, 0.35), linewidth=1.0,
-                         zorder=3))  # fmt: skip
+    ax.add_patch(Polygon(_arrow(s, e, orf.strand, head, ORF_Y), closed=True, zorder=3,
+                         **_orf_style(orf)))  # fmt: skip
     if orf.tick is not None:
         ax.plot([orf.tick, orf.tick], [ORF_Y - 0.3, ORF_Y + 0.3], color=NOVEL_ORF, lw=1.0)
     keys = {fold_il(p) for p in orf.peptides}
     mine = [h for h in hits if fold_il(str(h[0].peptide)) in keys]
     for ps, pe, d in _pileup_runs(mine):
         pile.fill_between([ps, pe], 0, d, color=NOVEL_ORF, linewidth=0, zorder=3)
-    return ["novel_orf", locus.locus_id, locus.contig, s, e, orf.strand, None, None]
+    category = "called" if orf.called else "not_called"
+    return ["novel_orf", locus.locus_id, locus.contig, s, e, orf.strand, None, category]
 
 
 def _gene_style(g: Any, cmap: Any, norm: Normalize, measured: bool) -> tuple[str, dict[str, Any]]:
@@ -541,7 +556,7 @@ def render_locus(
     fig.suptitle(title, fontsize=7)
     _colour_key(fig, [pile, ax], scale, label, drawn)
     if orf is not None:
-        _orf_key(pile)
+        _orf_key(pile, orf)
     _thin_labels(fig, ax)
     rows = [r + [None] * (len(COLUMNS) - len(r)) for r in rows]
     data = pd.DataFrame(rows, columns=list(COLUMNS)) if rows else _empty(COLUMNS)
@@ -576,10 +591,13 @@ def _colour_key(fig: Figure, axes: list[Axes], scale: tuple[float, float], label
     fig.legend(handles=swatches, loc="outside lower center", ncols=3, fontsize=6, frameon=False)
 
 
-def _orf_key(pile: Axes) -> None:
+def _orf_key(pile: Axes, orf: OrfMark) -> None:
     """The one-entry novel ORF key (V13 decision 13; the BGC shading shares its colour), just
-    above the pileup axes so the constrained layout makes room for it under the title."""
-    handle = Patch(facecolor=to_rgba(NOVEL_ORF, 0.35), edgecolor=NOVEL_ORF, lw=1.0, label=ORF_KEY)
+    above the pileup axes so the constrained layout makes room for it under the title. Its
+    swatch and text follow the ORF's call (M12-05a § 3)."""
+    # the uncalled text is wider than a single-column figure: two lines, after "(dashed);"
+    text = ORF_KEY_CALLED if orf.called else ORF_KEY_UNCALLED.replace("; ", ";\n", 1)
+    handle = Patch(label=text, **_orf_style(orf))
     pile.legend(handles=[handle], loc="lower center", bbox_to_anchor=(0.5, 1.0), fontsize=6,
                 frameon=False, borderaxespad=0.2)  # fmt: skip
 

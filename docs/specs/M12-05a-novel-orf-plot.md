@@ -130,10 +130,12 @@ Candidates are sorted, stably, by this key:
    "a call needs class q ≤ 0.01"). It is read with `_fdr`, so NA, the literal `unestimated` and
    non-finite values are "no q" and sort **after every finite q**. Q1 asks whether Khoa meant
    this q.
-2. **Called before not called** among equal q (including among "no q").
-3. **`rank` ascending, NA last.** Among called rows this is the pipeline's own §7.6.5 order.
+2. **`best_peptide_q` ascending, NA last** among equal class q (Khoa, Q1: "Class q, then peptide
+   q").
+3. **Called before not called** among equal class q and best peptide q (including among "no q").
+4. **`rank` ascending, NA last.** Among called rows this is the pipeline's own §7.6.5 order.
    Uncalled rows all have `rank` NA, so they tie here.
-4. **`rank_key(row)`** (§7.6.5): peptides descending, `best_peptide_q` ascending, start codon,
+5. **`rank_key(row)`** (§7.6.5): peptides descending, `best_peptide_q` ascending, start codon,
    TIR descending, promoter descending, terminator descending, length descending, and finally
    `orf_id` ascending. NA comes last in every component.
 
@@ -276,7 +278,7 @@ Columns, in this order:
 | E1 | Route E `novel_orfs.tsv`: 8 rows, 0 called. Antisense q 0.4 ×5, other classes q 1 ×3; best q in the evidence run | 8 locus views, all dashed and unfilled, in this order: `…130563_m` (0.4, best q 0.000875), `…58745_p` (0.4, 0.00247), `…195190_m` (0.4, 0.00339), `…43000_m` (0.4, 0.00509), `…20948_p` (0.4, 0.00721), `…20324_m` (1, 0.000875), `…25949_p` (1, 0.00721), `…149890_p` (1, 0.00779). Index title "Novel ORF loci, lowest class FDR first (8 candidates)". The index TSV has 8 rows, all `rendered = true`. Panel (a) is byte-identical to today's. The report shows the 8 views in this order |
 | E2 | Sim fixture `sim_plots` (57 rows: 40 called, 17 not) | Views 1–20 are all called: the 13 pseudogenes (q 0.00332862) in `rank` order 1, 2, 3, 4, 7, 9, 13, 17, 18, 20, 23, 24, 32, then 7 antisense (q 0.00383386), ranks 5, 6, 8, 10, 11, 12, 14. Index title "… (top 20 of 57; all in tables/novel_orfs.tsv)". The index TSV has 57 rows. Row 39 is `NOVEL_chr1_48669_p` (antisense, not called, q 0.00383386, after the 26 called antisense rows of that q). Rows 40–57 are uncalled, and row 57 is `NOVEL_chr1_74837_p`. Views 1 and 2 are `NOVEL_chr1_45143_m` and `NOVEL_chr1_44225_m`, the two kept baselines, as today |
 | E3 | All called, mixed q (E2's called rows) | The order is by q first, so `NOVEL_chr1_269094_p` (rank 32) is view 13. `NOVEL_chr1_185480_p` (rank 15), `NOVEL_chr1_247263_p` (16) and `NOVEL_chr1_130084_m` (19) are not drawn (`rendered = false`). The report-structure stems change accordingly |
-| E4 | Tie on q, called vs not: 2 antisense rows, both q 0.0065; A `called = true`, `n_peptides = 2`, rank 1; B `called = false`, `n_peptides = 5` | A then B (step 2 outranks B's peptide count) |
+| E4 | Tie on q, called vs not: 2 antisense rows, both q 0.0065; A `called = true`, `n_peptides = 2`, rank 1; B `called = false`, `n_peptides = 5` | A then B (both have best peptide q 0.001, so step 3 outranks B's peptide count) |
 | E5 | Tie on q and call, both uncalled: q 0.4; C best q 0.0025, D best q 0.0009, both 1 peptide | D then C (`rank_key`: best q ascending) |
 | E6 | Full tie: 2 uncalled rows equal in every key column, IDs `NOVEL_chr1_900_p` and `NOVEL_chr1_1000_p` | `NOVEL_chr1_1000_p` then `NOVEL_chr1_900_p` (string order of `orf_id`). The same output follows when the input rows are swapped |
 | E7 | NaN q: E called, `class_fdr` NA, rank 1; F not called, q 0.9; G not called, `class_fdr` = literal `unestimated` | F, E, G. Finite q comes first; among "no q", called comes first. E's title says "class FDR unestimated" and its arrow is filled. G's arrow is dashed. In the TSV, `class_fdr` is NA for E and G |
@@ -292,7 +294,7 @@ Columns, in this order:
 | 1 candidate | E9: 1 view, the singular index title |
 | all called | E2/E3: order by q, then `rank`. Every view is filled. The panel (a) title is unchanged |
 | none called | E1/E8: every view is dashed. The M9-12 "panel (a) only" rule is gone |
-| ties | E4–E6: called first, then `rank`, then `rank_key`, then `orf_id`. The output does not depend on input row order |
+| ties | E4–E6: best peptide q, then called first, then `rank`, then `rank_key`, then `orf_id`. The output does not depend on input row order |
 | NaN / `unestimated` q | E7: sorts after every finite q. NaN `best_peptide_q` and other NA `rank_key` components sort last within their step |
 | `called` NA | treated as not called, so dashed (as today's panel (b) filter) |
 | `flags` has `class_fdr_unestimated` but `class_fdr` is finite | sorts by the finite value (the sort reads `class_fdr` only). After M12-04 PR 11c this cannot occur, since that flag comes with NA |
@@ -423,3 +425,5 @@ Each question has a reversible default, which the PRs use unless the lead says o
 ## Lead decisions (2026-11-09)
 - Khoa: Q1 "Class q, then peptide q": sort by `class_fdr` ascending, ties by best peptide q (then the rest of the tie-break above). Q2 to Q6: the defaults above.
 - Added from the M12-05c review: V13 panel (a) currently prints raw class names (`nterm_extension`, `cterm_extension`, `cds_outframe`, `sorf`) on its axis. Use the plain words the report already uses for these classes (`src/gippa/viz/words.py`, or the report's class labels), and add an acceptance criterion: no raw class identifier appears in the V13 SVG text.
+- Review round 1 (lead, 2026-11-09): § 2 now lists best peptide q as step 2, matching Q1. AC 12 has one exception: `src/gippa/steps/plots.py` passes the plots directory to `build_report`. The report step builds its view from the step inputs, so `build.py` cannot find the V13 index without it, and § 6.3 wrongly assumed it could. Tests added: a fixed example where a smaller best peptide q outranks a call, and the M = 20 and M = 21 index titles.
+
