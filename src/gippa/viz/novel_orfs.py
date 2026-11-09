@@ -120,7 +120,10 @@ def _bar_label(d: pd.DataFrame) -> str:
 def _title(data: pd.DataFrame) -> str:
     n = {s: int(data.loc[data["status"] == s, "n"].sum()) for s in STATUSES}
     if not n["called"]:
-        return f"No novel ORF called; {n['unestimated']} candidates unestimated"
+        k = n["unestimated"]
+        if not k:
+            return "No novel ORF called"
+        return f"No novel ORF called; {k} {'candidate' if k == 1 else 'candidates'} unestimated"
     fdr = data["class_fdr_max_called"].dropna()
     bound = f"class FDR ≤ {style.fmt_num(fdr.max())}" if len(fdr) else "class FDR unestimated"
     orfs = "ORF" if n["called"] == 1 else "ORFs"
@@ -202,8 +205,9 @@ def _view(row: Any, view: RunView, cfg: GippaConfig, scale: tuple[float, float])
     n = _int(row.n_peptides)
     called = _is_called(row.called)
     status = "called" if called else "not called"
+    peps_word = "peptide" if n == 1 else "peptides"
     label = (f"{row.orf_id} ({_label(row.cls)}, {status}): {'NA' if n is None else n} "
-             f"peptides, best q {style.fmt_q(q)}, class FDR {_fmt(fdr)}")  # fmt: skip
+             f"{peps_word}, best q {style.fmt_q(q)}, class FDR {_fmt(fdr)}")  # fmt: skip
     lo = Locus(str(row.orf_id), "novel_orf", str(row.contig), *span, fdr, label)
     peps = frozenset(str(row.peptides).split(";")) if isinstance(row.peptides, str) else frozenset()
     mark = OrfMark(str(row.strand), _tick(row, span, length), peps, called)

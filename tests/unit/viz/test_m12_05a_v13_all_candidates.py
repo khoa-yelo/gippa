@@ -411,7 +411,7 @@ def test_ac3_e7_na_q_called_is_filled_and_unestimated_uncalled_is_dashed(
 
 def test_ac4_e9_title_says_not_called(tmp_path: Path, cfg: GippaConfig) -> None:
     (view,) = _views(_run(tmp_path, [h.e9_row()], cfg, replicons=h.C10))
-    want = (f"{h.E9_ID} (antisense, not called): 1 peptides, best q {style.fmt_q(0.002)}, "
+    want = (f"{h.E9_ID} (antisense, not called): 1 peptide, best q {style.fmt_q(0.002)}, "
             f"class FDR {style.fmt_num(0.4)}")  # fmt: skip
     assert _collapse(view.title) == want
     assert want in _collapse(" ".join(t.get_text() for t in _texts(view.figure)))
@@ -419,7 +419,7 @@ def test_ac4_e9_title_says_not_called(tmp_path: Path, cfg: GippaConfig) -> None:
 
 def test_ac4_called_title_says_called(tmp_path: Path, cfg: GippaConfig) -> None:
     (view,) = _views(_run(tmp_path, [h.e9_row(called=True)], cfg, replicons=h.C10))
-    assert _collapse(view.title).startswith(f"{h.E9_ID} (antisense, called): 1 peptides, ")
+    assert _collapse(view.title).startswith(f"{h.E9_ID} (antisense, called): 1 peptide, ")
 
 
 # --- AC 5: the index image and its cap note -------------------------------------------------------
@@ -634,11 +634,11 @@ def test_ac8_e9_window_is_unwrapped_across_the_origin(tmp_path: Path, cfg: Gippa
     assert [(int(r.start), int(r.end), r.strand) for r in nv.itertuples()] == [(9_899, 10_150, "-")]
 
 
-# --- AC 9: panel (a) is unchanged (values of e6f4aa3c) --------------------------------------------
+# --- AC 9: panel (a) values of e6f4aa3c; the e1 title drops "0 candidates unestimated" (Khoa) ---
 
 _NAN = math.nan
 PANEL_A = {
-    "e1": ("No novel ORF called; 0 candidates unestimated",
+    "e1": ("No novel ORF called",
            [("nterm_extension", "not_called", 1, _NAN), ("intergenic", "not_called", 1, _NAN),
             ("cds_outframe", "not_called", 1, _NAN), ("antisense", "not_called", 5, _NAN)]),
     "e7": ("1 novel ORF called (class FDR unestimated), 1 unestimated",
