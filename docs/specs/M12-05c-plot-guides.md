@@ -146,8 +146,8 @@ read top to bottom as "Question / text / Panels / list / …".
   origin and terminus when they are known. With no measured abundance, each panel is one strip of
   ticks coloured by detection status.
 - **How to read:** A shaded band is a run of neighbouring genes more (or less) abundant than the
-  rest of the replicon, beyond chance at a family-wise error of 0.05. The title gives the number
-  of islands and the lag-1 Moran's I with its q. A wavy trend line without bands is not evidence
+  rest of the replicon, beyond chance at the family-wise error level in the title. The title gives
+  the number of islands and the lag-1 Moran's I with its q. A wavy trend line without bands is not evidence
   of clustering.
 - **Caveats:** The trend line is a visual guide and is not tested. The island test shuffles whole
   transcription units, so operon partners looking alike do not by themselves make an island.
@@ -457,7 +457,7 @@ PR 2 merges (review outputs first).
 - Khoa: Q1 and Q2 "Five labels, visible": Question, Panels, How to read, Caveats, Data, always shown, with no extra heading and no `<details>`. Q3 to Q5: the defaults above. M12-05a merges first; this spec's V13 guide follows M12-05a (every candidate, class q first, then best peptide q).
 
 ## Review round 1 (lead, 2026-11-09)
-The code review found guide text that does not match the plots. The § 4 V07 guide, which AC 11 asserts verbatim, and the V01 caveat are corrected above. The other entries are fixed in `content.py` to the plots' real behaviour:
+The code review found guide text that does not match the plots. The § 4 V07 and V02 guides, which AC 11 asserts verbatim, and the V01 caveat are corrected above (V02 no longer hard-codes the 0.05 level). The other entries are fixed in `content.py` to the plots' real behaviour:
 - V03: the views are the first rows of the "Locus views, in display order" table, not in its order on the page.
 - V11: (b) ranks non-operon pairs by lfdr; flags use q.
 - V13: ties go to the smaller best peptide q, then the called candidate.

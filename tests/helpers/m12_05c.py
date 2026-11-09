@@ -58,8 +58,8 @@ V02_GUIDE: tuple[str, tuple[str, ...], str, str | None] = (
         "panel is one strip of ticks coloured by detection status.",
     ),
     "A shaded band is a run of neighbouring genes more (or less) abundant than the rest of the "
-    "replicon, beyond chance at a family-wise error of 0.05. The title gives the number of "
-    "islands and the lag-1 Moran's I with its q. A wavy trend line without bands is not "
+    "replicon, beyond chance at the family-wise error level in the title. The title gives the "
+    "number of islands and the lag-1 Moran's I with its q. A wavy trend line without bands is not "
     "evidence of clustering.",
     "The trend line is a visual guide and is not tested. The island test shuffles whole "
     "transcription units, so operon partners looking alike do not by themselves make an island.",

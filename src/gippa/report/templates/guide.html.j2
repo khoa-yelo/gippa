@@ -22,7 +22,7 @@
 {% endif %}
 {% else %}
 <dt>How to read</dt>
-<dd>{% if d.read %}{{ d.read }}{% else %}As for the first {{ d.name }} (<a href="#guide-{{ d.pid }}">see the guide above</a>).{% endif %}</dd>
+<dd>{% if d.read %}{{ d.read }} (<a href="#guide-{{ d.pid }}">see the guide above</a>){% else %}As for the first {{ d.name }} (<a href="#guide-{{ d.pid }}">see the guide above</a>).{% endif %}</dd>
 {% endif %}
 <dt>Data</dt>
 <dd>{% if d.data %}<a href="{{ d.data[1] }}">{{ d.data[0] }}</a>{% else %}no data table for this figure{% endif %}; figure files:{% for label, href in d.images %} <a href="{{ href }}">{{ label }}</a>{% endfor %}</dd>

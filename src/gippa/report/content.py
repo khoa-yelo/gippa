@@ -634,7 +634,8 @@ GUIDES: Mapping[str, Guide] = {
         "are dense are the parts of the genome the proteome covers. A region arc over undetected "
         "genes and no peptides is a region the sample did not detect; V07 tests whether that is "
         "more than detectability predicts.",
-        "A ring with nothing to draw is left out, and the title names the missing layers. The "
+        "A ring with nothing to draw is left out, and the note under the key names the missing "
+        "layers. The "
         "circle is descriptive; the tests are in V02, V07 and the Genome context tables.",
     ),
     "V02": Guide(
@@ -645,7 +646,8 @@ GUIDES: Mapping[str, Guide] = {
          "mark the origin and terminus when they are known. With no measured abundance, each "
          "panel is one strip of ticks coloured by detection status.",),
         "A shaded band is a run of neighbouring genes more (or less) abundant than the rest of "
-        "the replicon, beyond chance at a family-wise error of 0.05. The title gives the number "
+        "the replicon, beyond chance at the family-wise error level in the title. The title gives "
+        "the number "
         "of islands and the lag-1 Moran's I with its q. A wavy trend line without bands is not "
         "evidence of clustering.",
         "The trend line is a visual guide and is not tested. The island test shuffles whole "
@@ -661,8 +663,9 @@ GUIDES: Mapping[str, Guide] = {
          "or island is shaded. A dashed line marks the origin when the window crosses it.",),
         "The title gives the locus, its detected share against the share detectability "
         "predicts, and the q. Look at which genes carry peptides and how abundant they are "
-        "against the flanks. The views follow the \"Locus views, in display order\" table: the "
-        "best locus of each kind in turn, then the second best, and so on, at most 50.",
+        "against the flanks. The views are the first rows of the \"Locus views, in display "
+        "order\" table (the configured number, 50 by default); that table gives each one's "
+        "rank: the best locus of each kind in turn, then the second best, and so on.",
         "Novel-ORF candidates are drawn under Novel ORFs (V13), not here. A gene supported by a "
         "single peptide is marked, and its abundance is not estimated.",
     ),
@@ -675,7 +678,7 @@ GUIDES: Mapping[str, Guide] = {
          "takes one route to one outcome, the diagram is a single bar.",),
         "Most of the flow should end in \"placed\". A large unmapped, unexplained or rejected "
         "share means the genome, the search database and the input do not match well; V06 checks "
-        "the tolerant route, and the unmapped table lists the sequences.",
+        "the tolerant route, and tables/unmapped.tsv lists the sequences.",
         "Each sequence counts once: one placed by one route and unmapped by another counts as "
         "placed.",
     ),
@@ -689,20 +692,21 @@ GUIDES: Mapping[str, Guide] = {
          "confidence interval; drawn only for de novo input."),
         "Where decoys come close to targets in (a), those placements are mostly chance; (b) "
         "turns this into an FDR, and only strata at or below the dashed line are accepted. Bins "
-        "with low precision in (c) add errors to every later count. When every peptide matched "
-        "exactly, the plot is one line saying so.",
+        "with low precision in (c) add errors to every later count. When no tolerant placement "
+        "has a target, (a) and (b) collapse to one line saying so.",
         "Without reference peptides, de novo precision is not measured and an assumed value is "
         "used; panel (c) names it.",
     ),
     "V07": Guide(
         "Which regions and categories are detected less than detectability predicts?",
-        ("One row per group, in blocks: replicon, feature class, COG category, region. The point "
-         "is observed minus expected detected genes in percentage points of the group's genes, "
-         "the bar its 95 % confidence interval; the group size n is in the row label and the q "
-         "at the right.",),
+        ("One row per group, in blocks: replicon, feature class, COG category, region; at most 40 "
+         "rows, and a note names the rest. The point is observed minus expected detected genes in "
+         "percentage points of the group's genes, the bar its 95 % confidence interval; the group "
+         "size n is in the row label, and region rows also carry their q at the right.",),
         "A row left of zero has fewer detected genes than its genes' detectability predicts, a "
-        "row right of zero more. Only rows whose q is at or below the level in the title are "
-        "findings; the title counts them.",
+        "row right of zero more. Region rows carry a q: only those at or below the level in the "
+        "title are findings, and the title names the strongest. Other rows have a confidence "
+        "interval only: one that excludes 0 is a departure.",
         "The expected counts come from the detectability model, so check its reliability in "
         "V18 (a) first: where the model is off, every group can drift.",
     ),
@@ -722,11 +726,12 @@ GUIDES: Mapping[str, Guide] = {
         ("(a) Moran's I of abundance against the lag (genes apart, 1 to 20) per replicon, with "
          "two shaded 95 % null envelopes: gene shuffles (grey) and transcription-unit block "
          "shuffles (blue).",
-         "(b) the same for detection: the join statistic of neighbouring pairs in which both "
+         "(b) the same for detection: the join statistic of gene pairs k genes apart in which both "
          "genes are detected, as a Pearson residual, against the same two envelopes."),
-        "A filled marker lies outside the blue envelope with q at or below the level: genes that "
-        "far apart look alike beyond what operons explain. Open markers inside the blue envelope "
-        "at every lag mean operons explain the similarity. The title gives the lag-1 result.",
+        "A filled marker has a transcription-unit block q at or below the level (BH across lags): "
+        "genes that far apart look alike beyond what operons explain. Markers outside the grey "
+        "envelope but open and inside the blue one at every lag mean operons explain the "
+        "similarity. The title gives the lag-1 result.",
         "The grey envelope ignores operons and is too narrow; judge by the blue one. Lags with "
         "too few gene pairs are not drawn.",
     ),
@@ -735,13 +740,14 @@ GUIDES: Mapping[str, Guide] = {
         ("(a) |Δ| by pair class: histograms of the absolute log2 abundance difference of "
          "adjacent genes, for same-operon (OP), non-operon (NO), convergent (CV) and sandwiched "
          "(SW) pairs, with n in the legend.",
-         "(b) the local FDR of each pair against |Δ|, with the flag level dashed.",
+         "(b) the local FDR of each non-operon pair against |Δ|: how likely the pair is not a "
+         "missed operon; lower is stronger.",
          "(c) partners: upstream against downstream log2 abundance of OP and NO pairs, coloured "
          "by class; flagged pairs are larger outlined markers, one shape per flag."),
         "OP pairs at smaller |Δ| than NO pairs in (a) mean operon partners are made at similar "
-        "levels, as expected. Pairs below the dashed line in (b) are flagged, for example an "
-        "operon pair whose partners differ or a non-operon pair that behaves like one. In (c), "
-        "points near the diagonal look alike.",
+        "levels, as expected. (b) ranks non-operon pairs that may be missed operons; flags use "
+        "q, not this curve. A flag marks, for example, an operon pair whose partners differ or a "
+        "non-operon pair that behaves like one. In (c), points near the diagonal look alike.",
         "Pairs with an imputed abundance are left out of (a) and (c). A flag is a lead to check "
         "in the locus view (V03), not a confirmed promoter or terminator.",
     ),
@@ -753,20 +759,24 @@ GUIDES: Mapping[str, Guide] = {
          "the covering peptide with the ALT residue in bold colour, and the number of covering "
          "peptides."),
         "ALT means the peptides show only the alternative residue; mixed means both residues are "
-        "seen. High-confidence ALT sites without flags are the strongest. In (b), the peptide "
+        "seen. High-confidence ALT sites without a mass look-alike flag are the strongest. In (b), "
+        "the peptide "
         "should match the reference everywhere except the highlighted residue.",
         "The class error rate is pooled over every site of a class, not per site; a rate of "
-        "exactly 1 (marked *) means it was not measured. I and L have the same mass and are "
+        "exactly 1 (marked *) in a reference-proteome search means it was not measured. I and L "
+        "have the same mass and are "
         "written I/L.",
     ),
     # V13 follows M12-05a: every candidate, class q first, then the best peptide q
     "V13": Guide(
         "Which new genes or upstream extensions are supported?",
-        ("(a) candidates per class (for example N-terminal extension, intergenic, small ORF), "
+        ("(a) class counts, the first figure: candidates per class (for example N-terminal "
+         "extension, intergenic, small ORF), "
          "stacked by status: called, not called or unestimated.",
-         "(b) every candidate, called or not, smallest q first (the class FDR; ties go to the "
-         "called candidate, then the smallest best peptide q; unestimated last), each in its "
-         "genomic neighbourhood: the candidate (filled when called, a dashed outline when not), "
+         "(b) candidate views, one figure each: every candidate, called or not, smallest q first "
+         "(the class FDR; ties go to the smaller best peptide q, then to the called candidate; "
+         "unestimated last), each in its genomic neighbourhood: the candidate (filled when called, "
+         "a dashed outline when not), "
          "the nearby gene arrows, its peptides and the promoter and terminator marks, with its "
          "class, status and q in the title."),
         "A called candidate passed its class FDR; its q is the lowest FDR at which it would be "
@@ -800,16 +810,17 @@ GUIDES: Mapping[str, Guide] = {
         ("(a) block ΔR²: the drop in cross-validated R² when each feature block (transcription, "
          "translation, codon, protein, context) is left out, for the elastic net (the main "
          "model) and LightGBM (a check), with intervals.",
-         "(b) partial dependence of abundance on the codon adaptation index, the tRNA adaptation "
+         "(b) partial dependence (LightGBM, the check model, like (c) and (d)) of abundance on the "
+         "codon adaptation index, the tRNA adaptation "
          "index, the OSTIR initiation rate and the promoter score.",
-         "(c) SHAP values of the top 20 features: one point per gene, coloured by the feature's "
-         "value.",
+         "(c) SHAP values of the top 20 features: one point per gene, coloured by the rank of "
+         "the feature's value.",
          "(d) observed against out-of-fold predicted log2 abundance; genes more than 2 SD off "
          "are marked as unexplained."),
         "A large ΔR² in (a) means that block carries information the others lack. (b) and (c) "
         "show the direction, for example higher codon adaptation going with higher abundance. In "
         "(d), points near the diagonal are well predicted; the title gives the cross-validated "
-        "R².",
+        "R² of both models.",
         "When the model does not predict abundance (R² at or below 0, or its interval includes "
         "0), only (a) and (d) are drawn, under a banner. Feature blocks are correlated, and the "
         "intervals are uncalibrated because the cross-validation repeats share data.",
@@ -836,8 +847,9 @@ GUIDES: Mapping[str, Guide] = {
          "(d) log2 abundance, measured and imputed.",
          "(e) missing values (%) per gene feature over complete genes, with the reason when a "
          "feature was not computed."),
-        "An error in (a) needs action and a warning a look; the list under the panels names "
-        "them. Unmapped peptides much longer or shorter than the placed ones point to a wrong "
+        "An error in (a) needs action and a warning a look; the \"warnings and errors\" box "
+        "beside (d) names them. Unmapped peptides much longer or shorter than the placed ones "
+        "point to a wrong "
         "digest or database. A large imputed share in (d), or a feature near 100 % missing in "
         "(e), weakens every later plot that uses it.",
     ),
@@ -845,9 +857,11 @@ GUIDES: Mapping[str, Guide] = {
         "Are the tests calibrated on this dataset?",
         ("(a) detectability reliability: the observed detection rate against the mean predicted "
          "probability per bin, with the slope, intercept and Brier score.",
-         "(b) p-value histograms, one per test family, with n; families with fewer than 10 tests "
+         "(b) p-value histograms (the middle row): one per test family, with n; families with "
+         "fewer than 10 tests "
          "are listed, not drawn.",
-         "(c) null distributions for regions, islands and the determinants model, with the "
+         "(c) null distributions (the bottom row) for regions, islands and the determinants model, "
+         "with the "
          "observed statistic marked and its p."),
         "In (a), points on the diagonal (slope near 1, intercept near 0) mean the detectability "
         "model predicts well, so V07 can be trusted. In (b), a calibrated test is flat away from "
