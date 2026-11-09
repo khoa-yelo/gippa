@@ -1,0 +1,1 @@
+`novel_orfs.tsv` names the host gene and the nearest genes on each side, with distances: nine new columns after `overlapping_gene` (gene labels, `overlap_relation`, `other_overlapping_genes`, `upstream_*` and `downstream_*`). The report previews them in the Novel ORFs section, and the genes preview shows an unnamed gene's locus tag in italics with its product as a tooltip.

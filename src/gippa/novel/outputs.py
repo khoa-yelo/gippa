@@ -34,9 +34,18 @@ NOVEL_ORFS_TYPES: dict[str, Kind] = {
     "best_peptide_q": "float", "tir_ostir": "float", "promoter_score": "float",
     "promoter_supported": "bool", "terminator_downstream": "bool", "terminator_conf": "float",
     "terminator_distance_nt": "int", "rbs_supported": "bool", "class_fdr": "float",
-    "called": "bool", "rank": "int", "overlapping_gene": "str", "flags": "str",
+    "called": "bool", "rank": "int", "overlapping_gene": "str",
+    # M12-05b: host label and strand relation, other overlapping genes, the two flanks
+    "overlapping_gene_label": "str", "overlap_relation": "str", "other_overlapping_genes": "str",
+    "upstream_gene": "str", "upstream_gene_label": "str", "upstream_distance_nt": "int",
+    "downstream_gene": "str", "downstream_gene_label": "str", "downstream_distance_nt": "int",
+    "flags": "str",
 }  # fmt: skip
 NOVEL_ORFS_COLUMNS: tuple[str, ...] = tuple(NOVEL_ORFS_TYPES)
+#: filled by ``gippa.novel.gene_context.gene_context`` after ``orf_table`` (NA until then)
+GENE_CONTEXT_COLUMNS: tuple[str, ...] = NOVEL_ORFS_COLUMNS[
+    NOVEL_ORFS_COLUMNS.index("overlapping_gene") + 1 : NOVEL_ORFS_COLUMNS.index("flags")
+]
 POSITION_COLUMNS = ("start_longest", "start_best_ostir", "end")
 PATCH_PRODUCT = "hypothetical protein (GIPPA novel ORF)"
 NEW_ORF_CLASSES = frozenset({"intergenic", "cds_outframe", "antisense"})
@@ -154,6 +163,7 @@ def _orf_row(
         "overlapping_gene": o.overlapping_gene, "flags": order_flags(flags),
     }  # fmt: skip
     row.update({c: s.get(c) for c in _SCORED})
+    row.update(dict.fromkeys(GENE_CONTEXT_COLUMNS))
     return row
 
 

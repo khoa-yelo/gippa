@@ -5,7 +5,8 @@ A column sorts numerically when every non-``NA`` cell is a plain decimal number 
 ``-INF`` (ADR-0006; the ``_NUM`` pattern, ASCII digits only, shared with the JS), else by string
 (code-point order); ties keep their order and ``NA`` is last in both directions. A row matches a
 filter when the query is a case-insensitive substring of any one cell; an empty query matches every
-row.
+row. Cells are the shown text (``textContent`` in the JS), so a genes-preview ``gene`` cell that
+shows a locus tag in italics sorts by that tag and is never ``NA`` (M12-05b lead decision).
 """
 
 from __future__ import annotations

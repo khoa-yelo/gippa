@@ -42,7 +42,12 @@ NOVEL_ORFS_COLUMNS: tuple[str, ...] = (
     "length_aa_longest", "length_aa_best", "start_codon_best", "n_peptides", "peptides",
     "best_peptide_q", "tir_ostir", "promoter_score", "promoter_supported",
     "terminator_downstream", "terminator_conf", "terminator_distance_nt", "rbs_supported",
-    "class_fdr", "called", "rank", "overlapping_gene", "flags",
+    "class_fdr", "called", "rank", "overlapping_gene",
+    # M12-05b rule 2: host label, relation, other overlaps and the two flanks
+    "overlapping_gene_label", "overlap_relation", "other_overlapping_genes",
+    "upstream_gene", "upstream_gene_label", "upstream_distance_nt",
+    "downstream_gene", "downstream_gene_label", "downstream_distance_nt",
+    "flags",
 )  # fmt: skip
 PATCH_PRODUCT = "hypothetical protein (GIPPA novel ORF)"
 FILES = ("novel_orfs.tsv", "novel_orfs.gff3", "novel_orfs.faa", "annotation_patch.gff3")

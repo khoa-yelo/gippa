@@ -13,6 +13,8 @@ apart from the absolute links to the docs-site methods pages (links, never loads
 M12-04 PR 2: a section that does not apply to the run (``not_applicable``) is listed once in
 ``#sec-not-applicable`` at the end instead of being rendered; an empty-state instance is a
 ``.notice``; a 0-row preview is "none" with its link; the genes preview is ``GENES_PREVIEW``.
+M12-05b: the Novel ORFs preview is ``NOVEL_PREVIEW``; an unnamed gene in the genes preview shows
+its locus tag in italics with the product as its tooltip.
 
 M12-04 PR 13: Gene detection shows the pivoted views of ``detection_summary``
 (``gippa.report.detection``) instead of its raw preview; ``redact`` rewrites the provenance
@@ -38,6 +40,7 @@ from gippa.determinants.models import MIN_ROWS, MIN_TUS
 from gippa.io.plot_files import PlotFiles, svg_title
 from gippa.io.run_view import PATHS, RunView
 from gippa.io.tsv import format_value, read_tsv
+from gippa.model.genes import name_label
 from gippa.report import content, detection, head
 from gippa.viz import style
 from gippa.viz.determinants import no_predictive_power
@@ -86,6 +89,14 @@ SECTIONS: tuple[Section, ...] = (
 #: the curated genes preview, in order (R-06); ``tables/genes.tsv`` keeps every column
 GENES_PREVIEW = ("locus_tag", "gene", "product", "detection_status", "n_peptides_unique",
                  "abundance_log2", "region_ids", "flags")  # fmt: skip
+#: the curated Novel ORFs preview, in order (M12-05b rule 9); rows stay in table order
+NOVEL_PREVIEW = ("orf_id", "class", "called", "class_fdr", "strand", "length_aa_best",
+                 "overlapping_gene_label", "overlap_relation", "upstream_gene_label",
+                 "upstream_distance_nt", "downstream_gene_label", "downstream_distance_nt",
+                 "n_peptides", "flags")  # fmt: skip
+#: what an NA label cell shows in the Novel ORFs preview (the TSV keeps NA, rule 6)
+_NOVEL_NA_LABEL = {"overlapping_gene_label": "none", "upstream_gene_label": "—",
+                   "downstream_gene_label": "—"}  # fmt: skip
 NOT_APPLICABLE = "Not applicable in this run"
 SENSITIVITY_NONE = "No flagged results, so there is nothing to compare across sensitivity reruns."
 #: section id -> the tables whose absence makes it inapplicable (all of them absent)
@@ -245,8 +256,37 @@ def _genes_preview(view: RunView) -> tuple[list[str], list[list[str]]]:
         det, pep = num("detected").fillna(0.0), num("n_peptides_unique").fillna(0.0)
         keys = list(zip(det <= 0, -pep, tag, strict=True))
     order = sorted(range(len(genes)), key=lambda i: keys[i])[:TOP_ROWS]
-    recs = genes[cols].iloc[order].to_dict("records")
-    return cols, [[format_value(r[c]) for c in cols] for r in recs]
+    extra = [c for c in ("locus_tag", "product") if c in genes.columns and c not in cols]
+    recs = genes[cols + extra].iloc[order].to_dict("records")
+    return cols, [[_gene_cell(r) if c == "gene" else format_value(r[c]) for c in cols]
+                  for r in recs]  # fmt: skip
+
+
+def _gene_cell(r: Mapping[str, Any]) -> str:
+    """The shown ``gene`` cell: the name when usable, else the locus tag in italics with the
+    product as its tooltip (lead decision 2026-11-09; ``genes.tsv`` keeps NA)."""
+    name, tag = r["gene"], r.get("locus_tag")
+    name = None if pd.isna(name) else str(name)
+    if tag is None or pd.isna(tag):
+        return format_value(name)
+    shown = name_label(str(tag), name)
+    if shown == name:
+        return shown
+    product = r.get("product")
+    if product is None or pd.isna(product):
+        return Markup("<em>{}</em>").format(shown)
+    return Markup('<em title="{}">{}</em>').format(str(product), shown)
+
+
+def _novel_preview(top: tuple[list[str], list[list[str]]]) -> tuple[list[str], list[list[str]]]:
+    """``top`` restricted to ``NOVEL_PREVIEW`` (the columns present), table order kept; an NA
+    label shows ``none`` (host) or ``—`` (flank), every other cell as written (rule 9)."""
+    header, rows = top
+    cols = [c for c in NOVEL_PREVIEW if c in header]
+    ix = [header.index(c) for c in cols]
+    na = [_NOVEL_NA_LABEL.get(c) for c in cols]
+    return cols, [[sub if sub is not None and r[i] == "NA" else r[i]
+                   for i, sub in zip(ix, na, strict=True)] for r in rows]  # fmt: skip
 
 
 def _table(view: RunView, key: str) -> dict[str, Any]:
@@ -256,6 +296,8 @@ def _table(view: RunView, key: str) -> dict[str, Any]:
         whole = view.table(key) if key == "sensitivity" and head is not None else None
         if key == "genes_tsv" and head is not None and head[1]:
             head = _genes_preview(view)
+        elif key == "novel_orfs" and head is not None and head[1]:
+            head = _novel_preview(head)
     except Exception as exc:  # an unreadable file is a note, never a crash (review B5)
         return {"key": key, "name": name, "error": _unreadable(key, exc)}
     if head is None:

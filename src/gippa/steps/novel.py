@@ -61,7 +61,8 @@ from gippa.novel.candidates import (
 )
 from gippa.novel.evidence import apply_evidence, class_rules
 from gippa.novel.fdr import orf_regimes
-from gippa.novel.outputs import candidate_ids, is_na, orf_table
+from gippa.novel.gene_context import gene_context
+from gippa.novel.outputs import GENE_CONTEXT_COLUMNS, candidate_ids, is_na, orf_table
 from gippa.steps.common import one_path as _path
 from gippa.steps.common import read_genes as _genes
 from gippa.steps.common import read_replicons as _replicons
@@ -366,6 +367,7 @@ def novel_orfs(ctx: StepContext) -> None:
                                     dtype="float64")  # fmt: skip
     tt = cfg.annotation.translation_table
     table = orf_table(orfs, scored, genome=genome, replicons=reps, translation_table=tt)
+    table[list(GENE_CONTEXT_COLUMNS)] = gene_context(table, gm)  # M12-05b
     terms_df = _layer(ctx, "terminators", "terminators", reps)
     gene_table = pd.read_parquet(_path(ins["gene_table"]))
     pep_ivs = read_peptide_intervals(_path(ins["novel_candidates"]))
