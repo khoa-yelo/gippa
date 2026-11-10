@@ -1,1 +1,0 @@
-The novel ORF plot (V13) now draws every candidate, called or not, lowest class FDR first (ties by best peptide q, then called first): up to 20 locus views plus an index of all candidates. A called ORF is a filled arrow; an uncalled candidate is a dashed outline. Panel (a) names the classes in plain words, and the report shows the V13 locus views in the index order.
