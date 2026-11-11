@@ -4,7 +4,7 @@ All notable changes are recorded here by towncrier from `changelog.d/` fragments
 
 <!-- towncrier release notes start -->
 
-## GIPPA 1.1.0 (2026-11-06)
+## GIPPA 1.1.0 (2026-11-11)
 
 ### Features
 
