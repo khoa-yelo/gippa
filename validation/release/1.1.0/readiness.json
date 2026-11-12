@@ -1,7 +1,7 @@
 {
-  "version": "1.1.0rc1",
-  "commit": "202838346def772d64822d5998eaa88e49619707",
-  "computed": "2026-11-11T07:45:21+00:00",
+  "version": "1.1.0",
+  "commit": "e43683c7d84eb39557afb9a78fde8d41a41f2787",
+  "computed": "2026-11-12T05:50:23+00:00",
   "overall": "pass",
   "rows": [
     {
@@ -32,11 +32,11 @@
       "id": "R3",
       "criterion": "Every statistical method passes its calibration suite (§8.4)",
       "status": "pass",
-      "value": "calibration_full: 15 suites, 0 failed suites; 555 tests: 0 failed, 0 errors, 459 passed, 90 skipped, 6 xfailed, 0 xpassed; array 1966680; calibration_nightly: 28937 passed, 148 skipped, 17 xfailed, 3 xpassed, 19 warnings in 29214.17s (8:06:54, longest of 4 shards); coverage 97% (min 90%); reused from 4a6fa99 (reusable: diff ⊆ NON_STATS_PATHS)",
+      "value": "calibration_full: 15 suites, 0 failed suites; 555 tests: 0 failed, 0 errors, 459 passed, 90 skipped, 6 xfailed, 0 xpassed; array 1966680; calibration_nightly: 28937 passed, 148 skipped, 17 xfailed, 3 xpassed, 12 warnings in 13763.39s (3:49:23, longest of 4 shards); coverage 97% (min 90%); reused from 4a6fa99 (reusable: diff ⊆ NON_STATS_PATHS)",
       "threshold": "exit 0 and 0 failed for R or an ancestor C with reusable(C, R)",
       "evidence": [
         "nightly.tsv 2026-11-10 1966680_calibration 4a6fa998300c0fa0ea6fb01bc9b46f181e24ae35 exit 0",
-        "nightly.tsv 2026-11-10 1969445_2 20283834 exit 0"
+        "nightly.tsv 2026-11-11 1972754_2 e43683c7 exit 0"
       ],
       "waiver": null,
       "source": "farmshare"
@@ -61,7 +61,7 @@
       "threshold": "each TE pass; no data → deferred; reported → fail (Q-K5)",
       "evidence": [
         "validation/pilot/metrics/metrics.json",
-        "weekly.tsv 2026-11-10 1969418_0 20283834 exit 0",
+        "weekly.tsv 2026-11-11 1972755_0 e43683c7 exit 0",
         "docs/adr/ADR-0070-te4-rplL-rplJ-waiver-1-0-0.md (accepted-by-khoa; waived from fail)"
       ],
       "waiver": "ADR-0070",
@@ -71,11 +71,11 @@
       "id": "R6",
       "criterion": "The same seed gives byte-identical tables",
       "status": "pass",
-      "value": "TE7 pass; integration: integration: 967 passed, 84 skipped, 1 xfailed, 1 xpassed in 2099.81s (0:34:59); nf-test test,stub: SUCCESS: Executed 144 tests in 1228.371s",
+      "value": "TE7 pass; integration: integration: 967 passed, 84 skipped, 1 xfailed, 1 xpassed in 2189.92s (0:36:29); nf-test test,stub: SUCCESS: Executed 144 tests in 1208.927s",
       "threshold": "te7.gippa.status pass and the integration run",
       "evidence": [
         "validation/pilot/metrics/metrics.json",
-        "nightly.tsv 2026-11-10 1967956_0 4a6fa998 exit 0"
+        "nightly.tsv 2026-11-11 1973700_0 e43683c7 exit 0"
       ],
       "waiver": null,
       "source": "both"
@@ -144,8 +144,8 @@
       "id": "H2",
       "criterion": "version agreement; release tag not yet created",
       "status": "pass",
-      "value": "1.1.0rc1 everywhere; no tag v1.1.0rc1",
-      "threshold": "= 1.1.0rc1",
+      "value": "1.1.0 everywhere; no tag v1.1.0",
+      "threshold": "= 1.1.0",
       "evidence": [
         "src/gippa/__init__.py",
         "CITATION.cff",
@@ -201,7 +201,7 @@
       "value": "11 check runs success; skipped: summary, deploy, guards",
       "threshold": "every check run success or skipped",
       "evidence": [
-        "gh api …/commits/202838346def772d64822d5998eaa88e49619707/check-runs"
+        "gh api …/commits/e43683c7d84eb39557afb9a78fde8d41a41f2787/check-runs"
       ],
       "waiver": null,
       "source": "farmshare"
