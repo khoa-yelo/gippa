@@ -1467,3 +1467,18 @@ the user guide is [Inputs › Genetic code](user-guide/inputs.md#genetic-code) a
 - `novel/gene_context.py` compares each ORF with every gene on its replicon: about 7.5 s for 1000
   candidates on a 4.4k-gene genome. Use `gm.overlapping(span)` for overlaps and per-contig numpy
   start/end arrays for the flank distances. Outputs must stay byte-identical.
+
+## After 1.1.0: release-time findings (2026-11-12)
+- Scheduled nightly calibration (`nightly_launch.sh`, 3 shards, 6 h) hits SIGTERM on slow wheat
+  nodes (1967956_2, 1972199_2); 4 shards with a 10 h limit fit (1969445_2 8 h 07, 1972754_2 3 h 49).
+- `SBATCH_EXCLUDE` / `SBATCH_TIMELIMIT` passed through `--export` do not reach the submitted job;
+  launchers should pass `--exclude` and `--time` themselves.
+- Flake: tests/integration/test_m11_19_docker_pull_never.py example 21 (fake docker log records
+  interleave under concurrent tasks; 1972753_0). Write each record atomically or one file per call.
+- Flake: macOS test-compat `test_prechecked_elastic_net_equals_sklearn[60-60-3, 60-150-4]`
+  (bit-equal `mse_path_`, run 43166021200; passed on rerun).
+- docs/release.md step 14 names a `needs_net` example pin test that does not exist; add it or
+  replace the step with the asset-digest check.
+- release.yml `target` defaults to `testpypi` and no TestPyPI publisher is registered: make the
+  runbook command name the target, or register TestPyPI before the next rc.
+
