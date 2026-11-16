@@ -131,7 +131,7 @@ validation/release/1.0.0/READINESS.md (R3 waived, ADR-0073) -->
 
 ### 1.2 Results by method family
 
-Table 1 summarises each suite. Table 2 gives representative observed error rates against their
+Table R1 summarises each suite. Table R2 gives representative observed error rates against their
 bounds at α = 0.05, with m for pooled rows.
 
 **Placement FDR (mapping).** The placement suite produced 366 gated harness records, of which 365
@@ -325,7 +325,7 @@ docs/adr/ADR-0034-determinants-null-uncalibrated.md (Context, Decision) -->
 **Novel ORFs and variants.** Class-level FDR for novel ORFs was within tolerance at q = 0.05 when false ORFs
 were generated as in the gate (picked 0.0453, de novo 0.0498, R = 300). In the de novo regime it is
 anti-conservative when a false ORF carries several wrong peptides: the multi-peptide attack gave FDP
-0.0788 at q = 0.05 (Table 3b). This follows from the shipped rule (ORF q = minimum peptide q).
+0.0788 at q = 0.05 (Table R3b). This follows from the shipped rule (ORF q = minimum peptide q).
 ADR-0050 kept that rule as a documented limitation for exact systematic multi-peptide errors
 (G4-k3). No ADR covers the chance-hit multi-peptide attack, whose marker cites only M7-11 decision 3.
 The pooled novel-ORF F1 was 0.938 (SE 0.0014), against the minimum of 0.90.
@@ -376,7 +376,7 @@ docs/adr/ADR-0049-m7-variant-precision.md:50-64 (Evidence table, scopes c and d;
 CAL/lanes/compare-group0/compare_attack_free_entrapment_recorded.jsonl:4 (E 0.71875), 7 (D 0.75415); GIPPA_SPEC.md §8.4 (de novo precision);
 CAL/lanes/denovo_precision-group0/placement_m3_21_diagnostics.jsonl:1 › bias_vs_realised, bias_vs_truth_table; tests/calibration/test_denovo_precision_sim.py:113-130 -->
 
-**Table 1.** Full-tier calibration by suite (commit `4a6fa998`, array 1966680). "Records" are harness
+**Table R1.** Full-tier calibration by suite (commit `4a6fa998`, array 1966680). "Records" are harness
 records (criterion, level, observed, bound); the status of the last block is counted.
 
 | Suite | R | Tests (pass / skip / xfail) | Harness records | Status for the paper |
@@ -400,7 +400,7 @@ records (criterion, level, observed, bound); the status of the last block is cou
 
 <!-- src: CAL/task-0.json … task-14.json; CAL/task-N.*.junit.xml; CAL/<suite>.merged.jsonl and CAL/lanes/<suite>-group*/*.jsonl (status counts; audit R1-A recount); local/logs/nightly.tsv:124 -->
 
-**Table 2.** Observed error against nominal level, representative streams (α or q = 0.05 unless
+**Table R2.** Observed error against nominal level, representative streams (α or q = 0.05 unless
 stated; commit `4a6fa998`). For level and FWER rows the bound uses n = R, or n = R·m when m is shown.
 For FDR rows the bound uses the empirical SD of the FDP.
 
@@ -445,9 +445,9 @@ A known failure is a test marked xfail: it is expected to fail. At the full tier
 here are strict, so an unexpected pass turns the run red. Some marks are strict only at the full
 tier and non-strict at the fast tier (for example, the distance-model operon fallback and the fast
 D-1b-step mode), where R does not resolve the failure; the fast tier recorded 17 xfailed and 3
-xpassed tests. The junit roll-up that readiness row R3 reads counted 6 xfailed tests (Table 3a). The merge step of sharded
+xpassed tests. The junit roll-up that readiness row R3 reads counted 6 xfailed tests (Table R3a). The merge step of sharded
 suites records further strict-xfail verdicts in the merged records, and the roll-up does not count
-these (Table 3b).
+these (Table R3b).
 
 Three of the merged verdicts appear in the junit files as skipped attack tests, whose verdict is the
 merge step:
@@ -459,7 +459,7 @@ Readiness R3 therefore reads "6 xfailed", although 13 further merged records (1 
 novel-ORF, 3 variant) are known failures. Some markers still call ADR-0049 and ADR-0050
 "proposed"; both were accepted on 23 October 2026.
 
-**Table 3a.** Strict xfails counted by the junit roll-up (6).
+**Table R3a.** Strict xfails counted by the junit roll-up (6).
 
 | Suite | Test | Reason recorded in the marker |
 |---|---|---|
@@ -473,7 +473,7 @@ novel-ORF, 3 variant) are known failures. Some markers still call ADR-0049 and A
 <!-- src: CAL/task-4.*.junit.xml, task-6.*.junit.xml, task-9.*.junit.xml, task-13.*.junit.xml (xfail entries); local/logs/nightly.tsv:124; tests/calibration/attacks/test_attack_operons_sigma.py:45-52 (fast strict=False, full strict=True); tests/calibration/attacks/test_attack_operon_distance_fallback.py:113-117 (strict=full); tests/calibration/attacks/test_attack_m7_gate.py:295-296 and test_attack_gsea_structure.py:52-53 (strict=True); local/logs/nightly.tsv:137 (fast tier at e43683c7: 17 xfailed, 3 xpassed);
 docs/adr/ADR-0049-m7-variant-precision.md:2, docs/adr/ADR-0050-denovo-orf-q-exact-errors.md:2 (Status lines) -->
 
-**Table 3b.** Strict-xfail verdicts in merged records that the roll-up does not count.
+**Table R3b.** Strict-xfail verdicts in merged records that the roll-up does not count.
 
 | Stream | Criterion, level | Observed | Bound | Marker or ADR |
 |---|---|---|---|---|
@@ -493,7 +493,7 @@ docs/adr/ADR-0049-m7-variant-precision.md:2, docs/adr/ADR-0050-denovo-orf-q-exac
 
 Several attack nulls fail, and they are known failures. The specification's isobaric-swap attack
 is tested in the variants gate, not in the attack files, and it fails: A6b gave FWER 0.97 and A6c
-gave 1.0, against 0.0936 (Table 3b). Also failing as strict xfails (Section 1.3) are the
+gave 1.0, against 0.0936 (Table R3b). Also failing as strict xfails (Section 1.3) are the
 distance-model fallback, the D-1b-step σ attack, two GSEA restricted-claim structures, A6a isobaric
 flagging, contaminant weighting (`flat_c200`), multi-peptide or systematic de novo false ORFs, and
 GC-poor intergenic exact products (ADR-0050). The flagged methods (ORA,
@@ -514,9 +514,9 @@ The high-copy plasmid attack is a deterministic invariance check, not a rejectio
 
 In the full tier at `4a6fa998`, readiness counts all 14 attack suites as passed: of 281 attack
 tests, 273 passed, 3 were skipped and 5 xfailed (0 failed, 0 errors, 0 xpassed).
-- The 5 xfails are the five attack tests in Table 3a: two distance-model fallback tests, D-1b-step
+- The 5 xfails are the five attack tests in Table R3a: two distance-model fallback tests, D-1b-step
   and two GSEA restricted-claim tests.
-- The 3 skipped attack tests are those whose verdict is a merged strict xfail (Table 3b).
+- The 3 skipped attack tests are those whose verdict is a merged strict xfail (Table R3b).
 
 "14 of 14 suites passed" thus means only that no attack test failed outside the known failures
 listed above and in Section 1.3.
@@ -527,10 +527,10 @@ CAL/task-*.junit.xml (attack test outcomes); CAL/variants.merged.jsonl:1-2 (test
 ## 3. True-example assertions and operon calibration on real genomes
 
 The specification defines eight true-example assertions (TE1–TE8) on real genomes. Readiness row R5
-lists seven of them. It is recorded as **waived**, because TE4 failed (Table 4). TE6 was measured in
+lists seven of them. It is recorded as **waived**, because TE4 failed (Table R4). TE6 was measured in
 the weekly K-12 run but is not a readiness row.
 
-**Table 4.** True-example assertions.
+**Table R4.** True-example assertions.
 
 | TE | Assertion (short) | Outcome | Value | Code state |
 |---|---|---|---|---|
@@ -644,12 +644,12 @@ docs/adr/ADR-0076-waivers-1-1.md (Decision, Scope); git diff --stat fa49b8f1 e43
 ### 4.1 End-to-end runs, identifications and mapping
 
 GIPPA completed on all three arms at the freeze commit (A2 job 1914948, A1 1915264, A3 1916086, all
-exit 0). Table 5 gives identification and mapping aggregates. Precursors were filtered at DIA-NN's
+exit 0). Table R5 gives identification and mapping aggregates. Precursors were filtered at DIA-NN's
 global q ≤ 0.01. That 1 % is the search engine's own estimate, which GIPPA inherits and does not
 verify; on A1 the free-entrapment point estimate is 0.024 (Section 4.5). Peptide and protein-group
 counts are not FDR-controlled.
 
-**Table 5.** Identifications and mapping, A1 and A2 (union over runs).
+**Table R5.** Identifications and mapping, A1 and A2 (union over runs).
 
 | Quantity | A1 (K-12 reference) | A2 (strain database) |
 |---|---|---|
@@ -681,13 +681,13 @@ The gene set has 4,685 strain genes (CDS and sORF). A1 detected 2,673 of them
 (0.5705 [0.5563, 0.5847]) and A2 detected 3,057 (0.6525 [0.6388, 0.6660]). Of the 916
 strain-specific genes (no tryptic peptide shared with K-12), A1 cannot detect any by construction,
 because it searched only the K-12 proteome; it detected 0. A2 detected 317 (0.3461 [0.3160,
-0.3775]). Table 6 gives shares by region. The freeze run manifests record the
+0.3775]). Table R6 gives shares by region. The freeze run manifests record the
 detection tier `decoy_picked` for A1 and A2, and `two_peptide` for A3, because de novo rows carry no
 decoys.
 
-**Table 6.** Genes detected by subset (share [Wilson 95 %]). The Wilson intervals treat genes as
+**Table R6.** Genes detected by subset (share [Wilson 95 %]). The Wilson intervals treat genes as
 independent. Genes of one TU, and peptides of one protein, co-vary, so the intervals (here and in
-Table 5) are optimistic. They describe this single sample (three wild-type runs of one condition,
+Table R5) are optimistic. They describe this single sample (three wild-type runs of one condition,
 union over runs), not a population quantity.
 
 | Subset (genes) | A1 | A2 |
@@ -723,9 +723,9 @@ indices carry no uncertainty estimate.
 ### 4.4 Pre-registered hypotheses
 
 Specification §15.7 fixed four hypotheses before the pilot, to be "reported where the pilot data
-allow". Table 7 quotes them and gives their recorded outcomes.
+allow". Table R7 quotes them and gives their recorded outcomes.
 
-**Table 7.** Hypotheses H1–H4 (wording of specification §15.7).
+**Table R7.** Hypotheses H1–H4 (wording of specification §15.7).
 
 | Hypothesis | Recorded outcome | What was evaluated |
 |---|---|---|
@@ -838,9 +838,9 @@ gippasim, so "K-12" here means a real genome with simulated proteomics. The run 
 
 Each cell ran twice; repeat 3 was cancelled (ADR-0072). The "median" is the mean of 2 runs, with
 unestimated uncertainty. The node was busy, with a median allocation of 60–80 of
-80 CPUs. Table 8 gives the results.
+80 CPUs. Table R8 gives the results.
 
-**Table 8.** Standard-run benchmark (1.0.0-era, 2 repeats per cell; simulated peptide tables).
+**Table R8.** Standard-run benchmark (1.0.0-era, 2 repeats per cell; simulated peptide tables).
 
 | Cell | Modules; Bakta | Repeats (s) | Mean (s) | Mean (h:mm:ss) | Spread | Peak RSS (sacct max, GiB) | Estimate (s) | Ratio to estimate |
 |---|---|---|---|---|---|---|---|---|
@@ -896,7 +896,7 @@ time. GIPPA itself produced those expected values, so the match is a regression 
 check of the routes, not validation against external truth. The bundle was built at commit
 `52ddd95f`, which is not an ancestor of the release commit.
 
-**Table 9.** Example routes (one run each, commit `39f9f3a2`).
+**Table R9.** Example routes (one run each, commit `39f9f3a2`).
 
 | Route | Input | Detection tier | Genes | Detected | Detected (≥ 2 peptides) | With abundance | Peptides placed | Novel ORFs (candidates / called) | Wall time (s) |
 |---|---|---|---|---|---|---|---|---|---|
@@ -919,7 +919,7 @@ ORFs is not a negative result: in all four decoy-tagged classes the smallest rea
 ## 7. Release readiness of GIPPA 1.1.0
 
 The readiness check was computed on the release code `e43683c7` at 2026-11-12T05:50 UTC and reported
-overall **pass** (Table 10). Of the ten acceptance rows:
+overall **pass** (Table R10). Of the ten acceptance rows:
 - five passed under readiness's rules (R1, R3, R4, R6, R9);
 - one (R8) is reported only and measured about 7× its estimate;
 - three were waived;
@@ -946,7 +946,7 @@ That wording is not met. Behind the two passes lie:
 <!-- src: validation/release/1.1.0/READINESS.md:9-18; scripts/release/readiness.py:373 (R4), R3 threshold "exit 0 and 0 failed for R or an ancestor C with reusable(C, R)"; GIPPA_SPEC.md §13.2, §8.5:1991;
 docs/adr/ADR-0057-calibration-merge-honours-strict-xfail.md:1-8; benchmarks/baseline.json › standard_run.wheat.k12_core.ratio_to_estimate 7.249 -->
 
-**Table 10.** Readiness 1.1.0.
+**Table R10.** Readiness 1.1.0.
 
 | Row | Criterion | Status | Value (abridged) | Where the evidence was produced |
 |---|---|---|---|---|
