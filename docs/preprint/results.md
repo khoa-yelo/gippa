@@ -279,17 +279,20 @@ are UniOP-like TU-error arms (for example 0.062 against 0.0544 at α = 0.05, m =
 stream was `unconfirmed` (0.0563 and 0.0525; pooled 0.0544 against 0.0531 at 2R). The 10 ORA tests
 pass although 10 records fail, because the flag makes those records recorded-only.
 
-GSEA, run through R fgsea 1.36.2, was within tolerance under TU exchangeability:
-- unpooled R-engine null 0.0167 / 0.0567 / 0.127 at α = 0.01 / 0.05 / 0.10 (bounds 0.0215 / 0.0752 /
-  0.1346), above nominal at every level;
-- pooled single-set null 0.0415 (bound 0.0525, m = 100);
-- TU null 0.0333 (bound 0.0752).
+The pipeline runs GSEA on R fgsea 1.36.2, but the GSEA function's default engine, used by most
+GSEA calibration tests, is the Python port `fgsea_simple`. Streams on the port are evidence about
+the method, not about the shipped engine. GSEA was within tolerance under TU exchangeability:
+- on R fgsea, the unpooled null 0.0167 / 0.0567 / 0.127 at α = 0.01 / 0.05 / 0.10 (bounds 0.0215 /
+  0.0752 / 0.1346), above nominal at every level, and the pooled single-set null 0.0415 (bound
+  0.0525, m = 100);
+- on the Python port engine, the TU null 0.0333 (bound 0.0752).
 
-Its two strict xfails are the restricted-claim cases of ADR-0025 and ADR-0026: detectability-
-confounded sets and AR(1)-clustered sets.
+Its two strict xfails (Python port engine) are the restricted-claim cases of ADR-0025 and ADR-0026:
+detectability-confounded sets and AR(1)-clustered sets.
 
 The suite's "111 pass" includes a detection-confounding attack on rows the detection screen did
-*not* flag, gated at 1.5α, not α (statistician decision #174: the flag is a screen). One arm
+*not* flag, gated at 1.5α, not α (statistician decision #174: the flag is a screen). This screen and the
+genomic-cluster checks ran on the Python port engine and have not been re-measured on R. One arm
 (`null_b2`) rejected at 0.0833 at α = 0.05 and 0.137 at α = 0.10: within the 1.5α bounds (0.105,
 0.191) but above the α bounds at R = 300 (0.0752, 0.1346). No α-level claim is made for unflagged
 rows under detection confounding. Two further limits are recorded in the methods note:
@@ -297,7 +300,7 @@ rows under detection confounding. Two further limits are recorded in the methods
   made for unflagged rows in a collection that contains flagged rows;
 - NES has no confidence interval (ADR-0027).
 
-<!-- src: CAL/lanes/ora-group1/ora.jsonl:67,70 (m 6), 42 (m 10), 26-28, 55, 57, 59 (uniop_like; 27-28 unconfirmed; pooled bound level_bound(0.05, 20,000)); CAL/lanes/gsea-group0/gsea.jsonl:45 (m 100); CAL/lanes/gsea-group1/gsea.jsonl:45-47 (gsea.r.null), 52;
+<!-- src: CAL/lanes/ora-group1/ora.jsonl:67,70 (m 6), 42 (m 10), 26-28, 55, 57, 59 (uniop_like; 27-28 unconfirmed; pooled bound level_bound(0.05, 20,000)); CAL/lanes/gsea-group0/gsea.jsonl:45 (m 100); CAL/lanes/gsea-group1/gsea.jsonl:45-47 (gsea.r.null), 52; src/gippa/function/gsea.py:5-7, 545 (default engine SIMPLE_ENGINE); src/gippa/steps/function.py:17-19 (pipeline uses R fgsea); tests/calibration/test_gsea_r_engine_calibration.py (gsea.r.null on R); tests/calibration/attacks/test_attack_gsea_flags.py, test_attack_gsea_structure.py, test_gsea_tu_calibration.py (no engine argument: port);
 CAL/lanes/gsea-group*/ (gsea.attack.flags.detection.null_b2: level 0.075 observed 0.08333 bound 0.1054; level 0.15 observed 0.13667 bound 0.1912); tests/calibration/attacks/test_attack_gsea_flags.py:366-386 (SCREEN = 1.5);
 docs/methods/function-gsea.md:54-60;
 src/gippa/function/ora.py:52; docs/methods/function.md:316,561,645; CAL/task-9.*.junit.xml -->
@@ -430,7 +433,7 @@ For FDR rows the bound uses the empirical SD of the FDP.
 | ora | fitted null, over / under | level | 0.0235 / 0.0303 | 0.0556 | 1,000 (6) |
 | ora | distance-model large-TU under (fails; flag) | level | 0.0841 | 0.0544 | 1,000 (10) |
 | gsea | single-set null (R engine) | level | 0.0415 | 0.0525 | 300 (100) |
-| gsea | unflagged rows, detection-confounded `null_b2` (gated at 1.5α) | FWER | 0.0833 | 0.1054 (1.5α); α bound 0.0752 | 300 |
+| gsea | unflagged rows, detection-confounded `null_b2` (gated at 1.5α; Python port engine) | FWER | 0.0833 | 0.1054 (1.5α); α bound 0.0752 | 300 |
 | determinants | null, LightGBM / elastic net | level | 0.02 / 0.02 | 0.0936 | 100 |
 | novel_orfs | class FDR, picked / de novo | FDR | 0.0453 / 0.0498 | 0.0511 / 0.0507 | 300 |
 | novel_orfs | pooled F1 (≥ 0.90) | F1 | 0.938 | 0.90 | 300 |
@@ -503,7 +506,7 @@ distance-model fallback, the D-1b-step σ attack, two GSEA restricted-claim stru
 flagging, contaminant weighting (`flat_c200`), multi-peptide or systematic de novo false ORFs, and
 GC-poor intergenic exact products (ADR-0050). The flagged methods (ORA,
 determinants) pass their attacks only through their flags. The unflagged GSEA rows pass their
-detection attack only under a 1.5α screen (Section 1.2).
+detection attack only under a 1.5α screen (Python port engine; Section 1.2).
 
 The attack nulls are simulations built to make a method reject falsely, including:
 - autocorrelated abundance without islands;
@@ -942,7 +945,7 @@ That wording is not met. Behind the two passes lie:
 - known failures: 6 xfailed tests and 13 merged strict-xfail records (Tables R3a and R3b), which the
   calibration merge counts as non-failures (ADR-0057);
 - two methods that pass only through their flags (ORA, determinants);
-- GSEA unflagged rows that pass only under a 1.5α screen;
+- GSEA unflagged rows that pass only under a 1.5α screen (Python port engine);
 - recorded-only or vacuous results that would fail an α-level reading (Section 1.2): 4 autocorrelation
   records under UniOP-like and UniOP K-12 TU errors, 2 island breaches outside the regime, the
   gene-level H1 p (0.1737 at α = 0.05), the de novo truth-table bias (−0.066), the vacuous
@@ -979,7 +982,7 @@ The waiver mechanism does not check a record's version. ADR-0076 is the decision
 records to 1.1.0, for R5 only for TE4's rplL/rplJ pair.
 ᵇ Readiness checks exit 0 and "0 failed" for the release commit or a reusable ancestor; strict
 xfails do not count as failures. The §13.2 wording is not met: see Tables R3a and R3b (6 xfailed tests,
-13 merged records), the flagged methods (ORA, determinants) and the GSEA 1.5α screen.
+13 merged records), the flagged methods (ORA, determinants) and the GSEA 1.5α screen (Python port engine).
 
 <!-- src: validation/release/1.1.0/READINESS.md:1-24; validation/release/1.1.0/readiness.json › rows[*].status, value, evidence, waiver (ADR-0071, ADR-0070, ADR-0072);
 docs/adr/ADR-0076-waivers-1-1.md:10-14 (apply_waivers does not read the version), 28-33 -->
