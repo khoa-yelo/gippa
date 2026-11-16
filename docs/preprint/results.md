@@ -283,8 +283,8 @@ The pipeline runs GSEA on R fgsea 1.36.2, but the GSEA function's default engine
 GSEA calibration tests, is the Python port `fgsea_simple`. Streams on the port are evidence about
 the method, not about the shipped engine. GSEA was within tolerance under TU exchangeability:
 - on R fgsea, the unpooled null 0.0167 / 0.0567 / 0.127 at α = 0.01 / 0.05 / 0.10 (bounds 0.0215 /
-  0.0752 / 0.1346), above nominal at every level, and the pooled single-set null 0.0415 (bound
-  0.0525, m = 100);
+  0.0752 / 0.1346), above nominal at every level, and the pooled null over 100 tested sets per replicate from six
+  collections, 0.0415 (bound 0.0525, m = 100);
 - on the Python port engine, the TU null 0.0333 (bound 0.0752).
 
 Its two strict xfails (Python port engine) are the restricted-claim cases of ADR-0025 and ADR-0026:
@@ -300,7 +300,7 @@ rows under detection confounding. Two further limits are recorded in the methods
   made for unflagged rows in a collection that contains flagged rows;
 - NES has no confidence interval (ADR-0027).
 
-<!-- src: CAL/lanes/ora-group1/ora.jsonl:67,70 (m 6), 42 (m 10), 26-28, 55, 57, 59 (uniop_like; 27-28 unconfirmed; pooled bound level_bound(0.05, 20,000)); CAL/lanes/gsea-group0/gsea.jsonl:45 (m 100); CAL/lanes/gsea-group1/gsea.jsonl:45-47 (gsea.r.null), 52; src/gippa/function/gsea.py:5-7, 545 (default engine SIMPLE_ENGINE); src/gippa/steps/function.py:17-19 (pipeline uses R fgsea); tests/calibration/test_gsea_r_engine_calibration.py (gsea.r.null on R); tests/calibration/attacks/test_attack_gsea_flags.py, test_attack_gsea_structure.py, test_gsea_tu_calibration.py (no engine argument: port);
+<!-- src: CAL/lanes/ora-group1/ora.jsonl:67,70 (m 6), 42 (m 10), 26-28, 55, 57, 59 (uniop_like; 27-28 unconfirmed; pooled bound level_bound(0.05, 20,000)); CAL/lanes/gsea-group0/gsea.jsonl:45 (gsea.m815.null.r.full, m 100; tests/calibration/test_function_calibration.py:24-25, 52 M_GSEA = 100 over six collections); CAL/lanes/gsea-group1/gsea.jsonl:45-47 (gsea.r.null), 52; src/gippa/function/gsea.py:5-7, 545 (default engine SIMPLE_ENGINE); src/gippa/steps/function.py:17-19 (pipeline uses R fgsea); tests/calibration/test_gsea_r_engine_calibration.py (gsea.r.null on R); tests/calibration/attacks/test_attack_gsea_flags.py, test_attack_gsea_structure.py, test_gsea_tu_calibration.py (no engine argument: port);
 CAL/lanes/gsea-group*/ (gsea.attack.flags.detection.null_b2: level 0.075 observed 0.08333 bound 0.1054; level 0.15 observed 0.13667 bound 0.1912); tests/calibration/attacks/test_attack_gsea_flags.py:366-386 (SCREEN = 1.5);
 docs/methods/function-gsea.md:54-60;
 src/gippa/function/ora.py:52; docs/methods/function.md:316,561,645; CAL/task-9.*.junit.xml -->
@@ -432,7 +432,7 @@ For FDR rows the bound uses the empirical SD of the FDP.
 | missed_operons | shipped decoys, power arm | FDR (counts) | 0.0 (vacuous) | none | 300 |
 | ora | fitted null, over / under | level | 0.0235 / 0.0303 | 0.0556 | 1,000 (6) |
 | ora | distance-model large-TU under (fails; flag) | level | 0.0841 | 0.0544 | 1,000 (10) |
-| gsea | single-set null (R engine) | level | 0.0415 | 0.0525 | 300 (100) |
+| gsea | pooled null, 100 sets per replicate from six collections (R engine) | level | 0.0415 | 0.0525 | 300 (100) |
 | gsea | unflagged rows, detection-confounded `null_b2` (gated at 1.5α; Python port engine) | FWER | 0.0833 | 0.1054 (1.5α); α bound 0.0752 | 300 |
 | determinants | null, LightGBM / elastic net | level | 0.02 / 0.02 | 0.0936 | 100 |
 | novel_orfs | class FDR, picked / de novo | FDR | 0.0453 / 0.0498 | 0.0511 / 0.0507 | 300 |
