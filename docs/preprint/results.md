@@ -35,7 +35,7 @@ Statistical code also changed:
 
 No file in `context/`, `stats/`, `function/` or `compare/` changed, although `compare` reads its
 inputs through the changed `io/run_view.py`. The pilot numbers describe 1.0.0-era code; whether
-1.1.0 reproduces them (TE1, Tables 5–7, operon flags, ALT and novel-ORF calls) was not checked.
+1.1.0 reproduces them (TE1, Tables R5–R7, operon flags, ALT and novel-ORF calls) was not checked.
 
 The 1.1.0 readiness check evaluates rows R1, R5 (TE1–TE5), R6 (TE7), R7, R8 and R9 directly on the
 1.0.0-era pilot metrics and benchmark file. No decision record covers reusing the passing rows.
@@ -104,7 +104,7 @@ about 1.9α at R = 100, 1.5α at R = 300 and 1.3α at R = 1,000. At α = 0.01 an
 2.1α, and for an FWER check at R = 500 it is about 1.4α. Where a gated point estimate exceeds the
 nominal level, we report it as within tolerance, not as at level.
 
-The full tier ran 15 suites as one Slurm array (1966680) on commit `4a6fa998` on 9–10 November 2026.
+The full tier ran 15 suites as 15 Slurm jobs (1966680–1966694, recorded as "array 1966680") on commit `4a6fa998` on 9–10 November 2026.
 The islands task was re-run as 1968544 after the first attempt ended with exit 143. Replicates per
 suite were:
 - 100: detectability, determinants, variants;
@@ -165,9 +165,10 @@ The methods note records two limits:
 At q = 0.01 the observed FDP was 0.00941 (picked; bound 0.01031) and 0.00962 (MAYU with PEP; bound
 0.01022). The simulation places false hits on genes in proportion to their observable peptides,
 which is MAYU's own model. The unattacked suite therefore partly assumes what it tests; departures
-from that model are covered by the attack files.
+from that model are covered by the attack files. The `two_peptide` tier carries no FDR estimate; in
+the same simulation its gene-level FDP was 0.054 at q = 0.01 (bound 0.0105; recorded, not gated).
 
-<!-- src: CAL/lanes/gene_fdr-group1/gene_fdr.jsonl:44,47 and the q 0.01 rows of the same streams; docs/methods/detection-tiers.md:207-213, 296-301 -->
+<!-- src: CAL/lanes/gene_fdr-group1/gene_fdr.jsonl:44,47 and the q 0.01 rows of the same streams; CAL/lanes/gene_fdr-group1/gene_fdr_two_peptide.jsonl:1 (0.05385, bound 0.01047, ok false); docs/methods/detection-tiers.md:207-213, 296-301 -->
 
 **Detectability and detection limit.** The cross-fitted detectability slope had mean 0.981 over 100
 replicates, inside the band [0.8, 1.2]. The detection-limit calibration-in-the-large (CITL) mean was
@@ -302,8 +303,8 @@ docs/methods/function-gsea.md:54-60;
 src/gippa/function/ora.py:52; docs/methods/function.md:316,561,645; CAL/task-9.*.junit.xml -->
 
 **Determinants.** The gated determinants records passed in the full tier, within tolerance: null
-levels ranged from 0.02 (LightGBM and elastic net at α = 0.05, bound 0.0936, R = 100) to 0.12
-(LightGBM at α = 0.10, bound 0.16); the pooled function null was 0.0667 at α = 0.05. The
+rejection rates ranged from 0.00 (LightGBM at α = 0.01) to 0.12 (LightGBM at α = 0.10, bound 0.16),
+and at α = 0.05 from 0.02 to 0.07 (bound 0.0936, R = 100). The
 permutation p-value nevertheless ships flagged `null_uncalibrated` (ADR-0034), because it fails the
 dependence and detection-selection attacks.
 
@@ -316,10 +317,13 @@ not gated) at the following rates:
 | elastic net | 0.18 | 0.42 | 0.83 |
 
 A flagged TU attack also recorded univariate-CI non-coverage of 0.07 for AUROC (bound 0.0695) and
-0.20 / 0.218 for the gene-level ρ / AUROC intervals (R = 500). The full-tier pass is therefore not
-a level claim for real proteomes.
+0.20 / 0.218 for the gene-level ρ / AUROC intervals (R = 500). Under the distance-model fallback,
+the true-TU cross-check recorded non-coverage of 0.074 (ρ) and 0.072 (AUROC) against 0.0695
+(flagged). The ΔR² interval is not calibrated: under the null it missed 0 in 0.388 of LightGBM
+replicates (elastic net 0.02; bound 0.0695; recorded, not gated). The full-tier pass is therefore
+not a level claim for real proteomes.
 
-<!-- src: CAL/determinants.merged.jsonl:2,3,5,17,20; CAL/lanes/determinants-group1/determinants_attack_tu.jsonl (univariate_ci_level, flagged); CAL/lanes/determinants-group{0,1,2}/determinants_attack_null.jsonl (arm, model, rates["0.05"], flagged true);
+<!-- src: CAL/determinants.merged.jsonl:1-21 (min 0.0 line 1; max 0.12 line 3; α 0.05 max 0.07 line 17); CAL/lanes/determinants-group0/determinants_m808.jsonl:1 (null_delta_r2 miss_rate 0.388 / 0.02); CAL/lanes/determinants-group1/operon_fallback_arm_b_determinants.jsonl:1 (rho_true_tu_x 0.074, auroc_true_tu_x 0.072, flagged); CAL/lanes/determinants-group1/determinants_attack_tu.jsonl (univariate_ci_level, flagged); CAL/lanes/determinants-group{0,1,2}/determinants_attack_null.jsonl (arm, model, rates["0.05"], flagged true);
 docs/adr/ADR-0034-determinants-null-uncalibrated.md (Context, Decision) -->
 
 **Novel ORFs and variants.** Class-level FDR for novel ORFs was within tolerance at q = 0.05 when false ORFs
@@ -327,7 +331,8 @@ were generated as in the gate (picked 0.0453, de novo 0.0498, R = 300). In the d
 anti-conservative when a false ORF carries several wrong peptides: the multi-peptide attack gave FDP
 0.0788 at q = 0.05 (Table R3b). This follows from the shipped rule (ORF q = minimum peptide q).
 ADR-0050 kept that rule as a documented limitation for exact systematic multi-peptide errors
-(G4-k3). No ADR covers the chance-hit multi-peptide attack, whose marker cites only M7-11 decision 3.
+(G4-k3). No ADR names the chance-hit multi-peptide attack: ADR-0050 defers the k-chances excess it
+measures to the backlog (decision 3), and the attack's marker cites M7-11 decision 3.
 The pooled novel-ORF F1 was 0.938 (SE 0.0014), against the minimum of 0.90.
 
 Nine novel-ORF records failed, all strict xfails:
@@ -376,7 +381,7 @@ docs/adr/ADR-0049-m7-variant-precision.md:50-64 (Evidence table, scopes c and d;
 CAL/lanes/compare-group0/compare_attack_free_entrapment_recorded.jsonl:4 (E 0.71875), 7 (D 0.75415); GIPPA_SPEC.md §8.4 (de novo precision);
 CAL/lanes/denovo_precision-group0/placement_m3_21_diagnostics.jsonl:1 › bias_vs_realised, bias_vs_truth_table; tests/calibration/test_denovo_precision_sim.py:113-130 -->
 
-**Table R1.** Full-tier calibration by suite (commit `4a6fa998`, array 1966680). "Records" are harness
+**Table R1.** Full-tier calibration by suite (commit `4a6fa998`, jobs 1966680–1966694). "Records" are harness
 records (criterion, level, observed, bound); the status of the last block is counted.
 
 | Suite | R | Tests (pass / skip / xfail) | Harness records | Status for the paper |
@@ -683,7 +688,7 @@ strain-specific genes (no tryptic peptide shared with K-12), A1 cannot detect an
 because it searched only the K-12 proteome; it detected 0. A2 detected 317 (0.3461 [0.3160,
 0.3775]). Table R6 gives shares by region. The freeze run manifests record the
 detection tier `decoy_picked` for A1 and A2, and `two_peptide` for A3, because de novo rows carry no
-decoys.
+decoys; that tier has no FDR estimate (Section 1.2: simulated gene FDP 0.054 at q = 0.01).
 
 **Table R6.** Genes detected by subset (share [Wilson 95 %]). The Wilson intervals treat genes as
 independent. Genes of one TU, and peptides of one protein, co-vary, so the intervals (here and in
@@ -729,12 +734,12 @@ allow". Table R7 quotes them and gives their recorded outcomes.
 
 | Hypothesis | Recorded outcome | What was evaluated |
 |---|---|---|
-| H1: "A2 detects more strain CDS than A1, mostly plasmid, prophage and BGC genes." | **not supported** (failed clause: "mostly") | 417 genes detected only in A2, 33 only in A1; A2-only share 0.9267 [0.8988, 0.9473]; TU-level test 275 vs 31 units, p_tu 2.49e-50, unit effect 0.8987 [0.8598, 0.9277]; "mostly" share 106 of 417 = 0.2542 [0.2148, 0.2981] against a base rate of 0.0854 |
+| H1: "A2 detects more strain CDS than A1, mostly plasmid, prophage and BGC genes." | **not supported** (failed clause: "mostly") | 417 genes detected only in A2, 33 only in A1; A2-only share 0.9267 [0.8988, 0.9473]; TU-level test 275 vs 31 units, p_tu 2.49e-50, unit effect 0.8987 [0.8598, 0.9277]; "mostly" share 106 of 417 = 0.2542 [0.2148, 0.2981] against a base rate of 0.0854; 317 of the 417 A2-only genes (0.760 [0.717, 0.799]) are strain-specific and undetectable in A1 by construction, so the "more" clause is expected by design |
 | H2: "A1's genome-inconsistent FDP is at least its entrapment FDP (full validation, FDRBench), since it errs high." | **deferred** to the full validation | not tested; shown side by side only: A1 genome-inconsistent share 0.058 and A1 free-entrapment estimate 0.0273 (peptide level) |
 | H3: "Context conclusions (islands, region tests, operon concordance) agree between A1 and A2 on shared genes." | recorded verdict "supported" under the implemented rule (ρ and enriched-category Jaccard); **none of the three named conclusions was evaluated** | islands and operon flags not evaluable (none in either arm); region tests not compared; Jaccards not restricted to shared genes; evaluated instead: ρ 0.978 [0.973, 0.983] and enriched-category Jaccard 0.563 |
 | H4: "The genome-anchored de novo precision agrees with precision measured against A2 identifications." | **consistent with lower bound** (the data can refute but never confirm) | 10 reportable bins, 1,364 queries; all 10 bins consistent; n-weighted mean genome precision 0.562; pooled A2-confirmed share 0.543 [0.517, 0.570] |
 
-<!-- src: GIPPA_SPEC.md:2696-2703 (§15.7 wording); validation/pilot/metrics/metrics.json › h1; validation/pilot/REPORT.md:233 (H2 shown side by side), 312-313;
+<!-- src: GIPPA_SPEC.md:2696-2703 (§15.7 wording); validation/pilot/metrics/metrics.json › h1 (strain_specific_share 317/417); validation/pilot/REPORT.md:233 (H2 shown side by side), 312-313;
 metrics.json › h3.criteria (rho holds, enriched_categories holds, islands/operon_flags not_evaluable), h3.region_tests ("not compared in pass 1"), h3.verdict; metrics.json › h4 -->
 
 H3 as pre-registered was therefore not tested. The recorded "supported" rests only on criteria
@@ -889,7 +894,7 @@ The example bundle `nissle_r200k` (bundle version 1.1) holds the pilot's data re
 200-kb region (routes A–D). Route E instead uses a separate 200-kb region of the post-freeze exploratory
 six-frame arm A4 (DIA-NN job 1918156), which was not part of the pilot gate.
 
-Each route ran once at the development commit `39f9f3a2` on 9 November 2026, with modules core and
+Each route ran once (Table R9) at the development commit `39f9f3a2` on 9 November 2026, with modules core and
 bgc, the light Bakta database, TransTermHP terminators, Promoter Calculator off and 4 threads. For
 every route, all measured outputs equalled the bundle's expected values on every key except wall
 time. GIPPA itself produced those expected values, so the match is a regression and reproducibility
@@ -934,14 +939,16 @@ A readiness pass means only that the row's check succeeded; for R3 and R4, "no *
 failure". Specification §13.2 reads "Every statistical method passes its calibration
 suite … and every attack null stays at level", and §8.5 says that a failing attack blocks the merge.
 That wording is not met. Behind the two passes lie:
-- known failures: 6 xfailed tests and 13 merged strict-xfail records (Tables 3a and 3b), which the
+- known failures: 6 xfailed tests and 13 merged strict-xfail records (Tables R3a and R3b), which the
   calibration merge counts as non-failures (ADR-0057);
 - two methods that pass only through their flags (ORA, determinants);
 - GSEA unflagged rows that pass only under a 1.5α screen;
 - recorded-only or vacuous results that would fail an α-level reading (Section 1.2): 4 autocorrelation
   records under UniOP-like and UniOP K-12 TU errors, 2 island breaches outside the regime, the
   gene-level H1 p (0.1737 at α = 0.05), the de novo truth-table bias (−0.066), the vacuous
-  missed-operon pass, and 3 unconfirmed streams whose pooled value exceeds the bound.
+  missed-operon pass, 3 unconfirmed streams whose pooled value exceeds the bound, the determinants
+  ΔR² interval (0.388 miss rate) and distance-fallback CIs (0.074 / 0.072), and the `two_peptide`
+  gene FDP (0.054 at q = 0.01).
 
 <!-- src: validation/release/1.1.0/READINESS.md:9-18; scripts/release/readiness.py:373 (R4), R3 threshold "exit 0 and 0 failed for R or an ancestor C with reusable(C, R)"; GIPPA_SPEC.md §13.2, §8.5:1991;
 docs/adr/ADR-0057-calibration-merge-honours-strict-xfail.md:1-8; benchmarks/baseline.json › standard_run.wheat.k12_core.ratio_to_estimate 7.249 -->
@@ -971,7 +978,7 @@ docs/adr/ADR-0057-calibration-merge-honours-strict-xfail.md:1-8; benchmarks/base
 The waiver mechanism does not check a record's version. ADR-0076 is the decision that extends these
 records to 1.1.0, for R5 only for TE4's rplL/rplJ pair.
 ᵇ Readiness checks exit 0 and "0 failed" for the release commit or a reusable ancestor; strict
-xfails do not count as failures. The §13.2 wording is not met: see Tables 3a and 3b (6 xfailed tests,
+xfails do not count as failures. The §13.2 wording is not met: see Tables R3a and R3b (6 xfailed tests,
 13 merged records), the flagged methods (ORA, determinants) and the GSEA 1.5α screen.
 
 <!-- src: validation/release/1.1.0/READINESS.md:1-24; validation/release/1.1.0/readiness.json › rows[*].status, value, evidence, waiver (ADR-0071, ADR-0070, ADR-0072);
@@ -1004,7 +1011,7 @@ validation/release/1.1.0/READINESS.md:19 (H1 threshold "### Gate M1 … M10"); P
 Readiness 1.0.0 (commit `1aae3b67`, 3 November 2026) differs from 1.1.0 as follows:
 - **R3** changed from waived to pass, because the fast-tier calibration ran on the 1.1.0 release
   commit, whereas for 1.0.0 it had not (ADR-0073).
-- **R4** has the same counts (281 / 273 / 3 / 5), re-measured at `4a6fa998` in array 1966680.
+- **R4** has the same counts (281 / 273 / 3 / 5), re-measured at `4a6fa998` ("array 1966680", jobs 1966680–1966694).
   Readiness 1.0.0 used array 1924911, reused from `1099769`.
 - **R2, R5 and R7** remained waived (pilot and benchmark not re-run); R5 and R7 values are unchanged. R5's TE8 evidence moved from the weekly run 1914510_0 at `fa49b8f1` to
   1972755_0 at `e43683c7`. R2 is still unmeasured, but its value text changed: 1.0.0 read "missing:
