@@ -1,0 +1,12 @@
+# ThermoRawFileParser for the campaign only (ADR-0077 decision 2): Thermo .raw -> mzML for
+# Cascadia (arm E4). Apache-2.0; https://github.com/compomics/ThermoRawFileParser; Bioconda
+# `thermorawfileparser`. Not a GIPPA dependency (nothing under src/ or workflow/ uses it).
+# DIA-NN 2.3.1 reads .raw itself (validation/campaign/raw_check.md), so it is not used for searches.
+# Built by validation/campaign/slurm/build_trfp_env.sbatch into $MAMBA_ROOT_PREFIX/envs/gippa-thermorawfileparser;
+# the explicit lock is written to validation/campaign/envs/locks/thermorawfileparser.explicit.txt.
+name: gippa-thermorawfileparser
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - thermorawfileparser=1.4.5
