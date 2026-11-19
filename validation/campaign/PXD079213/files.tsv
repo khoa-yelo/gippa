@@ -1,0 +1,11 @@
+file_name	file_type	raw_format	bytes	checksum	checksum_source	url	acquisition	acquisition_source	sample	condition
+aCcrk_1.raw	raw	thermo_raw	1571923286	NA	NA	https://download.iprox.cn/IPX0017569000/IPX0017569001/aCcrk_1.raw	NA	NA	NA	NA
+aCcrk_2.raw	raw	thermo_raw	1553928709	NA	NA	https://download.iprox.cn/IPX0017569000/IPX0017569001/aCcrk_2.raw	NA	NA	NA	NA
+aCcrk_3.raw	raw	thermo_raw	1561044740	NA	NA	https://download.iprox.cn/IPX0017569000/IPX0017569001/aCcrk_3.raw	NA	NA	NA	NA
+CCTF1_1.raw	raw	thermo_raw	1572794971	NA	NA	https://download.iprox.cn/IPX0017569000/IPX0017569001/CCTF1_1.raw	NA	NA	NA	NA
+CCTF1_2.raw	raw	thermo_raw	1581983650	NA	NA	https://download.iprox.cn/IPX0017569000/IPX0017569001/CCTF1_2.raw	NA	NA	NA	NA
+CCTF1_3.raw	raw	thermo_raw	1591906624	NA	NA	https://download.iprox.cn/IPX0017569000/IPX0017569001/CCTF1_3.raw	NA	NA	NA	NA
+cont_1.raw	raw	thermo_raw	1580759346	NA	NA	https://download.iprox.cn/IPX0017569000/IPX0017569001/cont_1.raw	NA	NA	NA	NA
+cont_2.raw	raw	thermo_raw	1560198727	NA	NA	https://download.iprox.cn/IPX0017569000/IPX0017569001/cont_2.raw	NA	NA	NA	NA
+cont_3.raw	raw	thermo_raw	1564899673	NA	NA	https://download.iprox.cn/IPX0017569000/IPX0017569001/cont_3.raw	NA	NA	NA	NA
+SEARCH.zip	search	NA	198497363	NA	NA	https://download.iprox.cn/IPX0017569000/IPX0017569001/SEARCH.zip	NA	NA	NA	NA
