@@ -1,5 +1,5 @@
 # ADR-0077: Download sources and Thermo raw conversion for the demo and discovery campaign
-- Status: proposed
+- Status: accepted-by-khoa (2026-11-19, in session: "Yes")
 - Date: 2026-11-19
 - Spec sections: §3.2 (allowed sources), R6 (official sources only), R11 (large files under
   `$GIPPA_ROOT`), §15 (pilot rules, reused)
