@@ -683,6 +683,8 @@ Slurm jobs this session (2026-10-27): 1900002 (nightly, task 2 SIGTERM at 5 h 50
 | Since | What | Host or tool | Needed from Khoa |
 |---|---|---|---|
 | 2026-10-14 | ~~RegulonDB v12 download~~ **RESOLVED 2026-10-21** | Not an outage: RegulonDB serves a cert (GlobalSign GCC R46 OV TLS CA 2025, issued 2026-10-14) **without the intermediate**, so verification fails. The intermediate from GlobalSign's own CA endpoint verifies against `GlobalSign Root R46`, already in FarmShare's trust store; with it, the site and `/datasets` return HTTP 200. Khoa approved completing the chain (2026-10-21). | nothing — M6-11/M6-12 unblocked |
+| 2026-11-19 | Campaign: PRIDE HTTPS downloads of ~1.6 GB `.raw` files drop mid-transfer (`curl: (56) OpenSSL SSL_read: unexpected eof`) every 0.2–0.9 GB at 0.5–1 MB/s. Jobs 1998296 (two attempts, partial discarded: script bug, fixed) and 1998349 (two resumed attempts, stopped at 1.48 of 1.59 GB); 1998427 resumes the last 0.12 GB (third and last attempt, R9) | ftp.pride.ebi.ac.uk (https) | Nothing yet. For the full campaign downloads (tens of GB), the fetch must resume partial files across attempts (as `pxd_fetch.py` does); if PRIDE keeps dropping, Aspera or FTPS would need an ADR |
+| 2026-11-19 | Campaign: PMC article pages and supplementary files (pmc.ncbi.nlm.nih.gov) answer automated clients with a reCAPTCHA page; the article XML comes from NCBI E-utilities efetch (db=pmc) instead, but supplementary tables (e.g. V. natriegens Suppl. Data S3, B. theta Suppl. Table 1) are unreachable | pmc.ncbi.nlm.nih.gov | Questions 18–19 can be answered from the supplementary tables in a browser |
 
 ## Answered by Khoa
 - 2026-11-03: **CI runners** pinned to ubuntu-24.04 for 1.0.0 (#529); README keeps the FarmShare developer heading for 1.0.0. **Release 1.0.0 approved** ("approved" on #531, 20:31 UTC); Khoa asked the lead to run the publish ("Can you run it").
@@ -732,6 +734,12 @@ Slurm jobs this session (2026-10-27): 1900002 (nightly, task 2 SIGTERM at 5 h 50
 | 14 | ADR-0047 tightening (M4-24 backlog): narrow the condition under which decoys above `q_value_max` leave the picked competition | tighten / leave | leave (ADR-0047 as accepted) | 2026-10-23 (#238) |
 | 15 | FYI, reversible: MVP-04 gate 13 re-stated before any number (decision 20). "≥ 4 of 6 islands" was infeasible (0/11 seeds); now one 20-TU high island gated (11/11), three 8-TU lows exempt (structural cap) | ok / revise | decision 20 (in use) | 2026-10-23 (#258) |
 | 16 | M10-14 K2: after the report-freeze reruns, delete the DIA-NN raw reports and predicted libraries (the converted tables, hashes and counts stay)? | delete / keep | keep them until you say so (nothing irreversible) | 2026-10-24 (#308) |
+| 17 | Campaign E3: the Δlon/ΔclpP DIA runs of PMC12529367 are not in PXD058422; PXD066241 is hosted at Panorama Public (panoramaweb.org), not an ADR-0077 host. Amend ADR-0077 to allow Panorama Public for PXD066241? | amend / drop E3 | E3 not testable; E1/E2/E4 go ahead on PXD058422 | 2026-11-19 |
+| 18 | Campaign V. natriegens (PXD049476): the deposit does not say which 4 of Vnat-1-1..4, 1-9..12 are parental | Vnat-1-1..4 / 1-9..12 / check Suppl. Data S3 | Vnat-1-1..4 | 2026-11-19 |
+| 19 | Campaign M. xanthus (PXD060688): no file key for the five DdiA-4 blocks (WT untreated, MMC 5 h, MMC 10 h, ΔlexA, ...) | DdiA-4-01..04 / other block | DdiA-4-01..04 | 2026-11-19 |
+| 20 | Campaign C. difficile (PXD065346): the only DIA runs are a synthetic small-protein spike-in series | lowest spike-in total lysate (0.5 pg/µg Ctrl A–C, spiked proteins excluded from claims) / swap in a reserve | 0.5 pg/µg Ctrl A–C | 2026-11-19 |
+| 21 | Campaign Synechococcus (PXD072227): WH8102 is not in the deposit; treatment blocks are unlabelled | CC9311 runs 23–27 first / another strain | CC9311 runs 23–27 | 2026-11-19 |
+| 22 | Campaign T. pallidum (PXD065022): isolates "171" and "176" have no genome in the plan | skip / find genomes | skip until named | 2026-11-19 |
 
 ## Environment notes
 - capabilities: allocation cpus=8, mem=31.2 GB, time left at 16:32 UTC=4:18; local/ used=1.75 GB;
