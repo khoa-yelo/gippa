@@ -156,7 +156,9 @@ def novel_in(out: Path, lo: int, hi: int, strand: str) -> list[dict[str, Any]]:
         return []
     s = pd.to_numeric(n["start_longest"], errors="coerce")
     e = pd.to_numeric(n["end"], errors="coerce")
-    sel = n[(n["strand"].astype(str) == strand) & (s.combine(e, min) <= hi) & (s.combine(e, max) >= lo)]
+    lo_c = pd.concat([s, e], axis=1).min(axis=1)
+    hi_c = pd.concat([s, e], axis=1).max(axis=1)
+    sel = n[((n["strand"].astype(str) == strand) & (lo_c <= hi) & (hi_c >= lo)).fillna(False).astype(bool)]
     keep = ("orf_id", "class", "strand", "start_longest", "start_best_ostir", "end", "length_aa_longest",
             "n_peptides", "best_peptide_q", "class_fdr", "called", "overlapping_gene", "flags")
     return [{k: clean(r[k]) for k in keep} for _, r in sel.iterrows()]
@@ -186,6 +188,7 @@ def novel_vs_refseq(out: Path, ref: pd.DataFrame) -> dict[str, Any]:
     if n is None:
         return {"reason": "missing:novel_orfs.tsv"}
     called = n[n["called"].map(lambda v: str(v).lower() == "true")]
+    res_all = _match(n, ref) if True else None
     cds = ref[ref["type"].isin(["CDS", "pseudogene"]) | ref["pseudo"]]
     out_rows, k = [], 0
     for _, r in called.iterrows():
@@ -212,7 +215,35 @@ def novel_vs_refseq(out: Path, ref: pd.DataFrame) -> dict[str, Any]:
            for c in cls}
     return {"n_candidates": int(len(n)), "candidates_by_class": dict(cls), "n_called": int(len(called)),
             "called_by_class": dict(ccls), "min_class_fdr_by_class": fdr,
-            "share_matching_refseq": share(k, len(called)), "called": out_rows}
+            "share_matching_refseq": share(k, len(called)), "called": out_rows,
+            "exploratory_all_candidates": res_all}
+
+
+def _match(n: pd.DataFrame, ref: pd.DataFrame) -> dict[str, Any]:
+    """Exploratory (not the pre-registered row 9): every candidate, called or not, against the
+    RefSeq CDS/pseudogenes with the same >= 50 % same-strand overlap rule, by class and by
+    n_peptides >= 2."""
+    cds = ref[ref["type"].isin(["CDS", "pseudogene"]) | ref["pseudo"]]
+    rows = []
+    for _, r in n.iterrows():
+        e = int(r["end"])
+        st = clean(r["start_longest"])
+        a, b = sorted((int(st), e)) if st is not None else (e, e)
+        L = b - a + 1
+        same = cds[(cds["strand"] == r["strand"]) & (cds["start"] <= b) & (cds["end"] >= a)]
+        best = max(((min(b, c["end"]) - max(a, c["start"]) + 1, c) for _, c in same.iterrows()),
+                   key=lambda x: x[0], default=None)
+        rows.append({"class": str(r["class"]), "n_peptides": int(clean(r["n_peptides"]) or 0),
+                     "match": best is not None and st is not None and best[0] >= 0.5 * L,
+                     "pseudo": bool(best[1]["pseudo"]) if best is not None else False})
+    out: dict[str, Any] = {}
+    for key, sub in (("all", rows), ("n_peptides_ge_2", [x for x in rows if x["n_peptides"] >= 2])):
+        out[key] = share(sum(x["match"] for x in sub), len(sub))
+        out[key + "_by_class"] = {c: share(sum(x["match"] for x in sub if x["class"] == c),
+                                           sum(x["class"] == c for x in sub))
+                                  for c in sorted({x["class"] for x in sub})}
+        out[key + "_pseudogene_matches"] = sum(x["match"] and x["pseudo"] for x in sub)
+    return out
 
 
 def prophages(out: Path, ref: pd.DataFrame) -> dict[str, Any]:
