@@ -372,7 +372,11 @@ def main(argv: list[str] | None = None) -> int:
     doc["row2_te3"] = t3
     doc["row3_te4"] = tr.te4(genes1)
     heads = [ln[1:] for ln in a.contaminants.read_text().splitlines() if ln.startswith(">")]
-    t5 = tr.te5_arm(P1, hits1, unm1, tr.contaminant_families(heads), cfg1)
+    # gippa makedb writes the contaminants as CONT_<id> without their descriptions, so the
+    # pilot's family rule (on the description) is applied to the source FASTA and the IDs are
+    # given makedb's prefix; both spellings are kept.
+    fam = {f: set(ids) | {"CONT_" + i for i in ids} for f, ids in tr.contaminant_families(heads).items()}
+    t5 = tr.te5_arm(P1, hits1, unm1, fam, cfg1)
     t5.pop("_violations", None)
     doc["row4_te5"] = t5
     doc["row5_prophages"] = prophages(e1, ref)
