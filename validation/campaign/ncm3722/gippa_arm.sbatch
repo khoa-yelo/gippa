@@ -20,6 +20,7 @@ PIN="${PIN:-$GIPPA_ROOT/worktrees/campaign-pin}"
 export GIPPA_REPO="$PIN"
 source "$PIN/scripts/farmshare_env.sh"
 export PYTHONPATH="$PIN/src"
+export PATH="$UV_PROJECT_ENVIRONMENT/bin:$PATH"   # tasks call `gippa _step` (gippa_run.sbatch gets this from uv run)
 export XDG_CACHE_HOME="$GIPPA_ROOT/.cache"
 export TMPDIR="$(mktemp -d /tmp/gippa.XXXXXX)"; trap 'rm -rf "$TMPDIR"' EXIT
 GIPPA="$UV_PROJECT_ENVIRONMENT/bin/gippa"
