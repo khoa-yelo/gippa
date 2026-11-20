@@ -1,0 +1,19 @@
+{
+  "codon_check_failed": 0,
+  "gap_columns": 1,
+  "il_columns": 1,
+  "initiator_start_differences": 2,
+  "mg_proteins": 4373,
+  "ncm_no_hit": 164,
+  "ncm_no_rbh": 84,
+  "ncm_proteins": 4498,
+  "outside_hsp_residues": 528,
+  "pairs": 4235,
+  "pairs_identical": 4193,
+  "pairs_ncm_NZ_CP011495.1": 4235,
+  "proteins_with_sites": 26,
+  "rbh_below_limits": 15,
+  "sites": 31,
+  "sites_ncm_NZ_CP011495.1": 31,
+  "_note": "Phase 1b truth set (ANSWER_KEY_1b.md method), built by job 1998777 (blastp 2.16.0+, image sha256:9dfc69f9...959c) before any N2 output existed; sites re-derived in-session after adding the initiator filter (2 sites whose NCM3722 residue was Bakta's initiator M over a non-ATG start codon, identical codon on both genomes: start-call differences, not substitutions). NCM3722 proteins by replicon: chromosome 4235 paired, 93 hit but unpaired, 95 no hit; plasmid F 0 paired, 6 hit unpaired, 69 no hit."
+}

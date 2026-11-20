@@ -117,15 +117,22 @@ def sites(out: Path, ncm_json: Path, mg_json: Path) -> None:
             })
         cnt["pairs_identical"] += int(nd == 0 and float(r["pident"]) == 100.0 and qlen == slen)
         orth.append({"ncm_locus": q, "mg_locus": s, "pident": r["pident"], "n_sub": nd})
+    kept = []
     for x in rows:  # each site's codons translate to its REF (MG1655) and ALT (NCM3722) residues
         ok_m = residue(seqs, x["mg_contig"], x["mg_codon_start"], x["mg_strand"]) == x["ref_aa"]
         ok_n = residue(seqs, x["ncm_contig"], x["ncm_codon_start"], x["ncm_strand"]) == x["alt_aa"]
+        if ok_m and not ok_n and x["ncm_aa_pos"] == 1 and x["alt_aa"] == "M":
+            # Bakta's initiator M over a non-ATG start: a start-call difference, same codon
+            cnt["initiator_start_differences"] += 1
+            continue
         cnt["codon_check_failed"] += int(not (ok_m and ok_n))
-    cnt["ncm_no_hit"] = cnt["ncm_proteins"] - len(n2m)
+        kept.append(x)
+    rows = kept
     cnt["sites"] = len(rows)
     cnt["proteins_with_sites"] = len({x["mg_locus"] for x in rows})
     for x in rows:
         cnt[f"sites_ncm_{x['ncm_contig']}"] += 1
+    cnt["ncm_no_hit"] = cnt["ncm_proteins"] - len(n2m)
     for name, data in (("truth_sites.tsv", rows), ("orthologs.tsv", orth)):
         with (out / name).open("w", newline="") as fh:
             w = csv.DictWriter(fh, fieldnames=list(data[0]), delimiter="\t", lineterminator="\n")
