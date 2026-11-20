@@ -41,3 +41,15 @@ None yet; the Phase 0 inventory and the `.raw` test record the outcome.
   is accepted.
 - No change to the GIPPA package, its tests or its licences.
 - Each campaign report cites its accession and paper; raw files are never redistributed.
+
+## Amendment 1 (2026-11-19, accepted-by-khoa in session: "Add both")
+The Phase 0 inventory (`validation/campaign/`, PR #603) found two more sources:
+- **Panorama Public** (`panoramaweb.org`, its PXD-linked project folders) for PXD066241, which
+  holds the E3 knockout runs (ΔmntS, Δlon, ΔclpP) of the K-12 demonstration;
+- **NCBI E-utilities** (`eutils.ncbi.nlm.nih.gov`) for the full text and supplementary-file
+  links of the papers, because the PMC web pages answer automated clients with a reCAPTCHA.
+Same terms as decision 1: TLS verified, sha256 in `files.tsv`, one retry, then record the block.
+
+The Phase 0 check also found that the pinned DIA-NN 2.3.1 image reads Thermo `.raw` directly on
+Linux (job 1998427, `validation/campaign/raw_check.md`), so ThermoRawFileParser is needed only for
+Cascadia's mzML input (arm E4).
