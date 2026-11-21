@@ -34,8 +34,23 @@ Statistical code also changed:
 - output columns were renamed for 1.1.
 
 No file in `context/`, `stats/`, `function/` or `compare/` changed, although `compare` reads its
-inputs through the changed `io/run_view.py`. The pilot numbers describe 1.0.0-era code; whether
-1.1.0 reproduces them (TE1, Tables R5–R7, operon flags, ALT and novel-ORF calls) was not checked.
+inputs through the changed `io/run_view.py`. Apart from the detection recomputation described
+next, the pilot numbers describe 1.0.0-era code; whether 1.1.0 reproduces them (TE1, Tables R5–R7,
+operon flags, ALT and novel-ORF calls) was not checked.
+
+GIPPA 1.1.1 corrects the picked gene FDR (ADR-0078, PR #607; Methods Section 6). The pilot values
+that depend on gene detection (Table R6, Section 4.3, and the H1 and H3 rows of Table R7) were
+therefore recomputed with the 1.1.1 detection code on the frozen pilot inputs. The gene table,
+detectability, context-statistics and function steps of the A1 and A2 freeze runs, and
+`gippa compare`, were re-run with the freeze code `fa49b8f1`, in which only
+`src/gippa/genetable/detection.py` was replaced by its 1.1.1 version. A control with the unchanged
+freeze code (Slurm job 2001992) reproduced the recorded tables byte for byte; the reported values
+come from the run with the fix (Slurm job 2002006). The fix removed 28 detections from A1
+(2,673 to 2,645) and 6 from A2 (3,057 to 3,051) and added none. The outcomes of TE3, TE4, the
+plasmid and prophage rows of Table R6, and H1 and H3 did not change. All other pilot values are
+from the freeze runs.
+
+<!-- src: local/scratch/a1-recheck/{rerun.sbatch (control, Slurm 2001992), rerun_fix.sbatch (fix, Slurm 2002006), rerun_steps.py, derived.py}; logs/gippa-a1recheck-2001992.out, logs/gippa-a1recheck-fix-2002006.out; diff -rq of the freeze src/gippa against local/scratch/a1-recheck/hybrid/src/gippa (only genetable/detection.py differs; 1.1.1 detection.py from PR #607, merged as 92fbf3af); cmp of runs/ctl/{a1,a2}/out/tables/*.tsv and runs/ctl/cmp/tables/*.tsv against local/runs/pilot/freeze/fa49b8f (0 differ); derived_ctl.json, derived_fix.json › m3.*.all, h1, h3; detected/{v1.1.0,fix7d4c4bfd}/freeze__fa49b8f__out_{a1,a2}.tsv (genes at q ≤ 0.01: 28 and 6 lost, 0 gained; no ribosomal, rpl or atp gene among them) -->
 
 The 1.1.0 readiness check evaluates rows R1, R5 (TE1–TE5), R6 (TE7), R7, R8 and R9 directly on the
 1.0.0-era pilot metrics and benchmark file. No decision record covers reusing the passing rows.
@@ -49,6 +64,7 @@ the code.
 | release-equivalent | `4a6fa998`, `20283834` | version string only | calibration_full and attacks (`4a6fa998`); weekly Nissle TE2 and K-12 distance-model fallback (`20283834`) |
 | 1.1.0 development | `39f9f3a2`; `e6f4aa3c` | 2 files (+7/−3); 20 files (+780/−128) | example routes A–E (`39f9f3a2`); 9 November nightly runs (`e6f4aa3c`) |
 | 1.0.0-era | `fa49b8f1` | 124 files (+6,484/−1,090) | Nissle 1917 pilot (A1, A2, A3, compare); TE1–TE5, TE7; standard-run benchmark |
+| 1.0.0-era with 1.1.1 detection | `fa49b8f1` with `genetable/detection.py` of `92fbf3af` | as 1.0.0-era, with the 1.1.1 `detection.py` | pilot detection, Table R6, Section 4.3, H1 and H3 (Slurm 2002006; control 2001992) |
 | older | named per row | – | UniOP AUROC and cut-offs (ADR-0022, Slurm 1879748); TE2 in-silico proxy (2026-10-23) |
 
 <!-- src: git for-each-ref refs/tags/v1.1.0 (a2a95c76); git diff --stat e43683c7 a2a95c76 (READINESS.md, readiness.json only); validation/release/1.1.0/readiness.json › commit, rows[R1,R5,R6,R7,R8,R9].evidence; docs/adr/ADR-0076-waivers-1-1.md:1-40 (title, Context line 17, Scope);
@@ -685,11 +701,11 @@ from DIA-NN (input q ≤ 0.01) and is not estimated by GIPPA.
 
 ### 4.2 Detection and detection tiers
 
-The gene set has 4,685 strain genes (CDS and sORF). A1 detected 2,673 of them
-(0.5705 [0.5563, 0.5847]) <!-- TODO ADR-0078 recheck --> and A2 detected 3,057 (0.6525 [0.6388, 0.6660]). Of the 916
+The gene set has 4,685 strain genes (CDS and sORF). A1 detected 2,645 of them
+(0.5646 [0.5503, 0.5787]) and A2 detected 3,051 (0.6512 [0.6375, 0.6647]). Of the 916
 strain-specific genes (no tryptic peptide shared with K-12), A1 cannot detect any by construction,
-because it searched only the K-12 proteome; it detected 0. A2 detected 317 (0.3461 [0.3160,
-0.3775]). Table R6 gives shares by region. The freeze run manifests record the
+because it searched only the K-12 proteome; it detected 0. A2 detected 316 (0.3450 [0.3149,
+0.3764]). Table R6 gives shares by region. The freeze run manifests record the
 detection tier `decoy_picked` for A1 and A2, and `two_peptide` for A3, because de novo rows carry no
 decoys; that tier has no FDR estimate (Section 1.2: simulated gene FDP 0.054 at q = 0.01).
 
@@ -700,22 +716,22 @@ union over runs), not a population quantity.
 
 | Subset (genes) | A1 | A2 |
 |---|---|---|
-| all (4,685) | 0.5705 [0.5563, 0.5847] <!-- TODO ADR-0078 recheck --> | 0.6525 [0.6388, 0.6660] |
-| strain-specific (916) | 0 (structural; not an estimate) | 0.3461 [0.3160, 0.3775] |
-| plasmid (13) | 0.0769 [0.0137, 0.3331] <!-- TODO ADR-0078 recheck --> | 0.7692 [0.4974, 0.9182] |
-| prophage (136) | 0.0221 [0.0075, 0.0628] <!-- TODO ADR-0078 recheck --> | 0.2721 [0.2043, 0.3523] |
-| BGC (251) | 0.3108 [0.2567, 0.3705] <!-- TODO ADR-0078 recheck --> | 0.5458 [0.4840, 0.6063] |
-| K-12-shared (3,759) | 0.7111 [0.6964, 0.7254] <!-- TODO ADR-0078 recheck --> | 0.7289 [0.7145, 0.7429] |
+| all (4,685) | 0.5646 [0.5503, 0.5787] | 0.6512 [0.6375, 0.6647] |
+| strain-specific (916) | 0 (structural; not an estimate) | 0.3450 [0.3149, 0.3764] |
+| plasmid (13) | 0.0769 [0.0137, 0.3331] | 0.7692 [0.4974, 0.9182] |
+| prophage (136) | 0.0221 [0.0075, 0.0628] | 0.2721 [0.2043, 0.3523] |
+| BGC (251) | 0.3028 [0.2493, 0.3623] | 0.5458 [0.4840, 0.6063] |
+| K-12-shared (3,759) | 0.7036 [0.6888, 0.7180] | 0.7276 [0.7131, 0.7416] |
 
-<!-- src: validation/pilot/metrics/metrics.json › m3.A1/A2.subsets.*.share; validation/pilot/REPORT.md:81-84 (G = cds, sorf);
+<!-- src: local/scratch/a1-recheck/derived_fix.json › m3.A1/A2 (1.1.1 detection recompute, Slurm 2002006; the 1.0.0-era values in validation/pilot/metrics/metrics.json › m3 are reproduced byte-identically by the control, Slurm 2001992, derived_ctl.json); local/scratch/a1-recheck/out_fix.jsonl (freeze/fa49b8f/out_a1, out_a2: genes_q01); validation/pilot/REPORT.md:81-84 (G = cds, sorf);
 local/runs/pilot/freeze/fa49b8f/out_{a1,a2,a3}/run_manifest.json › detection_tier, git_commit -->
 
 ### 4.3 Comparison of A1 and A2
 
-On the 2,635 genes with measured abundance in both arms (1,683 TUs), <!-- TODO ADR-0078 recheck --> the Spearman correlation of
-abundance was 0.978, with a TU-block bootstrap 95 % CI of [0.973, 0.983] (1,000 resamples). <!-- TODO ADR-0078 recheck --> The
-Bland–Altman bias was −0.195 log2, with limits of agreement [−1.376, 0.987]. <!-- TODO ADR-0078 recheck --> The Jaccard index of
-enriched functional categories was 0.563 (437 in A1, 285 in A2, 260 shared). <!-- TODO ADR-0078 recheck -->
+On the 2,613 genes with measured abundance in both arms (1,674 TUs), the Spearman correlation of
+abundance was 0.978, with a TU-block bootstrap 95 % CI of [0.973, 0.983] (1,000 resamples). The
+Bland–Altman bias was −0.194 log2, with limits of agreement [−1.362, 0.975]. The Jaccard index of
+enriched functional categories was 0.588 (405 in A1, 292 in A2, 258 shared).
 
 Both arms quantify the same spectra. The correlation therefore measures how far the choice of
 search database perturbs abundance on genes quantified in both arms; it does not measure
@@ -726,7 +742,7 @@ No islands and no operon flags were called in either arm, so their Jaccard indic
 Jaccard indices for ALT sites (118 in A1, 0 in A2) and novel ORFs (1 in A1, 0 in A2) were 0. Jaccard
 indices carry no uncertainty estimate.
 
-<!-- src: validation/pilot/metrics/metrics.json › m4; m5.enriched_categories; m5.islands; m5.operon_flags; m5.other_families; src/gippa/compare/stability.py:40-52 (enriched = ORA ∪ GSEA at q ≤ alpha); validation/pilot/REPORT.md:174-176 (same spectra, same database) -->
+<!-- src: local/scratch/a1-recheck/derived_fix.json › m4, m5.enriched_categories (1.1.1 detection recompute, Slurm 2002006); validation/pilot/metrics/metrics.json › m5.islands, m5.operon_flags, m5.other_families (unchanged in local/scratch/a1-recheck/derived_fix.json); m5.islands; m5.operon_flags; m5.other_families; src/gippa/compare/stability.py:40-52 (enriched = ORA ∪ GSEA at q ≤ alpha); validation/pilot/REPORT.md:174-176 (same spectra, same database) -->
 
 ### 4.4 Pre-registered hypotheses
 
@@ -737,12 +753,12 @@ allow". Table R7 quotes them and gives their recorded outcomes.
 
 | Hypothesis | Recorded outcome | What was evaluated |
 |---|---|---|
-| H1: "A2 detects more strain CDS than A1, mostly plasmid, prophage and BGC genes." | **not supported** (failed clause: "mostly") | <!-- TODO ADR-0078 recheck --> 417 genes detected only in A2, 33 only in A1; A2-only share 0.9267 [0.8988, 0.9473]; TU-level test 275 vs 31 units, p_tu 2.49e-50, unit effect 0.8987 [0.8598, 0.9277]; "mostly" share 106 of 417 = 0.2542 [0.2148, 0.2981] against a base rate of 0.0854; 317 of the 417 A2-only genes (0.760 [0.717, 0.799]) are strain-specific and undetectable in A1 by construction, so the "more" clause is expected by design |
+| H1: "A2 detects more strain CDS than A1, mostly plasmid, prophage and BGC genes." | **not supported** (failed clause: "mostly") | 434 genes detected only in A2, 28 only in A1; A2-only share 0.9394 [0.9138, 0.9577]; TU-level test 290 vs 24 units, p_tu 1.80e-59, unit effect 0.9236 [0.8888, 0.9481]; "mostly" share 106 of 434 = 0.2442 [0.2062, 0.2868] against a base rate of 0.0854; 316 of the 434 A2-only genes (0.728 [0.684, 0.768]) are strain-specific and undetectable in A1 by construction, so the "more" clause is expected by design |
 | H2: "A1's genome-inconsistent FDP is at least its entrapment FDP (full validation, FDRBench), since it errs high." | **deferred** to the full validation | not tested; shown side by side only: A1 genome-inconsistent share 0.058 and A1 free-entrapment estimate 0.0273 (peptide level) |
-| H3: "Context conclusions (islands, region tests, operon concordance) agree between A1 and A2 on shared genes." | recorded verdict "supported" under the implemented rule (ρ and enriched-category Jaccard); **none of the three named conclusions was evaluated** | islands and operon flags not evaluable (none in either arm); region tests not compared; Jaccards not restricted to shared genes; evaluated instead: ρ 0.978 [0.973, 0.983] and enriched-category Jaccard 0.563 <!-- TODO ADR-0078 recheck --> |
+| H3: "Context conclusions (islands, region tests, operon concordance) agree between A1 and A2 on shared genes." | recorded verdict "supported" under the implemented rule (ρ and enriched-category Jaccard); **none of the three named conclusions was evaluated** | islands and operon flags not evaluable (none in either arm); region tests not compared; Jaccards not restricted to shared genes; evaluated instead: ρ 0.978 [0.973, 0.983] and enriched-category Jaccard 0.588 |
 | H4: "The genome-anchored de novo precision agrees with precision measured against A2 identifications." | **consistent with lower bound** (the data can refute but never confirm) | 10 reportable bins, 1,364 queries; all 10 bins consistent; n-weighted mean genome precision 0.562; pooled A2-confirmed share 0.543 [0.517, 0.570] |
 
-<!-- src: GIPPA_SPEC.md:2696-2703 (§15.7 wording); validation/pilot/metrics/metrics.json › h1 (strain_specific_share 317/417); validation/pilot/REPORT.md:233 (H2 shown side by side), 312-313;
+<!-- src: GIPPA_SPEC.md:2696-2703 (§15.7 wording); local/scratch/a1-recheck/derived_fix.json › h1 (b 434, c 28, b_tu 290, c_tu 24, p_tu, unit_effect, mostly, strain_specific_share 316/434; 1.1.1 detection recompute, Slurm 2002006), h3 (enriched_categories jaccard 0.587699, verdict supported); validation/pilot/REPORT.md:233 (H2 shown side by side), 312-313;
 metrics.json › h3.criteria (rho holds, enriched_categories holds, islands/operon_flags not_evaluable), h3.region_tests ("not compared in pass 1"), h3.verdict; metrics.json › h4 -->
 
 H3 as pre-registered was therefore not tested. The recorded "supported" rests only on criteria
@@ -754,7 +770,7 @@ and the rule that the "mostly" share must exceed 0.5 were specified in `docs/spe
 file was committed at 2026-10-24 04:22 PDT. At that time the DIA-NN reports had been converted
 (2026-10-23, 23:02), but no GIPPA pilot run had yet produced gene-level detections.
 
-For H1, the gene-level p (4.65e-86) <!-- TODO ADR-0078 recheck --> decides nothing: the compare attack
+For H1, the gene-level p (5.20e-95) decides nothing: the compare attack
 in Section 1.2 recorded this p as anti-conservative (0.1737 at α = 0.05), and the verdict rests on
 the TU-level test and the "mostly" clause. The table uses the specification's wording of H2,
 not the pilot report's.
@@ -763,7 +779,7 @@ For H4, A2 enters both sides (its matches set the c-value; its identifications s
 confirmations), so the check is not independent. The score bins span de novo scores in (0.8, 1]
 only, and DIA data give no spectrum pairing.
 
-<!-- src: validation/pilot/metrics/metrics.json › h1.p_gene; CAL/lanes/compare-group0/compare_attack_h1_recorded.jsonl:2; docs/specs/M10-05-pilot-metrics.md:266-298 (commit e81c1559, 2026-10-24T04:22-07:00); sacct 1880208 start 2026-10-23T23:02 (DIA-NN convert, validation/pilot/README.md:217-242); first GIPPA pilot runs 1892236 ff. (README.md:326-329); validation/pilot/REPORT.md:233 (H2 wording), H4 caveats -->
+<!-- src: local/scratch/a1-recheck/derived_fix.json › h1.p_gene (5.202e-95; 1.1.0 value 4.65e-86 in derived_ctl.json); CAL/lanes/compare-group0/compare_attack_h1_recorded.jsonl:2; docs/specs/M10-05-pilot-metrics.md:266-298 (commit e81c1559, 2026-10-24T04:22-07:00); sacct 1880208 start 2026-10-23T23:02 (DIA-NN convert, validation/pilot/README.md:217-242); first GIPPA pilot runs 1892236 ff. (README.md:326-329); validation/pilot/REPORT.md:233 (H2 wording), H4 caveats -->
 
 ### 4.5 Free entrapment (A1)
 
@@ -913,6 +929,8 @@ check of the routes, not validation against external truth. The bundle was built
 | C | Cascadia `.ssl` × 3 (76 rows; format demonstration) | two_peptide | 158 | 4 | 4 | – | 21 | – | 270.0 |
 | D | generic peptide table (2,088 rows) | mayu | 158 | 99 | 91 | 102 | 774 | – | 273.8 |
 | E | DIA-NN report against a six-frame database (arm A4; 3,650 rows) | decoy_picked | 178 | 114 | 100 | 114 | 1,041 | 8 / 0 | 641.8 |
+
+<!-- TODO ADR-0078 route E: was run at `39f9f3a2` (1.1.0 development code) in the `decoy_picked` tier, so its Detected, Detected (≥ 2 peptides) and With abundance values use the 1.1.0 picked gene FDR. On the full arm A4 the fix leaves 2,965 detected genes unchanged (maximum detected q 0.0055 to 0.0067; local/scratch/a1-recheck/out_v110.jsonl, out_fix.jsonl › pilot/sixframe-fa49b8f/out_a4), but the 200-kb route E subset was not recomputed. Re-run route E with 1.1.1 (and update the bundle's expected/E.json if it changes) before quoting it as 1.1.1 output. -->
 
 <!-- src: local/example/routes/1966530/gippa-example/runs/measured/{A..E}.json; runs/wall_times.tsv; expected/{A..E}.json; bundle.json › bundle_version, build_commit, counts;
 runs/A/run_manifest.json › git_commit; gippa-example/PROVENANCE.md:36-45 (route E from arm A4, Slurm 1918156); docs/adr/ADR-0074-example-dataset.md (decision 3; Amendment 2026-11-06) -->
