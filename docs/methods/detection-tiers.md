@@ -1,8 +1,8 @@
 # Detection tiers and gene-level FDR (M4-12)
 
-Status: M4-24 shared ranking key approved by the statistician 2026-10-23 (PR #238). Earlier: statistician re-review 2026-10-15 (PR #92, after f297600): PEP-only path approved;
+Status: ADR-0078 (1.1.1, unpaired decoys compete in own units; 1/f retired) specified by the statistician 2026-11-20, code pending. M4-24 shared ranking key approved by the statistician 2026-10-23 (PR #238). Earlier: statistician re-review 2026-10-15 (PR #92, after f297600): PEP-only path approved;
 **changes requested** on the contaminant-decoy rule (lead decision 11), see Sign-off. Code: `src/gippa/genetable/detection.py`.
-Spec: GIPPA_SPEC.md §2.1 decision 4, §7.3, §7.3.2, §9.3; ADR-0009; docs/specs/M4-12-detection-tiers.md.
+Spec: GIPPA_SPEC.md §2.1 decision 4, §7.3, §7.3.2, §9.3; ADR-0009 (1/f retired by ADR-0078); ADR-0078; docs/specs/M4-12-detection-tiers.md.
 
 ## Report text
 
@@ -61,12 +61,20 @@ Priority: (1) the ID is a C2 `locus_tag`; (2) the `gene` of its C12 rank-1 hits 
 (3) peptide vote: among accepted unique target peptides whose C9 `protein_ids` contain the ID, the
 gene with the most distinct peptides (a tie leaves the ID unmapped). Protein groups `A;B` are split;
 contaminant-prefixed IDs are never mapped.
+The vote depends on which targets were accepted. Since ADR-0078 that no longer decides whether a
+decoy counts, only the unit it competes in (next section).
 
 ## Decoy pairing
 The longest matching `input.decoy_prefixes` entry is stripped from every member of the decoy's
 `protein_ids`. A decoy with any stripped member carrying an `input.contaminant_prefixes` prefix is
 a contaminant decoy and is neither paired nor unpaired (lead decisions 6, 11). Otherwise the decoy
 pairs when every member maps, and all map to the same gene.
+
+ADR-0078 (1.1.1): a decoy that does not pair still competes. Its own unit is keyed by its sorted,
+de-duplicated counted stripped IDs (contaminant IDs and unmapped `GIPPAORF_` IDs removed). Decoys
+with the same key share one unit. An own unit has no target, so its best decoy is always a decoy
+win; it adds to D and never to T. All-contaminant decoys and all-`GIPPAORF_` decoys with no mapped
+entry still get no row (decision 12; M7-12 decisions 23/28/29).
 
 ## PEP-only input (lead decision 5)
 When every accepted q-value is missing and PEPs are given, peptide q is the running mean of the
@@ -79,21 +87,43 @@ their decoys stay, so D is too large and the picked estimate errs conservative. 
 false target places (`false_source = random_gene`), which is the least favourable case for this
 asymmetry.
 
-What 1/f assumes (ADR-0009). Decoys are lost **at random with respect to score** while their target
-counterparts stay. When loss is symmetric (a reference protein absent from the strain loses its
-false targets and its decoy alike, as in cross-strain searches), 1/f over-corrects and the estimate
-is conservative. Loss that depends on score is not corrected. Stress run below: losing the
-*best-scoring* 10 % / 20 % of passing decoys gives FDP 1.5x / 2x q at q = 0.01, and the 80 % guard
-does not catch it. Nothing in the input should make pairing depend on score. If an engine ever
-does that, a KS check of paired against unpaired decoy scores would be the diagnostic (backlog).
+Unpaired decoys and the 1.1.0 defect (ADR-0078). Up to 1.1.0, unpaired decoys were dropped from
+D and each decoy win counted 1/f (ADR-0009). That assumes decoys are lost at random with respect
+to the outcome. On the vote route the loss was not random. When protein_hits is empty and the
+protein IDs are not C2 locus tags (`--search-db other`, or `same` with accession IDs), a protein
+maps only through votes of accepted targets. The decoys left unpaired were therefore those whose
+protein had no accepted target, exactly the decoys that would have won their gene. 1/f cannot
+restore wins that were selected away. On the campaign's NCM3722 data (N2: MG1655 genome, NCM3722
+IDs) GIPPA 1.1.0 reported 2,399 genes at max q 0.005, with a realised FDR of about 0.027 at
+nominal 0.01. A KS test of paired against unpaired decoy q does not detect it (p 0.97): the
+unpaired decoys are ordinary, their missing partners are not. Since 1.1.1 every passing decoy with
+protein IDs competes, in its gene or in its own unit, and the weight is 1:
+FDR(t) = (D(t) + 1)/T(t). N2 then calls 2,305 genes at max q 0.0100. Locus-tag runs are unchanged
+(N1: the same 2,341 genes, max |Δq| 0.0007).
+
+Assumptions. (a) A decoy that maps to no gene, or to several, is a null for a unit in which no
+accepted target beats it, so counting it as a win can only overstate D. That includes cross-strain
+proteins absent from the genome: their false targets do not place while their decoys still count,
+so the estimate errs conservative. Random decoy loss (ADR-0009's case) is now counted in full
+rather than through 1/f, which is also conservative. (b) A gene pairing made by votes of accepted
+peptides is right, or at worst groups the decoy with a target of the same protein. (c) Decoys
+without protein IDs stay outside the competition. An input with many of them is outside the
+guarantee. Loss that depends on score among decoys that do get IDs is still not corrected: losing
+the best-scoring 10 % / 20 % gave FDP 1.5x / 2x q at q = 0.01 in the 1.1.0 stress run. Residual:
+an `nterm_extension` ORF entry whose in-gene targets are all unaccepted maps to no gene, and its
+decoy is dropped. The gene's `rev_<locus_tag>` decoy still competes (backlog: database-side
+pairing).
 
 ## Picked gene-level FDR (Savitski 2015, ADR-0009)
 Per eligible (non-partial) gene: best accepted target and best paired decoy by the key
 (q ascending, PEP ascending, score descending; NA last), dense-ranked over the union (no -log10 0).
-The better one is kept; a tie goes to the decoy. With f the paired share,
-FDR(t) = (D(t)/f + 1) / T(t), made monotone. Decoy winners and genes without accepted
-peptides get q NA (`not_detected`). `detection_summary.tsv` reports f (`decoy_paired_share`) and 1/f
-(`decoy_win_weight`).
+The better one is kept; a tie goes to the decoy. Own units of unpaired decoys (ADR-0078) join the
+list as decoy wins. FDR(t) = (D(t) + 1) / T(t), made monotone; up to 1.1.0 it was
+(D(t)/f + 1) / T(t) over paired decoys only (ADR-0009, retired). Decoy winners and genes without
+accepted peptides get q NA (`not_detected`). `detection_summary.tsv` reports the paired share f
+(`decoy_paired_share`, still the input of the 80 % guard) and `decoy_win_weight`, which is 1 since
+1.1.1 and is kept for the schema. The ranking key S is read over every competing decoy, own units
+included.
 It also reports `q_floor` = 1/T, where T is the number of eligible genes won by a target. It is a
 lower bound on every picked q, from the +1 that finite-sample control needs: q = running min of
 (D/f + 1)/k ≥ 1/T, whatever f is. It is reached only when no decoy win scores at or above the
