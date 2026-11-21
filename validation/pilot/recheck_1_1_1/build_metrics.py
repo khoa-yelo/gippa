@@ -1,4 +1,4 @@
-"""Build validation/pilot/recheck_1_1_1/metrics_1_1_1.json from the recheck outputs in this directory.
+"""Build recheck_1_1_1/metrics_1_1_1.json from the recheck outputs in this directory.
 
 The 1.1.1 addendum (ADR-0078, PR #607): pilot metrics whose value changes when only
 gippa/genetable/detection.py is swapped from 1.1.0 to the fix. metrics.json stays the 1.0.0
