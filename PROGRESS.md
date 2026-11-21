@@ -288,6 +288,7 @@ packet: `$GIPPA_ROOT/review/m10-pilot/r1/` (#524), round r1.
   Needs Khoa: no: ADR-0053, ADR-0059, ADR-0062, ADR-0063, ADR-0066.
 
 ## In progress
+- **Paper Methods and Results (2026-11-16), branch `docs/preprint-methods`:** `docs/preprint/methods.md` (~13.9k words) and `docs/preprint/results.md` (~8k words prose + tables), written from five sourced digests and audited in five independent rounds against code and run records (~330 findings fixed; round 5: 5 low-severity errors, ~185 checks passed, all fixed). Audit trail: `local/review/preprint/audit-trail/`. Awaiting Khoa's review (venue, authors, AI-use statement, figure permissions: Q-K11).
 - **1.1.0rc1 (2026-11-07): release freeze from R = `04c22e4b` (#572).** Only paperwork PRs merge until step 13.
   - Route E (six-frame DIA-NN) is in the bundle on its own region, NZ_CP058217.1 [1,400,000, 1,600,000): #573 (spec), #574 (tests, code, review), #575 (licence names two regions; Khoa 2026-11-07).
     - The old region had 0 ORF-only peptides passing Global.Q ≤ 0.01.
