@@ -4,6 +4,13 @@ All notable changes are recorded here by towncrier from `changelog.d/` fragments
 
 <!-- towncrier release notes start -->
 
+## GIPPA 1.1.1 (2026-11-21)
+
+### Fixes
+
+- The `decoy_picked` gene FDR is no longer anti-conservative when decoys pair with genes only through votes of accepted peptides (`--search-db other`, or non-locus-tag protein IDs without protein hits). Every q-passing decoy with protein IDs now competes: in its gene when all its IDs map to one gene, otherwise in its own unit, where it counts as a decoy win. The 1/f rescaling is retired, and the `decoy_win_weight` row is 1.0 (ADR-0078). Vote-route runs lose calls they could not support; locus-tag runs keep theirs, and their q may rise slightly.
+
+
 ## GIPPA 1.1.0 (2026-11-11)
 
 ### Features

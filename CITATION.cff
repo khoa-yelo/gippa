@@ -14,8 +14,8 @@ authors:
     given-names: Khoa
 license: MIT
 repository-code: "https://github.com/khoa-yelo/gippa"
-version: 1.1.0
-date-released: 2026-11-11
+version: 1.1.1
+date-released: 2026-11-21
 keywords:
   - "proteogenomics"
   - "bacteria"
