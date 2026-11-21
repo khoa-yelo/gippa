@@ -1,0 +1,15 @@
+file_name	file_type	raw_format	bytes	checksum	checksum_source	url	acquisition	acquisition_source	sample	condition
+20260105_225415_251215_Fabian_pulldown_Report.tsv	search	NA	818058	NA	NA	https://ftp.pride.ebi.ac.uk/pride/data/archive/2026/04/PXD074523/20260105_225415_251215_Fabian_pulldown_Report.tsv	NA	NA	NA	NA
+E1_251215_25C026_sample_1_DIA.raw	raw	thermo_raw	2383143040	NA	NA	https://ftp.pride.ebi.ac.uk/pride/data/archive/2026/04/PXD074523/E1_251215_25C026_sample_1_DIA.raw	DIA	file_name	E1_251215_25C026_sample_1_DIA	NA
+E1_251215_25C026_sample_2_DIA.raw	raw	thermo_raw	2499445782	NA	NA	https://ftp.pride.ebi.ac.uk/pride/data/archive/2026/04/PXD074523/E1_251215_25C026_sample_2_DIA.raw	DIA	file_name	E1_251215_25C026_sample_2_DIA	NA
+E1_251215_25C026_sample_3_DIA.raw	raw	thermo_raw	2481978015	NA	NA	https://ftp.pride.ebi.ac.uk/pride/data/archive/2026/04/PXD074523/E1_251215_25C026_sample_3_DIA.raw	DIA	file_name	E1_251215_25C026_sample_3_DIA	NA
+E1_251215_25C026_sample_4_DIA.raw	raw	thermo_raw	2495711092	NA	NA	https://ftp.pride.ebi.ac.uk/pride/data/archive/2026/04/PXD074523/E1_251215_25C026_sample_4_DIA.raw	DIA	file_name	E1_251215_25C026_sample_4_DIA	NA
+E1_251215_25C026_sample_5_DIA.raw	raw	thermo_raw	2501519667	NA	NA	https://ftp.pride.ebi.ac.uk/pride/data/archive/2026/04/PXD074523/E1_251215_25C026_sample_5_DIA.raw	DIA	file_name	E1_251215_25C026_sample_5_DIA	NA
+E1_251215_25C026_sample_6_DIA.raw	raw	thermo_raw	2530686260	NA	NA	https://ftp.pride.ebi.ac.uk/pride/data/archive/2026/04/PXD074523/E1_251215_25C026_sample_6_DIA.raw	DIA	file_name	E1_251215_25C026_sample_6_DIA	NA
+E1_251215_25C026_sample_7_DIA.raw	raw	thermo_raw	1620846365	NA	NA	https://ftp.pride.ebi.ac.uk/pride/data/archive/2026/04/PXD074523/E1_251215_25C026_sample_7_DIA.raw	DIA	file_name	E1_251215_25C026_sample_7_DIA	NA
+E1_251215_25C026_sample_8_DIA.raw	raw	thermo_raw	1129866316	NA	NA	https://ftp.pride.ebi.ac.uk/pride/data/archive/2026/04/PXD074523/E1_251215_25C026_sample_8_DIA.raw	DIA	file_name	E1_251215_25C026_sample_8_DIA	NA
+E1_251215_25C026_sample_9_DIA.raw	raw	thermo_raw	1519501741	NA	NA	https://ftp.pride.ebi.ac.uk/pride/data/archive/2026/04/PXD074523/E1_251215_25C026_sample_9_DIA.raw	DIA	file_name	E1_251215_25C026_sample_9_DIA	NA
+E1_251215_25C026_sample_10_DIA.raw	raw	thermo_raw	1601802532	NA	NA	https://ftp.pride.ebi.ac.uk/pride/data/archive/2026/04/PXD074523/E1_251215_25C026_sample_10_DIA.raw	DIA	file_name	E1_251215_25C026_sample_10_DIA	NA
+E1_251215_25C026_sample_11_DIA.raw	raw	thermo_raw	1574615083	NA	NA	https://ftp.pride.ebi.ac.uk/pride/data/archive/2026/04/PXD074523/E1_251215_25C026_sample_11_DIA.raw	DIA	file_name	E1_251215_25C026_sample_11_DIA	NA
+E1_251215_25C026_sample_12_DIA.raw	raw	thermo_raw	1600058730	NA	NA	https://ftp.pride.ebi.ac.uk/pride/data/archive/2026/04/PXD074523/E1_251215_25C026_sample_12_DIA.raw	DIA	file_name	E1_251215_25C026_sample_12_DIA	NA
+PXD074523_community_annotated.sdrf.tsv	sdrf	NA	5221	NA	NA	https://ftp.pride.ebi.ac.uk/pride/data/archive/2026/04/PXD074523/PXD074523_community_annotated.sdrf.tsv	NA	NA	NA	NA
