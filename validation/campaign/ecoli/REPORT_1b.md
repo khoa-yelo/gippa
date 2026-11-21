@@ -56,7 +56,8 @@ Runs on 2026-11-19/20 at `a2a95c76` (v1.1.0). Scripts: `validation/campaign/ncm3
 - `decoy_picked` tier: 2,341 genes at q ≤ 0.01, estimated FDR 0.0099 (2,315/4,423 chromosomal,
   26/75 plasmid F; 2,138 with ≥ 2 peptides).
 - 25,222 exact placements, 99.6 % `cds_inframe`.
-- N2 detects 2,399 genes, including about 94 orthologs N1 does not detect (under investigation).
+- N2 detects 2,399 genes, including about 94 orthologs N1 does not detect. **These are a GIPPA defect, not
+  biology** (see Correction below).
 
 ## Command log
 
@@ -99,5 +100,26 @@ All `gippa` commands ran from `local/worktrees/campaign-pin` (`a2a95c76`) with
 ## Decisions recorded (Khoa, 2026-11-20)
 
 - No cross-genome `gippa compare`: the ortholog join in `score.py` stays campaign tooling.
-- The ~94 orthologs detected in N2 but not N1 are being investigated before Phase 2.
+- The ~94 extra N2 orthologs were investigated (below).
 - Open: how to handle the tolerant-placement FDR floor (warning, issue/ADR, or documentation).
+
+## Correction: N2's gene-level FDR is anti-conservative (GIPPA defect, 2026-11-20)
+
+Investigated at Khoa's request and confirmed by an independent statistician review (aggregates in
+the lead session's scratchpad `n2extra/`, `n2review/`):
+- The 94 extra genes have identical peptide evidence in N1 and N2 (same unique/shared peptides, same
+  best peptide q); only their gene q differs (N1 0.010–0.026, N2 0.0026–0.0051).
+- Cause: in `genetable/detection.py`, with no protein hits and protein IDs that are not locus tags of
+  the run's annotation, a protein is mapped to a gene only through votes of **accepted** target
+  peptides, so `pair_decoys` leaves unpaired exactly the decoys whose protein has no accepted target
+  — the would-be decoy wins. Unpaired decoys enter only the paired share f, so the 1/f correction of
+  ADR-0009 cannot repair the loss.
+- N1 vs N2: decoys paired/unpaired 301/3 vs 244/60; decoy wins 62 vs 9 (53 vs 0 on genes without an
+  accepted target). Pairing N1 by vote only reproduces N2 (2,439 genes, max q 0.0050).
+- Estimated realised FDR of the N2 list: about 0.026–0.028 (target–decoy estimates) at a nominal
+  0.01 (reported max q 0.005).
+- Consequence for this report: the N2 gene counts and the "kept 2,284/2,284" and detection-Jaccard
+  figures of 1b-6 are inflated by this defect; the abundance correlation on shared genes is not
+  affected. N1 and the K-12 arms E1/E2 (locus-tag protein IDs) are unaffected.
+- A GitHub issue is drafted (fix options: pair decoys independently of target acceptance, or count
+  unpaired decoys as wins; plus a new attack null). Phase 2 cross-strain runs wait for the fix.
