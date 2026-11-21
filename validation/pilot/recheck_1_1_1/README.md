@@ -1,15 +1,14 @@
 # Pilot addendum: 1.1.1 detection recheck (ADR-0078)
 
-This is the full addendum to `validation/pilot/REPORT.md` for the ADR-0078 fix (PR #607, merged as
-92fbf3af). `REPORT.md` is rendered from `metrics.json` and `report_notes.md`. Its render guard rejects
-notes that hold a number of 4 or more digits not found in `metrics.json`, so the section there,
-"Addendum: 1.1.1 detection recheck", gives only the changes and verdicts. The values with 4 or more
-digits are in this file and in `../metrics/metrics_1_1_1.json`. `REPORT.md` and `metrics.json` keep
+This is the 1.1.1 addendum to `validation/pilot/REPORT.md` for the ADR-0078 fix (PR #607, merged as
+92fbf3af). `REPORT.md` is the Khoa-accepted 1.0.0 record and stays unchanged; it is rendered from
+`metrics.json` and `report_notes.md`. The superseding values are in this file and in
+`metrics_1_1_1.json` (this directory). `REPORT.md` and `metrics.json` keep
 the 1.0.0 freeze values, and the values below supersede them for 1.1.1. Only aggregates are recorded
 here: no sequence, no gene list, no per-gene value.
 
 
-GIPPA 1.1.0 left out of the picked gene FDR any decoy whose own unit had no q-passing target, so on the `decoy_picked` route such decoys never competed. ADR-0078 (PR #607) lets every q-passing decoy compete. Every pilot `decoy_picked` arm was recomputed with the 1.1.0 code (a2a95c76) and with the fix (7d4c4bfd). Then gene_table, detectability, context_stats, function and compare were rerun on the freeze outputs with the freeze code and only `detection.py` swapped: Slurm 2001992 is the control (it reproduces the recorded tables byte for byte), and Slurm 2002006 is the fix. Inputs, scripts and aggregate outputs: `validation/pilot/recheck_1_1_1/`. The superseding values, under the key paths of `metrics.json`: `validation/pilot/metrics/metrics_1_1_1.json`.
+GIPPA 1.1.0 left out of the picked gene FDR any decoy whose own unit had no q-passing target, so on the `decoy_picked` route such decoys never competed. ADR-0078 (PR #607) lets every q-passing decoy compete. Every pilot `decoy_picked` arm was recomputed with the 1.1.0 code (a2a95c76) and with the fix (7d4c4bfd). Then gene_table, detectability, context_stats, function and compare were rerun on the freeze outputs with the freeze code and only `detection.py` swapped: Slurm 2001992 is the control (it reproduces the recorded tables byte for byte), and Slurm 2002006 is the fix. Inputs, scripts and aggregate outputs: `validation/pilot/recheck_1_1_1/`. The superseding values, under the key paths of `metrics.json`: `validation/pilot/recheck_1_1_1/metrics_1_1_1.json`.
 
 The 1.0.0 values above stay as recorded, and `metrics.json` is unchanged. For a 1.1.1 reading, the values below supersede them. No threshold changed. No verdict changed: H1 (not_supported, "mostly" fails), H3 (supported), TE3, TE4, and the plasmid and prophage coverage.
 
@@ -66,7 +65,7 @@ H1's base rate (0.08538) and its failed clause are unchanged, so H1 stays not_su
 | `rerun.sbatch`, `rerun_fix.sbatch` | Slurm 2001992 (control, freeze code) and 2002006 (freeze code with the fix's `detection.py`), each followed by `gippa compare` |
 | `derived.py` | metric 3 (every subset), H1, metric 4, metric 5 and H3 from the rerun tables, with the freeze `validation/pilot/metrics.py` functions |
 | `derived_ctl.json`, `derived_fix.json` | its output. The control equals `metrics.json` on every key it covers. |
-| `build_metrics.py` | writes `../metrics/metrics_1_1_1.json` (superseding values, per-arm recheck and the list of changed keys). It asserts that the control equals `metrics.json`. |
+| `build_metrics.py` | writes `metrics_1_1_1.json` (this directory) (superseding values, per-arm recheck and the list of changed keys). It asserts that the control equals `metrics.json`. |
 
 The scripts are copied as they ran, with scratch paths under `local/scratch/a1-recheck` of the main checkout.
 There are two changes: `ruff format` and a file-level `noqa` line, and `derived.py` now writes every

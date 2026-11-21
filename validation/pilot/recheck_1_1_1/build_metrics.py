@@ -1,9 +1,9 @@
-"""Build validation/pilot/metrics/metrics_1_1_1.json from the recheck outputs in this directory.
+"""Build validation/pilot/recheck_1_1_1/metrics_1_1_1.json from the recheck outputs in this directory.
 
 The 1.1.1 addendum (ADR-0078, PR #607): pilot metrics whose value changes when only
 gippa/genetable/detection.py is swapped from 1.1.0 to the fix. metrics.json stays the 1.0.0
 freeze record; this file lists the superseding values under the same key paths. Aggregates only.
-Usage: build_metrics.py [OUT]   (default ../metrics/metrics_1_1_1.json)
+Usage: build_metrics.py [OUT]   (default ./metrics_1_1_1.json)
 """
 
 from __future__ import annotations
@@ -14,7 +14,7 @@ from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 PILOT = HERE.parent
-OUT = Path(sys.argv[1]) if len(sys.argv) > 1 else PILOT / "metrics" / "metrics_1_1_1.json"
+OUT = Path(sys.argv[1]) if len(sys.argv) > 1 else PILOT / "recheck_1_1_1" / "metrics_1_1_1.json"
 ARM_KEYS = ("genes_q01", "maxq", "gene_paired", "unpaired_own", "own_units", "decoy_wins")
 
 
