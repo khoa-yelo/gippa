@@ -63,16 +63,21 @@ _MEMO: dict[tuple[bool, int], tuple[dict[float, float], set[str]]] = {}
 
 
 def relabel(peptides: pd.DataFrame, rng: np.random.Generator) -> pd.DataFrame:
-    """Every ``GSIM_<k>`` / ``rev_GSIM_<k>`` protein ID -> ``ACC<perm>`` / ``rev_ACC<perm>``, one
-    permutation over the distinct stripped IDs (sorted) drawn from ``rng``."""
+    """Every target protein ID ``GSIM_<k>`` and its decoy ``rev_GSIM_<k>`` -> ``ACC<perm>`` /
+    ``rev_ACC<perm>``, one permutation over the distinct target IDs (sorted) drawn from ``rng``.
+    A decoy whose gene has no target C9 row keeps its ``rev_<locus_tag>`` ID (it has no target ID
+    to follow) and still pairs by locus tag, as in the ADR-0078 evidence run
+    (``local/scratch/adr-0078/a2.py``, gene-paired share 0.895)."""
     p = peptides.copy()
     ids = p["protein_ids"].tolist()
-    base = sorted({str(x).removeprefix("rev_") for c in ids for x in c})
+    base = sorted({str(x) for c in ids for x in c if not str(x).startswith("rev_")})
     perm = rng.permutation(len(base))
     new = {b: f"ACC{int(k):06d}" for b, k in zip(base, perm, strict=True)}
 
     def one(x: str) -> str:
-        return f"rev_{new[x[4:]]}" if x.startswith("rev_") else new[x]
+        if x.startswith("rev_"):
+            return f"rev_{new[x[4:]]}" if x[4:] in new else x
+        return new[x]
 
     p["protein_ids"] = pd.Series([[one(str(x)) for x in c] for c in ids], index=p.index,
                                  dtype=object)  # fmt: skip
@@ -91,18 +96,25 @@ def _replicate(full: bool, rep: int) -> tuple[dict[float, float], set[str]]:
     return _MEMO[key]
 
 
-def test_relabel_leaves_no_locus_tag_id() -> None:
-    """Unmarked guard: after relabelling no protein ID is a C2 locus tag, decoys keep ``rev_``
-    and each target ID keeps one image (a bijection)."""
+def test_relabel_moves_every_target_id() -> None:
+    """Unmarked guard: no target ID stays a C2 locus tag, a decoy follows its target ID, each
+    target ID keeps one image (a bijection), and a decoy without a target ID keeps its name."""
     rng = np.random.default_rng(78)
     p = pd.DataFrame(
-        {"protein_ids": [["GSIM_00005"], ["GSIM_00010", "GSIM_00005"], ["rev_GSIM_00010"]]}
+        {
+            "protein_ids": [
+                ["GSIM_00005"],
+                ["GSIM_00010", "GSIM_00005"],
+                ["rev_GSIM_00010"],
+                ["rev_GSIM_00015"],
+            ]
+        }
     )
     out = relabel(p, rng)["protein_ids"].tolist()
-    flat = [x for c in out for x in c]
-    assert not any("GSIM_" in x for x in flat)
+    assert not any("GSIM_" in x for c in out[:3] for x in c)
     assert out[2][0] == f"rev_{out[1][0]}"
     assert out[0][0] == out[1][1] and out[0][0] != out[1][0]
+    assert out[3] == ["rev_GSIM_00015"]
 
 
 @pytest.mark.calsuite(SUITE)
