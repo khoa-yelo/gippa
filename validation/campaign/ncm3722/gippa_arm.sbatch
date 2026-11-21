@@ -13,6 +13,8 @@
 # never holds more than 16 CPUs (the campaign caps this agent at 48; the farmshare profile can
 # hold 8 x 14). --threads 14 --memory 54.GB, all modules, default seed.
 #   sbatch --exclude=... --time=36:00:00 -J gippa-ncm-run-n1 validation/campaign/ncm3722/gippa_arm.sbatch N1
+# Rerun with other code (ADR-0078 fix): PIN=<pinned worktree> SUF=_fix writes in_<arm>_fix, preflight_<arm>_fix and
+# out_<arm>_fix, never touching the earlier outputs.
 set -euo pipefail
 ARM="${1:?N1|N2}"
 export GIPPA_ROOT=/home/classes/bios/270/khoa/giap/local
@@ -32,15 +34,18 @@ case "$ARM" in
       J="$GIPPA_ROOT/recordings/bakta_full_circ/k12_mg1655/bakta/k12_mg1655.json"; REL=(--genome-relation related) ;;
   *) echo "arm N1|N2" >&2; exit 2 ;;
 esac
-a="${ARM,,}"; IN="$D/in_$a"; OUTD="$D/out_$a"; mkdir -p "$IN"
+SUF="${SUF:-}"
+a="${ARM,,}"; IN="$D/in_$a$SUF"; OUTD="$D/out_$a$SUF"; PF="$D/preflight_$a$SUF"
+[ -z "$SUF" ] || [ ! -e "$OUTD" ] || { echo "$OUTD exists; refusing to overwrite" >&2; exit 3; }
+mkdir -p "$IN"
 cd "$PIN"
 t0=$(date +%s)
 "$GIPPA" convert --from diann "$REPORT" --out "$IN/peptides.tsv.gz" --abundance-out "$IN/abundance.tsv.gz" \
   --search-db "$SDB" 2>&1 | tee "$IN/convert.log"
 t1=$(date +%s)
-rm -rf "$D/preflight_$a"
+rm -rf "$PF"
 "$GIPPA" preflight --genome "$G" --annotation "$J" --peptides "$IN/peptides.tsv.gz" \
-  --outdir "$D/preflight_$a" --profile farmshare_local,apptainer --strict 2>&1 | tee "$IN/preflight.log"
+  --outdir "$PF" --profile farmshare_local,apptainer --strict 2>&1 | tee "$IN/preflight.log"
 pf=${PIPESTATUS[0]}
 echo "preflight_exit=$pf"
 [ "$pf" -eq 0 ] || exit "$pf"

@@ -1,0 +1,136 @@
+{
+  "N2": {
+    "arm": "N2",
+    "commit": "7d4c4bfd4f0124ba068a18c155b716d8ebc97840",
+    "git_dirty": false,
+    "gippa_version_string": "1.1.0",
+    "pin": "/home/classes/bios/270/khoa/giap/local/worktrees/fix-pin",
+    "profile": "farmshare_local,apptainer",
+    "status": "completed",
+    "exit_code": 0,
+    "warnings": [
+      "novel_orfs:novel_orfs.decoys_not_makedb"
+    ],
+    "detection_tier": "decoy_picked",
+    "provenance_digest": "b15e8b78644964347d6ed17df5a63d49d5cfdbbf8b21266dda7755da896d8c15",
+    "tools": {
+      "antismash": "sha256:d3f390e687cfe02f1387be40256dddbf678e91bc56b96c36da07b56ec8bda29d",
+      "genomad": "sha256:d54652ff868af72604ea0e54c541c5c92168c7ac821a422de05dcbad65509e5c",
+      "ostir": "sha256:d9107b9b87fd6f3d3cd329ba1d2ac66b9af9e38512f11d2b8a0210110c6c9292",
+      "promotech": "sha256:7366eaf67d9b26c6036ed5ececa740fe2728fdcf0cd4b2a12a0d9597b87a53ac",
+      "promoter_calculator": "sha256:c5bd0662ceed623c00c4bf40b085c6541b7676e1ccc37a390e0efd73e02b48df",
+      "terminatornet": "sha256:ec415757b6b70cce8240f425b35bf3e74dc3abe8ff413049c04d808034592f7a",
+      "transtermhp": "sha256:fc6fe0404be9340a883ec7a7b90415dfc3826c2bca7333a0314335c7bfee2d03",
+      "uniop": null,
+      "viennarna": "sha256:d9107b9b87fd6f3d3cd329ba1d2ac66b9af9e38512f11d2b8a0210110c6c9292"
+    },
+    "inputs_sha256": {
+      "k12_mg1655.fna.gz": "4bfd7163f6f0de6394a2131cbfdbe75100daa55cbee227ec3e403a44640ac03c",
+      "k12_mg1655.json": "ae0ccaf186b098ecd704b78c76cde8e464f8717030bd5890b38397f1c0e9b169",
+      "report.parquet": "9022a11d3564d0f0e2d9fabe4e0a0406a3d69d58d17647536d8b2634e47a6de0",
+      "peptides.tsv.gz": "5bb02993d319af35fba9d5cafa103e70dc833948d6005c6725538bcd26e33025",
+      "abundance.tsv.gz": "09d4b87bd5daeae67a26e662fe5a5b6386687cd29a369a30e3e3b8eb025f6470"
+    },
+    "inputs_identical_to_1_1_0_run": true,
+    "job": {
+      "id": 2001968,
+      "name": "gippa-camp-n2fix",
+      "wall": "03:26:37",
+      "cpus": 16,
+      "max_rss": "39.3 GB",
+      "node": "wheat-01",
+      "time_limit": "04:00:00",
+      "exclude": "barley-01..04,rye-01,rye-02"
+    },
+    "runtime": "arm=N2 convert_s=8 preflight_s=14 run_s=12360 run_exit=0 node=wheat-01 job=2001968",
+    "outdir": "/home/classes/bios/270/khoa/giap/local/campaign/ncm3722/out_n2_fix",
+    "decoy_competition": {
+      "decoy_rows": 304,
+      "gene_paired_rows": 244,
+      "own_unit_rows": 60,
+      "own_units": 57,
+      "gene_unit_decoy_wins": 9,
+      "gene_unit_decoy_wins_no_accepted_target": 0,
+      "decoy_wins_total": 66,
+      "target_wins": 2399,
+      "recomputed_detected": 2305,
+      "recomputed_max_q": 0.009978308026030369,
+      "table_detected": 2305,
+      "table_max_q": 0.00997831,
+      "tier": "decoy_picked"
+    }
+  },
+  "N1": {
+    "arm": "N1",
+    "commit": "7d4c4bfd4f0124ba068a18c155b716d8ebc97840",
+    "git_dirty": false,
+    "gippa_version_string": "1.1.0",
+    "pin": "/home/classes/bios/270/khoa/giap/local/worktrees/fix-pin",
+    "profile": "farmshare_local,apptainer",
+    "status": "completed",
+    "exit_code": 0,
+    "warnings": [
+      "novel_orfs:novel_orfs.decoys_not_makedb"
+    ],
+    "detection_tier": "decoy_picked",
+    "provenance_digest": "e6b7a82aece31a2245220ad5b6295e2b596e46d07c1f358f3a0dc75e87ac9a38",
+    "tools": {
+      "antismash": "sha256:d3f390e687cfe02f1387be40256dddbf678e91bc56b96c36da07b56ec8bda29d",
+      "genomad": "sha256:d54652ff868af72604ea0e54c541c5c92168c7ac821a422de05dcbad65509e5c",
+      "ostir": "sha256:d9107b9b87fd6f3d3cd329ba1d2ac66b9af9e38512f11d2b8a0210110c6c9292",
+      "promotech": "sha256:7366eaf67d9b26c6036ed5ececa740fe2728fdcf0cd4b2a12a0d9597b87a53ac",
+      "promoter_calculator": "sha256:c5bd0662ceed623c00c4bf40b085c6541b7676e1ccc37a390e0efd73e02b48df",
+      "terminatornet": "sha256:ec415757b6b70cce8240f425b35bf3e74dc3abe8ff413049c04d808034592f7a",
+      "transtermhp": "sha256:fc6fe0404be9340a883ec7a7b90415dfc3826c2bca7333a0314335c7bfee2d03",
+      "uniop": null,
+      "viennarna": "sha256:d9107b9b87fd6f3d3cd329ba1d2ac66b9af9e38512f11d2b8a0210110c6c9292"
+    },
+    "inputs_sha256": {
+      "ncm3722.fna.gz": "beaa87859e78a87522f416816344ca555966980c7e805c98ded32e1bbb562cd6",
+      "ncm3722.json": "605a75db647e3e60f6fd4a4969ed86e6ef411059a17a694a96f80821e0e27bd0",
+      "report.parquet": "9022a11d3564d0f0e2d9fabe4e0a0406a3d69d58d17647536d8b2634e47a6de0",
+      "peptides.tsv.gz": "17716fddf8a6fc524ed99df773a34f3b8c93e8d35437c90792cae9d7ce186baf",
+      "abundance.tsv.gz": "09d4b87bd5daeae67a26e662fe5a5b6386687cd29a369a30e3e3b8eb025f6470"
+    },
+    "inputs_identical_to_1_1_0_run": true,
+    "job": {
+      "id": 2001969,
+      "name": "gippa-camp-n1fix",
+      "wall": "02:30:10",
+      "cpus": 16,
+      "max_rss": "24.0 GB",
+      "node": "wheat-03",
+      "time_limit": "04:00:00",
+      "exclude": "barley-01..04,rye-01,rye-02"
+    },
+    "runtime": "arm=N1 convert_s=5 preflight_s=11 run_s=8984 run_exit=0 node=wheat-03 job=2001969",
+    "outdir": "/home/classes/bios/270/khoa/giap/local/campaign/ncm3722/out_n1_fix",
+    "decoy_competition": {
+      "decoy_rows": 304,
+      "gene_paired_rows": 301,
+      "own_unit_rows": 3,
+      "own_units": 2,
+      "gene_unit_decoy_wins": 62,
+      "gene_unit_decoy_wins_no_accepted_target": 53,
+      "decoy_wins_total": 64,
+      "target_wins": 2439,
+      "recomputed_detected": 2341,
+      "recomputed_max_q": 0.009824861170439982,
+      "table_detected": 2341,
+      "table_max_q": 0.00982486,
+      "tier": "decoy_picked"
+    }
+  },
+  "score": {
+    "n1old_n2fix": {
+      "path": "/home/classes/bios/270/khoa/giap/local/campaign/ncm3722/score_fix/n1old_n2fix/score/score.json",
+      "sha256": "2a2ce34fdda0258580fd66a4e682fdf184a23321962799d16c5bb99a77c3a348"
+    },
+    "n1fix_n2fix": {
+      "path": "/home/classes/bios/270/khoa/giap/local/campaign/ncm3722/score_fix/n1fix_n2fix/score/score.json",
+      "sha256": "2a2ce34fdda0258580fd66a4e682fdf184a23321962799d16c5bb99a77c3a348"
+    },
+    "compare_exit": 1,
+    "ran": "in the session allocation (seconds), score.py unchanged, seed 20261014"
+  }
+}

@@ -3,7 +3,7 @@
 Checks pre-registered in `ANSWER_KEY_1b.md` (commit 18a47b54, branch `validation/campaign-ncm3722`)
 before any download or search. Aggregates only: no peptide sequences or DIA-NN rows. Every share
 has a Wilson 95 % interval (optimistic, because peptides and sites are treated as independent).
-Runs on 2026-11-19/20 at `a2a95c76` (v1.1.0). Scripts: `validation/campaign/ncm3722/`;
+Runs on 2026-11-19/20 at `a2a95c76` (v1.1.0); N1 and N2 rerun on 2026-11-21 at `7d4c4bfd` (1.1.1 code, ADR-0078 fix). Scripts: `validation/campaign/ncm3722/`;
 `$D = $GIPPA_ROOT/campaign/ncm3722`.
 
 ## Verdicts
@@ -15,7 +15,7 @@ Runs on 2026-11-19/20 at `a2a95c76` (v1.1.0). Scripts: `validation/campaign/ncm3
 | 1b-3 | `high` ALT calls not in the truth set | 0 (mass_equivalent 0, start/stop 0, unexplained 0) | none |
 | 1b-4 | N1 peptides unplaced on MG1655, by N1 replicon | chromosome 63/24,594 = 0.26 % [0.20, 0.33]; plasmid F 242/242 = 100 % [98.4, 100]; both replicons 0/6 [0, 39]; all 305/24,842 = 1.23 % [1.10, 1.37]; priors met | reported |
 | 1b-5 | Placement FDR ≤ 1 % (TE8 analogue) | pooled TE8 estimator 0.35 % (24,538 accepted, all exact); run `mapping_fdr.tsv` stratum 0: 5.6e-5 (24,539 targets / 86 decoys); strata 1 and 2 accept nothing | pass (error unestimated); exact placements only |
-| 1b-6 | N1 vs N2 | `gippa compare` exit 1 ("different genomes"), as pre-registered. Ortholog join (4,235 pairs): Spearman 0.9988 [0.9963, 1.000], n = 2,280 (1,000 gene bootstraps, seed 20261014); N1-detected orthologs kept 2,284/2,284 [0.998, 1]; detection Jaccard 0.961; islands 0 vs 0 (Jaccard undefined); operon flags 10 vs 9, 8 shared, Jaccard 0.73; prior ρ ≥ 0.9 met | reported |
+| 1b-6 | N1 vs N2 | `gippa compare` exit 1 ("different genomes"), as pre-registered. Ortholog join (4,235 pairs): Spearman 0.9988 [0.9963, 1.000], n = 2,280 (1,000 gene bootstraps, seed 20261014); N1-detected orthologs kept 2,284/2,284 [0.998, 1]; ~~detection Jaccard 0.961~~ (1.1.0, superseded: 1.000 with the fix, see Rerun); islands 0 vs 0 (Jaccard undefined); ~~operon flags 10 vs 9, 8 shared, Jaccard 0.73~~ (superseded: 10 vs 8, 8 shared, 0.80); prior ρ ≥ 0.9 met | reported |
 
 ## Why recall is zero (exploratory)
 
@@ -56,8 +56,8 @@ Runs on 2026-11-19/20 at `a2a95c76` (v1.1.0). Scripts: `validation/campaign/ncm3
 - `decoy_picked` tier: 2,341 genes at q ≤ 0.01, estimated FDR 0.0099 (2,315/4,423 chromosomal,
   26/75 plasmid F; 2,138 with ≥ 2 peptides).
 - 25,222 exact placements, 99.6 % `cds_inframe`.
-- N2 detects 2,399 genes, including about 94 orthologs N1 does not detect. **These are a GIPPA defect, not
-  biology** (see Correction below).
+- ~~N2 detects 2,399 genes~~ (1.1.0, superseded), including about 94 orthologs N1 does not detect. **These are a GIPPA defect, not
+  biology** (see Correction below). With the ADR-0078 fix N2 detects 2,305 genes (see Rerun).
 
 ## Command log
 
@@ -123,3 +123,65 @@ the lead session's scratchpad `n2extra/`, `n2review/`):
   affected. N1 and the K-12 arms E1/E2 (locus-tag protein IDs) are unaffected.
 - A GitHub issue is drafted (fix options: pair decoys independently of target acceptance, or count
   unpaired decoys as wins; plus a new attack null). Phase 2 cross-strain runs wait for the fix.
+
+## Rerun with the fix (1.1.1 code, 7d4c4bfd)
+
+These figures supersede the 1.1.0 N2 gene counts and the 1b-6 detection figures above. The 1.1.0
+numbers above are kept for the record.
+
+- Code: the pinned detached worktree `local/worktrees/fix-pin` at `7d4c4bfd` (PR #607, ADR-0078
+  option A), `PYTHONPATH=<fix-pin>/src`, venv `bin/` on PATH inside Nextflow tasks. The manifests
+  record `git_commit` 7d4c4bfd and `git_dirty` false. The version string still reads 1.1.0 because
+  the fix is not released yet.
+- Command: the Command log's `gippa_arm.sbatch` with `PIN=<fix-pin> SUF=_fix`. The new `SUF` option
+  writes `in_<arm>_fix`, `preflight_<arm>_fix` and `out_<arm>_fix`, and refuses an existing outdir,
+  so the 1.1.0 outputs are untouched. Convert, preflight and run arguments are unchanged. The
+  input sha256s (genome, Bakta JSON, DIA-NN report, converted peptides and abundance) are identical
+  to the 1.1.0 runs.
+- **2001968 N2** (`gippa-camp-n2fix`): 3 h 26 min 37 s, 16 CPUs, wheat-01, MaxRSS 39.3 GB.
+  **2001969 N1** (`gippa-camp-n1fix`): 2 h 30 min 10 s, 16 CPUs, wheat-03, MaxRSS 24.0 GB.
+  - Both ran with `--time=04:00:00` and `--exclude=barley-01..04,rye-01,rye-02`.
+  - Deviation, as before: the `farmshare_local` profile ran every task inside one 16-CPU job.
+    Total GIPPA CPUs during the reruns: 33.
+  - Preflight `--strict` exited 0 and the run exited 0 on both arms, with all modules. The only
+    warning was `novel_orfs.decoys_not_makedb`.
+- Score: `score.py` is unchanged (seed 20261014). It ran on `$D/score_fix/<pair>/`, a directory
+  that symlinks `truth`, `out_n1` and `out_n2`, so `$D/score/` is untouched.
+  - It ran against the 1.1.0 N1 (as pre-registered) and against the rerun N1. Both give identical
+    figures.
+  - `gippa compare` still exits 1 ("different genomes").
+- Decoy counts were recomputed from the run outputs with the fix-pin `genetable.detection`
+  functions. The recomputed detections and max q equal `genes.tsv`.
+
+| | N1 1.1.0 | N1 fix | N2 1.1.0 (superseded) | N2 fix |
+|---|---|---|---|---|
+| Genes at q ≤ 0.01 (`decoy_picked`) | 2,341 | 2,341 | ~~2,399~~ | **2,305** |
+| Max gene q of the list | 0.0099 | 0.0098 | ~~0.0051~~ | **0.0100** |
+| `n_detected_2pep` summary row (own criterion, not a subset of the q list) | 2,138 | 2,138 | 2,113 | 2,113 |
+| Decoys q ≤ 0.01: gene-paired / own-unit rows | 301 / 3 | 301 / 3 (2 own units) | 244 / 60 (unpaired, dropped from D) | 244 / 60 (57 own units) |
+| `decoy_paired_share` | 0.990 | 0.990 | 0.803 | 0.803 |
+| `decoy_win_weight` | 1.01 | 1 (retired) | 1.246 | 1 (retired) |
+| Decoy wins in genes (on genes without accepted target) | 62 (53) | 62 (53) | 9 (0) | 9 (0) |
+| Decoy wins incl. own units | n/a | 64 | n/a | 66 |
+| Target wins (genes with finite q) | 2,439 | 2,439 | 2,399 | 2,399 |
+
+- N2 now has 2,305 genes at max q 0.0100, down from 2,399 at max q 0.0051. That is 94 fewer
+  genes, the size of the extra set in the Correction. This matches the statistician's
+  function-level check (2,305 genes, max q 0.0100).
+- N1 keeps the same 2,341 genes. Its max q moves from 0.00992 to 0.00982 because 1/f (f = 0.990)
+  is retired.
+- The 57 own units of N2 count as decoy wins in full. N2's total decoy wins (66) are now in line
+  with N1's (64). In 1.1.0, N2 lost 53 of its wins.
+- 1b-6, recomputed (ortholog join, 4,235 pairs):
+  - N1-detected orthologs kept in N2: 2,284/2,284 = 1.00 [0.998, 1] (unchanged).
+  - Detection Jaccard: **1.000** (was 0.961). The N2 list now detects exactly the orthologs N1
+    detects.
+  - Spearman: 0.9988 [0.9963, 1.000], n = 2,280 (unchanged, as expected).
+  - Operon flags: 10 vs 8, 8 shared, Jaccard 0.80 (was 10 vs 9, 0.73).
+  - Islands: 0 vs 0.
+  - The prior ρ ≥ 0.9 is still met. The verdict stays "reported".
+- 1b-1 to 1b-5 are unchanged: the score.json keys for recall, variants, unplaced peptides and
+  mapping FDR are identical.
+- Provenance: `$D/n1_fix/provenance.json`, `$D/n2_fix/provenance.json`; aggregate copy
+  `validation/campaign/ecoli/provenance/N1N2_fix.json` (commit, image digests, input sha256s, job
+  IDs, wall times, decoy counts, score.json sha256s).
