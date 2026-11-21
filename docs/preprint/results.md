@@ -686,7 +686,7 @@ from DIA-NN (input q ≤ 0.01) and is not estimated by GIPPA.
 ### 4.2 Detection and detection tiers
 
 The gene set has 4,685 strain genes (CDS and sORF). A1 detected 2,673 of them
-(0.5705 [0.5563, 0.5847]) and A2 detected 3,057 (0.6525 [0.6388, 0.6660]). Of the 916
+(0.5705 [0.5563, 0.5847]) <!-- TODO ADR-0078 recheck --> and A2 detected 3,057 (0.6525 [0.6388, 0.6660]). Of the 916
 strain-specific genes (no tryptic peptide shared with K-12), A1 cannot detect any by construction,
 because it searched only the K-12 proteome; it detected 0. A2 detected 317 (0.3461 [0.3160,
 0.3775]). Table R6 gives shares by region. The freeze run manifests record the
@@ -700,22 +700,22 @@ union over runs), not a population quantity.
 
 | Subset (genes) | A1 | A2 |
 |---|---|---|
-| all (4,685) | 0.5705 [0.5563, 0.5847] | 0.6525 [0.6388, 0.6660] |
+| all (4,685) | 0.5705 [0.5563, 0.5847] <!-- TODO ADR-0078 recheck --> | 0.6525 [0.6388, 0.6660] |
 | strain-specific (916) | 0 (structural; not an estimate) | 0.3461 [0.3160, 0.3775] |
-| plasmid (13) | 0.0769 [0.0137, 0.3331] | 0.7692 [0.4974, 0.9182] |
-| prophage (136) | 0.0221 [0.0075, 0.0628] | 0.2721 [0.2043, 0.3523] |
-| BGC (251) | 0.3108 [0.2567, 0.3705] | 0.5458 [0.4840, 0.6063] |
-| K-12-shared (3,759) | 0.7111 [0.6964, 0.7254] | 0.7289 [0.7145, 0.7429] |
+| plasmid (13) | 0.0769 [0.0137, 0.3331] <!-- TODO ADR-0078 recheck --> | 0.7692 [0.4974, 0.9182] |
+| prophage (136) | 0.0221 [0.0075, 0.0628] <!-- TODO ADR-0078 recheck --> | 0.2721 [0.2043, 0.3523] |
+| BGC (251) | 0.3108 [0.2567, 0.3705] <!-- TODO ADR-0078 recheck --> | 0.5458 [0.4840, 0.6063] |
+| K-12-shared (3,759) | 0.7111 [0.6964, 0.7254] <!-- TODO ADR-0078 recheck --> | 0.7289 [0.7145, 0.7429] |
 
 <!-- src: validation/pilot/metrics/metrics.json › m3.A1/A2.subsets.*.share; validation/pilot/REPORT.md:81-84 (G = cds, sorf);
 local/runs/pilot/freeze/fa49b8f/out_{a1,a2,a3}/run_manifest.json › detection_tier, git_commit -->
 
 ### 4.3 Comparison of A1 and A2
 
-On the 2,635 genes with measured abundance in both arms (1,683 TUs), the Spearman correlation of
-abundance was 0.978, with a TU-block bootstrap 95 % CI of [0.973, 0.983] (1,000 resamples). The
-Bland–Altman bias was −0.195 log2, with limits of agreement [−1.376, 0.987]. The Jaccard index of
-enriched functional categories was 0.563 (437 in A1, 285 in A2, 260 shared).
+On the 2,635 genes with measured abundance in both arms (1,683 TUs), <!-- TODO ADR-0078 recheck --> the Spearman correlation of
+abundance was 0.978, with a TU-block bootstrap 95 % CI of [0.973, 0.983] (1,000 resamples). <!-- TODO ADR-0078 recheck --> The
+Bland–Altman bias was −0.195 log2, with limits of agreement [−1.376, 0.987]. <!-- TODO ADR-0078 recheck --> The Jaccard index of
+enriched functional categories was 0.563 (437 in A1, 285 in A2, 260 shared). <!-- TODO ADR-0078 recheck -->
 
 Both arms quantify the same spectra. The correlation therefore measures how far the choice of
 search database perturbs abundance on genes quantified in both arms; it does not measure
@@ -737,9 +737,9 @@ allow". Table R7 quotes them and gives their recorded outcomes.
 
 | Hypothesis | Recorded outcome | What was evaluated |
 |---|---|---|
-| H1: "A2 detects more strain CDS than A1, mostly plasmid, prophage and BGC genes." | **not supported** (failed clause: "mostly") | 417 genes detected only in A2, 33 only in A1; A2-only share 0.9267 [0.8988, 0.9473]; TU-level test 275 vs 31 units, p_tu 2.49e-50, unit effect 0.8987 [0.8598, 0.9277]; "mostly" share 106 of 417 = 0.2542 [0.2148, 0.2981] against a base rate of 0.0854; 317 of the 417 A2-only genes (0.760 [0.717, 0.799]) are strain-specific and undetectable in A1 by construction, so the "more" clause is expected by design |
+| H1: "A2 detects more strain CDS than A1, mostly plasmid, prophage and BGC genes." | **not supported** (failed clause: "mostly") | <!-- TODO ADR-0078 recheck --> 417 genes detected only in A2, 33 only in A1; A2-only share 0.9267 [0.8988, 0.9473]; TU-level test 275 vs 31 units, p_tu 2.49e-50, unit effect 0.8987 [0.8598, 0.9277]; "mostly" share 106 of 417 = 0.2542 [0.2148, 0.2981] against a base rate of 0.0854; 317 of the 417 A2-only genes (0.760 [0.717, 0.799]) are strain-specific and undetectable in A1 by construction, so the "more" clause is expected by design |
 | H2: "A1's genome-inconsistent FDP is at least its entrapment FDP (full validation, FDRBench), since it errs high." | **deferred** to the full validation | not tested; shown side by side only: A1 genome-inconsistent share 0.058 and A1 free-entrapment estimate 0.0273 (peptide level) |
-| H3: "Context conclusions (islands, region tests, operon concordance) agree between A1 and A2 on shared genes." | recorded verdict "supported" under the implemented rule (ρ and enriched-category Jaccard); **none of the three named conclusions was evaluated** | islands and operon flags not evaluable (none in either arm); region tests not compared; Jaccards not restricted to shared genes; evaluated instead: ρ 0.978 [0.973, 0.983] and enriched-category Jaccard 0.563 |
+| H3: "Context conclusions (islands, region tests, operon concordance) agree between A1 and A2 on shared genes." | recorded verdict "supported" under the implemented rule (ρ and enriched-category Jaccard); **none of the three named conclusions was evaluated** | islands and operon flags not evaluable (none in either arm); region tests not compared; Jaccards not restricted to shared genes; evaluated instead: ρ 0.978 [0.973, 0.983] and enriched-category Jaccard 0.563 <!-- TODO ADR-0078 recheck --> |
 | H4: "The genome-anchored de novo precision agrees with precision measured against A2 identifications." | **consistent with lower bound** (the data can refute but never confirm) | 10 reportable bins, 1,364 queries; all 10 bins consistent; n-weighted mean genome precision 0.562; pooled A2-confirmed share 0.543 [0.517, 0.570] |
 
 <!-- src: GIPPA_SPEC.md:2696-2703 (§15.7 wording); validation/pilot/metrics/metrics.json › h1 (strain_specific_share 317/417); validation/pilot/REPORT.md:233 (H2 shown side by side), 312-313;
@@ -754,7 +754,7 @@ and the rule that the "mostly" share must exceed 0.5 were specified in `docs/spe
 file was committed at 2026-10-24 04:22 PDT. At that time the DIA-NN reports had been converted
 (2026-10-23, 23:02), but no GIPPA pilot run had yet produced gene-level detections.
 
-For H1, the gene-level p (4.65e-86) decides nothing: the compare attack
+For H1, the gene-level p (4.65e-86) <!-- TODO ADR-0078 recheck --> decides nothing: the compare attack
 in Section 1.2 recorded this p as anti-conservative (0.1737 at α = 0.05), and the verdict rests on
 the TU-level test and the "mostly" clause. The table uses the specification's wording of H2,
 not the pilot report's.
