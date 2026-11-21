@@ -183,6 +183,7 @@ nav:
       - adr/ADR-0075-outputs-revision-1-1.md
       - adr/ADR-0076-waivers-1-1.md
       - adr/ADR-0077-campaign-sources-and-raw-conversion.md
+      - adr/ADR-0078-decoy-pairing-independent-of-acceptance.md
   - Developer guide:
       - developer.md
       - release.md
