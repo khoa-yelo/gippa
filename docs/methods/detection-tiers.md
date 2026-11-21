@@ -1,6 +1,6 @@
 # Detection tiers and gene-level FDR (M4-12)
 
-Status: ADR-0078 (1.1.1, unpaired decoys compete in own units; 1/f retired) specified by the statistician 2026-11-20, code pending. M4-24 shared ranking key approved by the statistician 2026-10-23 (PR #238). Earlier: statistician re-review 2026-10-15 (PR #92, after f297600): PEP-only path approved;
+Status: ADR-0078 (1.1.1, unpaired decoys compete in own units; 1/f retired) specified by the statistician 2026-11-20, implemented 2026-11-21 (fix/decoy-pairing). M4-24 shared ranking key approved by the statistician 2026-10-23 (PR #238). Earlier: statistician re-review 2026-10-15 (PR #92, after f297600): PEP-only path approved;
 **changes requested** on the contaminant-decoy rule (lead decision 11), see Sign-off. Code: `src/gippa/genetable/detection.py`.
 Spec: GIPPA_SPEC.md §2.1 decision 4, §7.3, §7.3.2, §9.3; ADR-0009 (1/f retired by ADR-0078); ADR-0078; docs/specs/M4-12-detection-tiers.md.
 

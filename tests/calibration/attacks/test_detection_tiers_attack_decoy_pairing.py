@@ -17,10 +17,9 @@ Claims (criterion ``fdr``, ADR-0015 two-block confirmation, suite ``gene_fdr``; 
 ``stats.alpha.identification`` = q: mean FDP <= q + k SE (k = ``se_multiplier``).
 
 - The tier must be ``decoy_picked`` in every replicate (gene-paired share >= 0.86 in 50/50
-  simulated). A replicate in another tier fails the test through ``pytest.fail``, which the
-  ``xfail(raises=AssertionError)`` marks below never absorb.
-- q = 0.01 and q = 0.05 are confirmed fails on 1.1.0: ``xfail(strict=True)`` until the ADR-0078
-  fix lands (then the marks go). q = 0.10 is saturated by the peptide q cap and passes either way.
+  simulated). A replicate in another tier fails the test through ``pytest.fail``.
+- q = 0.01 and q = 0.05 were confirmed fails on 1.1.0 (Slurm job 2001538) and pass with the
+  ADR-0078 fix (job 2001557). q = 0.10 is saturated by the peptide q cap and passes either way.
 """
 
 from __future__ import annotations
@@ -48,15 +47,9 @@ PI = 0.05
 N_GENES = 4500  # both modes (ADR-0078)
 STREAM = "gene_fdr.attack_decoy_pairing.reid100"
 SIM_STREAM = "gene_fdr.attack_decoy_pairing.sim.reid100"
-XFAIL = pytest.mark.xfail(
-    strict=True,
-    raises=AssertionError,
-    reason="ADR-0078: 1.1.0 drops decoys whose protein has no accepted target (vote-only "
-    "pairing), so picked gene FDR is anti-conservative; fixed in 1.1.1",
-)
 LEVELS = [
-    pytest.param(0.01, marks=XFAIL, id="q0.01"),
-    pytest.param(0.05, marks=XFAIL, id="q0.05"),
+    pytest.param(0.01, id="q0.01"),
+    pytest.param(0.05, id="q0.05"),
     pytest.param(0.10, id="q0.10"),
 ]
 _MEMO: dict[tuple[bool, int], tuple[dict[float, float], set[str]]] = {}
