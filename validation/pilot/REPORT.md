@@ -352,3 +352,21 @@ Waiver: te4-rplL-rplJ-waiver-1-0-0 (docs/adr). It covers this pair only, for ver
 - Benchmark: all four cells ran at the freeze commit, so section 9's sentence that it was not re-run there does not apply. Repeat 3 was cancelled on Khoa's decision (ADR-0072). `benchmark_summary.py --rounds 2` is main's script (#523), because the script at the freeze commit has no such option. `metrics.py` reads ADR-0072 and the benchmark's `baseline.json` from the report branch, since neither the record nor its `standard_run` entry is at the freeze commit, so S14's relative paths do not re-run from the pinned worktree as written.
 - The clean-up step S15 was not run.
 - `metrics.json` has no `mapping_fdr` key: `metrics.py` at this commit does not compute one (see R2 above).
+
+## Addendum: 1.1.1 detection recheck
+
+This section covers decoy-pairing-independent-of-acceptance (docs/adr), PR #607, released in 1.1.1. In 1.1.0, an unpaired decoy competed in the picked gene FDR only when its own unit had a q-passing target. With the fix, every q-passing decoy competes. Every pilot `decoy_picked` arm was recomputed with the 1.1.0 code and with the fix. Then the gene table, detectability, context, function and compare steps were rerun on the freeze outputs, with only `detection.py` swapped. The control run reproduces the recorded tables byte for byte. The Slurm job IDs, the scripts and the full before and after values are in `validation/pilot/recheck_1_1_1/README.md`. The superseding values are in `validation/pilot/metrics/metrics_1_1_1.json`, under the key paths of `metrics.json`.
+
+The values above are the 1.0.0 record and stay as they are. For a 1.1.1 reading, the following are superseded: metric 3 rows all, chromosome and k12_shared in both arms, A1 bgc and A2 strain_specific; metric 4 rho, its interval, shared genes and bias; the metric 5 enriched-category Jaccard; and in H1 and H3 every count, share, interval and p-value listed below. No threshold changed. No verdict changed: H1 stays not_supported (its "mostly" clause still fails), H3 stays supported, and TE3, TE4 and the plasmid and prophage coverage are unchanged.
+
+| arm | detected genes | maximum gene q | decoys paired | own units | decoy wins |
+|---|---|---|---|---|---|
+| A1 (pass 3 and freeze) | 28 fewer | rises, stays below 0.01 | 189 | 0 → 33 | 4 → 37 |
+| A2 (pass 3, freeze and replicate) | 6 fewer | rises, stays below 0.01 | 323 | 0 → 2 | 49 → 51 |
+| A4 (six-frame, exploratory) | unchanged | rises, stays below 0.01 | 168 | 0 → 4 | 15 → 19 |
+
+A1 searched K-12 accessions, so 38 of its decoys have no gene pair, and 33 of them now compete as their own units. Pass 1 changes the same way (A1 28 fewer genes, A2 5 fewer).
+
+- **H1** (1.0.0 → 1.1.1): A2-only genes b 417 → 434, A1-only genes c 33 → 28; TU-level units 275 against 31 (1 mixed) → 290 against 24 (3 mixed); the plasmid, prophage or BGC genes among the A2-only genes stay at 106, now of 434 rather than 417. The "Read these with the numbers" line on H1 reads 106 of the 434 A2-only genes in 1.1.1.
+- **H3** enriched categories (n_a / n_b / n_shared / union): 437 / 285 / 260 / 462 → 405 / 292 / 258 / 439; the criterion still holds, and so does rho.
+- **Metric 3**: A1 bgc 78 → 76 genes, A2 strain_specific 317 → 316 genes; plasmid, per-plasmid, prophage, A1 strain_specific, A2 bgc, no_peptides and pseudogene are unchanged.
