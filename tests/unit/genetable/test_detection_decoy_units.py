@@ -231,12 +231,12 @@ def test_ex6_locus_tag_run_unchanged() -> None:
 # ---------------------------------------------------------------- example 7 (namespace)
 
 
-def _ex7() -> Builder:
+def _ex7(decoy_q: float = 0.0035) -> Builder:
     tags = ["G1", "G2", "P1;P2", "G4"]
     b = Builder(tags=tags)
     for i, (g, q) in enumerate(zip(tags, TARGET_Q, strict=True)):
         b.target(g, q, None, None, protein_ids=[f"P{i + 1}"])
-    b.decoy(["rev_P1;rev_P2"], 0.0035, None, None)  # worse than gene "P1;P2"'s target (0.003)
+    b.decoy(["rev_P1;rev_P2"], decoy_q, None, None)  # default: worse than gene "P1;P2"'s target
     return b
 
 
@@ -248,6 +248,17 @@ def test_ex7_own_unit_never_takes_a_target() -> None:
     tags = ["G1", "G2", "P1;P2", "G4"]
     assert _gene_unit(_pairing(r)) == [(None, "P1;P2")]
     _assert_q(r, [1 / 3, 1 / 3, 1 / 3, 0.5], tags)
+
+
+def test_ex7_own_unit_beating_the_namesake_target_stays_apart() -> None:
+    """Own unit ``P1;P2`` (D .002) beats gene ``P1;P2``'s target (.003) but is not its decoy: the
+    gene keeps a finite q and the own unit adds one to D. FDR 1, 2/2, 2/3, 2/4 -> q 0.5 for all.
+    Code review of PR #607: a mutant grouping own units with genes by key
+    survived the test above.
+    """
+    r = _ex7(0.002).run(_guard())
+    assert r.det.tier == "decoy_picked"
+    _assert_q(r, [0.5, 0.5, 0.5, 0.5], ["G1", "G2", "P1;P2", "G4"])
 
 
 # ---------------------------------------------------------------- example 8 (ADR-0047)
