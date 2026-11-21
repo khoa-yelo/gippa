@@ -75,7 +75,7 @@ All `gippa` commands ran from `local/worktrees/campaign-pin` (`a2a95c76`) with
   `62573261…2668`.
 - **1998776 makedb + DIA-NN** (13 min 49 s: predict 121 s, search 689 s; 16 CPUs):
   `gippa makedb --annotation $D/bakta/out/ncm3722.json --outdir $D/db_a` (4,874 records, 381
-  `CONT_`); DIA-NN 2.3.1 with the `[step1]`/`[step2]` flags of `diann_A2.cfg`. About 30k precursors
+  `CONT_`); DIA-NN 2.3.1 with the `[step1]`/`[step2]` flags of `diann_A2.cfg`. About 28k precursors (28,025–28,761)
   and 1,040–1,067 genes per run at 1 %; 2,301 protein groups.
 - **1998777 truth set** (1 min 08 s).
 - **1998866 N1** (2 h 13 min 31 s, 16 CPUs): `gippa convert --from diann $D/diann_a/report.parquet
