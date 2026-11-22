@@ -221,7 +221,17 @@ def main(argv: list[str] | None = None) -> int:
     gR["gene"] = gR["refseq_gene"]
     t3r = tr.te3(gR.drop(columns=["_stop", "refseq_idx"]))
     t3r.pop("_rows", None)
-    doc["row_te3_refseq_set"] = t3r
+    doc["row_te3_refseq_set_pilot_rule"] = t3r
+    # the answer keys' set: every RefSeq "(30S|50S) ribosomal protein" CDS carried by stop (the
+    # pilot's strict product rule drops archaeal names such as "S19e"; reported above)
+    Gc = tr._coding(gR.drop(columns=["_stop", "refseq_idx"]))
+    mask = Gc["product"].astype(str).str.match(RIBO).to_numpy(dtype=bool)
+    full = tr._te3_clauses(Gc, mask)
+    full["status"] = ("not_evaluable" if not full["n_ribosomal"] else
+                      "pass" if full["detection"]["holds"] and full["abundance"]["holds"] else "fail")
+    full["not_detected"] = [{"locus_tag": r.locus_tag, "refseq_locus": r.refseq_locus, "product": r.product}
+                            for r in Gc[mask & (Gc["detection_status"].astype(str) != "detected").to_numpy()].itertuples()]
+    doc["row_te3_refseq_set"] = full
     doc["row_te4"] = tr.te4(tbl(A, "genes"))
     heads = [ln[1:] for ln in a.contaminants.read_text().splitlines() if ln.startswith(">")]
     fam = {f: set(ids) | {"CONT_" + i for i in ids} for f, ids in tr.contaminant_families(heads).items()}

@@ -1,0 +1,269 @@
+{
+ "dataset": "PXD079213",
+ "route_a": {
+  "runtime": {
+   "raw_s": "72",
+   "records": "3188",
+   "cont": "381",
+   "bytes": "1025394",
+   "makedb_s": "3",
+   "diann_s": "502",
+   "convert_preflight_s": "16",
+   "gippa_run_s": "4185",
+   "run_exit": "0",
+   "total_s": "4778",
+   "node": "wheat-06",
+   "job": "2005460"
+  },
+  "makedb_fasta_bytes": 1025394,
+  "makedb_records": 3188,
+  "diann": {
+   "job_id": "2005460",
+   "exit_code": 0,
+   "step1": {
+    "status": "ran",
+    "exit": 0,
+    "wall_s": 81
+   },
+   "step2": {
+    "status": "ran",
+    "exit": 0,
+    "wall_s": 415
+   },
+   "library_bytes": 111157989,
+   "library_precursors": 457425,
+   "image_sha256": "1946452d56d2fb0f66e05ced473df88e53484e28040f1ecbd83c4a43405a6381",
+   "cfg_sha256": "dad24b38e315b68cb6a905dfda877404535310f030ed9f92f8e9370dae0d6a1f",
+   "fasta_sha256": {
+    "/home/classes/bios/270/khoa/giap/local/campaign/PXD079213/db_a/strain_db.faa": "7d248cb372029749f4ab5d412769290f9bca5b546e3b38e0aedb758c1418b592"
+   },
+   "n_runs": 3,
+   "precursors_1pct_per_run": [
+    28926,
+    28834,
+    28553
+   ],
+   "protein_groups_global_q001": 2129,
+   "version": "DIA-NN 2.3.1 Academia  (Data-Independent Acquisition by Neural Networks)"
+  },
+  "convert_preflight": {
+   "job_id": "2005460",
+   "pin": "/home/classes/bios/270/khoa/giap/local/worktrees/rel111-pin",
+   "commit": "bfc74ff6c20acc2cfcf298cdf23cbb30d8fae0dc",
+   "search_db": "same",
+   "convert_exit": 0,
+   "convert2_exit": 0,
+   "convert_wall_s": 4,
+   "deterministic": true,
+   "preflight_strict_exit": 0,
+   "preflight_wall_s": 8,
+   "sha256": {
+    "report": "3d8356967d4a68febad50476fd26a77e857b2fc8192825bd14e91c74e9f5b12a",
+    "genome": "5f5698b621c3e08a90c7c81c38e6e1dff6184ec93e8f1dc9c40defc5dd957369",
+    "annotation": "180c6a955535a52fa0017473d1892b14b4f685fcee777ffb24212e3a18eb1522",
+    "peptides": "f5190034e8bba806ee5e2eea54a1bc9f8505132e4ffa784fd1afeff5a7708cba",
+    "abundance": "1d6363dd8e71e8d8151c4e70a209db890501bc371c8cd867d087115b297b4286"
+   }
+  },
+  "gippa_run": {
+   "git_commit": "bfc74ff6c20acc2cfcf298cdf23cbb30d8fae0dc",
+   "git_dirty": false,
+   "gippa_version": "1.1.1",
+   "exit_code": 0,
+   "status": "completed",
+   "started_at": "2026-11-22T06:23:40+00:00",
+   "finished_at": "2026-11-22T07:33:13+00:00",
+   "profile": "farmshare_local,apptainer",
+   "modules_off": [],
+   "warnings": [
+    "novel_orfs:novel_orfs.decoys_not_makedb",
+    "novel_orfs:novel_orfs.layer_missing"
+   ],
+   "layers_missing": [
+    "rbs_novel"
+   ],
+   "master_seed": 20261014,
+   "inputs": {
+    "genome": "5f5698b621c3e08a90c7c81c38e6e1dff6184ec93e8f1dc9c40defc5dd957369",
+    "peptides": "f5190034e8bba806ee5e2eea54a1bc9f8505132e4ffa784fd1afeff5a7708cba",
+    "annotation": "180c6a955535a52fa0017473d1892b14b4f685fcee777ffb24212e3a18eb1522",
+    "precomputed:bakta_json": "180c6a955535a52fa0017473d1892b14b4f685fcee777ffb24212e3a18eb1522"
+   },
+   "tools": {
+    "antismash": {
+     "version": "8.0.4",
+     "container_digest": "sha256:d3f390e687cfe02f1387be40256dddbf678e91bc56b96c36da07b56ec8bda29d"
+    },
+    "genomad": {
+     "version": "1.12.0",
+     "container_digest": "sha256:d54652ff868af72604ea0e54c541c5c92168c7ac821a422de05dcbad65509e5c"
+    },
+    "ostir": {
+     "version": "1.1.3",
+     "container_digest": "sha256:d9107b9b87fd6f3d3cd329ba1d2ac66b9af9e38512f11d2b8a0210110c6c9292"
+    },
+    "promotech": {
+     "version": "56251ad9b883ef831b4753fc623d5ec970fe65e0",
+     "container_digest": "sha256:7366eaf67d9b26c6036ed5ececa740fe2728fdcf0cd4b2a12a0d9597b87a53ac"
+    },
+    "promoter_calculator": {
+     "version": "1.2.4",
+     "container_digest": "sha256:c5bd0662ceed623c00c4bf40b085c6541b7676e1ccc37a390e0efd73e02b48df"
+    },
+    "terminatornet": {
+     "version": "72180309545988dba63b8bd5db5d0b09bf4dba70",
+     "container_digest": "sha256:ec415757b6b70cce8240f425b35bf3e74dc3abe8ff413049c04d808034592f7a"
+    },
+    "transtermhp": {
+     "version": "2.09",
+     "container_digest": "sha256:fc6fe0404be9340a883ec7a7b90415dfc3826c2bca7333a0314335c7bfee2d03"
+    },
+    "uniop": {
+     "version": "3ed14dfc2a5d69b993d99a26e50c1f8e9723c087",
+     "container_digest": null
+    },
+    "viennarna": {
+     "version": "2.6.4",
+     "container_digest": "sha256:d9107b9b87fd6f3d3cd329ba1d2ac66b9af9e38512f11d2b8a0210110c6c9292"
+    }
+   }
+  }
+ },
+ "route_b": {
+  "runtime": {
+   "raw_s": "0",
+   "records": "62578",
+   "cont": "381",
+   "bytes": "6194840",
+   "makedb_s": "6",
+   "diann_s": "736",
+   "convert_preflight_s": "18",
+   "gippa_run_s": "3648",
+   "run_exit": "0",
+   "total_s": "4408",
+   "node": "wheat-05",
+   "job": "2006191"
+  },
+  "makedb_fasta_bytes": 6194840,
+  "makedb_records": 62578,
+  "diann": {
+   "job_id": "2006191",
+   "exit_code": 0,
+   "step1": {
+    "status": "ran",
+    "exit": 0,
+    "wall_s": 194
+   },
+   "step2": {
+    "status": "ran",
+    "exit": 0,
+    "wall_s": 534
+   },
+   "library_bytes": 354197030,
+   "library_precursors": 1418541,
+   "image_sha256": "1946452d56d2fb0f66e05ced473df88e53484e28040f1ecbd83c4a43405a6381",
+   "cfg_sha256": "dad24b38e315b68cb6a905dfda877404535310f030ed9f92f8e9370dae0d6a1f",
+   "fasta_sha256": {
+    "/home/classes/bios/270/khoa/giap/local/campaign/PXD079213/db_b/strain_db.faa": "e2c6d572d70a1ec5e886df97f7b607ded257cbd9f20da7aee7e797c5ab2485be"
+   },
+   "n_runs": 3,
+   "precursors_1pct_per_run": [
+    27683,
+    27656,
+    27555
+   ],
+   "protein_groups_global_q001": 2146,
+   "version": "DIA-NN 2.3.1 Academia  (Data-Independent Acquisition by Neural Networks)"
+  },
+  "convert_preflight": {
+   "job_id": "2006191",
+   "pin": "/home/classes/bios/270/khoa/giap/local/worktrees/rel111-pin",
+   "commit": "bfc74ff6c20acc2cfcf298cdf23cbb30d8fae0dc",
+   "search_db": "same",
+   "convert_exit": 0,
+   "convert2_exit": 0,
+   "convert_wall_s": 3,
+   "deterministic": true,
+   "preflight_strict_exit": 0,
+   "preflight_wall_s": 10,
+   "sha256": {
+    "report": "109fce51cd3577a10cbd55d8e177e20dc426789ea4ac224dbb4571632d29dd6a",
+    "genome": "5f5698b621c3e08a90c7c81c38e6e1dff6184ec93e8f1dc9c40defc5dd957369",
+    "annotation": "180c6a955535a52fa0017473d1892b14b4f685fcee777ffb24212e3a18eb1522",
+    "peptides": "92dc595f14cffeebbc1fbab0403d4afb4e8a78a951a3f52419b0e8479baae9a2",
+    "abundance": "feb01fd046812c2e50050213e6e038b894b62b364c5025091a0cb8ca3e86645f"
+   }
+  },
+  "gippa_run": {
+   "git_commit": "bfc74ff6c20acc2cfcf298cdf23cbb30d8fae0dc",
+   "git_dirty": false,
+   "gippa_version": "1.1.1",
+   "exit_code": 0,
+   "status": "completed",
+   "started_at": "2026-11-22T08:44:35+00:00",
+   "finished_at": "2026-11-22T09:45:11+00:00",
+   "profile": "farmshare_local,apptainer",
+   "modules_off": [],
+   "warnings": [
+    "novel_orfs:novel_orfs.class_q_floor_above_alpha"
+   ],
+   "layers_missing": [],
+   "master_seed": 20261014,
+   "inputs": {
+    "genome": "5f5698b621c3e08a90c7c81c38e6e1dff6184ec93e8f1dc9c40defc5dd957369",
+    "peptides": "92dc595f14cffeebbc1fbab0403d4afb4e8a78a951a3f52419b0e8479baae9a2",
+    "annotation": "180c6a955535a52fa0017473d1892b14b4f685fcee777ffb24212e3a18eb1522",
+    "precomputed:bakta_json": "180c6a955535a52fa0017473d1892b14b4f685fcee777ffb24212e3a18eb1522"
+   },
+   "tools": {
+    "antismash": {
+     "version": "8.0.4",
+     "container_digest": "sha256:d3f390e687cfe02f1387be40256dddbf678e91bc56b96c36da07b56ec8bda29d"
+    },
+    "genomad": {
+     "version": "1.12.0",
+     "container_digest": "sha256:d54652ff868af72604ea0e54c541c5c92168c7ac821a422de05dcbad65509e5c"
+    },
+    "ostir": {
+     "version": "1.1.3",
+     "container_digest": "sha256:d9107b9b87fd6f3d3cd329ba1d2ac66b9af9e38512f11d2b8a0210110c6c9292"
+    },
+    "promotech": {
+     "version": "56251ad9b883ef831b4753fc623d5ec970fe65e0",
+     "container_digest": "sha256:7366eaf67d9b26c6036ed5ececa740fe2728fdcf0cd4b2a12a0d9597b87a53ac"
+    },
+    "promoter_calculator": {
+     "version": "1.2.4",
+     "container_digest": "sha256:c5bd0662ceed623c00c4bf40b085c6541b7676e1ccc37a390e0efd73e02b48df"
+    },
+    "terminatornet": {
+     "version": "72180309545988dba63b8bd5db5d0b09bf4dba70",
+     "container_digest": "sha256:ec415757b6b70cce8240f425b35bf3e74dc3abe8ff413049c04d808034592f7a"
+    },
+    "transtermhp": {
+     "version": "2.09",
+     "container_digest": "sha256:fc6fe0404be9340a883ec7a7b90415dfc3826c2bca7333a0314335c7bfee2d03"
+    },
+    "uniop": {
+     "version": "3ed14dfc2a5d69b993d99a26e50c1f8e9723c087",
+     "container_digest": null
+    },
+    "viennarna": {
+     "version": "2.6.4",
+     "container_digest": "sha256:d9107b9b87fd6f3d3cd329ba1d2ac66b9af9e38512f11d2b8a0210110c6c9292"
+    }
+   }
+  }
+ },
+ "post": [
+  "compare exit=0 wall_s=8",
+  "report out_a --redact exit=0 wall_s=34 tables_unchanged=yes",
+  "report out_b --redact exit=0 wall_s=56 tables_unchanged=yes",
+  "job=2005379 node=iron-04"
+ ],
+ "raw_sha256": {
+  "cont_1.raw": "d01cbd6c227e176ab3d6f95e75d58f484f9176af8177ce9938a6f0c5bddf15d8",
+  "cont_2.raw": "4feb3514c01e70ca045c60ed71a51258b63deb273dee9d7246ef9938d8142c5f",
+  "cont_3.raw": "2a52fed961d990eac9db77dd8a732c06b68328a0744e9e4da95b03bb510f4bed"
+ }
+}
