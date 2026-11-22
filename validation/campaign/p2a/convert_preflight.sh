@@ -20,7 +20,7 @@ PIN="$1" REPORT="$2" IN="$3" GENOME="$4" JSON="$5" SDB="${6:-same}"
 export TMPDIR="$(mktemp -d /tmp/gippa.XXXXXX)"; trap 'rm -rf "$TMPDIR"' EXIT
 case "$IN" in "$GIPPA_ROOT"/campaign/*) ;; *) echo "IN_DIR must be under \$GIPPA_ROOT/campaign" >&2; exit 2 ;; esac
 for f in "$REPORT" "$GENOME" "$JSON"; do [ -s "$f" ] || { echo "missing $f" >&2; exit 2; }; done
-mkdir -p "$IN"; rm -rf "$IN/preflight"
+mkdir -p "$IN"; rm -rf "$IN/preflight" "$IN/preflight_strict"
 g() { PYTHONPATH="$PIN/src" "$UV_PROJECT_ENVIRONMENT/bin/python" -c 'from gippa.cli import cli; cli()' "$@"; }
 s=$(date +%s)
 g convert --from diann "$REPORT" --out "$IN/peptides.tsv.gz" --abundance-out "$IN/abundance.tsv.gz" \
@@ -37,6 +37,28 @@ g preflight --genome "$GENOME" --annotation "$JSON" --peptides "$IN/peptides.tsv
   --outdir "$IN/preflight" --strict >"$IN/preflight.log" 2>&1
 PF=$?; PF_S=$(( $(date +%s) - s ))
 tail -25 "$IN/preflight.log"
+# Phase 2 group A exception (REPORT.md > Deviations): --strict exits 3 on any warning. When the
+# only non-ok, non-info rows are warnings in STRICT_ALLOWED (default genome.gaps: N runs in the
+# RefSeq assembly itself, which no input change may remove), preflight is run again without
+# --strict and must exit 0; the strict exit and the waived rule are recorded.
+PF_STRICT=$PF WAIVED=""
+if [ "$PF" -eq 3 ]; then
+  WAIVED=$(python3 -I - "$IN/preflight/preflight/preflight.json" "${STRICT_ALLOWED:-genome.gaps}" <<'PY'
+import json, sys
+d = json.load(open(sys.argv[1])); allowed = set(sys.argv[2].split(","))
+bad = [(c["level"], c["rule_id"]) for c in d["checks"] if c["level"] not in ("ok", "info")]
+ok = bad and all(lv == "warn" and r in allowed for lv, r in bad)
+print(",".join(sorted({r for _, r in bad})) if ok else "")
+PY
+)
+  if [ -n "$WAIVED" ]; then
+    mv "$IN/preflight" "$IN/preflight_strict"; mv "$IN/preflight.log" "$IN/preflight_strict.log"
+    g preflight --genome "$GENOME" --annotation "$JSON" --peptides "$IN/peptides.tsv.gz" \
+      --outdir "$IN/preflight" >"$IN/preflight.log" 2>&1
+    PF=$?
+    echo "strict exit 3 on warnings [$WAIVED] only; non-strict preflight exit $PF"
+  fi
+fi
 echo "convert=$C1 convert2=$C2 deterministic=$DET preflight_strict=$PF"
 python3 -I - "$IN/convert_provenance.json" <<PY
 import json, sys, hashlib, os
@@ -49,7 +71,7 @@ def sha(p):
 d = {"job_id": os.environ.get("SLURM_JOB_ID"), "pin": "$PIN",
      "commit": os.popen("git -C $PIN rev-parse HEAD").read().strip(),
      "search_db": "$SDB", "convert_exit": $C1, "convert2_exit": $C2, "convert_wall_s": $C1_S,
-     "deterministic": "$DET" == "true", "preflight_strict_exit": $PF, "preflight_wall_s": $PF_S,
+     "deterministic": "$DET" == "true", "preflight_strict_exit": $PF_STRICT, "preflight_exit": $PF, "strict_waived": "$WAIVED", "preflight_wall_s": $PF_S,
      "sha256": {k: sha(p) for k, p in (("report", "$REPORT"), ("genome", "$GENOME"),
                 ("annotation", "$JSON"), ("peptides", "$IN/peptides.tsv.gz"),
                 ("abundance", "$IN/abundance.tsv.gz")) if os.path.exists(p)}}

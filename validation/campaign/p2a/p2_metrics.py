@@ -436,6 +436,13 @@ def main(argv: list[str] | None = None) -> int:
         import csv
         rows = [r for r in csv.DictReader(a.loci.open(), delimiter="\t") if r["genome"] == a.tag]
         doc["loci"] = loci_status(outs, rows)
+        doc["loci_by_key_A"] = {}
+        for key in sorted({r["key"] for r in rows}):
+            tags = [r["bakta_locus"] for r in rows if r["key"] == key and r["match"] == "same_stop"]
+            pct = abundance_percentile(A, tags)
+            pct["n_detected_q01"] = sum(detected_q(x["A_gene"]) for x in doc["loci"] if x["key"] == key)
+            pct["n_loci"] = sum(1 for r in rows if r["key"] == key)
+            doc["loci_by_key_A"][key] = pct
     if a.patched:
         doc["S11_round2"] = arm_summary(a.patched)
     a.out.write_text(json.dumps(doc, indent=1, default=str) + "\n")

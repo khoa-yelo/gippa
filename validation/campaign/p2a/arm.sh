@@ -51,7 +51,7 @@ diann() {  # route
 
 convert() {  # route report search_db genome json in_dir
   local in="$6"
-  if [ -s "$in/convert_provenance.json" ] && "$PY" -I -c 'import json,sys; d=json.load(open(sys.argv[1])); sys.exit(0 if d["convert_exit"]==0 and d["deterministic"] and d["preflight_strict_exit"]==0 else 1)' "$in/convert_provenance.json"; then
+  if [ -s "$in/convert_provenance.json" ] && "$PY" -I -c 'import json,sys; d=json.load(open(sys.argv[1])); sys.exit(0 if d["convert_exit"]==0 and d["deterministic"] and d.get("preflight_exit", d["preflight_strict_exit"])==0 else 1)' "$in/convert_provenance.json"; then
     log "convert/preflight done, skipped"; return 0; fi
   log "convert + preflight --strict ($3)"
   bash "$HERE/convert_preflight.sh" "$PIN" "$2" "$in" "$4" "$5" "$3"
