@@ -1,0 +1,295 @@
+{
+ "E1": {
+  "arm": "E1",
+  "commit": "bfc74ff6c20acc2cfcf298cdf23cbb30d8fae0dc",
+  "git_dirty": false,
+  "gippa_version_string": "1.1.1",
+  "pin": "/home/classes/bios/270/khoa/giap/local/worktrees/rel111-pin",
+  "profile": "farmshare_local,apptainer",
+  "status": "completed",
+  "exit_code": 0,
+  "warnings": [
+   "novel_orfs:novel_orfs.decoys_not_makedb"
+  ],
+  "detection_tier": "decoy_picked",
+  "provenance_digest": "abed6e8b78c8d921a9edf53187ea14e9f9a3f914488c9658952713e333e73c93",
+  "tools": [
+   {
+    "conda_lock_hash": null,
+    "container_digest": "sha256:d3f390e687cfe02f1387be40256dddbf678e91bc56b96c36da07b56ec8bda29d",
+    "name": "antismash",
+    "processes": [
+     "ANNOTATE:ANTISMASH"
+    ],
+    "version": "8.0.4"
+   },
+   {
+    "conda_lock_hash": null,
+    "container_digest": "sha256:d54652ff868af72604ea0e54c541c5c92168c7ac821a422de05dcbad65509e5c",
+    "name": "genomad",
+    "processes": [
+     "ANNOTATE:GENOMAD"
+    ],
+    "version": "1.12.0"
+   },
+   {
+    "conda_lock_hash": null,
+    "container_digest": "sha256:d9107b9b87fd6f3d3cd329ba1d2ac66b9af9e38512f11d2b8a0210110c6c9292",
+    "name": "ostir",
+    "processes": [
+     "ANNOTATE:OSTIR",
+     "NOVEL:OSTIR_NOVEL"
+    ],
+    "version": "1.1.3"
+   },
+   {
+    "conda_lock_hash": null,
+    "container_digest": "sha256:7366eaf67d9b26c6036ed5ececa740fe2728fdcf0cd4b2a12a0d9597b87a53ac",
+    "name": "promotech",
+    "processes": [
+     "ANNOTATE:PROMOTECH",
+     "NOVEL:PROMOTECH_NOVEL"
+    ],
+    "version": "56251ad9b883ef831b4753fc623d5ec970fe65e0"
+   },
+   {
+    "conda_lock_hash": null,
+    "container_digest": "sha256:c5bd0662ceed623c00c4bf40b085c6541b7676e1ccc37a390e0efd73e02b48df",
+    "name": "promoter_calculator",
+    "processes": [
+     "ANNOTATE:PROMOTER_CALCULATOR"
+    ],
+    "version": "1.2.4"
+   },
+   {
+    "conda_lock_hash": null,
+    "container_digest": "sha256:ec415757b6b70cce8240f425b35bf3e74dc3abe8ff413049c04d808034592f7a",
+    "name": "terminatornet",
+    "processes": [
+     "ANNOTATE:TERMINATORNET_SHARDED:TERMINATORNET_MERGE"
+    ],
+    "version": "72180309545988dba63b8bd5db5d0b09bf4dba70"
+   },
+   {
+    "conda_lock_hash": null,
+    "container_digest": "sha256:fc6fe0404be9340a883ec7a7b90415dfc3826c2bca7333a0314335c7bfee2d03",
+    "name": "transtermhp",
+    "processes": [
+     "ANNOTATE:TRANSTERMHP"
+    ],
+    "version": "2.09"
+   },
+   {
+    "conda_lock_hash": "a16e1731537f901edfff5c1b7604b40e05de40ba8a062c7d4647ef54b7ff463b",
+    "container_digest": null,
+    "name": "uniop",
+    "processes": [
+     "ANNOTATE:UNIOP"
+    ],
+    "version": "3ed14dfc2a5d69b993d99a26e50c1f8e9723c087"
+   },
+   {
+    "conda_lock_hash": null,
+    "container_digest": "sha256:d9107b9b87fd6f3d3cd329ba1d2ac66b9af9e38512f11d2b8a0210110c6c9292",
+    "name": "viennarna",
+    "processes": [
+     "ANNOTATE:OSTIR",
+     "NOVEL:OSTIR_NOVEL"
+    ],
+    "version": "2.6.4"
+   }
+  ],
+  "inputs_sha256": {
+   "genome.fna.gz": "4bfd7163f6f0de6394a2131cbfdbe75100daa55cbee227ec3e403a44640ac03c",
+   "peptides.tsv.gz": "50dbd6b32c379dacac3a92356b5593e8e39487412ddfda6344b1bf0088f0a138",
+   "k12_mg1655.json": "ae0ccaf186b098ecd704b78c76cde8e464f8717030bd5890b38397f1c0e9b169"
+  },
+  "inputs_identical_to_1_1_0_run": true,
+  "job": {
+   "id": 2005456,
+   "name": "gippa-camp-e1fix",
+   "wall": "02:16:53",
+   "cpus": 16,
+   "max_rss": "43.0 GB",
+   "node": "wheat-05",
+   "time_limit": "05:00:00",
+   "exclude": "barley-01..04,rye-01,rye-02"
+  },
+  "runtime": "arm=E1 run_s=8203 run_exit=0 node=wheat-05 job=2005456",
+  "outdir": "/home/classes/bios/270/khoa/giap/local/campaign/ecoli_k12/runs/out_e1_fix",
+  "decoy_competition": {
+   "decoy_rows": 430,
+   "gene_paired_rows": 428,
+   "own_unit_rows": 2,
+   "own_units": 2,
+   "gene_unit_decoy_wins": 61,
+   "gene_unit_decoy_wins_no_accepted_target": 56,
+   "decoy_wins_total": 63,
+   "target_wins": 2759,
+   "recomputed_detected": 2691,
+   "recomputed_max_q": 0.00929022668153103,
+   "table_detected": 2691,
+   "table_max_q": 0.00929023,
+   "decoy_paired_share": 0.9953488372093023,
+   "decoy_win_weight": 1.0,
+   "tier": "decoy_picked"
+  },
+  "tables_sha256": {
+   "genes.tsv": "5fa7490ab4de486d8aca767978f0a2f6a809a173f1b6a1191734ddd132b78f33",
+   "detection_summary.tsv": "992444111f5991dbcb857da699801cc4682b19e00a1def4123b9fc1f232fb9c2",
+   "novel_orfs.tsv": "16e481ee9427da7774e92c7b348a2333262fe18ed0bd8a10ce15f417a0df4d62"
+  }
+ },
+ "E2": {
+  "arm": "E2",
+  "commit": "bfc74ff6c20acc2cfcf298cdf23cbb30d8fae0dc",
+  "git_dirty": false,
+  "gippa_version_string": "1.1.1",
+  "pin": "/home/classes/bios/270/khoa/giap/local/worktrees/rel111-pin",
+  "profile": "farmshare_local,apptainer",
+  "status": "completed",
+  "exit_code": 0,
+  "warnings": [
+   "novel_orfs:novel_orfs.class_q_floor_above_alpha"
+  ],
+  "detection_tier": "decoy_picked",
+  "provenance_digest": "25c956f4f753031402ec869cb3d40416c9c2f8ac4060e910fb2698fa07e159f1",
+  "tools": [
+   {
+    "conda_lock_hash": null,
+    "container_digest": "sha256:d3f390e687cfe02f1387be40256dddbf678e91bc56b96c36da07b56ec8bda29d",
+    "name": "antismash",
+    "processes": [
+     "ANNOTATE:ANTISMASH"
+    ],
+    "version": "8.0.4"
+   },
+   {
+    "conda_lock_hash": null,
+    "container_digest": "sha256:d54652ff868af72604ea0e54c541c5c92168c7ac821a422de05dcbad65509e5c",
+    "name": "genomad",
+    "processes": [
+     "ANNOTATE:GENOMAD"
+    ],
+    "version": "1.12.0"
+   },
+   {
+    "conda_lock_hash": null,
+    "container_digest": "sha256:d9107b9b87fd6f3d3cd329ba1d2ac66b9af9e38512f11d2b8a0210110c6c9292",
+    "name": "ostir",
+    "processes": [
+     "ANNOTATE:OSTIR",
+     "NOVEL:OSTIR_NOVEL"
+    ],
+    "version": "1.1.3"
+   },
+   {
+    "conda_lock_hash": null,
+    "container_digest": "sha256:7366eaf67d9b26c6036ed5ececa740fe2728fdcf0cd4b2a12a0d9597b87a53ac",
+    "name": "promotech",
+    "processes": [
+     "ANNOTATE:PROMOTECH",
+     "NOVEL:PROMOTECH_NOVEL"
+    ],
+    "version": "56251ad9b883ef831b4753fc623d5ec970fe65e0"
+   },
+   {
+    "conda_lock_hash": null,
+    "container_digest": "sha256:c5bd0662ceed623c00c4bf40b085c6541b7676e1ccc37a390e0efd73e02b48df",
+    "name": "promoter_calculator",
+    "processes": [
+     "ANNOTATE:PROMOTER_CALCULATOR"
+    ],
+    "version": "1.2.4"
+   },
+   {
+    "conda_lock_hash": null,
+    "container_digest": "sha256:ec415757b6b70cce8240f425b35bf3e74dc3abe8ff413049c04d808034592f7a",
+    "name": "terminatornet",
+    "processes": [
+     "ANNOTATE:TERMINATORNET_SHARDED:TERMINATORNET_MERGE"
+    ],
+    "version": "72180309545988dba63b8bd5db5d0b09bf4dba70"
+   },
+   {
+    "conda_lock_hash": null,
+    "container_digest": "sha256:fc6fe0404be9340a883ec7a7b90415dfc3826c2bca7333a0314335c7bfee2d03",
+    "name": "transtermhp",
+    "processes": [
+     "ANNOTATE:TRANSTERMHP"
+    ],
+    "version": "2.09"
+   },
+   {
+    "conda_lock_hash": "a16e1731537f901edfff5c1b7604b40e05de40ba8a062c7d4647ef54b7ff463b",
+    "container_digest": null,
+    "name": "uniop",
+    "processes": [
+     "ANNOTATE:UNIOP"
+    ],
+    "version": "3ed14dfc2a5d69b993d99a26e50c1f8e9723c087"
+   },
+   {
+    "conda_lock_hash": null,
+    "container_digest": "sha256:d9107b9b87fd6f3d3cd329ba1d2ac66b9af9e38512f11d2b8a0210110c6c9292",
+    "name": "viennarna",
+    "processes": [
+     "ANNOTATE:OSTIR",
+     "NOVEL:OSTIR_NOVEL"
+    ],
+    "version": "2.6.4"
+   }
+  ],
+  "inputs_sha256": {
+   "genome.fna.gz": "4bfd7163f6f0de6394a2131cbfdbe75100daa55cbee227ec3e403a44640ac03c",
+   "peptides.tsv.gz": "dfb8e80e2580089e150844c97bae27350478595944adc1f8058823c89bd3b235",
+   "k12_mg1655.json": "ae0ccaf186b098ecd704b78c76cde8e464f8717030bd5890b38397f1c0e9b169"
+  },
+  "inputs_identical_to_1_1_0_run": true,
+  "job": {
+   "id": 2005455,
+   "name": "gippa-camp-e2fix",
+   "wall": "03:18:26",
+   "cpus": 16,
+   "max_rss": "35.2 GB",
+   "node": "wheat-01",
+   "time_limit": "05:00:00",
+   "exclude": "barley-01..04,rye-01,rye-02"
+  },
+  "runtime": "arm=E2 run_s=11893 run_exit=0 node=wheat-01 job=2005455",
+  "outdir": "/home/classes/bios/270/khoa/giap/local/campaign/ecoli_k12/runs/out_e2_fix",
+  "decoy_competition": {
+   "decoy_rows": 266,
+   "gene_paired_rows": 266,
+   "own_unit_rows": 0,
+   "own_units": 0,
+   "gene_unit_decoy_wins": 26,
+   "gene_unit_decoy_wins_no_accepted_target": 25,
+   "decoy_wins_total": 26,
+   "target_wins": 2669,
+   "recomputed_detected": 2669,
+   "recomputed_max_q": 0.009741476208317721,
+   "table_detected": 2669,
+   "table_max_q": 0.00974148,
+   "decoy_paired_share": 1.0,
+   "decoy_win_weight": 1.0,
+   "tier": "decoy_picked"
+  },
+  "tables_sha256": {
+   "genes.tsv": "01efa377a26b1ef8c7bd8ea9da575c571d441874320e78b8244da897789ac6df",
+   "detection_summary.tsv": "990323d12488ec36920b3b99e246ca97f2a60aea058ce05d2807adca0cc7cbe8",
+   "novel_orfs.tsv": "2b834ff32c6a831e17e67efd975d4001f911074962b6bf5b9a8f5160612c9c19"
+  }
+ },
+ "compare": {
+  "command": "gippa compare out_e1_fix out_e2_fix --labels genes,sixframe --outdir cmp_e1_e2_fix",
+  "exit": 0,
+  "wall_s": 9.6,
+  "compare_abundance_sha256": "dea65cc2e7586c4166c4c9694215f227434fdb709ec5d28321d5ed33827e5b94"
+ },
+ "metrics": {
+  "file": "/home/classes/bios/270/khoa/giap/local/campaign/ecoli_k12/metrics_phase1_fix.json",
+  "sha256": "62b3634d383de5faf9dad8919e972d54880ba3a90ff981c9f90295ed11ddb0d5",
+  "command": "PYTHONPATH=<pin>:<pin>/src phase1_metrics.py --e1 out_e1_fix --e2 out_e2_fix --cmp cmp_e1_e2_fix (E3/E4 not rerun)"
+ }
+}

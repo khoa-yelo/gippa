@@ -33,6 +33,73 @@ no error estimate for that number.
 
 Counts: **10 pass** (row 7's junction sub-check not testable), **3 fail, 1 not testable, 1 dropped (row 11, E3), 1 reported** (row 14 has no pass threshold).
 
+## Recheck with 1.1.1 code (bfc74ff6)
+
+Khoa asked for this on 2026-11-21. GIPPA 1.1.1 carries ADR-0078 (#607). The picked gene FDR now
+lets every decoy compete: a decoy that does not map to exactly one gene competes in its own unit
+and counts as a decoy win, and the 1/f weight is retired. E1 and E2 were rerun to see whether
+the locus-tag arms move. The 1.1.0 figures above stay as recorded. Where a 1.1.0 number is
+superseded, it is struck through below.
+
+- Code: the pinned detached worktree `local/worktrees/rel111-pin` at `bfc74ff6` (main with the
+  fix and version 1.1.1). Run with `PYTHONPATH=<pin>/src` and the venv `bin/` on PATH inside
+  the Nextflow tasks. Both manifests record `git_commit` bfc74ff6, `git_dirty` false and
+  `gippa_version` 1.1.1.
+- Command: `gippa_fix.sbatch E1|E2` (this directory). It takes the same converted inputs
+  (`$D/in_a`, `$D/in_b`), so DIA-NN and convert were not rerun. Genome, Bakta JSON, threads,
+  memory, modules and the default seed are the same as in 1.1.0. It writes to a new outdir,
+  `$D/runs/out_<arm>_fix`, and refuses to overwrite one. The input sha256s match the 1.1.0 runs.
+- **2005456 E1** (`gippa-camp-e1fix`): 2 h 16 min 53 s, wheat-05, MaxRSS 43.0 GB.
+  **2005455 E2** (`gippa-camp-e2fix`): 3 h 18 min 26 s, wheat-01, MaxRSS 35.2 GB.
+  - Both jobs had 16 CPUs, `--time=05:00:00` and `--exclude=barley-01..04,rye-01,rye-02`.
+  - The 1.1.0 runs used the distributed `farmshare` profile. These reruns used `farmshare_local`,
+    so every task ran inside the one 16-CPU job. The wall times are therefore not comparable
+    with row 14's 1.1.0 times.
+  - Both runs exited 0 with all modules. E1's only warning was `novel_orfs.decoys_not_makedb`,
+    E2's only warning was `novel_orfs.class_q_floor_above_alpha`, as in 1.1.0.
+- Decoy counts: `decoy_counts.py` recomputes the detection from each run's GENE_TABLE task inputs
+  with the pin's `genetable.detection` functions. The recomputed detections and max q equal
+  `genes.tsv`. Checked on Phase 1b N2 fix first, it reproduces REPORT_1b's counts exactly.
+- `gippa compare out_e1_fix out_e2_fix --labels genes,sixframe`: exit 0, 10 s.
+  `phase1_metrics.py` ran on the fixed E1/E2 and the fixed compare
+  (`metrics_phase1_fix.json`; E3 and E4 were not rerun).
+
+| | E1 1.1.0 | E1 1.1.1 | E2 1.1.0 | E2 1.1.1 |
+|---|---|---|---|---|
+| Genes at q ≤ 0.01 (`decoy_picked`) | 2,691 | 2,691 (same genes) | 2,669 | 2,669 (same genes) |
+| Max gene q of the list | ~~0.00933~~ | **0.00929** | 0.00974 | 0.00974 |
+| Decoys q ≤ 0.01: gene-paired / own-unit rows | 428 / 2 (unpaired, out of D) | 428 / 2 (2 own units) | 266 / 0 | 266 / 0 |
+| `decoy_paired_share` / `decoy_win_weight` | 0.995 / ~~1.0047~~ | 0.995 / 1 (retired) | 1 / 1 | 1 / 1 |
+| Decoy wins in genes (on genes without an accepted target) | 61 (56) | 61 (56) | 26 (25) | 26 (25) |
+| Decoy wins incl. own units | n/a | 63 | n/a | 26 |
+| Target wins (genes with finite q) | 2,759 | 2,759 | 2,669 | 2,669 |
+
+- **E2 does not change.** All 22 files in `tables/` are byte-identical to 1.1.0 except
+  `variants.vcf`, whose only difference is the `##source=gippa-1.1.1` header line. E2 has no
+  own-unit decoy: unmapped six-frame ORF decoys were already left out (M7-12 decision 28), so
+  f = 1 and 1/f = 1 in 1.1.0 too.
+- **E1 changes only in its q-values.** In `genes.tsv` only the `gene_q_value` column differs,
+  in 270 rows (ratio fix/1.1.0 from 0.9955 to 1.031). The detected set is identical.
+  `detection_summary.tsv` differs only in the `tier` FDR curve and `decoy_win_weight` (q ≤ 0.01
+  FDR ~~0.0093319~~ 0.0092902; q ≤ 0.02 ~~0.01934~~ 0.019615; q ≤ 0.05 ~~0.0225752~~ 0.0231968).
+  These shifts are small and in both directions: the two own-unit decoys now count as wins,
+  and 1/f = 1.0047 is gone. The other differing file is `variants.vcf` (header only).
+- Row 14, recomputed: E2 keeps 2,648 / 2,691 E1 genes, 98.4 % [97.9, 98.8]. E2-only: 21.
+  Spearman 0.996 [0.995, 0.997] over 2,634 shared genes (1,758 TUs), Bland-Altman bias
+  0.09 log2. **Unchanged.**
+- Rows 7, 8, 9 and 15: E2's `novel_orfs.tsv` is byte-identical to 1.1.0. The same 124
+  candidates, 0 calls and minimum class FDRs (0.14 intergenic and nterm_extension, 0.50
+  cds_outframe, 0.67 antisense) hold, with the same `class_q_floor_above_alpha` warning.
+  No novel-ORF candidate and no class FDR changed. The crl and prfB window counts and gene rows
+  in `metrics_phase1_fix.json` equal the 1.1.0 values.
+- Every other E1/E2 metric in `metrics_phase1_fix.json` (rows 1-6, 10 and the compare tables)
+  equals `metrics_phase1.json`. Only the commit and the timestamps differ.
+- **No verdict changes.** The counts stay 10 pass, 3 fail, 1 not testable, 1 dropped and
+  1 reported.
+- Provenance: `$D/E1_fix/provenance.json` and `$D/E2_fix/provenance.json`. The aggregate copy
+  `provenance/E1E2_fix.json` holds the commit, image digests, input sha256s, job IDs, wall
+  times, decoy counts and table sha256s.
+
 ## Key numbers
 
 | | E1 (route A) | E2 (route B) | E4 (route C, de novo) |
@@ -110,6 +177,10 @@ gippa preflight ... --peptides $D/in_c/peptides.tsv.gz --strict                #
 gippa preflight ... --peptides $D/in_c/peptides_min7.tsv.gz --strict           # exit 0 (the 27 rows GIPPA drops anyway removed first)
 gippa run ... --peptides $D/in_c/peptides_min7.tsv.gz --reference-peptides $D/in_a/peptides.tsv.gz \
   ... --outdir $D/runs/out_e4                                                  # 2000505
+# Recheck with 1.1.1 code (pin rel111-pin, bfc74ff6), same inputs, farmshare_local profile:
+PIN=<rel111-pin> sbatch -J gippa-camp-e1fix gippa_fix.sbatch E1    # 2005456 -> $D/runs/out_e1_fix
+PIN=<rel111-pin> sbatch -J gippa-camp-e2fix gippa_fix.sbatch E2    # 2005455 -> $D/runs/out_e2_fix
+gippa compare $D/runs/out_e1_fix $D/runs/out_e2_fix --labels genes,sixframe --outdir $D/runs/cmp_e1_e2_fix   # allocation: exit 0, 10 s
 ```
 
 `gippa run` was submitted through `validation/campaign/slurm/submit_gippa_run.sh`, which calls the
