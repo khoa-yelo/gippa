@@ -518,9 +518,12 @@ def main(argv: list[str] | None = None) -> int:
                           "B_only": len(d2 - d1)}
     cmp_dir = D / "cmp_ab" / "tables"
     if cmp_dir.is_dir():
-        doc["compare"] = {f.stem: pd.read_csv(f, sep="\t").head(50).to_dict("records")
-                          for f in sorted(cmp_dir.glob("compare_*.tsv")) if f.stem in
-                          ("compare_abundance", "compare_stability", "compare_detection", "compare_summary")}
+        doc["compare"] = {}
+        for f in sorted(cmp_dir.glob("compare_*.tsv")):
+            t = pd.read_csv(f, sep="\t")
+            if "section" in t.columns:  # drop the per-gene detection matrix
+                t = t[t["section"].astype(str) != "matrix"]
+            doc["compare"][f.stem] = [{k: clean(v) for k, v in r.items()} for r in t.head(60).to_dict("records")]
     doc["S12_variants"] = {"A": variants(A), "B": variants(B)}
     te7 = D / "te7.diff"
     if te7.exists():
