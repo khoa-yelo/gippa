@@ -1,0 +1,15 @@
+{
+ "refseq_cds_nonpseudo": 3897,
+ "bakta_cds_plus_sorf": 4023,
+ "count_ratio": 1.0323,
+ "count_within_10pct": true,
+ "refseq_cds_with_bakta_stop": 3840,
+ "stop_share": 0.9854,
+ "stop_share_ci95": [
+  0.9811,
+  0.9887
+ ],
+ "stop_share_ge_0.90": true,
+ "bakta_cds_with_refseq_stop": 3840,
+ "pass": true
+}
