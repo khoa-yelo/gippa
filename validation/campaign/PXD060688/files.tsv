@@ -1,31 +1,31 @@
-file_name	file_type	raw_format	bytes	checksum	checksum_source	url	acquisition	acquisition_source	sample	condition
-DdiA-4-01.raw	raw	thermo_raw	3240703211	sha1:c204c1ddceeb2ea03f73758df10f9cd96983ddda	deposit:checksum.txt	https://ftp.pride.ebi.ac.uk/pride/data/archive/2025/02/PXD060688/DdiA-4-01.raw	NA	NA	NA	NA
-DdiA-4-02.raw	raw	thermo_raw	3323736144	sha1:bffa12be741d3104deaac7a0bce6ffc07f622f4b	deposit:checksum.txt	https://ftp.pride.ebi.ac.uk/pride/data/archive/2025/02/PXD060688/DdiA-4-02.raw	NA	NA	NA	NA
-DdiA-4-03.raw	raw	thermo_raw	3303039144	sha1:4418a21200bb9b708fa9e3d35af059b9f41af00d	deposit:checksum.txt	https://ftp.pride.ebi.ac.uk/pride/data/archive/2025/02/PXD060688/DdiA-4-03.raw	NA	NA	NA	NA
-DdiA-4-04.raw	raw	thermo_raw	3248336183	sha1:89a6eeb72ce6baf0b69466d24d6d885a3e0d8771	deposit:checksum.txt	https://ftp.pride.ebi.ac.uk/pride/data/archive/2025/02/PXD060688/DdiA-4-04.raw	NA	NA	NA	NA
-DdiA-4-05.raw	raw	thermo_raw	3233635884	sha1:90b3c20664a4709fc7ee06fc7684b8b5cdb3cda4	deposit:checksum.txt	https://ftp.pride.ebi.ac.uk/pride/data/archive/2025/02/PXD060688/DdiA-4-05.raw	NA	NA	NA	NA
-DdiA-4-06.raw	raw	thermo_raw	3203273971	sha1:6ad32161a452a8957dd177cb6d3f1fe459701d5d	deposit:checksum.txt	https://ftp.pride.ebi.ac.uk/pride/data/archive/2025/02/PXD060688/DdiA-4-06.raw	NA	NA	NA	NA
-DdiA-4-07.raw	raw	thermo_raw	3248517639	sha1:d69f2fd3706a0ef5b63b517728b2ec7acd037b42	deposit:checksum.txt	https://ftp.pride.ebi.ac.uk/pride/data/archive/2025/02/PXD060688/DdiA-4-07.raw	NA	NA	NA	NA
-DdiA-4-08.raw	raw	thermo_raw	3189222310	sha1:2bf77e23e7904c04a20582dad273892e48b7440d	deposit:checksum.txt	https://ftp.pride.ebi.ac.uk/pride/data/archive/2025/02/PXD060688/DdiA-4-08.raw	NA	NA	NA	NA
-DdiA-4-13.raw	raw	thermo_raw	3262296080	sha1:f30f51a26b9039e2e6e8d1244dde1a10a1400849	deposit:checksum.txt	https://ftp.pride.ebi.ac.uk/pride/data/archive/2025/02/PXD060688/DdiA-4-13.raw	NA	NA	NA	NA
-DdiA-4-14.raw	raw	thermo_raw	3135834181	sha1:37d14489163b7f8d36ee63925186a7f0dc9c53e1	deposit:checksum.txt	https://ftp.pride.ebi.ac.uk/pride/data/archive/2025/02/PXD060688/DdiA-4-14.raw	NA	NA	NA	NA
-DdiA-4-15.raw	raw	thermo_raw	3350866151	sha1:efce7ad87ad7e2fd2328acc49a12e0fd25a9ea84	deposit:checksum.txt	https://ftp.pride.ebi.ac.uk/pride/data/archive/2025/02/PXD060688/DdiA-4-15.raw	NA	NA	NA	NA
-DdiA-4-16.raw	raw	thermo_raw	3203395822	sha1:99ff23b7f478339f59fe9b21b03282b9a9491977	deposit:checksum.txt	https://ftp.pride.ebi.ac.uk/pride/data/archive/2025/02/PXD060688/DdiA-4-16.raw	NA	NA	NA	NA
-DdiA-4-17.raw	raw	thermo_raw	3328371480	sha1:52db448749bc6c4a96ecfe0267b39a1f0bf8ef92	deposit:checksum.txt	https://ftp.pride.ebi.ac.uk/pride/data/archive/2025/02/PXD060688/DdiA-4-17.raw	NA	NA	NA	NA
-DdiA-4-18.raw	raw	thermo_raw	3277511691	sha1:703138958c0c7f3fce187a37c6dfbfab04659dbb	deposit:checksum.txt	https://ftp.pride.ebi.ac.uk/pride/data/archive/2025/02/PXD060688/DdiA-4-18.raw	NA	NA	NA	NA
-DdiA-4-19.raw	raw	thermo_raw	3357807988	sha1:c2ef5fa2fff9b91960afefad02f40f0b6b3b10f9	deposit:checksum.txt	https://ftp.pride.ebi.ac.uk/pride/data/archive/2025/02/PXD060688/DdiA-4-19.raw	NA	NA	NA	NA
-DdiA-4-20.raw	raw	thermo_raw	3383021942	sha1:1f667ef388119e8d573a1e61f27c4f357feab23f	deposit:checksum.txt	https://ftp.pride.ebi.ac.uk/pride/data/archive/2025/02/PXD060688/DdiA-4-20.raw	NA	NA	NA	NA
-DdiA-4-21.raw	raw	thermo_raw	3388847357	sha1:f51c8afdec6bc194252423769b33ee3eebeb0692	deposit:checksum.txt	https://ftp.pride.ebi.ac.uk/pride/data/archive/2025/02/PXD060688/DdiA-4-21.raw	NA	NA	NA	NA
-DdiA-4-22.raw	raw	thermo_raw	3334331350	sha1:e264615d201caf021bcc388186cd2c0f25b56987	deposit:checksum.txt	https://ftp.pride.ebi.ac.uk/pride/data/archive/2025/02/PXD060688/DdiA-4-22.raw	NA	NA	NA	NA
-DdiA-4-23.raw	raw	thermo_raw	3353808002	sha1:7b945fde014b00333d42e4d01d3eb305324eb104	deposit:checksum.txt	https://ftp.pride.ebi.ac.uk/pride/data/archive/2025/02/PXD060688/DdiA-4-23.raw	NA	NA	NA	NA
-DdiA-4-24.raw	raw	thermo_raw	3311794201	sha1:089523e984193bbfadbd4b7b9d3ad8a9c557ddf8	deposit:checksum.txt	https://ftp.pride.ebi.ac.uk/pride/data/archive/2025/02/PXD060688/DdiA-4-24.raw	NA	NA	NA	NA
-DdiA-4.tsv	search	NA	1914006221	sha1:e0773354a38913e309044b7a67ce39fc0c43dfff	deposit:checksum.txt	https://ftp.pride.ebi.ac.uk/pride/data/archive/2025/02/PXD060688/DdiA-4.tsv	NA	NA	NA	NA
-DdiA-5-17.raw	raw	thermo_raw	3176343442	sha1:4b9fd927c164b07de6acd9a2834f474d2dcc526a	deposit:checksum.txt	https://ftp.pride.ebi.ac.uk/pride/data/archive/2025/02/PXD060688/DdiA-5-17.raw	NA	NA	NA	NA
-DdiA-5-18.raw	raw	thermo_raw	3260253152	sha1:afeb623a6d1617fe98fb2e3eacb7d70cb8ecae9b	deposit:checksum.txt	https://ftp.pride.ebi.ac.uk/pride/data/archive/2025/02/PXD060688/DdiA-5-18.raw	NA	NA	NA	NA
-DdiA-5-19.raw	raw	thermo_raw	3236046659	sha1:bdfbf0513bdd57fc088f7011f65ea1217e902f1e	deposit:checksum.txt	https://ftp.pride.ebi.ac.uk/pride/data/archive/2025/02/PXD060688/DdiA-5-19.raw	NA	NA	NA	NA
-DdiA-5-20.raw	raw	thermo_raw	3150136756	sha1:fae545cf3e27e938c66ee0bd3191fe16d2d909de	deposit:checksum.txt	https://ftp.pride.ebi.ac.uk/pride/data/archive/2025/02/PXD060688/DdiA-5-20.raw	NA	NA	NA	NA
-DdiA-5-21.raw	raw	thermo_raw	3185098195	sha1:a19450c90eaeede0d1267c9677424ff2ef5f9ff6	deposit:checksum.txt	https://ftp.pride.ebi.ac.uk/pride/data/archive/2025/02/PXD060688/DdiA-5-21.raw	NA	NA	NA	NA
-DdiA-5-22.raw	raw	thermo_raw	3175348930	sha1:145ff5f0820b430fae3fead1be6c4e2259dfcd71	deposit:checksum.txt	https://ftp.pride.ebi.ac.uk/pride/data/archive/2025/02/PXD060688/DdiA-5-22.raw	NA	NA	NA	NA
-DdiA-5-23.raw	raw	thermo_raw	3164321577	sha1:135f0253064b9e1eeffff55512d2e365b2eff228	deposit:checksum.txt	https://ftp.pride.ebi.ac.uk/pride/data/archive/2025/02/PXD060688/DdiA-5-23.raw	NA	NA	NA	NA
-DdiA-5-24.raw	raw	thermo_raw	3197604673	sha1:db4f8835341627881882fac11b509c7aa72f7a3a	deposit:checksum.txt	https://ftp.pride.ebi.ac.uk/pride/data/archive/2025/02/PXD060688/DdiA-5-24.raw	NA	NA	NA	NA
-DdiA-5.tsv	search	NA	1881390120	sha1:a08c9ebcf503c84d9eaf0d20d281e6d46fe87262	deposit:checksum.txt	https://ftp.pride.ebi.ac.uk/pride/data/archive/2025/02/PXD060688/DdiA-5.tsv	NA	NA	NA	NA
+file_name	file_type	raw_format	bytes	checksum	checksum_source	url	acquisition	acquisition_source	sample	condition	sha256
+DdiA-4-01.raw	raw	thermo_raw	3240703211	sha1:c204c1ddceeb2ea03f73758df10f9cd96983ddda	deposit:checksum.txt	https://ftp.pride.ebi.ac.uk/pride/data/archive/2025/02/PXD060688/DdiA-4-01.raw	NA	NA	NA	NA	9c38f1f7a2880cb55427718e30a5c22988ecfad0b7d6ec857886c53aafeed6ed
+DdiA-4-02.raw	raw	thermo_raw	3323736144	sha1:bffa12be741d3104deaac7a0bce6ffc07f622f4b	deposit:checksum.txt	https://ftp.pride.ebi.ac.uk/pride/data/archive/2025/02/PXD060688/DdiA-4-02.raw	NA	NA	NA	NA	b8790ccbc6abeb739a25ee1368b063748c3dfee82c201ae85d9c437f0c0ea327
+DdiA-4-03.raw	raw	thermo_raw	3303039144	sha1:4418a21200bb9b708fa9e3d35af059b9f41af00d	deposit:checksum.txt	https://ftp.pride.ebi.ac.uk/pride/data/archive/2025/02/PXD060688/DdiA-4-03.raw	NA	NA	NA	NA	bf3fff8ff77df2179013bf84ab66c7ad40a003abc4bc437b1e5b4f81ee22e367
+DdiA-4-04.raw	raw	thermo_raw	3248336183	sha1:89a6eeb72ce6baf0b69466d24d6d885a3e0d8771	deposit:checksum.txt	https://ftp.pride.ebi.ac.uk/pride/data/archive/2025/02/PXD060688/DdiA-4-04.raw	NA	NA	NA	NA	a1bccf92cf16c8c6ff9b5c285d466e3c8d7ae9af308ea0428a58c1440e5abbf4
+DdiA-4-05.raw	raw	thermo_raw	3233635884	sha1:90b3c20664a4709fc7ee06fc7684b8b5cdb3cda4	deposit:checksum.txt	https://ftp.pride.ebi.ac.uk/pride/data/archive/2025/02/PXD060688/DdiA-4-05.raw	NA	NA	NA	NA	NA
+DdiA-4-06.raw	raw	thermo_raw	3203273971	sha1:6ad32161a452a8957dd177cb6d3f1fe459701d5d	deposit:checksum.txt	https://ftp.pride.ebi.ac.uk/pride/data/archive/2025/02/PXD060688/DdiA-4-06.raw	NA	NA	NA	NA	NA
+DdiA-4-07.raw	raw	thermo_raw	3248517639	sha1:d69f2fd3706a0ef5b63b517728b2ec7acd037b42	deposit:checksum.txt	https://ftp.pride.ebi.ac.uk/pride/data/archive/2025/02/PXD060688/DdiA-4-07.raw	NA	NA	NA	NA	NA
+DdiA-4-08.raw	raw	thermo_raw	3189222310	sha1:2bf77e23e7904c04a20582dad273892e48b7440d	deposit:checksum.txt	https://ftp.pride.ebi.ac.uk/pride/data/archive/2025/02/PXD060688/DdiA-4-08.raw	NA	NA	NA	NA	NA
+DdiA-4-13.raw	raw	thermo_raw	3262296080	sha1:f30f51a26b9039e2e6e8d1244dde1a10a1400849	deposit:checksum.txt	https://ftp.pride.ebi.ac.uk/pride/data/archive/2025/02/PXD060688/DdiA-4-13.raw	NA	NA	NA	NA	NA
+DdiA-4-14.raw	raw	thermo_raw	3135834181	sha1:37d14489163b7f8d36ee63925186a7f0dc9c53e1	deposit:checksum.txt	https://ftp.pride.ebi.ac.uk/pride/data/archive/2025/02/PXD060688/DdiA-4-14.raw	NA	NA	NA	NA	NA
+DdiA-4-15.raw	raw	thermo_raw	3350866151	sha1:efce7ad87ad7e2fd2328acc49a12e0fd25a9ea84	deposit:checksum.txt	https://ftp.pride.ebi.ac.uk/pride/data/archive/2025/02/PXD060688/DdiA-4-15.raw	NA	NA	NA	NA	NA
+DdiA-4-16.raw	raw	thermo_raw	3203395822	sha1:99ff23b7f478339f59fe9b21b03282b9a9491977	deposit:checksum.txt	https://ftp.pride.ebi.ac.uk/pride/data/archive/2025/02/PXD060688/DdiA-4-16.raw	NA	NA	NA	NA	NA
+DdiA-4-17.raw	raw	thermo_raw	3328371480	sha1:52db448749bc6c4a96ecfe0267b39a1f0bf8ef92	deposit:checksum.txt	https://ftp.pride.ebi.ac.uk/pride/data/archive/2025/02/PXD060688/DdiA-4-17.raw	NA	NA	NA	NA	NA
+DdiA-4-18.raw	raw	thermo_raw	3277511691	sha1:703138958c0c7f3fce187a37c6dfbfab04659dbb	deposit:checksum.txt	https://ftp.pride.ebi.ac.uk/pride/data/archive/2025/02/PXD060688/DdiA-4-18.raw	NA	NA	NA	NA	NA
+DdiA-4-19.raw	raw	thermo_raw	3357807988	sha1:c2ef5fa2fff9b91960afefad02f40f0b6b3b10f9	deposit:checksum.txt	https://ftp.pride.ebi.ac.uk/pride/data/archive/2025/02/PXD060688/DdiA-4-19.raw	NA	NA	NA	NA	NA
+DdiA-4-20.raw	raw	thermo_raw	3383021942	sha1:1f667ef388119e8d573a1e61f27c4f357feab23f	deposit:checksum.txt	https://ftp.pride.ebi.ac.uk/pride/data/archive/2025/02/PXD060688/DdiA-4-20.raw	NA	NA	NA	NA	NA
+DdiA-4-21.raw	raw	thermo_raw	3388847357	sha1:f51c8afdec6bc194252423769b33ee3eebeb0692	deposit:checksum.txt	https://ftp.pride.ebi.ac.uk/pride/data/archive/2025/02/PXD060688/DdiA-4-21.raw	NA	NA	NA	NA	NA
+DdiA-4-22.raw	raw	thermo_raw	3334331350	sha1:e264615d201caf021bcc388186cd2c0f25b56987	deposit:checksum.txt	https://ftp.pride.ebi.ac.uk/pride/data/archive/2025/02/PXD060688/DdiA-4-22.raw	NA	NA	NA	NA	NA
+DdiA-4-23.raw	raw	thermo_raw	3353808002	sha1:7b945fde014b00333d42e4d01d3eb305324eb104	deposit:checksum.txt	https://ftp.pride.ebi.ac.uk/pride/data/archive/2025/02/PXD060688/DdiA-4-23.raw	NA	NA	NA	NA	NA
+DdiA-4-24.raw	raw	thermo_raw	3311794201	sha1:089523e984193bbfadbd4b7b9d3ad8a9c557ddf8	deposit:checksum.txt	https://ftp.pride.ebi.ac.uk/pride/data/archive/2025/02/PXD060688/DdiA-4-24.raw	NA	NA	NA	NA	NA
+DdiA-4.tsv	search	NA	1914006221	sha1:e0773354a38913e309044b7a67ce39fc0c43dfff	deposit:checksum.txt	https://ftp.pride.ebi.ac.uk/pride/data/archive/2025/02/PXD060688/DdiA-4.tsv	NA	NA	NA	NA	NA
+DdiA-5-17.raw	raw	thermo_raw	3176343442	sha1:4b9fd927c164b07de6acd9a2834f474d2dcc526a	deposit:checksum.txt	https://ftp.pride.ebi.ac.uk/pride/data/archive/2025/02/PXD060688/DdiA-5-17.raw	NA	NA	NA	NA	NA
+DdiA-5-18.raw	raw	thermo_raw	3260253152	sha1:afeb623a6d1617fe98fb2e3eacb7d70cb8ecae9b	deposit:checksum.txt	https://ftp.pride.ebi.ac.uk/pride/data/archive/2025/02/PXD060688/DdiA-5-18.raw	NA	NA	NA	NA	NA
+DdiA-5-19.raw	raw	thermo_raw	3236046659	sha1:bdfbf0513bdd57fc088f7011f65ea1217e902f1e	deposit:checksum.txt	https://ftp.pride.ebi.ac.uk/pride/data/archive/2025/02/PXD060688/DdiA-5-19.raw	NA	NA	NA	NA	NA
+DdiA-5-20.raw	raw	thermo_raw	3150136756	sha1:fae545cf3e27e938c66ee0bd3191fe16d2d909de	deposit:checksum.txt	https://ftp.pride.ebi.ac.uk/pride/data/archive/2025/02/PXD060688/DdiA-5-20.raw	NA	NA	NA	NA	NA
+DdiA-5-21.raw	raw	thermo_raw	3185098195	sha1:a19450c90eaeede0d1267c9677424ff2ef5f9ff6	deposit:checksum.txt	https://ftp.pride.ebi.ac.uk/pride/data/archive/2025/02/PXD060688/DdiA-5-21.raw	NA	NA	NA	NA	NA
+DdiA-5-22.raw	raw	thermo_raw	3175348930	sha1:145ff5f0820b430fae3fead1be6c4e2259dfcd71	deposit:checksum.txt	https://ftp.pride.ebi.ac.uk/pride/data/archive/2025/02/PXD060688/DdiA-5-22.raw	NA	NA	NA	NA	NA
+DdiA-5-23.raw	raw	thermo_raw	3164321577	sha1:135f0253064b9e1eeffff55512d2e365b2eff228	deposit:checksum.txt	https://ftp.pride.ebi.ac.uk/pride/data/archive/2025/02/PXD060688/DdiA-5-23.raw	NA	NA	NA	NA	NA
+DdiA-5-24.raw	raw	thermo_raw	3197604673	sha1:db4f8835341627881882fac11b509c7aa72f7a3a	deposit:checksum.txt	https://ftp.pride.ebi.ac.uk/pride/data/archive/2025/02/PXD060688/DdiA-5-24.raw	NA	NA	NA	NA	NA
+DdiA-5.tsv	search	NA	1881390120	sha1:a08c9ebcf503c84d9eaf0d20d281e6d46fe87262	deposit:checksum.txt	https://ftp.pride.ebi.ac.uk/pride/data/archive/2025/02/PXD060688/DdiA-5.tsv	NA	NA	NA	NA	NA
