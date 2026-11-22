@@ -372,6 +372,36 @@ def gene_fdr(out: Path) -> dict[str, Any]:
     return {"detection_summary": None if ds is None else ds.to_dict("records")}
 
 
+def candidates_ge2(out: Path, ref: pd.DataFrame, min_pep: int = 2) -> list[dict[str, Any]]:
+    """Route-B candidates with >= min_pep peptides and the RefSeq feature they overlap most
+    (same strand); coordinates 1-based closed; no peptide sequences."""
+    n = tbl(out, "novel_orfs")
+    if n is None:
+        return []
+    n = n[pd.to_numeric(n["n_peptides"], errors="coerce") >= min_pep]
+    cds = ref[ref["type"].isin(["CDS", "pseudogene"]) | ref["pseudo"]]
+    rows = []
+    for _, r in n.iterrows():
+        e = int(r["end"])
+        st = clean(r["start_longest"])
+        a, b = sorted((int(st), e)) if st is not None else (e, e)
+        same = cds[(cds["strand"] == r["strand"]) & (cds["start"] <= b) & (cds["end"] >= a)]
+        anys = cds[(cds["start"] <= b) & (cds["end"] >= a)]
+        best = max(((min(b, c["end"]) - max(a, c["start"]) + 1, c) for _, c in same.iterrows()),
+                   key=lambda x: x[0], default=None)
+        other = max(((min(b, c["end"]) - max(a, c["start"]) + 1, c) for _, c in anys.iterrows()),
+                    key=lambda x: x[0], default=None)
+        rows.append({k: clean(r[k]) for k in ("orf_id", "class", "strand", "start_longest", "end",
+                     "length_aa_longest", "n_peptides", "best_peptide_q", "class_fdr", "called",
+                     "overlapping_gene", "flags")} | {
+            "refseq_same_strand": None if best is None else {"name": best[1]["name"], "locus": best[1]["locus_tag"],
+                "start": int(best[1]["start"]), "end": int(best[1]["end"]), "pseudo": bool(best[1]["pseudo"]),
+                "overlap_frac_of_orf": round(best[0] / (b - a + 1), 3)},
+            "refseq_any_strand": None if other is None else {"name": other[1]["name"], "locus": other[1]["locus_tag"],
+                "strand": other[1]["strand"], "pseudo": bool(other[1]["pseudo"])}})
+    return rows
+
+
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--a", type=Path, required=True)
@@ -424,6 +454,7 @@ def main(argv: list[str] | None = None) -> int:
         doc["S6_context_B"] = regions_summary(B)
         doc["S7_novel"] = novel_vs_refseq(B, ref)
         doc["S8_q_floor"] = {"warnings": [x for x in (doc["B"]["warnings"] or []) if "class_q_floor" in str(x)]}
+        doc["S7_candidates_ge2"] = candidates_ge2(B, ref)
         d1, d2 = detected(A), detected(B)
         doc["S9_route_b"] = {"A_detected": len(d1), "B_detected": len(d2),
                              "A_kept_by_B": share(len(d1 & d2), len(d1)), "B_only": len(d2 - d1)}
