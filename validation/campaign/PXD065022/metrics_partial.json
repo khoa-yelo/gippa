@@ -1,0 +1,707 @@
+{
+ "schema": "gippa-campaign-phase2a-tpa-partial/1",
+ "strains": {
+  "tpa_dal1": {
+   "diann_a": {
+    "job_id": "2006168",
+    "node": "wheat-02",
+    "exit_code": 0,
+    "image_sha256": "1946452d56d2fb0f66e05ced473df88e53484e28040f1ecbd83c4a43405a6381",
+    "cfg_sha256": "ad82925965810d02244503659d78d1a778185ffedd1a0b76bc211fa2ad34d946",
+    "campaign_commit": "e6f4ef955ebad505b5193c51ad505baa26ea23fa",
+    "fasta_sha256": {
+     "/home/classes/bios/270/khoa/giap/local/campaign/PXD065022/db/tpa_dal1/db_a/strain_db.faa": "3eaac4b76761a77827dffb6d2a56fc31c4eae7da0d1f38ce215bf93d90d991f5",
+     "/home/classes/bios/270/khoa/giap/local/campaign/PXD065022/host/rabbit_host.fasta": "f145af1e1e4772636c2599a624695d15a7ee800db01ceff10aed813c7004970e"
+    },
+    "n_runs": 3,
+    "step1": {
+     "status": "ran",
+     "exit": 0,
+     "wall_s": 858
+    },
+    "step2": {
+     "status": "ran",
+     "exit": 0,
+     "wall_s": 13228
+    },
+    "wall_s": 14098,
+    "library_bytes": 1299581896,
+    "library_precursors": 5295633,
+    "ids_at_1pct_per_run": [
+     11407,
+     25829,
+     13081
+    ],
+    "protein_groups_global_q01": 4322,
+    "runs": [
+     "5602_TIMS1_RSLC-74m_DIA_Dalas_A_1_GA4_1_21298.d",
+     "5602_TIMS1_RSLC-74m_DIA_Dalas_B_1_GB5_1_21263.d",
+     "5602_TIMS1_RSLC-74m_DIA_Dalas_C_1_GC6_1_21330.d"
+    ]
+   },
+   "convert_a": {
+    "job_id": "2009201",
+    "pin": "/home/classes/bios/270/khoa/giap/local/worktrees/rel111-pin",
+    "commit": "bfc74ff6c20acc2cfcf298cdf23cbb30d8fae0dc",
+    "search_db": "same",
+    "convert_exit": 0,
+    "convert2_exit": 0,
+    "convert_wall_s": 3,
+    "deterministic": true,
+    "preflight_strict_exit": 3,
+    "preflight_exit": 0,
+    "strict_waived": "genome.gaps",
+    "preflight_wall_s": 6,
+    "sha256": {
+     "report": "19ef840e7e97b933a2ac2fe7b7eb018ceef2ee3a0b5902e007bee4f7b7d670e3",
+     "genome": "d0d22ef38b52b3e071dfc030a96fbc36e7c9cd4f3e7f7af53b9155e7ce5ae30d",
+     "annotation": "c360f3d47031b2dad9e6bdf403e154be1a59e4bacdcf4ceb6c3c52e336bde9f5",
+     "peptides": "177b6ab9d7dd084fc9962c386be7ac310fdb7e8f33844f9e20a16b53835410dd",
+     "abundance": "24b16299ac3ef7776408584419f39aebdaf085727187fe9a49f2322fb5720bc5"
+    }
+   },
+   "run_a_bfc74ff6": null,
+   "run_a_cff0fd68": {
+    "git_commit": "cff0fd6865ec0a11c738572f68c1516ae4477d87",
+    "exit_code": 4,
+    "status": "failed"
+   },
+   "diann_b": {
+    "job_id": "2006168",
+    "node": "wheat-02",
+    "exit_code": 0,
+    "image_sha256": "1946452d56d2fb0f66e05ced473df88e53484e28040f1ecbd83c4a43405a6381",
+    "cfg_sha256": "ad82925965810d02244503659d78d1a778185ffedd1a0b76bc211fa2ad34d946",
+    "campaign_commit": "6976e60a524e2543b8f9534d350c833e2bb1a262",
+    "fasta_sha256": {
+     "/home/classes/bios/270/khoa/giap/local/campaign/PXD065022/db/tpa_dal1/db_b/strain_db.faa": "854d1e2371afdecf4d93f68df02f2b30a86362209dd65e4e606362cf1bc66a62",
+     "/home/classes/bios/270/khoa/giap/local/campaign/PXD065022/host/rabbit_host.fasta": "f145af1e1e4772636c2599a624695d15a7ee800db01ceff10aed813c7004970e"
+    },
+    "n_runs": 3,
+    "step1": {
+     "status": "ran",
+     "exit": 0,
+     "wall_s": 1320
+    },
+    "step2": {
+     "status": "ran",
+     "exit": 0,
+     "wall_s": 17976
+    },
+    "wall_s": 19344,
+    "library_bytes": 1524690543,
+    "library_precursors": 6198649,
+    "ids_at_1pct_per_run": [
+     10932,
+     25720,
+     13089
+    ],
+    "protein_groups_global_q01": 4257,
+    "runs": [
+     "5602_TIMS1_RSLC-74m_DIA_Dalas_A_1_GA4_1_21298.d",
+     "5602_TIMS1_RSLC-74m_DIA_Dalas_B_1_GB5_1_21263.d",
+     "5602_TIMS1_RSLC-74m_DIA_Dalas_C_1_GC6_1_21330.d"
+    ]
+   },
+   "convert_b": {
+    "job_id": "2006168",
+    "pin": "/home/classes/bios/270/khoa/giap/local/worktrees/rel111-pin",
+    "commit": "bfc74ff6c20acc2cfcf298cdf23cbb30d8fae0dc",
+    "search_db": "same",
+    "convert_exit": 0,
+    "convert2_exit": 0,
+    "convert_wall_s": 4,
+    "deterministic": true,
+    "preflight_strict_exit": 3,
+    "preflight_exit": 0,
+    "strict_waived": "genome.gaps",
+    "preflight_wall_s": 7,
+    "sha256": {
+     "report": "dcb699365fa1559d4d332b6eb630ed84c4d8e2513bf4ebcfb46ea141afc74e35",
+     "genome": "d0d22ef38b52b3e071dfc030a96fbc36e7c9cd4f3e7f7af53b9155e7ce5ae30d",
+     "annotation": "c360f3d47031b2dad9e6bdf403e154be1a59e4bacdcf4ceb6c3c52e336bde9f5",
+     "peptides": "88c25630d5ea2cb0db321b8c68027e5ef3a309cf32018800385783a99fabbdcf",
+     "abundance": "8b1e3ac831d317716f25a0338ce1dff34282516b9f3b8f3c6c01c3349b80af85"
+    }
+   },
+   "run_b_bfc74ff6": {
+    "git_commit": "bfc74ff6c20acc2cfcf298cdf23cbb30d8fae0dc",
+    "exit_code": 4,
+    "status": "failed"
+   },
+   "run_b_cff0fd68": {
+    "git_commit": "cff0fd6865ec0a11c738572f68c1516ae4477d87",
+    "exit_code": 4,
+    "status": "failed"
+   },
+   "T1_host": {
+    "n_accepted_peptides": 24510,
+    "cont_only": {
+     "k": 16160,
+     "n": 24510,
+     "value": 0.6593227254181967,
+     "ci_low": 0.6533648610096385,
+     "ci_high": 0.6652306562665724
+    },
+    "rabbit_only": {
+     "k": 13917,
+     "n": 24510,
+     "value": 0.5678090575275397,
+     "ci_low": 0.561597141615038,
+     "ci_high": 0.5739997213076411
+    },
+    "library_only": {
+     "k": 1685,
+     "n": 24510,
+     "value": 0.06874745002039984,
+     "ci_low": 0.06564689776477167,
+     "ci_high": 0.07198316174622763
+    }
+   },
+   "T6_truth_counts": null
+  },
+  "tpa_grady": {
+   "diann_a": {
+    "job_id": "2009201",
+    "node": "wheat-07",
+    "exit_code": 0,
+    "image_sha256": "1946452d56d2fb0f66e05ced473df88e53484e28040f1ecbd83c4a43405a6381",
+    "cfg_sha256": "ad82925965810d02244503659d78d1a778185ffedd1a0b76bc211fa2ad34d946",
+    "campaign_commit": "992556d2b822b542d4bd4802243eee4975adcd44",
+    "fasta_sha256": {
+     "/home/classes/bios/270/khoa/giap/local/campaign/PXD065022/db/tpa_grady/db_a/strain_db.faa": "573f5d89bc0781148f1f637f8e5c16aa7933a441254e8e7c838a9cf65b6504db",
+     "/home/classes/bios/270/khoa/giap/local/campaign/PXD065022/host/rabbit_host.fasta": "f145af1e1e4772636c2599a624695d15a7ee800db01ceff10aed813c7004970e"
+    },
+    "n_runs": 3,
+    "step1": {
+     "status": "ran",
+     "exit": 0,
+     "wall_s": 973
+    },
+    "step2": {
+     "status": "ran",
+     "exit": 0,
+     "wall_s": 10177
+    },
+    "wall_s": 11185,
+    "library_bytes": 1299606170,
+    "library_precursors": 5295728,
+    "ids_at_1pct_per_run": [
+     10429,
+     10536,
+     7854
+    ],
+    "protein_groups_global_q01": 3341,
+    "runs": [
+     "5602_TIMS1_RSLC-74m_DIA_Grady_A_1_GB1_1_21191.d",
+     "5602_TIMS1_RSLC-74m_DIA_Grady_B_1_GC2_1_21306.d",
+     "5602_TIMS1_RSLC-74m_DIA_Grady_C_1_GD3_1_21274.d"
+    ]
+   },
+   "convert_a": {
+    "job_id": "2009201",
+    "pin": "/home/classes/bios/270/khoa/giap/local/worktrees/rel111-pin",
+    "commit": "bfc74ff6c20acc2cfcf298cdf23cbb30d8fae0dc",
+    "search_db": "same",
+    "convert_exit": 0,
+    "convert2_exit": 0,
+    "convert_wall_s": 2,
+    "deterministic": true,
+    "preflight_strict_exit": 3,
+    "preflight_exit": 0,
+    "strict_waived": "genome.gaps",
+    "preflight_wall_s": 4,
+    "sha256": {
+     "report": "629a69a0bdb6e85a8ab1c3e64dc5c53526ffa29e678846834eee50c6e4653c7e",
+     "genome": "32f1e0cc4ccb7efa956e1182ce16b32b9ac88087bdfb4bfc2bd212e656f9e4ad",
+     "annotation": "9697f38b603ab30071f2877e7f473fbd1f63fdb07ed3aec98a4bfc6976faec5c",
+     "peptides": "9a576f6cca090eefb857b7099443795a745d3075ed1bed099bec86a45aa9e305",
+     "abundance": "ff9b785c8f18e71bfebadf6cb369977040fdba57b9c5143f6ff165e3789aad1b"
+    }
+   },
+   "run_a_bfc74ff6": null,
+   "run_a_cff0fd68": {
+    "git_commit": "cff0fd6865ec0a11c738572f68c1516ae4477d87",
+    "exit_code": 4,
+    "status": "failed"
+   },
+   "diann_b": {
+    "job_id": "2011438",
+    "node": "wheat-06",
+    "exit_code": 0,
+    "image_sha256": "1946452d56d2fb0f66e05ced473df88e53484e28040f1ecbd83c4a43405a6381",
+    "cfg_sha256": "ad82925965810d02244503659d78d1a778185ffedd1a0b76bc211fa2ad34d946",
+    "campaign_commit": "462c411b600204d8e90c8ecf66a7f67fb6288fed",
+    "fasta_sha256": {
+     "/home/classes/bios/270/khoa/giap/local/campaign/PXD065022/db/tpa_grady/db_b/strain_db.faa": "caec5c59664f9fd591f161b5198fef409df7d4704d47a46baeeaeb7e81e375aa",
+     "/home/classes/bios/270/khoa/giap/local/campaign/PXD065022/host/rabbit_host.fasta": "f145af1e1e4772636c2599a624695d15a7ee800db01ceff10aed813c7004970e"
+    },
+    "n_runs": 3,
+    "step1": {
+     "status": "ran",
+     "exit": 0,
+     "wall_s": 1009
+    },
+    "step2": {
+     "status": "ran",
+     "exit": 0,
+     "wall_s": 12388
+    },
+    "wall_s": 13429,
+    "library_bytes": 1525025741,
+    "library_precursors": 6199511,
+    "ids_at_1pct_per_run": [
+     10076,
+     10299,
+     7826
+    ],
+    "protein_groups_global_q01": 3286,
+    "runs": [
+     "5602_TIMS1_RSLC-74m_DIA_Grady_A_1_GB1_1_21191.d",
+     "5602_TIMS1_RSLC-74m_DIA_Grady_B_1_GC2_1_21306.d",
+     "5602_TIMS1_RSLC-74m_DIA_Grady_C_1_GD3_1_21274.d"
+    ]
+   },
+   "convert_b": {
+    "job_id": "2011438",
+    "pin": "/home/classes/bios/270/khoa/giap/local/worktrees/rel111-pin",
+    "commit": "bfc74ff6c20acc2cfcf298cdf23cbb30d8fae0dc",
+    "search_db": "same",
+    "convert_exit": 0,
+    "convert2_exit": 0,
+    "convert_wall_s": 2,
+    "deterministic": true,
+    "preflight_strict_exit": 3,
+    "preflight_exit": 0,
+    "strict_waived": "genome.gaps",
+    "preflight_wall_s": 5,
+    "sha256": {
+     "report": "34c88a45f94dbc89eaa0a32ce8024756f4184e5ca9e98d1976e9ac89152f45f2",
+     "genome": "32f1e0cc4ccb7efa956e1182ce16b32b9ac88087bdfb4bfc2bd212e656f9e4ad",
+     "annotation": "9697f38b603ab30071f2877e7f473fbd1f63fdb07ed3aec98a4bfc6976faec5c",
+     "peptides": "0ffb77f6537dea8931c3f4e960ac8353312d01530303b6afd7981c36a1ecc8ce",
+     "abundance": "eb8d336b972e0c4b16402c2edb2eceaf61e22b4ed0a3bcd808943033f56d1621"
+    }
+   },
+   "run_b_bfc74ff6": null,
+   "run_b_cff0fd68": null,
+   "T1_host": {
+    "n_accepted_peptides": 12117,
+    "cont_only": {
+     "k": 9371,
+     "n": 12117,
+     "value": 0.7733762482462656,
+     "ci_low": 0.7658361256178866,
+     "ci_high": 0.7807430885817012
+    },
+    "rabbit_only": {
+     "k": 7794,
+     "n": 12117,
+     "value": 0.6432285219113641,
+     "ci_low": 0.6346547676310343,
+     "ci_high": 0.6517114893481004
+    },
+    "library_only": {
+     "k": 1129,
+     "n": 12117,
+     "value": 0.0931748782701989,
+     "ci_low": 0.08812741539694349,
+     "ci_high": 0.09848021135117185
+    }
+   },
+   "T6_truth_counts": {
+    "codon_check_failed": 2,
+    "gap_columns": 10,
+    "initiator_start_differences": 1,
+    "mg_proteins": 976,
+    "ncm_no_hit": 3,
+    "ncm_no_rbh": 8,
+    "ncm_proteins": 978,
+    "outside_hsp_residues": 174,
+    "pairs": 962,
+    "pairs_identical": 856,
+    "pairs_ncm_NZ_CP035104.1": 962,
+    "proteins_with_sites": 96,
+    "rbh_below_limits": 5,
+    "sites": 218,
+    "sites_ncm_NZ_CP035104.1": 218
+   }
+  },
+  "tpa_haitib": {
+   "diann_a": {
+    "job_id": "2009201",
+    "node": "wheat-07",
+    "exit_code": 0,
+    "image_sha256": "1946452d56d2fb0f66e05ced473df88e53484e28040f1ecbd83c4a43405a6381",
+    "cfg_sha256": "ad82925965810d02244503659d78d1a778185ffedd1a0b76bc211fa2ad34d946",
+    "campaign_commit": "992556d2b822b542d4bd4802243eee4975adcd44",
+    "fasta_sha256": {
+     "/home/classes/bios/270/khoa/giap/local/campaign/PXD065022/db/tpa_haitib/db_a/strain_db.faa": "bfa153c28a3c3a1a762891bd700549836f9ae55500abe340c4e6f986d1d91eef",
+     "/home/classes/bios/270/khoa/giap/local/campaign/PXD065022/host/rabbit_host.fasta": "f145af1e1e4772636c2599a624695d15a7ee800db01ceff10aed813c7004970e"
+    },
+    "n_runs": 3,
+    "step1": {
+     "status": "ran",
+     "exit": 0,
+     "wall_s": 1065
+    },
+    "step2": {
+     "status": "ran",
+     "exit": 0,
+     "wall_s": 10506
+    },
+    "wall_s": 11607,
+    "library_bytes": 1299560568,
+    "library_precursors": 5295543,
+    "ids_at_1pct_per_run": [
+     3080,
+     33704,
+     12341
+    ],
+    "protein_groups_global_q01": 4702,
+    "runs": [
+     "5602_TIMS1_RSLC-74m_DIA_HAITI_A_1_GA3_1_21372.d",
+     "5602_TIMS1_RSLC-74m_DIA_HAITI_B_2_GB4_1_21380.d",
+     "5602_TIMS1_RSLC-74m_DIA_HAITI_C_1_GC5_1_21223.d"
+    ]
+   },
+   "convert_a": {
+    "job_id": "2009201",
+    "pin": "/home/classes/bios/270/khoa/giap/local/worktrees/rel111-pin",
+    "commit": "bfc74ff6c20acc2cfcf298cdf23cbb30d8fae0dc",
+    "search_db": "same",
+    "convert_exit": 0,
+    "convert2_exit": 0,
+    "convert_wall_s": 2,
+    "deterministic": true,
+    "preflight_strict_exit": 3,
+    "preflight_exit": 0,
+    "strict_waived": "genome.gaps",
+    "preflight_wall_s": 5,
+    "sha256": {
+     "report": "36e0e038ea84185a34d4293a146bfe1d68c464aab60d7160ad66b55119dca8e8",
+     "genome": "520db4654296dfe21901a0bff785e53145de2ee3120dbaf957511498ca1abaf4",
+     "annotation": "28a4cd5a1bdc516f327fb2374f1ede307aaeb5d8cc84676fb29210b6e867cd85",
+     "peptides": "28c0a50d65c26a76adcb2783f0d644091a65dcbe3dce9196312a721e0c581a75",
+     "abundance": "96d58bdea9122a52cfc3fb24e1ce07486da5cb23e3b266748bcf0d6bedfecfc2"
+    }
+   },
+   "run_a_bfc74ff6": null,
+   "run_a_cff0fd68": null,
+   "diann_b": null,
+   "convert_b": null,
+   "run_b_bfc74ff6": null,
+   "run_b_cff0fd68": null,
+   "T1_host": {
+    "n_accepted_peptides": 32302,
+    "cont_only": {
+     "k": 23018,
+     "n": 32302,
+     "value": 0.7125874558850845,
+     "ci_low": 0.7076271994709997,
+     "ci_high": 0.7174971551292768
+    },
+    "rabbit_only": {
+     "k": 19932,
+     "n": 32302,
+     "value": 0.6170515757538233,
+     "ci_low": 0.6117368753540456,
+     "ci_high": 0.6223384391564605
+    },
+    "library_only": {
+     "k": 2365,
+     "n": 32302,
+     "value": 0.07321528078756734,
+     "ci_low": 0.07042505601808019,
+     "ci_high": 0.0761070027383767
+    }
+   },
+   "T6_truth_counts": {
+    "codon_check_failed": 2,
+    "gap_columns": 25,
+    "initiator_start_differences": 2,
+    "mg_proteins": 976,
+    "ncm_no_hit": 2,
+    "ncm_no_rbh": 5,
+    "ncm_proteins": 976,
+    "outside_hsp_residues": 139,
+    "pairs": 962,
+    "pairs_identical": 901,
+    "pairs_ncm_NZ_CP032623.1": 962,
+    "proteins_with_sites": 51,
+    "rbh_below_limits": 7,
+    "sites": 82,
+    "sites_ncm_NZ_CP032623.1": 82
+   }
+  },
+  "tpa_madras": {
+   "diann_a": {
+    "job_id": "2009201",
+    "node": "wheat-07",
+    "exit_code": 0,
+    "image_sha256": "1946452d56d2fb0f66e05ced473df88e53484e28040f1ecbd83c4a43405a6381",
+    "cfg_sha256": "ad82925965810d02244503659d78d1a778185ffedd1a0b76bc211fa2ad34d946",
+    "campaign_commit": "462c411b600204d8e90c8ecf66a7f67fb6288fed",
+    "fasta_sha256": {
+     "/home/classes/bios/270/khoa/giap/local/campaign/PXD065022/db/tpa_madras/db_a/strain_db.faa": "d4bb6f29168f71148f148a3f5f0a3ac663bb8a86ef2eca5e107bf0bdbd3aafc7",
+     "/home/classes/bios/270/khoa/giap/local/campaign/PXD065022/host/rabbit_host.fasta": "f145af1e1e4772636c2599a624695d15a7ee800db01ceff10aed813c7004970e"
+    },
+    "n_runs": 3,
+    "step1": {
+     "status": "ran",
+     "exit": 0,
+     "wall_s": 853
+    },
+    "step2": {
+     "status": "ran",
+     "exit": 0,
+     "wall_s": 10608
+    },
+    "wall_s": 11495,
+    "library_bytes": 1299513439,
+    "library_precursors": 5295348,
+    "ids_at_1pct_per_run": [
+     16376,
+     10768,
+     13787
+    ],
+    "protein_groups_global_q01": 3915,
+    "runs": [
+     "5602_TIMS1_RSLC-74m_DIA_Madras_A_1_GA5_1_21199.d",
+     "5602_TIMS1_RSLC-74m_DIA_Madras_B_1_GB6_1_21247.d",
+     "5602_TIMS1_RSLC-74m_DIA_Madras_C_1_GC7_1_21175.d"
+    ]
+   },
+   "convert_a": {
+    "job_id": "2009201",
+    "pin": "/home/classes/bios/270/khoa/giap/local/worktrees/rel111-pin",
+    "commit": "bfc74ff6c20acc2cfcf298cdf23cbb30d8fae0dc",
+    "search_db": "same",
+    "convert_exit": 0,
+    "convert2_exit": 0,
+    "convert_wall_s": 3,
+    "deterministic": true,
+    "preflight_strict_exit": 3,
+    "preflight_exit": 0,
+    "strict_waived": "genome.gaps",
+    "preflight_wall_s": 6,
+    "sha256": {
+     "report": "1086aaf24cacd70e487ecdd2ec1d022423dd36d1b60afb9e86e6aaf7830a8098",
+     "genome": "6136c6a7db9ea8c564cd3bd54ca4461a770a47ef51aba169def39693ad6f29ae",
+     "annotation": "3890f2a3e1cc7327827b781127ac8d265309bd125d7dfb107c1af3f9d1b3b964",
+     "peptides": "a765e2a09c7ff82fffc93862021fc0e2169c86b3224ba41a0309c6bb9dbab198",
+     "abundance": "155bed749af6013593b5820e710932ec51d7a133c19ca9f96bb01fbcab3382a6"
+    }
+   },
+   "run_a_bfc74ff6": null,
+   "run_a_cff0fd68": null,
+   "diann_b": null,
+   "convert_b": null,
+   "run_b_bfc74ff6": null,
+   "run_b_cff0fd68": null,
+   "T1_host": {
+    "n_accepted_peptides": 16532,
+    "cont_only": {
+     "k": 11612,
+     "n": 16532,
+     "value": 0.7023953544640696,
+     "ci_low": 0.6953795759942897,
+     "ci_high": 0.7093170955760763
+    },
+    "rabbit_only": {
+     "k": 9864,
+     "n": 16532,
+     "value": 0.5966610210500847,
+     "ci_low": 0.589161420149568,
+     "ci_high": 0.6041157111025076
+    },
+    "library_only": {
+     "k": 1287,
+     "n": 16532,
+     "value": 0.0778490200822647,
+     "ci_low": 0.07386213120466449,
+     "ci_high": 0.08203204964124579
+    }
+   },
+   "T6_truth_counts": {
+    "codon_check_failed": 2,
+    "initiator_start_differences": 3,
+    "mg_proteins": 976,
+    "ncm_no_hit": 0,
+    "ncm_no_rbh": 4,
+    "ncm_proteins": 975,
+    "outside_hsp_residues": 134,
+    "pairs": 966,
+    "pairs_identical": 939,
+    "pairs_ncm_NZ_CP078121.1": 966,
+    "proteins_with_sites": 21,
+    "rbh_below_limits": 5,
+    "sites": 26,
+    "sites_ncm_NZ_CP078121.1": 26
+   }
+  },
+  "tpa_mexicoa": {
+   "diann_a": {
+    "job_id": "2009201",
+    "node": "wheat-07",
+    "exit_code": 0,
+    "image_sha256": "1946452d56d2fb0f66e05ced473df88e53484e28040f1ecbd83c4a43405a6381",
+    "cfg_sha256": "ad82925965810d02244503659d78d1a778185ffedd1a0b76bc211fa2ad34d946",
+    "campaign_commit": "e982dc613c07ce6f00778bf371b6e85a63cd2b68",
+    "fasta_sha256": {
+     "/home/classes/bios/270/khoa/giap/local/campaign/PXD065022/db/tpa_mexicoa/db_a/strain_db.faa": "8392e61b358063220ed46a637e2f0976ba6c14645e533f210a3ab15a343af8ad",
+     "/home/classes/bios/270/khoa/giap/local/campaign/PXD065022/host/rabbit_host.fasta": "f145af1e1e4772636c2599a624695d15a7ee800db01ceff10aed813c7004970e"
+    },
+    "n_runs": 3,
+    "step1": {
+     "status": "ran",
+     "exit": 0,
+     "wall_s": 1031
+    },
+    "step2": {
+     "status": "ran",
+     "exit": 0,
+     "wall_s": 10874
+    },
+    "wall_s": 11941,
+    "library_bytes": 1299701014,
+    "library_precursors": 5296112,
+    "ids_at_1pct_per_run": [
+     12237,
+     17001,
+     6528
+    ],
+    "protein_groups_global_q01": 3726,
+    "runs": [
+     "5602_TIMS1_RSLC-74m_DIA_Mexiko_A_1_GA7_1_21348.d",
+     "5602_TIMS1_RSLC-74m_DIA_Mexiko_B_1_GB8_1_21290.d",
+     "5602_TIMS1_RSLC-74m_DIA_Mexiko_C_1_GD1_1_21167.d"
+    ]
+   },
+   "convert_a": {
+    "job_id": "2009201",
+    "pin": "/home/classes/bios/270/khoa/giap/local/worktrees/rel111-pin",
+    "commit": "bfc74ff6c20acc2cfcf298cdf23cbb30d8fae0dc",
+    "search_db": "same",
+    "convert_exit": 0,
+    "convert2_exit": 0,
+    "convert_wall_s": 2,
+    "deterministic": true,
+    "preflight_strict_exit": 3,
+    "preflight_exit": 0,
+    "strict_waived": "genome.gaps",
+    "preflight_wall_s": 4,
+    "sha256": {
+     "report": "96b2b9c643c44867b1a2ab1c07499bbc951b393eaa4cf1482f69223f34ee44e0",
+     "genome": "74bc3500b92d3394340cf0e57f64a29fda65e3e0b653a9190ea57f45d765b542",
+     "annotation": "0c488021e874bf4d2f0d5d5faf96350c38eddd03e06e918a0512fa383815c3c4",
+     "peptides": "5cbd997328a4d65f977c5fed0b8c206029b433182a555b2db317ff09a1213be7",
+     "abundance": "ed7cb8e5b763d0abd62f0504767b8345908456390916e9458d7f03154c697cfa"
+    }
+   },
+   "run_a_bfc74ff6": null,
+   "run_a_cff0fd68": null,
+   "diann_b": null,
+   "convert_b": null,
+   "run_b_bfc74ff6": null,
+   "run_b_cff0fd68": null,
+   "T1_host": {
+    "n_accepted_peptides": 17153,
+    "cont_only": {
+     "k": 11586,
+     "n": 17153,
+     "value": 0.6754503585378651,
+     "ci_low": 0.6684050199036855,
+     "ci_high": 0.682417129642116
+    },
+    "rabbit_only": {
+     "k": 9427,
+     "n": 17153,
+     "value": 0.5495831632950504,
+     "ci_low": 0.5421272462898444,
+     "ci_high": 0.557016876716869
+    },
+    "library_only": {
+     "k": 1617,
+     "n": 17153,
+     "value": 0.09426922404244155,
+     "ci_low": 0.08998678427710179,
+     "ci_high": 0.09873335203656984
+    }
+   },
+   "T6_truth_counts": {
+    "codon_check_failed": 3,
+    "gap_columns": 82,
+    "initiator_start_differences": 3,
+    "mg_proteins": 976,
+    "ncm_no_hit": 4,
+    "ncm_no_rbh": 5,
+    "ncm_proteins": 975,
+    "outside_hsp_residues": 215,
+    "pairs": 961,
+    "pairs_identical": 854,
+    "pairs_ncm_NC_018722.1": 961,
+    "proteins_with_sites": 93,
+    "rbh_below_limits": 5,
+    "sites": 247,
+    "sites_ncm_NC_018722.1": 247
+   }
+  },
+  "tpa_phil1": {
+   "diann_a": null,
+   "convert_a": null,
+   "run_a_bfc74ff6": null,
+   "run_a_cff0fd68": null,
+   "diann_b": null,
+   "convert_b": null,
+   "run_b_bfc74ff6": null,
+   "run_b_cff0fd68": null,
+   "T1_host": null,
+   "T6_truth_counts": {
+    "codon_check_failed": 3,
+    "gap_columns": 10,
+    "initiator_start_differences": 4,
+    "mg_proteins": 976,
+    "ncm_no_hit": 2,
+    "ncm_no_rbh": 8,
+    "ncm_proteins": 979,
+    "outside_hsp_residues": 295,
+    "pairs": 964,
+    "pairs_identical": 857,
+    "pairs_ncm_NZ_CP035193.1": 964,
+    "proteins_with_sites": 96,
+    "rbh_below_limits": 5,
+    "sites": 221,
+    "sites_ncm_NZ_CP035193.1": 221
+   }
+  },
+  "tpa_ss14": {
+   "diann_a": null,
+   "convert_a": null,
+   "run_a_bfc74ff6": null,
+   "run_a_cff0fd68": null,
+   "diann_b": null,
+   "convert_b": null,
+   "run_b_bfc74ff6": null,
+   "run_b_cff0fd68": null,
+   "T1_host": null,
+   "T6_truth_counts": {
+    "codon_check_failed": 3,
+    "gap_columns": 10,
+    "initiator_start_differences": 4,
+    "mg_proteins": 976,
+    "ncm_no_hit": 2,
+    "ncm_no_rbh": 8,
+    "ncm_proteins": 979,
+    "outside_hsp_residues": 295,
+    "pairs": 964,
+    "pairs_identical": 856,
+    "pairs_ncm_NC_021508.1": 964,
+    "proteins_with_sites": 97,
+    "rbh_below_limits": 5,
+    "sites": 224,
+    "sites_ncm_NC_021508.1": 224
+   }
+  }
+ }
+}
