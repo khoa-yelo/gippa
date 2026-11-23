@@ -550,6 +550,15 @@ Until that is decided, two things hold:
 - **M-3.** The M6-01 attacks: AR(1) abundance (attack A), and detection confounded with distance
   (attack B).
 
+### Promoter windows over assembly gaps (#611, 1.1.1)
+
+Promotech's encoder drops non-ACGT bases, so a 40-nt window with an `N` or any IUPAC code is not
+sent to it: `dedupe_and_chunk` keeps the window's map row with a null header, `promoter_layer`
+gives that position a NaN score (never a promoter) and the run logs one WARNING with the number of
+skipped positions. Gene and between-gene promoter scores are the maximum over scored windows only
+(NaN, or no `promoter_between` value, when every window was skipped). Genomes with only ACGT give
+byte-identical outputs.
+
 ## Simulations (M6-03)
 
 The operon generators live in `tests/sim/gippasim/scenarios.py` (configs) and
