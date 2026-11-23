@@ -1,0 +1,1 @@
+`gippa run` no longer crashes in Promoter Calculator on genomes with assembly gaps. TU upstream regions containing `N` or another non-ACGT base are not sent to Promoter Calculator; the genes of those TUs get NA transcription-rate and TSS-distance layers (a scored TU without a hit keeps 0), and the run logs one warning with their count. Gap-free genomes give identical outputs.
