@@ -446,14 +446,26 @@ def cdif(a: Path, b: Path, pa: Path, pb: Path, nov_b: dict[str, Any]) -> dict[st
     c5["B_candidates"] = novel_overlapping(b, CDIF, 2678908, 2679381, "-")
     res["C5"] = c5
     # C6 PrdB C-terminal tail 3,749,919-3,750,188 (-)
+    # Verdict as ANSWER_KEY.md words it: every route-B peptide in the window belongs to a candidate
+    # (its peptide is in a candidate's `peptides`); counts only, no sequence leaves this function.
     hb = hits_in(b, CDIF, 3749919, 3750188, "-")
     cands = novel_overlapping(b, CDIF, 3749919, 3750188, "-")
     n = int(hb["peptide"].nunique())
+    nt = tbl(b, "novel_orfs")
+    ids = {c["orf_id"] for c in cands}
+    # I/L-blind: novel_orfs.tsv and peptide_hits.tsv may spell I/L differently (mass-identical)
+    cpep = set() if nt is None else {p.replace("I", "L") for _, r in nt[nt["orf_id"].astype(str).isin(ids)].iterrows()
+                                     for p in str(r["peptides"]).split(";") if p and p != "nan"}
+    in_c = int(len({p.replace("I", "L") for p in hb["peptide"].astype(str)} & cpep))
     res["C6"] = {"gene_A": gene_row(a, "FLEEGO_03446"), "B_peptides_in_tail": n,
                  "B_locus_class": dict(Counter(hb["locus_class"].astype(str))) if n else {},
+                 "B_locus_class_by_gene": {f"{k[0]}|{k[1]}": int(v) for k, v in hb.groupby(
+                     [hb["locus_class"].astype(str), hb["gene"].astype(str)])["peptide"].nunique().items()} if n else {},
+                 "B_peptides_in_candidates": in_c,
+                 "genes_in_tail_A": {t: gene_row(a, t) for t in ("FLEEGO_03445",)},
+                 "A_peptides_in_tail": int(hits_in(a, CDIF, 3749919, 3750188, "-")["peptide"].nunique()),
                  "B_candidates": cands,
-                 "verdict": "not testable" if not n else ("pass" if cands and all(
-                     str(x) not in ("cds", "annotated") for x in hb["locus_class"].astype(str)) else "fail")}
+                 "verdict": "not testable" if not n else ("pass" if in_c == n else "fail")}
     return res
 
 
@@ -461,10 +473,10 @@ def novel_overlapping(out: Path, contig: str, lo: int, hi: int, strand: str) -> 
     n = tbl(out, "novel_orfs")
     if n is None:
         return []
-    s = pd.to_numeric(n["start_longest"], errors="coerce")
-    e = pd.to_numeric(n["end"], errors="coerce")
-    a = pd.concat([s, e], axis=1).min(axis=1)
-    b = pd.concat([s, e], axis=1).max(axis=1)
+    # span via _orf_span, so a candidate without a start codon (start_longest NA) keeps its extent
+    sp = [_orf_span(r) for _, r in n.iterrows()]
+    a = pd.Series([x[0] if x else np.nan for x in sp], index=n.index)
+    b = pd.Series([x[1] if x else np.nan for x in sp], index=n.index)
     sel = n[((n["contig"].astype(str) == contig) & (n["strand"].astype(str) == strand) & (a <= hi) & (b >= lo)).fillna(False).astype(bool)]
     keep = ("orf_id", "class", "strand", "start_longest", "end", "length_aa_longest", "n_peptides",
             "best_peptide_q", "class_fdr", "called", "overlapping_gene", "flags")
