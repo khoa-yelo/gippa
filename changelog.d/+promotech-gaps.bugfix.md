@@ -1,0 +1,1 @@
+`gippa run` no longer crashes in Promotech on genomes with assembly gaps (#611). Promoter windows containing `N` or another non-ACGT base are not sent to Promotech; they get a NaN score, are never called promoters, and the run logs one warning with their count. Gene promoter scores use the maximum over the scored windows. Gap-free genomes give identical outputs.
