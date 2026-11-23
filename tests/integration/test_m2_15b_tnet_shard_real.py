@@ -140,7 +140,7 @@ def _same_except_gapped(got: bytes, ref: bytes, gapped: dict[str, str]) -> None:
         early_ref = [f[2:] for f in ref_calls if int(f[9]) <= first_gap - 200]
         early_got = [f[2:] for f in calls if int(f[9]) <= first_gap - 200]
         assert early_got == early_ref, f"{name}: calls before the first gap changed"
-    if "y" in gapped:  # record c's only call spans its N run and is dropped
+    if "y" in gapped:  # record y keeps gapped calls; record c's only call spans its N run
         assert checked, "no gapped call was checked"
 
 

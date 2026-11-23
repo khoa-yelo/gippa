@@ -948,7 +948,8 @@ gzip in a separate change. As the spec section 4 call is written, it fails with
 codes) before it scans, so its own coordinates shift after the first such base. The default sharded
 path (`gippa_terminatornet_shard merge`) maps every call back to original genome coordinates, drops
 the hairpins whose span crosses a removed base, and logs one WARNING with both counts; gap-free
-genomes give byte-identical output.
+genomes give byte-identical output. Only the hairpin span is tested: a kept hairpin next to a gap
+can still carry an A- or U-tract read across the removed bases.
 - **Known limitation:** the opt-in unsharded path (`--terminatornet_sharded false`), which calls
   upstream `TerminatorNet.py` directly, is not corrected: on a genome with non-ACGT bases its calls
   after the first removed base are shifted by the number of bases removed before them.

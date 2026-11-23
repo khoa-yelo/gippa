@@ -10,7 +10,8 @@ Runs in the ``gippa-terminatornet`` env (Python 3.10), not part of ``src/gippa``
   upstream's own pool functions -> ``calls_<chunk_id>.pkl`` (protocol 4);
 * ``merge``: every block (+ blocks in FASTA order, then - blocks) through upstream
   ``merge_overlapping`` / ``output_terms`` -> ``terminatornet.tsv``, byte-identical to
-  ``TerminatorNet.py -s -n N`` (N >= 2).
+  ``TerminatorNet.py -s -n N`` (N >= 2) except on records with removed non-ACGT bases, whose calls
+  are mapped back to original coordinates (calls spanning a removed base dropped; issue #615).
 """
 
 from __future__ import annotations
@@ -104,11 +105,10 @@ def order_calls(calls_by_chunk: Sequence[Sequence[Call]], mode: str) -> list[Cal
 
 
 def _kept_index(raw: str, cleaned: str) -> list[int]:
-    """Index in ``raw`` of every ``cleaned`` position when upstream ``clean_sequences`` deleted
-    characters: spaces always, and every non-ACGT base (U kept as T) when it cleaned the record."""
+    """Index in ``raw`` of every ``cleaned`` position: upstream ``clean_sequences`` keeps the
+    ACGTU bases (U as T) and deletes the rest. ANNOTATE passes the normalised genome FASTA, so a
+    record whose lengths still disagree after that (whitespace inside a sequence) is an error."""
     kept = [i for i, c in enumerate(raw) if c.upper() in "ACGTU"]
-    if len(kept) != len(cleaned):  # record left uncleaned (< 75 % ACGT): only spaces went
-        kept = [i for i, c in enumerate(raw) if c != " "]
     if len(kept) != len(cleaned):
         raise ValueError(f"cannot align cleaned ({len(cleaned)} nt) to raw ({len(raw)} nt)")
     return kept
@@ -119,7 +119,8 @@ def to_original(
 ) -> tuple[list[Call], int]:
     """Calls (0-based inclusive ``(start, stop, ...)`` in the scanned strand sequence: ``cleaned``
     for ``+``, its reverse complement for ``-``) mapped to the original strand sequence (``raw``,
-    or its reverse complement), in input order, every other element the same object; calls whose
+    or its reverse complement), in input order; fields after start/stop pass through unchanged
+    (the same objects). Calls whose
     original span would contain a base upstream removed are dropped and counted (issue #615).
     The identity when nothing was removed (``len(cleaned) == len(raw)``)."""
     lc, lo = len(cleaned), len(raw)
@@ -304,7 +305,10 @@ def cmd_merge() -> None:
             first = block[0]
             calls = order_calls([payloads[r["chunk_id"]]["calls"] for r in block], first["mode"])
             i = first["seq_index"]
-            calls, n_dropped = to_original(calls, raws[i], seqs[i], first["strand"])
+            try:
+                calls, n_dropped = to_original(calls, raws[i], seqs[i], first["strand"])
+            except ValueError as err:
+                _fail(f"{names[i]}: {err}")
             dropped += n_dropped
             if first["strand"] == "+":
                 terms = tn.merge_overlapping(calls)
