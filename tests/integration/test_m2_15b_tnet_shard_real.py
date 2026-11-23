@@ -1,5 +1,7 @@
 """M2-15b: the sharded TerminatorNet scan with the real model is byte-identical to upstream
-(docs/specs/M2-15b-terminatornet-sharding.md "Tests", ``needs_conda``; examples 3, 5-10).
+(docs/specs/M2-15b-terminatornet-sharding.md "Tests", ``needs_conda``; examples 3, 5-10), except
+on records with non-ACGT bases, where upstream shifts its calls and the sharded scan reports them
+in original coordinates (issue #615).
 
 ``workflow/bin/gippa_terminatornet_shard`` runs ``plan --core N``, every ``chunk <id> --cpus N``
 and ``merge`` in the ``gippa-terminatornet`` prebuilt env (``$GIPPA_ROOT/micromamba/envs``), with
@@ -102,21 +104,62 @@ def _chr1() -> str:
     return "".join(seqs["chr1"])
 
 
+def _rc(s: str) -> str:
+    return s.translate(str.maketrans("ACGT", "TGCA"))[::-1]
+
+
+def _fields(line: str) -> list[str]:
+    return line.split("\t")
+
+
+def _same_except_gapped(got: bytes, ref: bytes, gapped: dict[str, str]) -> None:
+    """Issue #615: records without non-ACGT bases equal the unsharded output line for line;
+    on a gapped record (unsharded TerminatorNet shifts every call after the first removed base),
+    every call is in original coordinates: no removed base inside its span, hairpin (and the
+    8-nt tracts when they hold no removed base) equal to the genome there, and the calls ending
+    200 nt or more before the first removed base equal the unsharded ones (TERM numbers aside)."""
+    g_lines, r_lines = got.decode().splitlines(), ref.decode().splitlines()
+    assert [x for x in g_lines if x.split("\t")[0] not in gapped] == [
+        x for x in r_lines if x.split("\t")[0] not in gapped
+    ]
+    checked = 0
+    for name, raw in gapped.items():
+        up = raw.upper()
+        first_gap = next(i for i, c in enumerate(up) if c not in "ACGT")
+        calls = [x.split("\t") for x in g_lines if x.split("\t")[0] == name and x.count("\t") == 10]
+        checked += len(calls)
+        for f in calls:
+            s, e = int(f[8]), int(f[9])
+            seg = up[s - 1 : e]
+            assert set(seg) <= set("ACGT"), f"{f}: span holds a removed base"
+            assert (seg if f[10] == "+" else _rc(seg)) == f[3], f"{f}: hairpin not at {s}..{e}"
+            wide = up[max(s - 9, 0) : e + 8]
+            if s > 8 and set(wide) <= set("ACGT"):
+                assert (wide if f[10] == "+" else _rc(wide)) == f[2] + f[3] + f[4], f
+        ref_calls = [f for f in map(_fields, r_lines) if f[0] == name and len(f) == 11]
+        early_ref = [f[2:] for f in ref_calls if int(f[9]) <= first_gap - 200]
+        early_got = [f[2:] for f in calls if int(f[9]) <= first_gap - 200]
+        assert early_got == early_ref, f"{name}: calls before the first gap changed"
+    if "y" in gapped:  # record c's only call spans its N run and is dropped
+        assert checked, "no gapped call was checked"
+
+
 def test_short_mode_examples_3_5_8_10(tmp_path: Path) -> None:
     s = _chr1()
     dirty = s[1800:1900] + "NNNN" + s[1900:2100].lower()  # 300 cleaned nt, Ns and lower case
     fasta = f">w40\n{s[1850:1890]}\n>e\n>t\nAC\n>c\n{dirty}\n>u\n{s[2800:3250]}\n"
     a, b = _dir(tmp_path, "sharded", fasta), _dir(tmp_path, "ref", fasta)
     got = _sharded(a, core=100)
-    assert got == _unsharded(b)
+    _same_except_gapped(got, _unsharded(b), {"c": dirty})
     assert b"t\tNO TERMINATORS FOUND\n" in got and b"e\t" not in got
 
 
 def test_long_mode_chunk_edges_examples_6_7_8(tmp_path: Path) -> None:
     s = _chr1()
-    fasta = f">x\n{s[:6000]}\n>y\n{s[30000:31000]}NNacgt{s[31000:33000].lower()}\n"
+    y = f"{s[30000:31000]}NNacgt{s[31000:33000].lower()}"
+    fasta = f">x\n{s[:6000]}\n>y\n{y}\n"
     a, b = _dir(tmp_path, "sharded", fasta), _dir(tmp_path, "ref", fasta)
-    assert _sharded(a, core=1_000) == _unsharded(b)
+    _same_except_gapped(_sharded(a, core=1_000), _unsharded(b), {"y": y})
 
 
 def test_example_9_chunk_bytes_at_1_4_8_cpus(tmp_path: Path) -> None:
