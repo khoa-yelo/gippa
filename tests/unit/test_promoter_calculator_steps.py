@@ -192,7 +192,8 @@ def test_tx_layer_step_accepts_a_single_csv(
 ) -> None:
     one = work["pc"][0]  # type: ignore[index]
     out = _run(steps, work, tmp_path / "tx_rates.parquet", pc=one)
-    rows = {tuple(r.values()) for r in pq.read_table(out).to_pylist()}
+    # #614: TUs without a CSV may get an unscored (null tx_rate) marker row; scored rows only
+    rows = {tuple(r.values()) for r in pq.read_table(out).to_pylist() if r["tx_rate"] is not None}
     assert rows == {r for r in WANT if r[4] == "TU_1"}
 
 
@@ -202,7 +203,9 @@ def test_tx_layer_step_with_only_header_only_csvs_writes_an_empty_layer(
     pc = [header_only(tmp_path / "pc0" / f"TU_{i}.csv") for i in (1, 2, 3)]
     out = _run(steps, work, tmp_path / "tx_rates.parquet", pc=pc)
     t = pq.read_table(out)
-    assert len(t) == 0
+    # #614: TU_4 and TU_5 have no CSV and may get an unscored (null tx_rate) marker row
+    assert t.column("tx_rate").null_count == len(t)
+    assert set(t.column("tu_id").to_pylist()) <= {"TU_4", "TU_5"}
     assert t.column_names == ["contig", "strand", "tss", "tx_rate", "tu_id"]
 
 
