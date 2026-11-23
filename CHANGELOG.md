@@ -4,11 +4,12 @@ All notable changes are recorded here by towncrier from `changelog.d/` fragments
 
 <!-- towncrier release notes start -->
 
-## GIPPA 1.1.1 (2026-11-21)
+## GIPPA 1.1.1 (2026-11-22)
 
 ### Fixes
 
 - The `decoy_picked` gene FDR is no longer anti-conservative when decoys pair with genes only through votes of accepted peptides (`--search-db other`, or non-locus-tag protein IDs without protein hits). Every q-passing decoy with protein IDs now competes: in its gene when all its IDs map to one gene, otherwise in its own unit, where it counts as a decoy win. The 1/f rescaling is retired, and the `decoy_win_weight` row is 1.0 (ADR-0078). Vote-route runs lose calls they could not support; locus-tag runs keep theirs, and their q may rise slightly.
+- `gippa run` no longer crashes in Promotech on genomes with assembly gaps. Promoter windows containing `N` or another non-ACGT base are not sent to Promotech; they get a NaN score, are never called promoters, and the run logs one warning with their count. Gene promoter scores use the maximum over the scored windows. Gap-free genomes give identical outputs.
 
 
 ## GIPPA 1.1.0 (2026-11-11)
