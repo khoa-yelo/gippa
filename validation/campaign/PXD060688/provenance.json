@@ -1,0 +1,406 @@
+{
+ "dataset": "PXD060688",
+ "lane_steps": [
+  {
+   "step": "makedb",
+   "exit": "0",
+   "wall_s": "20",
+   "job": "2005509"
+  },
+  {
+   "step": "lib_a",
+   "exit": "0",
+   "wall_s": "286",
+   "job": "2005509"
+  },
+  {
+   "step": "lib_b",
+   "exit": "0",
+   "wall_s": "1704",
+   "job": "2005509"
+  },
+  {
+   "step": "diann_a",
+   "exit": "0",
+   "wall_s": "2569",
+   "job": "2005509"
+  },
+  {
+   "step": "diann_b",
+   "exit": "0",
+   "wall_s": "13073",
+   "job": "2005509"
+  },
+  {
+   "step": "conv_a",
+   "exit": "0",
+   "wall_s": "34",
+   "job": "2005509"
+  },
+  {
+   "step": "conv_b",
+   "exit": "0",
+   "wall_s": "27",
+   "job": "2005509"
+  },
+  {
+   "step": "run_a",
+   "exit": "0",
+   "wall_s": "29392",
+   "job": "2005509"
+  },
+  {
+   "step": "run_b",
+   "exit": "0",
+   "wall_s": "28455",
+   "job": "2005509"
+  },
+  {
+   "step": "post",
+   "exit": "0",
+   "wall_s": "322",
+   "job": "2005509"
+  }
+ ],
+ "jobs": {
+  "2005509": {
+   "job_id": "2005509",
+   "name": "gippa-camp-p2b-mxan",
+   "state": "COMPLETED",
+   "elapsed": "21:04:53",
+   "exit_code": "0:0",
+   "node": "wheat-08",
+   "alloc_cpus": "16",
+   "start": "2026-11-21T23:01:53",
+   "end": "2026-11-22T20:06:46",
+   "max_rss": "60937300K"
+  }
+ },
+ "raw_sha256": {
+  "DdiA-4-01.raw": "9c38f1f7a2880cb55427718e30a5c22988ecfad0b7d6ec857886c53aafeed6ed",
+  "DdiA-4-02.raw": "b8790ccbc6abeb739a25ee1368b063748c3dfee82c201ae85d9c437f0c0ea327",
+  "DdiA-4-03.raw": "bf3fff8ff77df2179013bf84ab66c7ad40a003abc4bc437b1e5b4f81ee22e367",
+  "DdiA-4-04.raw": "a1bccf92cf16c8c6ff9b5c285d466e3c8d7ae9af308ea0428a58c1440e5abbf4"
+ },
+ "db": {
+  "a": {
+   "records": 7699,
+   "contaminant_records": 381,
+   "bytes": 3312429,
+   "sha256": "6cc6d0ba8c47059e7d9f12f9868016867a6a759fc5cdc27a2725c31f15fc8998"
+  },
+  "b": {
+   "records": 174908,
+   "contaminant_records": 381,
+   "bytes": 27084255,
+   "sha256": "31adfa28e689c5332fbddfb156932766a1a4ebd531d9943670d8eb9c2e222205"
+  }
+ },
+ "diann": {
+  "a": {
+   "library_precursors": 1479133,
+   "step1_job": "2005509",
+   "step1_wall_s": 274,
+   "library_bytes": 359929707,
+   "step2_job": "2005509",
+   "step2_wall_s": 2562,
+   "n_runs": 4,
+   "image_sha256": "1946452d56d2fb0f66e05ced473df88e53484e28040f1ecbd83c4a43405a6381",
+   "cfg_sha256": "f89dfab40ef5d1195b96c38d29f813a0e848587d1917ec5555ea6f68fc2959cf",
+   "fasta_sha256": {
+    "/home/classes/bios/270/khoa/giap/local/campaign/PXD060688/db_a/strain_db.faa": "6cc6d0ba8c47059e7d9f12f9868016867a6a759fc5cdc27a2725c31f15fc8998"
+   },
+   "per_run": [
+    {
+     "run": "DdiA-4-01.raw",
+     "Precursors.Identified": "65562",
+     "Proteins.Identified": "1661"
+    },
+    {
+     "run": "DdiA-4-02.raw",
+     "Precursors.Identified": "63127",
+     "Proteins.Identified": "1672"
+    },
+    {
+     "run": "DdiA-4-03.raw",
+     "Precursors.Identified": "62592",
+     "Proteins.Identified": "1668"
+    },
+    {
+     "run": "DdiA-4-04.raw",
+     "Precursors.Identified": "62329",
+     "Proteins.Identified": "1665"
+    }
+   ],
+   "report_sha256": "0fc701fae11a76a5389582eb46edeeef3bc9cea863cc56fed4079e671d63bdf8"
+  },
+  "b": {
+   "library_precursors": 9802626,
+   "step1_job": "2005509",
+   "step1_wall_s": 1649,
+   "library_bytes": 2396986857,
+   "step2_job": "2005509",
+   "step2_wall_s": 13056,
+   "n_runs": 4,
+   "image_sha256": "1946452d56d2fb0f66e05ced473df88e53484e28040f1ecbd83c4a43405a6381",
+   "cfg_sha256": "f89dfab40ef5d1195b96c38d29f813a0e848587d1917ec5555ea6f68fc2959cf",
+   "fasta_sha256": {
+    "/home/classes/bios/270/khoa/giap/local/campaign/PXD060688/db_b/strain_db.faa": "31adfa28e689c5332fbddfb156932766a1a4ebd531d9943670d8eb9c2e222205"
+   },
+   "per_run": [
+    {
+     "run": "DdiA-4-01.raw",
+     "Precursors.Identified": "67234",
+     "Proteins.Identified": "1654"
+    },
+    {
+     "run": "DdiA-4-02.raw",
+     "Precursors.Identified": "64313",
+     "Proteins.Identified": "1652"
+    },
+    {
+     "run": "DdiA-4-03.raw",
+     "Precursors.Identified": "63070",
+     "Proteins.Identified": "1651"
+    },
+    {
+     "run": "DdiA-4-04.raw",
+     "Precursors.Identified": "63629",
+     "Proteins.Identified": "1636"
+    }
+   ],
+   "report_sha256": "cbdfba8795984bb18f9135014ff0094cda774143fecca65d35782a1498a712b0"
+  }
+ },
+ "convert": {
+  "a": {
+   "job_id": "2005509",
+   "pin": "/home/classes/bios/270/khoa/giap/local/worktrees/rel111-pin",
+   "commit": "bfc74ff6c20acc2cfcf298cdf23cbb30d8fae0dc",
+   "search_db": "same",
+   "convert_exit": 0,
+   "convert2_exit": 0,
+   "convert_wall_s": 10,
+   "deterministic": true,
+   "preflight_strict_exit": 0,
+   "preflight_wall_s": 15,
+   "sha256": {
+    "report": "0fc701fae11a76a5389582eb46edeeef3bc9cea863cc56fed4079e671d63bdf8",
+    "genome": "a36130a65c51933c5b18f1f44673773c1df710003dfb57268be853130e05b218",
+    "annotation": "af6d14c5415a05c58732aa91eb95dd33648d792095eceb5d4e62aea5929f5185",
+    "peptides": "f5fbfcc2fd87d393b7bb3c9172a340a5ed8157728bd166b57ce0dec1ace5bfa1",
+    "abundance": "b4558c42397574e0c031efda02f1612358d71c41273b58fb9a05b4b4ab827fd0"
+   }
+  },
+  "b": {
+   "job_id": "2005509",
+   "pin": "/home/classes/bios/270/khoa/giap/local/worktrees/rel111-pin",
+   "commit": "bfc74ff6c20acc2cfcf298cdf23cbb30d8fae0dc",
+   "search_db": "same",
+   "convert_exit": 0,
+   "convert2_exit": 0,
+   "convert_wall_s": 8,
+   "deterministic": true,
+   "preflight_strict_exit": 0,
+   "preflight_wall_s": 10,
+   "sha256": {
+    "report": "cbdfba8795984bb18f9135014ff0094cda774143fecca65d35782a1498a712b0",
+    "genome": "a36130a65c51933c5b18f1f44673773c1df710003dfb57268be853130e05b218",
+    "annotation": "af6d14c5415a05c58732aa91eb95dd33648d792095eceb5d4e62aea5929f5185",
+    "peptides": "b22229dd5e951f43e01c8556e57550dda15a577f5f0813ef76c1429ee68d9ea6",
+    "abundance": "726676704b526c3d7c270286d44e3d217b166164f4ac3efe0458d6a88f2d1507"
+   }
+  }
+ },
+ "runs": {
+  "a": {
+   "git_commit": "bfc74ff6c20acc2cfcf298cdf23cbb30d8fae0dc",
+   "git_dirty": false,
+   "gippa_version": "1.1.1",
+   "profile": "farmshare_local,apptainer",
+   "exit_code": 0,
+   "started_at": "2026-11-22T11:57:29+00:00",
+   "finished_at": "2026-11-22T20:06:59+00:00",
+   "seeds": {
+    "codon_usage": 3129038944,
+    "context_layers": 1365550599,
+    "context_stats": 105909204,
+    "detectability": 3987542110,
+    "determinants": 3593833509,
+    "function": 3400406589,
+    "gene_table": 393846822,
+    "loci": 1770125858,
+    "map_exact": 3911246953,
+    "map_tolerant": 1491420984,
+    "master": 20261014,
+    "novel_candidates": 2908536744,
+    "novel_orfs": 388090210,
+    "operon_pairs": 4034643963,
+    "operons": 179147819,
+    "ostir_input": 1327200810,
+    "parse_bakta": 642799015,
+    "placement": 1222341902,
+    "plots": 2413055744,
+    "promoter_layer": 2441405911,
+    "promoter_windows": 28991342,
+    "rbs_layer": 2821979816,
+    "region_layer": 1556029954,
+    "report": 3291445124,
+    "sensitivity": 4237340471,
+    "sixframe_index": 3300501706,
+    "terminator_layer": 1571130219,
+    "transterm_input": 732194518,
+    "tx_layer": 1302245994,
+    "uniop_input": 3714929077,
+    "variants": 3013104609
+   },
+   "modules_off": [],
+   "layers_missing": [
+    "rbs_novel"
+   ],
+   "warnings": [
+    "novel_orfs:novel_orfs.decoys_not_makedb",
+    "novel_orfs:novel_orfs.layer_missing",
+    "report:report.size_exceeded"
+   ],
+   "inputs": {
+    "genome": "a36130a65c51933c5b18f1f44673773c1df710003dfb57268be853130e05b218",
+    "peptides": "f5fbfcc2fd87d393b7bb3c9172a340a5ed8157728bd166b57ce0dec1ace5bfa1",
+    "annotation": "af6d14c5415a05c58732aa91eb95dd33648d792095eceb5d4e62aea5929f5185",
+    "precomputed:bakta_json": "af6d14c5415a05c58732aa91eb95dd33648d792095eceb5d4e62aea5929f5185"
+   },
+   "tools": {
+    "antismash": {
+     "version": "8.0.4",
+     "digest": "sha256:d3f390e687cfe02f1387be40256dddbf678e91bc56b96c36da07b56ec8bda29d"
+    },
+    "genomad": {
+     "version": "1.12.0",
+     "digest": "sha256:d54652ff868af72604ea0e54c541c5c92168c7ac821a422de05dcbad65509e5c"
+    },
+    "ostir": {
+     "version": "1.1.3",
+     "digest": "sha256:d9107b9b87fd6f3d3cd329ba1d2ac66b9af9e38512f11d2b8a0210110c6c9292"
+    },
+    "promotech": {
+     "version": "56251ad9b883ef831b4753fc623d5ec970fe65e0",
+     "digest": "sha256:7366eaf67d9b26c6036ed5ececa740fe2728fdcf0cd4b2a12a0d9597b87a53ac"
+    },
+    "promoter_calculator": {
+     "version": "1.2.4",
+     "digest": "sha256:c5bd0662ceed623c00c4bf40b085c6541b7676e1ccc37a390e0efd73e02b48df"
+    },
+    "terminatornet": {
+     "version": "72180309545988dba63b8bd5db5d0b09bf4dba70",
+     "digest": "sha256:ec415757b6b70cce8240f425b35bf3e74dc3abe8ff413049c04d808034592f7a"
+    },
+    "transtermhp": {
+     "version": "2.09",
+     "digest": "sha256:fc6fe0404be9340a883ec7a7b90415dfc3826c2bca7333a0314335c7bfee2d03"
+    },
+    "uniop": {
+     "version": "3ed14dfc2a5d69b993d99a26e50c1f8e9723c087",
+     "digest": null
+    },
+    "viennarna": {
+     "version": "2.6.4",
+     "digest": "sha256:d9107b9b87fd6f3d3cd329ba1d2ac66b9af9e38512f11d2b8a0210110c6c9292"
+    }
+   }
+  },
+  "b": {
+   "git_commit": "bfc74ff6c20acc2cfcf298cdf23cbb30d8fae0dc",
+   "git_dirty": false,
+   "gippa_version": "1.1.1",
+   "profile": "farmshare_local,apptainer",
+   "exit_code": 0,
+   "started_at": "2026-11-22T20:07:19+00:00",
+   "finished_at": "2026-11-23T04:01:14+00:00",
+   "seeds": {
+    "codon_usage": 3129038944,
+    "context_layers": 1365550599,
+    "context_stats": 105909204,
+    "detectability": 3987542110,
+    "determinants": 3593833509,
+    "function": 3400406589,
+    "gene_table": 393846822,
+    "loci": 1770125858,
+    "map_exact": 3911246953,
+    "map_tolerant": 1491420984,
+    "master": 20261014,
+    "novel_candidates": 2908536744,
+    "novel_orfs": 388090210,
+    "novel_promoter_layer": 1428708026,
+    "novel_rbs_layer": 1423765203,
+    "operon_pairs": 4034643963,
+    "operons": 179147819,
+    "ostir_input": 1327200810,
+    "parse_bakta": 642799015,
+    "placement": 1222341902,
+    "plots": 2413055744,
+    "promoter_layer": 2441405911,
+    "promoter_windows": 28991342,
+    "rbs_layer": 2821979816,
+    "region_layer": 1556029954,
+    "report": 3291445124,
+    "sensitivity": 4237340471,
+    "sixframe_index": 3300501706,
+    "terminator_layer": 1571130219,
+    "transterm_input": 732194518,
+    "tx_layer": 1302245994,
+    "uniop_input": 3714929077,
+    "variants": 3013104609
+   },
+   "modules_off": [],
+   "layers_missing": [],
+   "warnings": [
+    "novel_orfs:novel_orfs.class_q_floor_above_alpha",
+    "report:report.size_exceeded"
+   ],
+   "inputs": {
+    "genome": "a36130a65c51933c5b18f1f44673773c1df710003dfb57268be853130e05b218",
+    "peptides": "b22229dd5e951f43e01c8556e57550dda15a577f5f0813ef76c1429ee68d9ea6",
+    "annotation": "af6d14c5415a05c58732aa91eb95dd33648d792095eceb5d4e62aea5929f5185",
+    "precomputed:bakta_json": "af6d14c5415a05c58732aa91eb95dd33648d792095eceb5d4e62aea5929f5185"
+   },
+   "tools": {
+    "antismash": {
+     "version": "8.0.4",
+     "digest": "sha256:d3f390e687cfe02f1387be40256dddbf678e91bc56b96c36da07b56ec8bda29d"
+    },
+    "genomad": {
+     "version": "1.12.0",
+     "digest": "sha256:d54652ff868af72604ea0e54c541c5c92168c7ac821a422de05dcbad65509e5c"
+    },
+    "ostir": {
+     "version": "1.1.3",
+     "digest": "sha256:d9107b9b87fd6f3d3cd329ba1d2ac66b9af9e38512f11d2b8a0210110c6c9292"
+    },
+    "promotech": {
+     "version": "56251ad9b883ef831b4753fc623d5ec970fe65e0",
+     "digest": "sha256:7366eaf67d9b26c6036ed5ececa740fe2728fdcf0cd4b2a12a0d9597b87a53ac"
+    },
+    "promoter_calculator": {
+     "version": "1.2.4",
+     "digest": "sha256:c5bd0662ceed623c00c4bf40b085c6541b7676e1ccc37a390e0efd73e02b48df"
+    },
+    "terminatornet": {
+     "version": "72180309545988dba63b8bd5db5d0b09bf4dba70",
+     "digest": "sha256:ec415757b6b70cce8240f425b35bf3e74dc3abe8ff413049c04d808034592f7a"
+    },
+    "transtermhp": {
+     "version": "2.09",
+     "digest": "sha256:fc6fe0404be9340a883ec7a7b90415dfc3826c2bca7333a0314335c7bfee2d03"
+    },
+    "uniop": {
+     "version": "3ed14dfc2a5d69b993d99a26e50c1f8e9723c087",
+     "digest": null
+    },
+    "viennarna": {
+     "version": "2.6.4",
+     "digest": "sha256:d9107b9b87fd6f3d3cd329ba1d2ac66b9af9e38512f11d2b8a0210110c6c9292"
+    }
+   }
+  }
+ }
+}
