@@ -559,6 +559,17 @@ skipped positions. Gene and between-gene promoter scores are the maximum over sc
 (NaN, or no `promoter_between` value, when every window was skipped). Genomes with only ACGT give
 byte-identical outputs.
 
+### TU upstream regions over assembly gaps (#614, 1.1.1)
+
+Promoter Calculator's reverse complement knows only A, C, G, T and U, so a TU whose strand-aware
+upstream region (`tu_upstream_bp`, origin wrap included) holds any base other than A, C, G or T is
+not sent to it: `region_is_acgt` is the one skip rule, `write_tu_regions` writes no
+`tu_upstream/<tu_id>.fa` for such a TU and `operon_pairs` logs one WARNING with the number of
+skipped TUs (only when Promoter Calculator runs: enabled and no precomputed `tx_rates`). In
+`layers.parquet` the genes of a skipped TU get `tx_rate_max_tu`, `tx_rate_sum_tu` and
+`tss_distance_bp` NA (unscored), while a scored TU without a hit keeps 0. A precomputed `tx_rates`
+layer is used as given. Genomes with only ACGT give byte-identical outputs.
+
 ## Simulations (M6-03)
 
 The operon generators live in `tests/sim/gippasim/scenarios.py` (configs) and
