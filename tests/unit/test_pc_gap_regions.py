@@ -371,10 +371,7 @@ def test_tx_rates_scored_rows_are_exactly_the_hits(tmp_path: Path, reg: ModuleTy
     assert set(scored["tu_id"]) == {tu_of[g] for g in HIT_GENES}
     assert len(scored) == 2 * len(HIT_GENES)
     assert scored["tss"].notna().all()
-    extra = tx[tx["tx_rate"].isna()]
-    assert set(extra["tu_id"]) <= {tu_of[g] for g in SKIPPED_GENES}, (
-        "only a skipped TU may have an unscored marker row"
-    )
+    assert tx["tx_rate"].notna().all(), "a skipped TU adds no marker row"
 
 
 def test_skipped_tu_does_not_break_pair_evidence_or_determinants(

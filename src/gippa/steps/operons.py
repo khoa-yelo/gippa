@@ -170,7 +170,8 @@ def operon_pairs(ctx: StepContext) -> None:
     write_parquet_deterministic(out["tus"], _TU_COLS, tu_rows)
     genome = {r.id: r.sequence for r in read_genome_fasta(_path(ctx.inputs["genome"]))}
     written = write_tu_regions(out["tu_upstream"], tus, genome)
-    if skipped := len(tus) - len(written):
+    skipped = len(tus) - len(written)
+    if skipped and ann.promoter_calculator.enabled and ann.precomputed.tx_rates is None:
         ctx.log.warning(
             "operon_pairs: %d TU upstream region(s) contain non-ACGT bases (assembly gaps or "
             "IUPAC codes); not sent to Promoter Calculator, tx rates NA",
