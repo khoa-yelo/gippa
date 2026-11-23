@@ -366,3 +366,29 @@ def test_gap_free_genome_outputs_are_byte_identical(tmp_path: Path, reg: ModuleT
     }
     assert sorted(p.name for p in outs["windows"].iterdir()) == ["windows_000.fa"]
     assert got == GAP_FREE_SHA256
+
+
+# --------------------------- lead decision: promoter_score is a max over scored windows
+
+
+def test_gene_promoter_score_ignores_skipped_windows() -> None:
+    """NaN (skipped) windows do not poison the max; all-skipped gives NaN (lead, 2026-11-22)."""
+    from gippa.annotate.promoters import gene_promoter_features
+
+    reps = {"c1": Replicon("c1", 10_000, "linear", "chromosome")}
+    a = _gene("A", 1000, 1300, "+", "c1")  # own windows: end3p 800 .. 1020
+    b = _gene("B", 5000, 5300, "+", "c1")  # own windows: end3p 4800 .. 5020, all skipped
+    rows = [("c1", "+", p, 0.1) for p in range(800, 1021)]
+    rows = [(c, s, p, 0.7 if p == 950 else float("nan") if 900 <= p < 940 else x)
+            for c, s, p, x in rows]  # fmt: skip
+    rows += [("c1", "+", p, float("nan")) for p in range(4800, 5021)]
+    layer = pd.DataFrame(rows, columns=["contig", "strand", "end3p", "score"])
+    feats = gene_promoter_features([a, b], [], layer, yes=0.5, replicons=reps).set_index(
+        "locus_tag"
+    )
+    assert feats.loc["A", "promoter_score"] == pytest.approx(0.7)
+    assert feats.loc["A", "promoter_score_tu"] == pytest.approx(0.7)
+    assert feats.loc["A", "n_promoter_windows_tu"] == 1
+    assert np.isnan(feats.loc["B", "promoter_score"])
+    assert np.isnan(feats.loc["B", "promoter_score_tu"])
+    assert feats.loc["B", "n_promoter_windows_tu"] == 0
