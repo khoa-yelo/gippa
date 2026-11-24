@@ -1,11 +1,11 @@
 # ADR-0079: Warn when a placement stratum's q floor is above α
-- Status: proposed
+- Status: accepted (Option 1, Khoa 2026-11-24: "option 1, put it in 1.1.1")
 - Date: 2026-11-21
 - Spec sections: §7.2.5 (placement FDR, G3), §8.1 rows "Peptide placed at a locus (exact)" and
   "Peptide placed with ≥ 1 difference", R3; mirrors M7-11b rule 8
   (`novel_orfs.class_q_floor_above_alpha`) and the gene-level `q_floor_above_alpha`
-- Needs Khoa: yes (adds a run warning to the manifest `warnings` list and to the report; Khoa has
-  not chosen between a warning, documentation only, or a statistics change)
+- Needs Khoa: decided. Option 1 (run warning, acceptance unchanged) plus the Option 2 methods
+  paragraph, in release 1.1.1; event name `placement.stratum_q_floor_above_alpha` as proposed
 
 ## Context
 Placement FDR (§7.2.5, docs/methods/placement-fdr.md) builds one list per decoy type × difference
