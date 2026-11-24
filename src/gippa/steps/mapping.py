@@ -488,6 +488,16 @@ def placement_step(ctx: StepContext) -> None:
             PREFILTERED_FLAG,
             extra={"event": "mapping.input_prefiltered", "data": {"flag": PREFILTERED_FLAG}},
         )
+    for b in out.floor_breaches:  # ADR-0079: q, accepted and alpha are unchanged
+        c = b["q_floor"] * b["n_targets"]
+        ctx.log.warning(
+            "placement: stratum %s m=%d has %d targets; its q floor %.4g > alpha %g, so none "
+            "can be accepted (a stratum with fewer than about c/alpha = %.4g targets cannot "
+            "accept anything at alpha)",
+            b["decoy_type"], b["n_diff"], b["n_targets"], b["q_floor"], b["alpha"],
+            c / b["alpha"],
+            extra={"event": "placement.stratum_q_floor_above_alpha", "data": dict(b)},
+        )  # fmt: skip
     per.to_parquet(ctx.outputs["placement"], index=False)
     fdr.to_parquet(ctx.outputs["mapping_fdr"], index=False)
     out.stratum0_classes.to_parquet(ctx.outputs["stratum0_classes"], index=False)
