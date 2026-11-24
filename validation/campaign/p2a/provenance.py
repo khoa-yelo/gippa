@@ -5,6 +5,7 @@
 Reads diann_R/provenance_report.json, step1.log/step2_report.log (precursor and protein-group
 counts only), in_R/convert_provenance.json, in_R/runtime_out_R.txt and out_R/run_manifest.json
 (commit, tool images, inputs, warnings). ROUTE a | b | te7 | x_<REF>. No peptide or DIA-NN row.
+An optional 4th argument SUF (e.g. _fix2) selects in_<R>SUF / out_<R>SUF (te7: out_aSUF_te7).
 """
 
 import json
@@ -47,9 +48,10 @@ def run_info(run: Path) -> dict | None:
 
 def main() -> int:
     arm, route, out = Path(sys.argv[1]), sys.argv[2], Path(sys.argv[3])
+    suf = sys.argv[4] if len(sys.argv) > 4 else ""
     base = "a" if route in ("a", "te7") or route.startswith("x_") else route
-    in_dir = arm / ("in_" + route if route.startswith("x_") else "in_" + base)
-    out_dir = arm / ("out_a_te7" if route == "te7" else "out_" + route)
+    in_dir = arm / (("in_" + route if route.startswith("x_") else "in_" + base) + suf)
+    out_dir = arm / (f"out_a{suf}_te7" if route == "te7" else "out_" + route + suf)
     rt = in_dir / f"runtime_{out_dir.name}.txt"
     doc = {"arm_dir": str(arm), "route": route, "diann": diann(arm / f"diann_{base}"),
            "convert": jl(in_dir / "convert_provenance.json"),
