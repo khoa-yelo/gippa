@@ -32,6 +32,8 @@ LAYER_COLUMNS = ["contig", "strand", "end3p", "score"]
 FEATURE_COLUMNS = ["locus_tag", "promoter_score", "promoter_score_tu", "n_promoter_windows_tu"]
 _COMP = str.maketrans("ACGTRYKMSWBDHVNacgtrykmswbdhvn", "TGCAYRMKSWVHDBNtgcayrmkswvhdbn")
 
+_ACGT = frozenset("ACGT")
+
 _Track = tuple[np.ndarray, np.ndarray]  # sorted end3p, scores (one contig and strand)
 
 
@@ -90,16 +92,25 @@ def gene_windows(
     return out
 
 
+def is_gap_window(seq: str) -> bool:
+    """True when ``seq`` holds any base other than A, C, G, T (either case)."""
+    return not _ACGT.issuperset(seq.upper())
+
+
 def dedupe_and_chunk(
     windows: Iterable[Window], chunk_size: int = 100_000
 ) -> tuple[list[list[tuple[str, str]]], pd.DataFrame]:
-    """Unique sequences as ``w<index>`` (first-seen order) in chunks, plus the full map frame."""
+    """Unique sequences as ``w<index>`` (first-seen order) in chunks, plus the full map frame.
+
+    A window with any non-ACGT base (case-insensitive; Promotech's encoder drops them, #611) is
+    not chunked: its map row keeps a null ``header`` so ``promoter_layer`` scores it NaN.
+    """
     if chunk_size < 1:
         raise ValueError(f"chunk_size must be >= 1, got {chunk_size}")
     header_of: dict[str, str] = {}
-    rows: list[tuple[str, str, str, int, str, int]] = []
+    rows: list[tuple[str | None, str, str, int, str, int]] = []
     for w in windows:
-        h = header_of.setdefault(w.seq, f"w{len(header_of)}")
+        h = None if is_gap_window(w.seq) else header_of.setdefault(w.seq, f"w{len(header_of)}")
         rows.append((h, w.contig, w.strand, w.end3p, w.owner, w.k))
     recs = [(h, s) for s, h in header_of.items()]
     chunks = [recs[i : i + chunk_size] for i in range(0, len(recs), chunk_size)]
@@ -121,8 +132,13 @@ def write_chunks(outdir: Path, chunks: Sequence[Sequence[tuple[str, str]]]) -> l
 
 
 def promoter_layer(window_map: pd.DataFrame, scores: Mapping[str, float]) -> pd.DataFrame:
-    """One row per unique (contig, strand, end3p) with the score of its window."""
-    missing = sorted(set(window_map["header"]) - set(scores))
+    """One row per unique (contig, strand, end3p) with the score of its window.
+
+    A skipped window (null ``header``, see ``dedupe_and_chunk``) scores NaN; any other window
+    without a score raises.
+    """
+    sent = window_map["header"].dropna()
+    missing = sorted(set(sent) - set(scores))
     if missing:
         raise ValueError(f"no Promotech score for {len(missing)} window(s), e.g. {missing[:3]}")
     uniq = window_map.drop_duplicates(["contig", "strand", "end3p"])
@@ -131,7 +147,10 @@ def promoter_layer(window_map: pd.DataFrame, scores: Mapping[str, float]) -> pd.
             "contig": uniq["contig"].to_numpy(),
             "strand": uniq["strand"].to_numpy(),
             "end3p": uniq["end3p"].to_numpy(dtype=np.int64),
-            "score": np.array([float(scores[h]) for h in uniq["header"]], dtype=float),
+            "score": np.array(
+                [float("nan") if pd.isna(h) else float(scores[h]) for h in uniq["header"]],
+                dtype=float,
+            ),
         }
     )
 
@@ -141,7 +160,8 @@ def promoter_layer(window_map: pd.DataFrame, scores: Mapping[str, float]) -> pd.
 
 def _tracks(window_scores: pd.DataFrame) -> dict[tuple[str, str], _Track]:
     out: dict[tuple[str, str], _Track] = {}
-    for (contig, strand), sub in window_scores.groupby(["contig", "strand"], sort=True):
+    scored = window_scores[window_scores["score"].notna()]  # skipped windows (#611): nanmax
+    for (contig, strand), sub in scored.groupby(["contig", "strand"], sort=True):
         p = sub["end3p"].to_numpy(dtype=np.int64)
         order = np.argsort(p, kind="stable")
         out[(str(contig), str(strand))] = (p[order], sub["score"].to_numpy(dtype=float)[order])
