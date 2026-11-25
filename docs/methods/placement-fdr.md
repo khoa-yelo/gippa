@@ -577,10 +577,13 @@ acceptances, not necessary: decoys can still reject a list above it. q and α ar
 it (R3). Campaign evidence: NCM3722 N2 (MG1655 genome) has reverse m = 1 with T = 13, D = 7
 (floor 0.077), so all 11 truth substitution peptides were rejected (recall 0/11). E. coli E4 (de
 novo) has shuffle m = 2 with T = 68 and **no** decoy, and still accepts none (floor 1/68 = 0.0147).
-1.1.0 logs no warning for this, unlike the class FDR (`novel_orfs.class_q_floor_above_alpha`).
-A per-list WARNING `placement.stratum_q_floor_above_alpha` is **proposed** in ADR-0079 (status
-proposed, not implemented). Until it is accepted, read `targets` in the `all` rows of
-`mapping_fdr.tsv` before treating zero tolerant placements as an absence of strain differences.
+From 1.1.1 (ADR-0079) the `placement` step logs one WARNING `placement.stratum_q_floor_above_alpha`
+per list (decoy type × m) with T_m > 0 and c/T_m **strictly** above α, with data `decoy_type`,
+`n_diff`, `n_targets`, `n_decoys`, `q_floor` and `alpha`. It goes to the manifest `warnings` list as
+`placement:placement.stratum_q_floor_above_alpha` (`--strict` exits 3), not to a run-flag token, as
+the class floor `novel_orfs.class_q_floor_above_alpha` does. q, `accepted` and α are unchanged. Read
+it, or `targets` in the `all` rows of `mapping_fdr.tsv`, before treating zero tolerant placements as
+an absence of strain differences.
 
 ## π̂_wrong sources (M3-10)
 
