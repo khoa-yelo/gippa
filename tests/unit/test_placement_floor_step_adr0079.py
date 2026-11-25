@@ -91,6 +91,8 @@ def check_record(r: logging.LogRecord, alpha: float) -> dict[str, Any]:
     assert msg.startswith("placement: "), msg
     assert f"stratum {dt} m={m} has {t} targets" in msg, msg
     assert "q floor" in msg and "alpha" in msg and "none can be accepted" in msg, msg
+    if m >= 1:  # c = 1 for difference strata: c/alpha rendered with %.4g
+        assert f"c/alpha = {1 / alpha:.4g} targets" in msg, msg
     return data
 
 
