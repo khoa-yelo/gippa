@@ -85,8 +85,11 @@ q 0.049). Route A has none. This is exploratory and borderline.
 ## Exploratory: novel-ORF candidates vs RefSeq
 
 The same ≥ 50 % same-strand overlap rule was applied to all 142 candidates, called or not:
-74 / 142 = 52.1 % [43.9, 60.2] overlap a RefSeq CDS or pseudogene, 4 of them pseudogenes. By
-class: nterm_extension 29 / 41, intergenic 21 / 30, cds_outframe 11 / 16, antisense 13 / 55.
+50 / 142 = 35.2 % [27.8, 43.4] overlap a RefSeq CDS or pseudogene on the same replicon. By
+class: nterm_extension 28 / 41, intergenic 11 / 30, cds_outframe 9 / 16, antisense 2 / 55.
+(Corrected 2026-11-24: the first version, 74 / 142 = 52.1 % with antisense 13 / 55, matched
+coordinates without checking the replicon; H. volcanii has 5. Recount in
+`validation/campaign/novel_pc/` on branch validation/campaign-p2a.)
 Among candidates with ≥ 2 peptides, 23 / 26 match: 88.5 % [71.0, 96.0], none of them a
 pseudogene.
 
