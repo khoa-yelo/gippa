@@ -1,0 +1,3213 @@
+{
+ "q_column": "class_fdr",
+ "controls_spec": [
+  {
+   "name": "prfB N-terminal extension",
+   "kind": "prfB",
+   "match": {
+    "gene": "prfB"
+   },
+   "runs": "all",
+   "reason": "PrfB (RF2) is essential; its N-terminus is made by a programmed +1 frameshift that Bakta cannot model, so peptides upstream of Bakta's start are true by biology"
+  },
+  {
+   "name": "infC late start",
+   "kind": "infC",
+   "match": {
+    "gene": "infC"
+   },
+   "runs": [
+    "ecoli_e2",
+    "cdif"
+   ],
+   "reason": "IF3 starts at the AUU codon upstream of Bakta's later ATG/GTG start; peptides there are true N-terminal sequence"
+  },
+  {
+   "name": "PrdB read-through (Sec)",
+   "kind": "prdB",
+   "match": {
+    "gene": "prdB"
+   },
+   "runs": [
+    "cdif"
+   ],
+   "reason": "PrdB is a selenoprotein; translation continues through the UGA (Sec) codon"
+  },
+  {
+   "name": "rpmB (L28)",
+   "kind": "missed",
+   "match": {
+    "product": "50S ribosomal protein L28"
+   },
+   "runs": [
+    "tpa_dal1",
+    "tpa_grady",
+    "tpa_haitib",
+    "tpa_madras",
+    "tpa_mexicoa",
+    "tpa_phil1",
+    "tpa_ss14"
+   ],
+   "reason": "RefSeq ribosomal protein L28 not called by Bakta"
+  },
+  {
+   "name": "L36 Rv3461c",
+   "kind": "missed",
+   "match": {
+    "locus_tag": "Rv3461c"
+   },
+   "runs": [
+    "mtb"
+   ],
+   "reason": "RefSeq ribosomal protein L36 (MS-supported in RefSeq) not called by Bakta"
+  },
+  {
+   "name": "L34 Rv3924c",
+   "kind": "missed",
+   "match": {
+    "locus_tag": "Rv3924c"
+   },
+   "runs": [
+    "mtb"
+   ],
+   "reason": "RefSeq ribosomal protein L34 not called by Bakta"
+  },
+  {
+   "name": "L37ae",
+   "kind": "missed",
+   "match": {
+    "product": "50S ribosomal protein L37ae"
+   },
+   "runs": [
+    "sisl"
+   ],
+   "reason": "RefSeq ribosomal protein L37ae not called by Bakta"
+  },
+  {
+   "name": "L40e",
+   "kind": "missed",
+   "match": {
+    "product": "50S ribosomal protein L40e"
+   },
+   "runs": [
+    "sisl"
+   ],
+   "reason": "RefSeq ribosomal protein L40e not called by Bakta"
+  },
+  {
+   "name": "cdzC",
+   "kind": "missed",
+   "match": {
+    "locus_tag": "CCNA_03933"
+   },
+   "runs": [
+    "ccre"
+   ],
+   "reason": "RefSeq bacteriocin cdzC (LC-MS / Ribo-seq evidence in RefSeq) not called by Bakta"
+  },
+  {
+   "name": "cdzD",
+   "kind": "missed",
+   "match": {
+    "locus_tag": "CCNA_03932"
+   },
+   "runs": [
+    "ccre"
+   ],
+   "reason": "RefSeq bacteriocin cdzD not called by Bakta"
+  },
+  {
+   "name": "cdzI",
+   "kind": "missed",
+   "match": {
+    "locus_tag": "CCNA_03931"
+   },
+   "runs": [
+    "ccre"
+   ],
+   "reason": "RefSeq bacteriocin immunity cdzI not called by Bakta"
+  }
+ ],
+ "controls_found": [
+  {
+   "control": "prfB N-terminal extension",
+   "kind": "prfB",
+   "role": "primary",
+   "run": "ecoli_e2",
+   "orf_id": "NOVEL_U00096.3_3035184_m",
+   "class": "nterm_extension",
+   "q": 0.142857,
+   "n_peptides": 4,
+   "has_start": false,
+   "flags": "no_start_codon",
+   "refseq_feature": "prfB 3035184-3036282 (-)"
+  },
+  {
+   "control": "prfB N-terminal extension",
+   "kind": "prfB",
+   "role": "secondary (prfB leader)",
+   "run": "ecoli_e2",
+   "orf_id": "NOVEL_U00096.3_3036205_m",
+   "class": "intergenic",
+   "q": 0.142857,
+   "n_peptides": 1,
+   "has_start": true,
+   "flags": "rbs_supported;promoter_supported",
+   "refseq_feature": "prfB 3035184-3036282 (-)"
+  },
+  {
+   "control": "infC late start",
+   "kind": "infC",
+   "role": "secondary",
+   "run": "ecoli_e2",
+   "orf_id": "NOVEL_U00096.3_1800096_m",
+   "class": "nterm_extension",
+   "q": 0.142857,
+   "n_peptides": 2,
+   "has_start": false,
+   "flags": "no_start_codon;terminator_supported",
+   "refseq_feature": "infC 1800096-1800638 (-)"
+  },
+  {
+   "control": "rpmB (L28)",
+   "kind": "missed",
+   "role": "secondary",
+   "run": "tpa_dal1",
+   "orf_id": "NOVEL_NC_016844.1_385062_p",
+   "class": "intergenic",
+   "q": 1.0,
+   "n_peptides": 2,
+   "has_start": true,
+   "flags": "rbs_supported;promoter_supported",
+   "refseq_feature": "50S ribosomal protein L28 385113-385298 (+)"
+  },
+  {
+   "control": "rpmB (L28)",
+   "kind": "missed",
+   "role": "secondary",
+   "run": "tpa_grady",
+   "orf_id": "NOVEL_NZ_CP035104.1_385043_p",
+   "class": "intergenic",
+   "q": 1.0,
+   "n_peptides": 2,
+   "has_start": true,
+   "flags": "rbs_supported;promoter_supported",
+   "refseq_feature": "50S ribosomal protein L28 385043-385279 (+)"
+  },
+  {
+   "control": "rpmB (L28)",
+   "kind": "missed",
+   "role": "secondary",
+   "run": "tpa_haitib",
+   "orf_id": "NOVEL_NZ_CP032623.1_385058_p",
+   "class": "intergenic",
+   "q": 1.0,
+   "n_peptides": 2,
+   "has_start": true,
+   "flags": "rbs_supported;promoter_supported",
+   "refseq_feature": "50S ribosomal protein L28 385058-385294 (+)"
+  },
+  {
+   "control": "rpmB (L28)",
+   "kind": "missed",
+   "role": "secondary",
+   "run": "tpa_madras",
+   "orf_id": "NOVEL_NZ_CP078121.1_385073_p",
+   "class": "intergenic",
+   "q": 1.0,
+   "n_peptides": 2,
+   "has_start": true,
+   "flags": "rbs_supported;promoter_supported",
+   "refseq_feature": "50S ribosomal protein L28 385073-385309 (+)"
+  },
+  {
+   "control": "rpmB (L28)",
+   "kind": "missed",
+   "role": "secondary",
+   "run": "tpa_mexicoa",
+   "orf_id": "NOVEL_NC_018722.1_385032_p",
+   "class": "intergenic",
+   "q": 1.0,
+   "n_peptides": 2,
+   "has_start": true,
+   "flags": "rbs_supported;promoter_supported",
+   "refseq_feature": "50S ribosomal protein L28 385032-385268 (+)"
+  },
+  {
+   "control": "rpmB (L28)",
+   "kind": "missed",
+   "role": "secondary",
+   "run": "tpa_phil1",
+   "orf_id": "NOVEL_NZ_CP035193.1_385044_p",
+   "class": "intergenic",
+   "q": 1.0,
+   "n_peptides": 2,
+   "has_start": true,
+   "flags": "rbs_supported;promoter_supported",
+   "refseq_feature": "50S ribosomal protein L28 385044-385280 (+)"
+  },
+  {
+   "control": "rpmB (L28)",
+   "kind": "missed",
+   "role": "secondary",
+   "run": "tpa_ss14",
+   "orf_id": "NOVEL_NC_021508.1_385044_p",
+   "class": "intergenic",
+   "q": 0.5,
+   "n_peptides": 2,
+   "has_start": true,
+   "flags": "rbs_supported;promoter_supported",
+   "refseq_feature": "50S ribosomal protein L28 385044-385280 (+)"
+  },
+  {
+   "control": "cdzC",
+   "kind": "missed",
+   "role": "secondary",
+   "run": "ccre",
+   "orf_id": "NOVEL_NC_011916.1_774018_m",
+   "class": "intergenic",
+   "q": 0.0769231,
+   "n_peptides": 3,
+   "has_start": true,
+   "flags": "rbs_supported",
+   "refseq_feature": "CCNA_03933 774018-774278 (-)"
+  },
+  {
+   "control": "cdzD",
+   "kind": "missed",
+   "role": "secondary",
+   "run": "ccre",
+   "orf_id": "NOVEL_NC_011916.1_773733_m",
+   "class": "intergenic",
+   "q": 0.0769231,
+   "n_peptides": 3,
+   "has_start": true,
+   "flags": "rbs_supported",
+   "refseq_feature": "CCNA_03932 773733-773987 (-)"
+  },
+  {
+   "control": "cdzI",
+   "kind": "missed",
+   "role": "secondary",
+   "run": "ccre",
+   "orf_id": "NOVEL_NC_011916.1_773437_m",
+   "class": "intergenic",
+   "q": 0.0769231,
+   "n_peptides": 2,
+   "has_start": true,
+   "flags": "rbs_supported;promoter_supported;terminator_supported",
+   "refseq_feature": "CCNA_03931 773437-773730 (-)"
+  },
+  {
+   "control": "prfB N-terminal extension",
+   "kind": "prfB",
+   "role": "primary",
+   "run": "bthe",
+   "orf_id": "NOVEL_NC_004663.1_4594807_p",
+   "class": "nterm_extension",
+   "q": 0.111111,
+   "n_peptides": 4,
+   "has_start": false,
+   "flags": "no_start_codon",
+   "refseq_feature": "prfB 4594728-4595844 (+)"
+  },
+  {
+   "control": "prfB N-terminal extension",
+   "kind": "prfB",
+   "role": "secondary (prfB leader)",
+   "run": "syn",
+   "orf_id": "NOVEL_NC_008319.1_2330999_p",
+   "class": "intergenic",
+   "q": 0.428571,
+   "n_peptides": 1,
+   "has_start": true,
+   "flags": "NA",
+   "refseq_feature": "prfB 2330999-2332127 (+)"
+  },
+  {
+   "control": "prfB N-terminal extension",
+   "kind": "prfB",
+   "role": "primary",
+   "run": "vnat",
+   "orf_id": "NOVEL_NZ_CP009977.1_2396209_m",
+   "class": "nterm_extension",
+   "q": 0.166667,
+   "n_peptides": 2,
+   "has_start": false,
+   "flags": "no_start_codon",
+   "refseq_feature": "prfB 2396209-2397307 (-)"
+  },
+  {
+   "control": "infC late start",
+   "kind": "infC",
+   "role": "secondary",
+   "run": "cdif",
+   "orf_id": "NOVEL_NZ_CP016318.1_836517_p",
+   "class": "nterm_extension",
+   "q": 0.142857,
+   "n_peptides": 4,
+   "has_start": false,
+   "flags": "no_start_codon",
+   "refseq_feature": "infC 836526-837017 (+)"
+  },
+  {
+   "control": "PrdB read-through (Sec)",
+   "kind": "prdB",
+   "role": "secondary",
+   "run": "cdif",
+   "orf_id": "NOVEL_NZ_CP016318.1_3749916_m",
+   "class": "nterm_extension",
+   "q": 0.142857,
+   "n_peptides": 2,
+   "has_start": false,
+   "flags": "no_start_codon;terminator_supported",
+   "refseq_feature": "prdB 3749916-3750641 (-)"
+  },
+  {
+   "control": "PrdB read-through (Sec)",
+   "kind": "prdB",
+   "role": "secondary (prdB N-terminal part, ends at the Sec codon)",
+   "run": "cdif",
+   "orf_id": "NOVEL_NZ_CP016318.1_3750189_m",
+   "class": "nterm_extension",
+   "q": 0.142857,
+   "n_peptides": 1,
+   "has_start": false,
+   "flags": "no_start_codon;terminator_supported",
+   "refseq_feature": "prdB 3749916-3750641 (-)"
+  },
+  {
+   "control": "L36 Rv3461c",
+   "kind": "missed",
+   "role": "secondary",
+   "run": "mtb",
+   "orf_id": "NOVEL_NC_000962.3_3880286_m",
+   "class": "intergenic",
+   "q": 0.1,
+   "n_peptides": 2,
+   "has_start": true,
+   "flags": "rbs_supported",
+   "refseq_feature": "Rv3461c 3880286-3880399 (-)"
+  },
+  {
+   "control": "L34 Rv3924c",
+   "kind": "missed",
+   "role": "secondary",
+   "run": "mtb",
+   "orf_id": "NOVEL_NC_000962.3_4410786_m",
+   "class": "intergenic",
+   "q": 0.1,
+   "n_peptides": 1,
+   "has_start": true,
+   "flags": "rbs_supported;promoter_supported",
+   "refseq_feature": "Rv3924c 4410786-4410929 (-)"
+  },
+  {
+   "control": "L37ae",
+   "kind": "missed",
+   "role": "secondary",
+   "run": "sisl",
+   "orf_id": "NOVEL_NC_017276.1_1215184_p",
+   "class": "cds_outframe",
+   "q": 0.142857,
+   "n_peptides": 3,
+   "has_start": true,
+   "flags": "rbs_supported;promoter_supported",
+   "refseq_feature": "50S ribosomal protein L37ae 1215193-1215405 (+)"
+  },
+  {
+   "control": "L40e",
+   "kind": "missed",
+   "role": "secondary",
+   "run": "sisl",
+   "orf_id": "NOVEL_NC_017276.1_1702242_p",
+   "class": "intergenic",
+   "q": 0.166667,
+   "n_peptides": 2,
+   "has_start": true,
+   "flags": "rbs_supported;promoter_supported",
+   "refseq_feature": "50S ribosomal protein L40e 1702242-1702412 (+)"
+  }
+ ],
+ "tau": {
+  "tau_prfB": 0.166667,
+  "tau_all": 1.0,
+  "tau_class:cds_outframe": 0.142857,
+  "tau_class:intergenic": 1.0,
+  "tau_class:nterm_extension": 0.166667,
+  "tau_all_excl_tpa_rpmB": 0.428571
+ },
+ "results": {
+  "tau_prfB": {
+   "ecoli_e2": {
+    "dataset": "E. coli K-12 (Phase 1 E2)",
+    "accession": "ecoli",
+    "n_candidates": 124,
+    "n_pass": 14,
+    "pass_by_class": {
+     "intergenic": 7,
+     "nterm_extension": 7
+    },
+    "class_q_max_of_passers": {
+     "intergenic": 0.142857,
+     "nterm_extension": 0.142857
+    },
+    "candidates_by_class": {
+     "cds_outframe": 30,
+     "antisense": 62,
+     "intergenic": 21,
+     "nterm_extension": 11
+    },
+    "gippa_class_fdr_expected_false": 1.9999980000000002,
+    "n_controls_passing": 3,
+    "n_noncontrol_passing": 11,
+    "noncontrol_refseq_match": [
+     11,
+     11,
+     1.0,
+     0.7411670330319684,
+     1.0
+    ],
+    "noncontrol_refseq_match_span": [
+     11,
+     11,
+     1.0,
+     0.7411670330319684,
+     1.0
+    ]
+   },
+   "tpa_dal1": {
+    "dataset": "T. pallidum",
+    "accession": "PXD065022",
+    "n_candidates": 41,
+    "n_pass": 28,
+    "pass_by_class": {
+     "antisense": 8,
+     "intergenic": 4,
+     "cds_outframe": 2,
+     "nterm_extension": 14
+    },
+    "class_q_max_of_passers": {
+     "antisense": 0.166667,
+     "cds_outframe": 0.166667,
+     "intergenic": 0.166667,
+     "nterm_extension": 0.0714286
+    },
+    "candidates_by_class": {
+     "antisense": 10,
+     "cds_outframe": 9,
+     "intergenic": 7,
+     "nterm_extension": 14,
+     "pseudogene": 1
+    },
+    "gippa_class_fdr_expected_false": 3.3333384,
+    "n_controls_passing": 0,
+    "n_noncontrol_passing": 28,
+    "noncontrol_refseq_match": [
+     17,
+     28,
+     0.6071428571428571,
+     0.42409044296597176,
+     0.764343134584204
+    ],
+    "noncontrol_refseq_match_span": [
+     19,
+     28,
+     0.6785714285714286,
+     0.49338843180857617,
+     0.8206675307750504
+    ]
+   },
+   "tpa_grady": {
+    "dataset": "T. pallidum",
+    "accession": "PXD065022",
+    "n_candidates": 18,
+    "n_pass": 0,
+    "pass_by_class": {},
+    "class_q_max_of_passers": {},
+    "candidates_by_class": {
+     "cds_outframe": 4,
+     "antisense": 8,
+     "intergenic": 2,
+     "nterm_extension": 4
+    },
+    "gippa_class_fdr_expected_false": 0,
+    "n_controls_passing": 0,
+    "n_noncontrol_passing": 0,
+    "noncontrol_refseq_match": [
+     0,
+     0,
+     null,
+     null,
+     null
+    ],
+    "noncontrol_refseq_match_span": [
+     0,
+     0,
+     null,
+     null,
+     null
+    ]
+   },
+   "tpa_haitib": {
+    "dataset": "T. pallidum",
+    "accession": "PXD065022",
+    "n_candidates": 34,
+    "n_pass": 10,
+    "pass_by_class": {
+     "nterm_extension": 10
+    },
+    "class_q_max_of_passers": {
+     "nterm_extension": 0.1
+    },
+    "candidates_by_class": {
+     "antisense": 15,
+     "nterm_extension": 12,
+     "intergenic": 4,
+     "cds_outframe": 3
+    },
+    "gippa_class_fdr_expected_false": 1.0,
+    "n_controls_passing": 0,
+    "n_noncontrol_passing": 10,
+    "noncontrol_refseq_match": [
+     9,
+     10,
+     0.9,
+     0.5958499732047615,
+     0.9821237869049271
+    ],
+    "noncontrol_refseq_match_span": [
+     10,
+     10,
+     1.0,
+     0.7224672001371107,
+     0.9999999999999999
+    ]
+   },
+   "tpa_madras": {
+    "dataset": "T. pallidum",
+    "accession": "PXD065022",
+    "n_candidates": 17,
+    "n_pass": 7,
+    "pass_by_class": {
+     "intergenic": 2,
+     "cds_outframe": 3,
+     "antisense": 2
+    },
+    "class_q_max_of_passers": {
+     "antisense": 0.142857,
+     "cds_outframe": 0.142857,
+     "intergenic": 0.142857
+    },
+    "candidates_by_class": {
+     "antisense": 4,
+     "intergenic": 4,
+     "cds_outframe": 4,
+     "nterm_extension": 5
+    },
+    "gippa_class_fdr_expected_false": 0.9999990000000001,
+    "n_controls_passing": 0,
+    "n_noncontrol_passing": 7,
+    "noncontrol_refseq_match": [
+     6,
+     7,
+     0.8571428571428571,
+     0.4868721707256811,
+     0.9743203756552565
+    ],
+    "noncontrol_refseq_match_span": [
+     6,
+     7,
+     0.8571428571428571,
+     0.4868721707256811,
+     0.9743203756552565
+    ]
+   },
+   "tpa_mexicoa": {
+    "dataset": "T. pallidum",
+    "accession": "PXD065022",
+    "n_candidates": 30,
+    "n_pass": 6,
+    "pass_by_class": {
+     "nterm_extension": 6
+    },
+    "class_q_max_of_passers": {
+     "nterm_extension": 0.166667
+    },
+    "candidates_by_class": {
+     "antisense": 14,
+     "cds_outframe": 7,
+     "intergenic": 3,
+     "nterm_extension": 6
+    },
+    "gippa_class_fdr_expected_false": 1.000002,
+    "n_controls_passing": 0,
+    "n_noncontrol_passing": 6,
+    "noncontrol_refseq_match": [
+     6,
+     6,
+     1.0,
+     0.6096657120978346,
+     1.0
+    ],
+    "noncontrol_refseq_match_span": [
+     6,
+     6,
+     1.0,
+     0.6096657120978346,
+     1.0
+    ]
+   },
+   "tpa_phil1": {
+    "dataset": "T. pallidum",
+    "accession": "PXD065022",
+    "n_candidates": 35,
+    "n_pass": 6,
+    "pass_by_class": {
+     "intergenic": 2,
+     "cds_outframe": 3,
+     "antisense": 1
+    },
+    "class_q_max_of_passers": {
+     "antisense": 0.166667,
+     "cds_outframe": 0.166667,
+     "intergenic": 0.166667
+    },
+    "candidates_by_class": {
+     "cds_outframe": 10,
+     "antisense": 13,
+     "nterm_extension": 9,
+     "intergenic": 3
+    },
+    "gippa_class_fdr_expected_false": 1.000002,
+    "n_controls_passing": 0,
+    "n_noncontrol_passing": 6,
+    "noncontrol_refseq_match": [
+     6,
+     6,
+     1.0,
+     0.6096657120978346,
+     1.0
+    ],
+    "noncontrol_refseq_match_span": [
+     6,
+     6,
+     1.0,
+     0.6096657120978346,
+     1.0
+    ]
+   },
+   "tpa_ss14": {
+    "dataset": "T. pallidum",
+    "accession": "PXD065022",
+    "n_candidates": 25,
+    "n_pass": 14,
+    "pass_by_class": {
+     "cds_outframe": 4,
+     "intergenic": 2,
+     "antisense": 2,
+     "nterm_extension": 6
+    },
+    "class_q_max_of_passers": {
+     "antisense": 0.125,
+     "cds_outframe": 0.125,
+     "intergenic": 0.125,
+     "nterm_extension": 0.166667
+    },
+    "candidates_by_class": {
+     "antisense": 9,
+     "cds_outframe": 4,
+     "intergenic": 6,
+     "nterm_extension": 6
+    },
+    "gippa_class_fdr_expected_false": 2.0000020000000003,
+    "n_controls_passing": 0,
+    "n_noncontrol_passing": 14,
+    "noncontrol_refseq_match": [
+     11,
+     14,
+     0.7857142857142857,
+     0.524107694133997,
+     0.9242861328730683
+    ],
+    "noncontrol_refseq_match_span": [
+     13,
+     14,
+     0.9285714285714286,
+     0.6853129557584889,
+     0.9872777847521093
+    ]
+   },
+   "ccre": {
+    "dataset": "C. crescentus",
+    "accession": "PXD069004",
+    "n_candidates": 164,
+    "n_pass": 67,
+    "pass_by_class": {
+     "nterm_extension": 48,
+     "intergenic": 17,
+     "cds_outframe": 2
+    },
+    "class_q_max_of_passers": {
+     "cds_outframe": 0.166667,
+     "intergenic": 0.166667,
+     "nterm_extension": 0.0833333
+    },
+    "candidates_by_class": {
+     "antisense": 65,
+     "nterm_extension": 49,
+     "cds_outframe": 21,
+     "intergenic": 29
+    },
+    "gippa_class_fdr_expected_false": 7.1666714,
+    "n_controls_passing": 3,
+    "n_noncontrol_passing": 64,
+    "noncontrol_refseq_match": [
+     51,
+     64,
+     0.796875,
+     0.6828636426898583,
+     0.8772658218081634
+    ],
+    "noncontrol_refseq_match_span": [
+     58,
+     64,
+     0.90625,
+     0.810171204003544,
+     0.9563217474148016
+    ]
+   },
+   "bthe": {
+    "dataset": "B. thetaiotaomicron",
+    "accession": "PXD055395",
+    "n_candidates": 99,
+    "n_pass": 9,
+    "pass_by_class": {
+     "nterm_extension": 9
+    },
+    "class_q_max_of_passers": {
+     "nterm_extension": 0.111111
+    },
+    "candidates_by_class": {
+     "cds_outframe": 35,
+     "antisense": 38,
+     "nterm_extension": 14,
+     "intergenic": 12
+    },
+    "gippa_class_fdr_expected_false": 0.999999,
+    "n_controls_passing": 1,
+    "n_noncontrol_passing": 8,
+    "noncontrol_refseq_match": [
+     6,
+     8,
+     0.75,
+     0.40927543031016883,
+     0.9285207872478909
+    ],
+    "noncontrol_refseq_match_span": [
+     8,
+     8,
+     1.0,
+     0.6755924351161198,
+     1.0
+    ]
+   },
+   "syn": {
+    "dataset": "Synechococcus CC9311",
+    "accession": "PXD072227",
+    "n_candidates": 117,
+    "n_pass": 62,
+    "pass_by_class": {
+     "nterm_extension": 43,
+     "antisense": 6,
+     "intergenic": 10,
+     "cds_outframe": 3
+    },
+    "class_q_max_of_passers": {
+     "antisense": 0.142857,
+     "cds_outframe": 0.166667,
+     "intergenic": 0.166667,
+     "nterm_extension": 0.0930233
+    },
+    "candidates_by_class": {
+     "antisense": 37,
+     "nterm_extension": 43,
+     "cds_outframe": 19,
+     "intergenic": 18
+    },
+    "gippa_class_fdr_expected_false": 7.0238149000000005,
+    "n_controls_passing": 0,
+    "n_noncontrol_passing": 62,
+    "noncontrol_refseq_match": [
+     49,
+     62,
+     0.7903225806451613,
+     0.6736078510298068,
+     0.8731601071048801
+    ],
+    "noncontrol_refseq_match_span": [
+     54,
+     62,
+     0.8709677419354839,
+     0.7655067270982637,
+     0.9331412194071697
+    ]
+   },
+   "vnat": {
+    "dataset": "V. natriegens",
+    "accession": "PXD049476",
+    "n_candidates": 78,
+    "n_pass": 12,
+    "pass_by_class": {
+     "nterm_extension": 12
+    },
+    "class_q_max_of_passers": {
+     "nterm_extension": 0.166667
+    },
+    "candidates_by_class": {
+     "nterm_extension": 15,
+     "cds_outframe": 17,
+     "intergenic": 12,
+     "antisense": 34
+    },
+    "gippa_class_fdr_expected_false": 2.000004,
+    "n_controls_passing": 1,
+    "n_noncontrol_passing": 11,
+    "noncontrol_refseq_match": [
+     10,
+     11,
+     0.9090909090909091,
+     0.6226415635484043,
+     0.9837678271141151
+    ],
+    "noncontrol_refseq_match_span": [
+     11,
+     11,
+     1.0,
+     0.7411670330319684,
+     1.0
+    ]
+   },
+   "mxan": {
+    "dataset": "M. xanthus",
+    "accession": "PXD060688",
+    "n_candidates": 265,
+    "n_pass": 116,
+    "pass_by_class": {
+     "nterm_extension": 103,
+     "antisense": 2,
+     "intergenic": 10,
+     "cds_outframe": 1
+    },
+    "class_q_max_of_passers": {
+     "antisense": 0.166667,
+     "cds_outframe": 0.166667,
+     "intergenic": 0.166667,
+     "nterm_extension": 0.145631
+    },
+    "candidates_by_class": {
+     "nterm_extension": 115,
+     "antisense": 96,
+     "intergenic": 26,
+     "cds_outframe": 28
+    },
+    "gippa_class_fdr_expected_false": 17.166664,
+    "n_controls_passing": 0,
+    "n_noncontrol_passing": 116,
+    "noncontrol_refseq_match": [
+     86,
+     116,
+     0.7413793103448276,
+     0.6548646743755572,
+     0.812419356969445
+    ],
+    "noncontrol_refseq_match_span": [
+     97,
+     116,
+     0.8362068965517241,
+     0.7582995878695619,
+     0.892560312932405
+    ]
+   },
+   "cdif": {
+    "dataset": "C. difficile",
+    "accession": "PXD065346",
+    "n_candidates": 53,
+    "n_pass": 7,
+    "pass_by_class": {
+     "nterm_extension": 7
+    },
+    "class_q_max_of_passers": {
+     "nterm_extension": 0.142857
+    },
+    "candidates_by_class": {
+     "antisense": 17,
+     "cds_outframe": 11,
+     "intergenic": 13,
+     "nterm_extension": 12
+    },
+    "gippa_class_fdr_expected_false": 0.9999990000000001,
+    "n_controls_passing": 3,
+    "n_noncontrol_passing": 4,
+    "noncontrol_refseq_match": [
+     0,
+     4,
+     0.0,
+     0.0,
+     0.4898908364545973
+    ],
+    "noncontrol_refseq_match_span": [
+     4,
+     4,
+     1.0,
+     0.5101091635454027,
+     1.0
+    ]
+   },
+   "mtb": {
+    "dataset": "M. tuberculosis",
+    "accession": "PXD057335",
+    "n_candidates": 247,
+    "n_pass": 131,
+    "pass_by_class": {
+     "nterm_extension": 109,
+     "intergenic": 15,
+     "cds_outframe": 6,
+     "antisense": 1
+    },
+    "class_q_max_of_passers": {
+     "antisense": 0.0909091,
+     "cds_outframe": 0.166667,
+     "intergenic": 0.1,
+     "nterm_extension": 0.119266
+    },
+    "candidates_by_class": {
+     "cds_outframe": 36,
+     "antisense": 76,
+     "nterm_extension": 109,
+     "intergenic": 26
+    },
+    "gippa_class_fdr_expected_false": 15.590905099999999,
+    "n_controls_passing": 2,
+    "n_noncontrol_passing": 129,
+    "noncontrol_refseq_match": [
+     105,
+     129,
+     0.813953488372093,
+     0.7380801476526884,
+     0.8716692537697368
+    ],
+    "noncontrol_refseq_match_span": [
+     119,
+     129,
+     0.9224806201550387,
+     0.8631767470486843,
+     0.9573502252358138
+    ]
+   },
+   "hvo": {
+    "dataset": "H. volcanii",
+    "accession": "PXD066008",
+    "n_candidates": 142,
+    "n_pass": 51,
+    "pass_by_class": {
+     "nterm_extension": 22,
+     "intergenic": 20,
+     "cds_outframe": 5,
+     "antisense": 4
+    },
+    "class_q_max_of_passers": {
+     "antisense": 0.166667,
+     "cds_outframe": 0.0833333,
+     "intergenic": 0.166667,
+     "nterm_extension": 0.0909091
+    },
+    "candidates_by_class": {
+     "antisense": 55,
+     "nterm_extension": 41,
+     "intergenic": 30,
+     "cds_outframe": 16
+    },
+    "gippa_class_fdr_expected_false": 6.416674700000001,
+    "n_controls_passing": 0,
+    "n_noncontrol_passing": 51,
+    "noncontrol_refseq_match": [
+     33,
+     51,
+     0.6470588235294118,
+     0.5098605845450523,
+     0.7636551154847915
+    ],
+    "noncontrol_refseq_match_span": [
+     36,
+     51,
+     0.7058823529411765,
+     0.5700092442431359,
+     0.8129127357986454
+    ]
+   },
+   "sisl": {
+    "dataset": "S. islandicus",
+    "accession": "PXD079213",
+    "n_candidates": 92,
+    "n_pass": 41,
+    "pass_by_class": {
+     "nterm_extension": 28,
+     "cds_outframe": 4,
+     "intergenic": 9
+    },
+    "class_q_max_of_passers": {
+     "cds_outframe": 0.142857,
+     "intergenic": 0.166667,
+     "nterm_extension": 0.142857
+    },
+    "candidates_by_class": {
+     "antisense": 26,
+     "nterm_extension": 30,
+     "intergenic": 18,
+     "cds_outframe": 18
+    },
+    "gippa_class_fdr_expected_false": 6.071427,
+    "n_controls_passing": 2,
+    "n_noncontrol_passing": 39,
+    "noncontrol_refseq_match": [
+     17,
+     39,
+     0.4358974358974359,
+     0.2930475387568963,
+     0.5902430835133052
+    ],
+    "noncontrol_refseq_match_span": [
+     32,
+     39,
+     0.8205128205128205,
+     0.6733195433811838,
+     0.9102273452678089
+    ]
+   }
+  },
+  "tau_prfB_total": {
+   "n_pass": 581,
+   "pass_by_class": {
+    "intergenic": 98,
+    "nterm_extension": 424,
+    "antisense": 26,
+    "cds_outframe": 33
+   },
+   "n_controls_passing": 15,
+   "n_noncontrol_passing": 566,
+   "noncontrol_refseq_match": [
+    423,
+    566,
+    0.7473498233215548,
+    0.7099660544533811,
+    0.7813986850997382
+   ],
+   "noncontrol_refseq_match_span": [
+    490,
+    566,
+    0.8657243816254417,
+    0.8351569274532419,
+    0.8913609374574419
+   ],
+   "gippa_class_fdr_expected_false": 74.7695005,
+   "n_candidates": 1581
+  },
+  "tau_all": {
+   "ecoli_e2": {
+    "dataset": "E. coli K-12 (Phase 1 E2)",
+    "accession": "ecoli",
+    "n_candidates": 124,
+    "n_pass": 124,
+    "pass_by_class": {
+     "cds_outframe": 30,
+     "antisense": 62,
+     "intergenic": 21,
+     "nterm_extension": 11
+    },
+    "class_q_max_of_passers": {
+     "antisense": 1.0,
+     "cds_outframe": 1.0,
+     "intergenic": 1.0,
+     "nterm_extension": 1.0
+    },
+    "candidates_by_class": {
+     "cds_outframe": 30,
+     "antisense": 62,
+     "intergenic": 21,
+     "nterm_extension": 11
+    },
+    "gippa_class_fdr_expected_false": 124.0,
+    "n_controls_passing": 3,
+    "n_noncontrol_passing": 121,
+    "noncontrol_refseq_match": [
+     22,
+     121,
+     0.18181818181818182,
+     0.12324719851453322,
+     0.2599705183611347
+    ],
+    "noncontrol_refseq_match_span": [
+     45,
+     121,
+     0.371900826446281,
+     0.29097037147101024,
+     0.46071468337503785
+    ]
+   },
+   "tpa_dal1": {
+    "dataset": "T. pallidum",
+    "accession": "PXD065022",
+    "n_candidates": 41,
+    "n_pass": 40,
+    "pass_by_class": {
+     "antisense": 10,
+     "cds_outframe": 9,
+     "intergenic": 7,
+     "nterm_extension": 14
+    },
+    "class_q_max_of_passers": {
+     "antisense": 0.3,
+     "cds_outframe": 0.714286,
+     "intergenic": 1.0,
+     "nterm_extension": 0.0714286
+    },
+    "candidates_by_class": {
+     "antisense": 10,
+     "cds_outframe": 9,
+     "intergenic": 7,
+     "nterm_extension": 14,
+     "pseudogene": 1
+    },
+    "gippa_class_fdr_expected_false": 17.4285744,
+    "n_controls_passing": 1,
+    "n_noncontrol_passing": 39,
+    "noncontrol_refseq_match": [
+     19,
+     39,
+     0.48717948717948717,
+     0.33865175329862,
+     0.6380063711554202
+    ],
+    "noncontrol_refseq_match_span": [
+     25,
+     39,
+     0.6410256410256411,
+     0.4841814855954854,
+     0.7725791454100714
+    ]
+   },
+   "tpa_grady": {
+    "dataset": "T. pallidum",
+    "accession": "PXD065022",
+    "n_candidates": 18,
+    "n_pass": 18,
+    "pass_by_class": {
+     "cds_outframe": 4,
+     "antisense": 8,
+     "intergenic": 2,
+     "nterm_extension": 4
+    },
+    "class_q_max_of_passers": {
+     "antisense": 1.0,
+     "cds_outframe": 0.428571,
+     "intergenic": 1.0,
+     "nterm_extension": 0.25
+    },
+    "candidates_by_class": {
+     "cds_outframe": 4,
+     "antisense": 8,
+     "intergenic": 2,
+     "nterm_extension": 4
+    },
+    "gippa_class_fdr_expected_false": 12.714284,
+    "n_controls_passing": 1,
+    "n_noncontrol_passing": 17,
+    "noncontrol_refseq_match": [
+     9,
+     17,
+     0.5294117647058824,
+     0.30963235060004424,
+     0.7383489355759056
+    ],
+    "noncontrol_refseq_match_span": [
+     10,
+     17,
+     0.5882352941176471,
+     0.3600544264299978,
+     0.7838894320978518
+    ]
+   },
+   "tpa_haitib": {
+    "dataset": "T. pallidum",
+    "accession": "PXD065022",
+    "n_candidates": 34,
+    "n_pass": 34,
+    "pass_by_class": {
+     "antisense": 15,
+     "nterm_extension": 12,
+     "intergenic": 4,
+     "cds_outframe": 3
+    },
+    "class_q_max_of_passers": {
+     "antisense": 0.6,
+     "cds_outframe": 0.333333,
+     "intergenic": 1.0,
+     "nterm_extension": 0.25
+    },
+    "candidates_by_class": {
+     "antisense": 15,
+     "nterm_extension": 12,
+     "intergenic": 4,
+     "cds_outframe": 3
+    },
+    "gippa_class_fdr_expected_false": 16.999999,
+    "n_controls_passing": 1,
+    "n_noncontrol_passing": 33,
+    "noncontrol_refseq_match": [
+     14,
+     33,
+     0.42424242424242425,
+     0.2723559663341021,
+     0.5919273666268755
+    ],
+    "noncontrol_refseq_match_span": [
+     17,
+     33,
+     0.5151515151515151,
+     0.3521837544891414,
+     0.674959578918663
+    ]
+   },
+   "tpa_madras": {
+    "dataset": "T. pallidum",
+    "accession": "PXD065022",
+    "n_candidates": 17,
+    "n_pass": 17,
+    "pass_by_class": {
+     "antisense": 4,
+     "intergenic": 4,
+     "cds_outframe": 4,
+     "nterm_extension": 5
+    },
+    "class_q_max_of_passers": {
+     "antisense": 1.0,
+     "cds_outframe": 0.222222,
+     "intergenic": 1.0,
+     "nterm_extension": 0.2
+    },
+    "candidates_by_class": {
+     "antisense": 4,
+     "intergenic": 4,
+     "cds_outframe": 4,
+     "nterm_extension": 5
+    },
+    "gippa_class_fdr_expected_false": 9.888888,
+    "n_controls_passing": 1,
+    "n_noncontrol_passing": 16,
+    "noncontrol_refseq_match": [
+     12,
+     16,
+     0.75,
+     0.5050168346449122,
+     0.8981793250878696
+    ],
+    "noncontrol_refseq_match_span": [
+     12,
+     16,
+     0.75,
+     0.5050168346449122,
+     0.8981793250878696
+    ]
+   },
+   "tpa_mexicoa": {
+    "dataset": "T. pallidum",
+    "accession": "PXD065022",
+    "n_candidates": 30,
+    "n_pass": 30,
+    "pass_by_class": {
+     "antisense": 14,
+     "cds_outframe": 7,
+     "intergenic": 3,
+     "nterm_extension": 6
+    },
+    "class_q_max_of_passers": {
+     "antisense": 0.727273,
+     "cds_outframe": 0.583333,
+     "intergenic": 1.0,
+     "nterm_extension": 0.166667
+    },
+    "candidates_by_class": {
+     "antisense": 14,
+     "cds_outframe": 7,
+     "intergenic": 3,
+     "nterm_extension": 6
+    },
+    "gippa_class_fdr_expected_false": 18.265155,
+    "n_controls_passing": 1,
+    "n_noncontrol_passing": 29,
+    "noncontrol_refseq_match": [
+     15,
+     29,
+     0.5172413793103449,
+     0.34431021881994717,
+     0.6861390984731652
+    ],
+    "noncontrol_refseq_match_span": [
+     16,
+     29,
+     0.5517241379310345,
+     0.37547963210970914,
+     0.7158683197696281
+    ]
+   },
+   "tpa_phil1": {
+    "dataset": "T. pallidum",
+    "accession": "PXD065022",
+    "n_candidates": 35,
+    "n_pass": 35,
+    "pass_by_class": {
+     "cds_outframe": 10,
+     "antisense": 13,
+     "nterm_extension": 9,
+     "intergenic": 3
+    },
+    "class_q_max_of_passers": {
+     "antisense": 0.75,
+     "cds_outframe": 0.384615,
+     "intergenic": 1.0,
+     "nterm_extension": 0.222222
+    },
+    "candidates_by_class": {
+     "cds_outframe": 10,
+     "antisense": 13,
+     "nterm_extension": 9,
+     "intergenic": 3
+    },
+    "gippa_class_fdr_expected_false": 18.596148,
+    "n_controls_passing": 1,
+    "n_noncontrol_passing": 34,
+    "noncontrol_refseq_match": [
+     15,
+     34,
+     0.4411764705882353,
+     0.2888348224624216,
+     0.6054610074379694
+    ],
+    "noncontrol_refseq_match_span": [
+     22,
+     34,
+     0.6470588235294118,
+     0.47913963119781733,
+     0.785120794051205
+    ]
+   },
+   "tpa_ss14": {
+    "dataset": "T. pallidum",
+    "accession": "PXD065022",
+    "n_candidates": 25,
+    "n_pass": 25,
+    "pass_by_class": {
+     "antisense": 9,
+     "cds_outframe": 4,
+     "intergenic": 6,
+     "nterm_extension": 6
+    },
+    "class_q_max_of_passers": {
+     "antisense": 0.625,
+     "cds_outframe": 0.125,
+     "intergenic": 0.5,
+     "nterm_extension": 0.166667
+    },
+    "candidates_by_class": {
+     "antisense": 9,
+     "cds_outframe": 4,
+     "intergenic": 6,
+     "nterm_extension": 6
+    },
+    "gippa_class_fdr_expected_false": 10.125002,
+    "n_controls_passing": 1,
+    "n_noncontrol_passing": 24,
+    "noncontrol_refseq_match": [
+     12,
+     24,
+     0.5,
+     0.3142742581957335,
+     0.6857257418042665
+    ],
+    "noncontrol_refseq_match_span": [
+     15,
+     24,
+     0.625,
+     0.42709962442674276,
+     0.7884063244045122
+    ]
+   },
+   "ccre": {
+    "dataset": "C. crescentus",
+    "accession": "PXD069004",
+    "n_candidates": 164,
+    "n_pass": 164,
+    "pass_by_class": {
+     "antisense": 65,
+     "nterm_extension": 49,
+     "cds_outframe": 21,
+     "intergenic": 29
+    },
+    "class_q_max_of_passers": {
+     "antisense": 1.0,
+     "cds_outframe": 0.973684,
+     "intergenic": 1.0,
+     "nterm_extension": 0.265306
+    },
+    "candidates_by_class": {
+     "antisense": 65,
+     "nterm_extension": 49,
+     "cds_outframe": 21,
+     "intergenic": 29
+    },
+    "gippa_class_fdr_expected_false": 127.447358,
+    "n_controls_passing": 3,
+    "n_noncontrol_passing": 161,
+    "noncontrol_refseq_match": [
+     62,
+     161,
+     0.38509316770186336,
+     0.313437480977629,
+     0.4621044229541563
+    ],
+    "noncontrol_refseq_match_span": [
+     81,
+     161,
+     0.5031055900621118,
+     0.42670648192148214,
+     0.5793599531073884
+    ]
+   },
+   "bthe": {
+    "dataset": "B. thetaiotaomicron",
+    "accession": "PXD055395",
+    "n_candidates": 99,
+    "n_pass": 99,
+    "pass_by_class": {
+     "cds_outframe": 35,
+     "antisense": 38,
+     "nterm_extension": 14,
+     "intergenic": 12
+    },
+    "class_q_max_of_passers": {
+     "antisense": 0.974359,
+     "cds_outframe": 0.540541,
+     "intergenic": 1.0,
+     "nterm_extension": 0.428571
+    },
+    "candidates_by_class": {
+     "cds_outframe": 35,
+     "antisense": 38,
+     "nterm_extension": 14,
+     "intergenic": 12
+    },
+    "gippa_class_fdr_expected_false": 73.944571,
+    "n_controls_passing": 1,
+    "n_noncontrol_passing": 98,
+    "noncontrol_refseq_match": [
+     22,
+     98,
+     0.22448979591836735,
+     0.15318242080683164,
+     0.3165816553826658
+    ],
+    "noncontrol_refseq_match_span": [
+     49,
+     98,
+     0.5,
+     0.40289182562513004,
+     0.59710817437487
+    ]
+   },
+   "syn": {
+    "dataset": "Synechococcus CC9311",
+    "accession": "PXD072227",
+    "n_candidates": 117,
+    "n_pass": 117,
+    "pass_by_class": {
+     "antisense": 37,
+     "nterm_extension": 43,
+     "cds_outframe": 19,
+     "intergenic": 18
+    },
+    "class_q_max_of_passers": {
+     "antisense": 1.0,
+     "cds_outframe": 0.653846,
+     "intergenic": 0.785714,
+     "nterm_extension": 0.0930233
+    },
+    "candidates_by_class": {
+     "antisense": 37,
+     "nterm_extension": 43,
+     "cds_outframe": 19,
+     "intergenic": 18
+    },
+    "gippa_class_fdr_expected_false": 67.5659279,
+    "n_controls_passing": 1,
+    "n_noncontrol_passing": 116,
+    "noncontrol_refseq_match": [
+     59,
+     116,
+     0.5086206896551724,
+     0.41883837571114535,
+     0.5978503396940331
+    ],
+    "noncontrol_refseq_match_span": [
+     73,
+     116,
+     0.6293103448275862,
+     0.5385927441329772,
+     0.7117379869447025
+    ]
+   },
+   "vnat": {
+    "dataset": "V. natriegens",
+    "accession": "PXD049476",
+    "n_candidates": 78,
+    "n_pass": 78,
+    "pass_by_class": {
+     "nterm_extension": 15,
+     "cds_outframe": 17,
+     "intergenic": 12,
+     "antisense": 34
+    },
+    "class_q_max_of_passers": {
+     "antisense": 1.0,
+     "cds_outframe": 1.0,
+     "intergenic": 1.0,
+     "nterm_extension": 0.4
+    },
+    "candidates_by_class": {
+     "nterm_extension": 15,
+     "cds_outframe": 17,
+     "intergenic": 12,
+     "antisense": 34
+    },
+    "gippa_class_fdr_expected_false": 69.0,
+    "n_controls_passing": 1,
+    "n_noncontrol_passing": 77,
+    "noncontrol_refseq_match": [
+     24,
+     77,
+     0.3116883116883117,
+     0.21927281991691477,
+     0.42200035324140456
+    ],
+    "noncontrol_refseq_match_span": [
+     33,
+     77,
+     0.42857142857142855,
+     0.32403652422604634,
+     0.5398946793857298
+    ]
+   },
+   "mxan": {
+    "dataset": "M. xanthus",
+    "accession": "PXD060688",
+    "n_candidates": 265,
+    "n_pass": 265,
+    "pass_by_class": {
+     "nterm_extension": 115,
+     "antisense": 96,
+     "intergenic": 26,
+     "cds_outframe": 28
+    },
+    "class_q_max_of_passers": {
+     "antisense": 1.0,
+     "cds_outframe": 1.0,
+     "intergenic": 1.0,
+     "nterm_extension": 1.0
+    },
+    "candidates_by_class": {
+     "nterm_extension": 115,
+     "antisense": 96,
+     "intergenic": 26,
+     "cds_outframe": 28
+    },
+    "gippa_class_fdr_expected_false": 265.0,
+    "n_controls_passing": 0,
+    "n_noncontrol_passing": 265,
+    "noncontrol_refseq_match": [
+     107,
+     265,
+     0.4037735849056604,
+     0.34648156403404407,
+     0.4638155522525671
+    ],
+    "noncontrol_refseq_match_span": [
+     135,
+     265,
+     0.5094339622641509,
+     0.44954147649853266,
+     0.5690568454341526
+    ]
+   },
+   "cdif": {
+    "dataset": "C. difficile",
+    "accession": "PXD065346",
+    "n_candidates": 53,
+    "n_pass": 53,
+    "pass_by_class": {
+     "antisense": 17,
+     "cds_outframe": 11,
+     "intergenic": 13,
+     "nterm_extension": 12
+    },
+    "class_q_max_of_passers": {
+     "antisense": 1.0,
+     "cds_outframe": 1.0,
+     "intergenic": 1.0,
+     "nterm_extension": 0.5
+    },
+    "candidates_by_class": {
+     "antisense": 17,
+     "cds_outframe": 11,
+     "intergenic": 13,
+     "nterm_extension": 12
+    },
+    "gippa_class_fdr_expected_false": 47.0,
+    "n_controls_passing": 3,
+    "n_noncontrol_passing": 50,
+    "noncontrol_refseq_match": [
+     7,
+     50,
+     0.14,
+     0.06950833427016294,
+     0.2618619371058554
+    ],
+    "noncontrol_refseq_match_span": [
+     19,
+     50,
+     0.38,
+     0.25862789310193596,
+     0.5184955306900703
+    ]
+   },
+   "mtb": {
+    "dataset": "M. tuberculosis",
+    "accession": "PXD057335",
+    "n_candidates": 247,
+    "n_pass": 247,
+    "pass_by_class": {
+     "cds_outframe": 36,
+     "antisense": 76,
+     "nterm_extension": 109,
+     "intergenic": 26
+    },
+    "class_q_max_of_passers": {
+     "antisense": 1.0,
+     "cds_outframe": 0.673469,
+     "intergenic": 1.0,
+     "nterm_extension": 0.119266
+    },
+    "candidates_by_class": {
+     "cds_outframe": 36,
+     "antisense": 76,
+     "nterm_extension": 109,
+     "intergenic": 26
+    },
+    "gippa_class_fdr_expected_false": 139.244878,
+    "n_controls_passing": 2,
+    "n_noncontrol_passing": 245,
+    "noncontrol_refseq_match": [
+     125,
+     245,
+     0.5102040816326531,
+     0.44793568010434825,
+     0.5721574346993342
+    ],
+    "noncontrol_refseq_match_span": [
+     151,
+     245,
+     0.6163265306122448,
+     0.5540851420635836,
+     0.6749763666983951
+    ]
+   },
+   "hvo": {
+    "dataset": "H. volcanii",
+    "accession": "PXD066008",
+    "n_candidates": 142,
+    "n_pass": 142,
+    "pass_by_class": {
+     "antisense": 55,
+     "nterm_extension": 41,
+     "intergenic": 30,
+     "cds_outframe": 16
+    },
+    "class_q_max_of_passers": {
+     "antisense": 0.965517,
+     "cds_outframe": 0.923077,
+     "intergenic": 0.965517,
+     "nterm_extension": 0.414634
+    },
+    "candidates_by_class": {
+     "antisense": 55,
+     "nterm_extension": 41,
+     "intergenic": 30,
+     "cds_outframe": 16
+    },
+    "gippa_class_fdr_expected_false": 113.838171,
+    "n_controls_passing": 0,
+    "n_noncontrol_passing": 142,
+    "noncontrol_refseq_match": [
+     50,
+     142,
+     0.352112676056338,
+     0.2783929960862804,
+     0.43362304969644033
+    ],
+    "noncontrol_refseq_match_span": [
+     63,
+     142,
+     0.44366197183098594,
+     0.3645010697878813,
+     0.5257907571769647
+    ]
+   },
+   "sisl": {
+    "dataset": "S. islandicus",
+    "accession": "PXD079213",
+    "n_candidates": 92,
+    "n_pass": 92,
+    "pass_by_class": {
+     "antisense": 26,
+     "nterm_extension": 30,
+     "intergenic": 18,
+     "cds_outframe": 18
+    },
+    "class_q_max_of_passers": {
+     "antisense": 1.0,
+     "cds_outframe": 0.809524,
+     "intergenic": 1.0,
+     "nterm_extension": 0.233333
+    },
+    "candidates_by_class": {
+     "antisense": 26,
+     "nterm_extension": 30,
+     "intergenic": 18,
+     "cds_outframe": 18
+    },
+    "gippa_class_fdr_expected_false": 65.571422,
+    "n_controls_passing": 2,
+    "n_noncontrol_passing": 90,
+    "noncontrol_refseq_match": [
+     23,
+     90,
+     0.25555555555555554,
+     0.17674759373369173,
+     0.3543764898755346
+    ],
+    "noncontrol_refseq_match_span": [
+     49,
+     90,
+     0.5444444444444444,
+     0.44184633569208204,
+     0.6434038309244221
+    ]
+   }
+  },
+  "tau_all_total": {
+   "n_pass": 1580,
+   "pass_by_class": {
+    "cds_outframe": 272,
+    "antisense": 579,
+    "intergenic": 234,
+    "nterm_extension": 495
+   },
+   "n_controls_passing": 23,
+   "n_noncontrol_passing": 1557,
+   "noncontrol_refseq_match": [
+    597,
+    1557,
+    0.3834296724470135,
+    0.35959344330200416,
+    0.4078396947988586
+   ],
+   "noncontrol_refseq_match_span": [
+    815,
+    1557,
+    0.5234425176621709,
+    0.498607063643764,
+    0.5481625807601946
+   ],
+   "gippa_class_fdr_expected_false": 1196.6303783,
+   "n_candidates": 1581
+  },
+  "tau_class": {
+   "ecoli_e2": {
+    "dataset": "E. coli K-12 (Phase 1 E2)",
+    "accession": "ecoli",
+    "n_candidates": 124,
+    "n_pass": 28,
+    "pass_by_class": {
+     "intergenic": 21,
+     "nterm_extension": 7
+    },
+    "class_q_max_of_passers": {
+     "intergenic": 1.0,
+     "nterm_extension": 0.142857
+    },
+    "candidates_by_class": {
+     "cds_outframe": 30,
+     "antisense": 62,
+     "intergenic": 21,
+     "nterm_extension": 11
+    },
+    "gippa_class_fdr_expected_false": 21.999999,
+    "n_controls_passing": 3,
+    "n_noncontrol_passing": 25,
+    "noncontrol_refseq_match": [
+     12,
+     25,
+     0.48,
+     0.30031285954112974,
+     0.6650148304964322
+    ],
+    "noncontrol_refseq_match_span": [
+     12,
+     25,
+     0.48,
+     0.30031285954112974,
+     0.6650148304964322
+    ]
+   },
+   "tpa_dal1": {
+    "dataset": "T. pallidum",
+    "accession": "PXD065022",
+    "n_candidates": 41,
+    "n_pass": 21,
+    "pass_by_class": {
+     "intergenic": 7,
+     "nterm_extension": 14
+    },
+    "class_q_max_of_passers": {
+     "intergenic": 1.0,
+     "nterm_extension": 0.0714286
+    },
+    "candidates_by_class": {
+     "antisense": 10,
+     "cds_outframe": 9,
+     "intergenic": 7,
+     "nterm_extension": 14,
+     "pseudogene": 1
+    },
+    "gippa_class_fdr_expected_false": 8.0000004,
+    "n_controls_passing": 1,
+    "n_noncontrol_passing": 20,
+    "noncontrol_refseq_match": [
+     14,
+     20,
+     0.7,
+     0.4810271816464765,
+     0.8545227551323956
+    ],
+    "noncontrol_refseq_match_span": [
+     16,
+     20,
+     0.8,
+     0.5839825677481064,
+     0.919342337420202
+    ]
+   },
+   "tpa_grady": {
+    "dataset": "T. pallidum",
+    "accession": "PXD065022",
+    "n_candidates": 18,
+    "n_pass": 2,
+    "pass_by_class": {
+     "intergenic": 2
+    },
+    "class_q_max_of_passers": {
+     "intergenic": 1.0
+    },
+    "candidates_by_class": {
+     "cds_outframe": 4,
+     "antisense": 8,
+     "intergenic": 2,
+     "nterm_extension": 4
+    },
+    "gippa_class_fdr_expected_false": 2.0,
+    "n_controls_passing": 1,
+    "n_noncontrol_passing": 1,
+    "noncontrol_refseq_match": [
+     1,
+     1,
+     1.0,
+     0.20654931437723745,
+     1.0
+    ],
+    "noncontrol_refseq_match_span": [
+     1,
+     1,
+     1.0,
+     0.20654931437723745,
+     1.0
+    ]
+   },
+   "tpa_haitib": {
+    "dataset": "T. pallidum",
+    "accession": "PXD065022",
+    "n_candidates": 34,
+    "n_pass": 14,
+    "pass_by_class": {
+     "nterm_extension": 10,
+     "intergenic": 4
+    },
+    "class_q_max_of_passers": {
+     "intergenic": 1.0,
+     "nterm_extension": 0.1
+    },
+    "candidates_by_class": {
+     "antisense": 15,
+     "nterm_extension": 12,
+     "intergenic": 4,
+     "cds_outframe": 3
+    },
+    "gippa_class_fdr_expected_false": 5.0,
+    "n_controls_passing": 1,
+    "n_noncontrol_passing": 13,
+    "noncontrol_refseq_match": [
+     10,
+     13,
+     0.7692307692307693,
+     0.49743624053272495,
+     0.9182047128150143
+    ],
+    "noncontrol_refseq_match_span": [
+     11,
+     13,
+     0.8461538461538461,
+     0.5776536898051745,
+     0.9567418216419186
+    ]
+   },
+   "tpa_madras": {
+    "dataset": "T. pallidum",
+    "accession": "PXD065022",
+    "n_candidates": 17,
+    "n_pass": 7,
+    "pass_by_class": {
+     "intergenic": 4,
+     "cds_outframe": 3
+    },
+    "class_q_max_of_passers": {
+     "cds_outframe": 0.142857,
+     "intergenic": 1.0
+    },
+    "candidates_by_class": {
+     "antisense": 4,
+     "intergenic": 4,
+     "cds_outframe": 4,
+     "nterm_extension": 5
+    },
+    "gippa_class_fdr_expected_false": 4.428571,
+    "n_controls_passing": 1,
+    "n_noncontrol_passing": 6,
+    "noncontrol_refseq_match": [
+     5,
+     6,
+     0.8333333333333334,
+     0.43649717781352987,
+     0.9699466302516935
+    ],
+    "noncontrol_refseq_match_span": [
+     5,
+     6,
+     0.8333333333333334,
+     0.43649717781352987,
+     0.9699466302516935
+    ]
+   },
+   "tpa_mexicoa": {
+    "dataset": "T. pallidum",
+    "accession": "PXD065022",
+    "n_candidates": 30,
+    "n_pass": 9,
+    "pass_by_class": {
+     "intergenic": 3,
+     "nterm_extension": 6
+    },
+    "class_q_max_of_passers": {
+     "intergenic": 1.0,
+     "nterm_extension": 0.166667
+    },
+    "candidates_by_class": {
+     "antisense": 14,
+     "cds_outframe": 7,
+     "intergenic": 3,
+     "nterm_extension": 6
+    },
+    "gippa_class_fdr_expected_false": 4.000002,
+    "n_controls_passing": 1,
+    "n_noncontrol_passing": 8,
+    "noncontrol_refseq_match": [
+     8,
+     8,
+     1.0,
+     0.6755924351161198,
+     1.0
+    ],
+    "noncontrol_refseq_match_span": [
+     8,
+     8,
+     1.0,
+     0.6755924351161198,
+     1.0
+    ]
+   },
+   "tpa_phil1": {
+    "dataset": "T. pallidum",
+    "accession": "PXD065022",
+    "n_candidates": 35,
+    "n_pass": 3,
+    "pass_by_class": {
+     "intergenic": 3
+    },
+    "class_q_max_of_passers": {
+     "intergenic": 1.0
+    },
+    "candidates_by_class": {
+     "cds_outframe": 10,
+     "antisense": 13,
+     "nterm_extension": 9,
+     "intergenic": 3
+    },
+    "gippa_class_fdr_expected_false": 3.0,
+    "n_controls_passing": 1,
+    "n_noncontrol_passing": 2,
+    "noncontrol_refseq_match": [
+     2,
+     2,
+     1.0,
+     0.34238022750665303,
+     1.0
+    ],
+    "noncontrol_refseq_match_span": [
+     2,
+     2,
+     1.0,
+     0.34238022750665303,
+     1.0
+    ]
+   },
+   "tpa_ss14": {
+    "dataset": "T. pallidum",
+    "accession": "PXD065022",
+    "n_candidates": 25,
+    "n_pass": 16,
+    "pass_by_class": {
+     "cds_outframe": 4,
+     "intergenic": 6,
+     "nterm_extension": 6
+    },
+    "class_q_max_of_passers": {
+     "cds_outframe": 0.125,
+     "intergenic": 0.5,
+     "nterm_extension": 0.166667
+    },
+    "candidates_by_class": {
+     "antisense": 9,
+     "cds_outframe": 4,
+     "intergenic": 6,
+     "nterm_extension": 6
+    },
+    "gippa_class_fdr_expected_false": 4.500002,
+    "n_controls_passing": 1,
+    "n_noncontrol_passing": 15,
+    "noncontrol_refseq_match": [
+     11,
+     15,
+     0.7333333333333333,
+     0.4804956594401943,
+     0.8910254667430761
+    ],
+    "noncontrol_refseq_match_span": [
+     14,
+     15,
+     0.9333333333333333,
+     0.7018347012621998,
+     0.9881331045067315
+    ]
+   },
+   "ccre": {
+    "dataset": "C. crescentus",
+    "accession": "PXD069004",
+    "n_candidates": 164,
+    "n_pass": 77,
+    "pass_by_class": {
+     "nterm_extension": 48,
+     "intergenic": 29
+    },
+    "class_q_max_of_passers": {
+     "intergenic": 1.0,
+     "nterm_extension": 0.0833333
+    },
+    "candidates_by_class": {
+     "antisense": 65,
+     "nterm_extension": 49,
+     "cds_outframe": 21,
+     "intergenic": 29
+    },
+    "gippa_class_fdr_expected_false": 32.9999984,
+    "n_controls_passing": 3,
+    "n_noncontrol_passing": 74,
+    "noncontrol_refseq_match": [
+     52,
+     74,
+     0.7027027027027027,
+     0.5906708986801543,
+     0.794727839402392
+    ],
+    "noncontrol_refseq_match_span": [
+     58,
+     74,
+     0.7837837837837838,
+     0.6772627498746149,
+     0.8622954834409498
+    ]
+   },
+   "bthe": {
+    "dataset": "B. thetaiotaomicron",
+    "accession": "PXD055395",
+    "n_candidates": 99,
+    "n_pass": 21,
+    "pass_by_class": {
+     "nterm_extension": 9,
+     "intergenic": 12
+    },
+    "class_q_max_of_passers": {
+     "intergenic": 1.0,
+     "nterm_extension": 0.111111
+    },
+    "candidates_by_class": {
+     "cds_outframe": 35,
+     "antisense": 38,
+     "nterm_extension": 14,
+     "intergenic": 12
+    },
+    "gippa_class_fdr_expected_false": 12.999999,
+    "n_controls_passing": 1,
+    "n_noncontrol_passing": 20,
+    "noncontrol_refseq_match": [
+     8,
+     20,
+     0.4,
+     0.21880653237281705,
+     0.6134184992377469
+    ],
+    "noncontrol_refseq_match_span": [
+     10,
+     20,
+     0.5,
+     0.2992980081982123,
+     0.7007019918017877
+    ]
+   },
+   "syn": {
+    "dataset": "Synechococcus CC9311",
+    "accession": "PXD072227",
+    "n_candidates": 117,
+    "n_pass": 61,
+    "pass_by_class": {
+     "nterm_extension": 43,
+     "intergenic": 18
+    },
+    "class_q_max_of_passers": {
+     "intergenic": 0.785714,
+     "nterm_extension": 0.0930233
+    },
+    "candidates_by_class": {
+     "antisense": 37,
+     "nterm_extension": 43,
+     "cds_outframe": 19,
+     "intergenic": 18
+    },
+    "gippa_class_fdr_expected_false": 18.142853900000002,
+    "n_controls_passing": 1,
+    "n_noncontrol_passing": 60,
+    "noncontrol_refseq_match": [
+     45,
+     60,
+     0.75,
+     0.6276792992295218,
+     0.8422347746994333
+    ],
+    "noncontrol_refseq_match_span": [
+     50,
+     60,
+     0.8333333333333334,
+     0.7196838683638547,
+     0.9068682302080855
+    ]
+   },
+   "vnat": {
+    "dataset": "V. natriegens",
+    "accession": "PXD049476",
+    "n_candidates": 78,
+    "n_pass": 24,
+    "pass_by_class": {
+     "nterm_extension": 12,
+     "intergenic": 12
+    },
+    "class_q_max_of_passers": {
+     "intergenic": 1.0,
+     "nterm_extension": 0.166667
+    },
+    "candidates_by_class": {
+     "nterm_extension": 15,
+     "cds_outframe": 17,
+     "intergenic": 12,
+     "antisense": 34
+    },
+    "gippa_class_fdr_expected_false": 14.000004,
+    "n_controls_passing": 1,
+    "n_noncontrol_passing": 23,
+    "noncontrol_refseq_match": [
+     12,
+     23,
+     0.5217391304347826,
+     0.32962737336427406,
+     0.7076284258335335
+    ],
+    "noncontrol_refseq_match_span": [
+     13,
+     23,
+     0.5652173913043478,
+     0.3681137508501646,
+     0.743653646743258
+    ]
+   },
+   "mxan": {
+    "dataset": "M. xanthus",
+    "accession": "PXD060688",
+    "n_candidates": 265,
+    "n_pass": 129,
+    "pass_by_class": {
+     "nterm_extension": 103,
+     "intergenic": 26
+    },
+    "class_q_max_of_passers": {
+     "intergenic": 1.0,
+     "nterm_extension": 0.145631
+    },
+    "candidates_by_class": {
+     "nterm_extension": 115,
+     "antisense": 96,
+     "intergenic": 26,
+     "cds_outframe": 28
+    },
+    "gippa_class_fdr_expected_false": 40.999993,
+    "n_controls_passing": 0,
+    "n_noncontrol_passing": 129,
+    "noncontrol_refseq_match": [
+     86,
+     129,
+     0.6666666666666666,
+     0.5815391163837179,
+     0.7421550102973226
+    ],
+    "noncontrol_refseq_match_span": [
+     97,
+     129,
+     0.751937984496124,
+     0.6708487306573387,
+     0.8184563445581876
+    ]
+   },
+   "cdif": {
+    "dataset": "C. difficile",
+    "accession": "PXD065346",
+    "n_candidates": 53,
+    "n_pass": 20,
+    "pass_by_class": {
+     "intergenic": 13,
+     "nterm_extension": 7
+    },
+    "class_q_max_of_passers": {
+     "intergenic": 1.0,
+     "nterm_extension": 0.142857
+    },
+    "candidates_by_class": {
+     "antisense": 17,
+     "cds_outframe": 11,
+     "intergenic": 13,
+     "nterm_extension": 12
+    },
+    "gippa_class_fdr_expected_false": 13.999999,
+    "n_controls_passing": 3,
+    "n_noncontrol_passing": 17,
+    "noncontrol_refseq_match": [
+     1,
+     17,
+     0.058823529411764705,
+     0.010460400984997592,
+     0.26982030637575405
+    ],
+    "noncontrol_refseq_match_span": [
+     5,
+     17,
+     0.29411764705882354,
+     0.1327998961029523,
+     0.5313311006653985
+    ]
+   },
+   "mtb": {
+    "dataset": "M. tuberculosis",
+    "accession": "PXD057335",
+    "n_candidates": 247,
+    "n_pass": 140,
+    "pass_by_class": {
+     "nterm_extension": 109,
+     "intergenic": 26,
+     "cds_outframe": 5
+    },
+    "class_q_max_of_passers": {
+     "cds_outframe": 0.0909091,
+     "intergenic": 1.0,
+     "nterm_extension": 0.119266
+    },
+    "candidates_by_class": {
+     "cds_outframe": 36,
+     "antisense": 76,
+     "nterm_extension": 109,
+     "intergenic": 26
+    },
+    "gippa_class_fdr_expected_false": 39.454539499999996,
+    "n_controls_passing": 2,
+    "n_noncontrol_passing": 138,
+    "noncontrol_refseq_match": [
+     107,
+     138,
+     0.7753623188405797,
+     0.6988194946014094,
+     0.8369899974320433
+    ],
+    "noncontrol_refseq_match_span": [
+     121,
+     138,
+     0.8768115942028986,
+     0.8115661883561323,
+     0.9216468007422765
+    ]
+   },
+   "hvo": {
+    "dataset": "H. volcanii",
+    "accession": "PXD066008",
+    "n_candidates": 142,
+    "n_pass": 57,
+    "pass_by_class": {
+     "nterm_extension": 22,
+     "intergenic": 30,
+     "cds_outframe": 5
+    },
+    "class_q_max_of_passers": {
+     "cds_outframe": 0.0833333,
+     "intergenic": 0.965517,
+     "nterm_extension": 0.0909091
+    },
+    "candidates_by_class": {
+     "antisense": 55,
+     "nterm_extension": 41,
+     "intergenic": 30,
+     "cds_outframe": 16
+    },
+    "gippa_class_fdr_expected_false": 31.3821767,
+    "n_controls_passing": 0,
+    "n_noncontrol_passing": 57,
+    "noncontrol_refseq_match": [
+     33,
+     57,
+     0.5789473684210527,
+     0.44980141395599427,
+     0.6981240331724827
+    ],
+    "noncontrol_refseq_match_span": [
+     37,
+     57,
+     0.6491228070175439,
+     0.519418953556502,
+     0.7599957799083991
+    ]
+   },
+   "sisl": {
+    "dataset": "S. islandicus",
+    "accession": "PXD079213",
+    "n_candidates": 92,
+    "n_pass": 50,
+    "pass_by_class": {
+     "nterm_extension": 28,
+     "intergenic": 18,
+     "cds_outframe": 4
+    },
+    "class_q_max_of_passers": {
+     "cds_outframe": 0.142857,
+     "intergenic": 1.0,
+     "nterm_extension": 0.142857
+    },
+    "candidates_by_class": {
+     "antisense": 26,
+     "nterm_extension": 30,
+     "intergenic": 18,
+     "cds_outframe": 18
+    },
+    "gippa_class_fdr_expected_false": 22.571424,
+    "n_controls_passing": 2,
+    "n_noncontrol_passing": 48,
+    "noncontrol_refseq_match": [
+     17,
+     48,
+     0.3541666666666667,
+     0.23433644125604858,
+     0.4956094298965691
+    ],
+    "noncontrol_refseq_match_span": [
+     33,
+     48,
+     0.6875,
+     0.5466692858410841,
+     0.8005431655341219
+    ]
+   }
+  },
+  "tau_class_total": {
+   "n_pass": 679,
+   "pass_by_class": {
+    "intergenic": 234,
+    "nterm_extension": 424,
+    "cds_outframe": 21
+   },
+   "n_controls_passing": 23,
+   "n_noncontrol_passing": 656,
+   "noncontrol_refseq_match": [
+    424,
+    656,
+    0.6463414634146342,
+    0.6089998370849583,
+    0.6819791510240236
+   ],
+   "noncontrol_refseq_match_span": [
+    493,
+    656,
+    0.7515243902439024,
+    0.7170558391816727,
+    0.7830642966306397
+   ],
+   "gippa_class_fdr_expected_false": 279.4795619,
+   "n_candidates": 1581
+  },
+  "tau_all_excl_tpa_rpmB": {
+   "ecoli_e2": {
+    "dataset": "E. coli K-12 (Phase 1 E2)",
+    "accession": "ecoli",
+    "n_candidates": 124,
+    "n_pass": 23,
+    "pass_by_class": {
+     "intergenic": 16,
+     "nterm_extension": 7
+    },
+    "class_q_max_of_passers": {
+     "intergenic": 0.375,
+     "nterm_extension": 0.142857
+    },
+    "candidates_by_class": {
+     "cds_outframe": 30,
+     "antisense": 62,
+     "intergenic": 21,
+     "nterm_extension": 11
+    },
+    "gippa_class_fdr_expected_false": 6.999999,
+    "n_controls_passing": 3,
+    "n_noncontrol_passing": 20,
+    "noncontrol_refseq_match": [
+     11,
+     20,
+     0.55,
+     0.34208534245034233,
+     0.7418021417443759
+    ],
+    "noncontrol_refseq_match_span": [
+     11,
+     20,
+     0.55,
+     0.34208534245034233,
+     0.7418021417443759
+    ]
+   },
+   "tpa_dal1": {
+    "dataset": "T. pallidum",
+    "accession": "PXD065022",
+    "n_candidates": 41,
+    "n_pass": 35,
+    "pass_by_class": {
+     "antisense": 10,
+     "intergenic": 5,
+     "cds_outframe": 6,
+     "nterm_extension": 14
+    },
+    "class_q_max_of_passers": {
+     "antisense": 0.3,
+     "cds_outframe": 0.272727,
+     "intergenic": 0.2,
+     "nterm_extension": 0.0714286
+    },
+    "candidates_by_class": {
+     "antisense": 10,
+     "cds_outframe": 9,
+     "intergenic": 7,
+     "nterm_extension": 14,
+     "pseudogene": 1
+    },
+    "gippa_class_fdr_expected_false": 6.6363624,
+    "n_controls_passing": 0,
+    "n_noncontrol_passing": 35,
+    "noncontrol_refseq_match": [
+     19,
+     35,
+     0.5428571428571428,
+     0.3818972506848375,
+     0.6953398071159278
+    ],
+    "noncontrol_refseq_match_span": [
+     22,
+     35,
+     0.6285714285714286,
+     0.4633693684359532,
+     0.7683418049663429
+    ]
+   },
+   "tpa_grady": {
+    "dataset": "T. pallidum",
+    "accession": "PXD065022",
+    "n_candidates": 18,
+    "n_pass": 11,
+    "pass_by_class": {
+     "cds_outframe": 4,
+     "intergenic": 1,
+     "nterm_extension": 4,
+     "antisense": 2
+    },
+    "class_q_max_of_passers": {
+     "antisense": 0.428571,
+     "cds_outframe": 0.428571,
+     "intergenic": 0.333333,
+     "nterm_extension": 0.25
+    },
+    "candidates_by_class": {
+     "cds_outframe": 4,
+     "antisense": 8,
+     "intergenic": 2,
+     "nterm_extension": 4
+    },
+    "gippa_class_fdr_expected_false": 3.904759,
+    "n_controls_passing": 0,
+    "n_noncontrol_passing": 11,
+    "noncontrol_refseq_match": [
+     9,
+     11,
+     0.8181818181818182,
+     0.523019438039156,
+     0.9486323102539149
+    ],
+    "noncontrol_refseq_match_span": [
+     10,
+     11,
+     0.9090909090909091,
+     0.6226415635484043,
+     0.9837678271141151
+    ]
+   },
+   "tpa_haitib": {
+    "dataset": "T. pallidum",
+    "accession": "PXD065022",
+    "n_candidates": 34,
+    "n_pass": 21,
+    "pass_by_class": {
+     "antisense": 5,
+     "nterm_extension": 12,
+     "intergenic": 1,
+     "cds_outframe": 3
+    },
+    "class_q_max_of_passers": {
+     "antisense": 0.333333,
+     "cds_outframe": 0.333333,
+     "intergenic": 0.25,
+     "nterm_extension": 0.25
+    },
+    "candidates_by_class": {
+     "antisense": 15,
+     "nterm_extension": 12,
+     "intergenic": 4,
+     "cds_outframe": 3
+    },
+    "gippa_class_fdr_expected_false": 5.916664,
+    "n_controls_passing": 0,
+    "n_noncontrol_passing": 21,
+    "noncontrol_refseq_match": [
+     14,
+     21,
+     0.6666666666666666,
+     0.4537345197425524,
+     0.8280524739491653
+    ],
+    "noncontrol_refseq_match_span": [
+     17,
+     21,
+     0.8095238095238095,
+     0.5999943530979508,
+     0.9233243494723822
+    ]
+   },
+   "tpa_madras": {
+    "dataset": "T. pallidum",
+    "accession": "PXD065022",
+    "n_candidates": 17,
+    "n_pass": 14,
+    "pass_by_class": {
+     "intergenic": 3,
+     "cds_outframe": 4,
+     "antisense": 2,
+     "nterm_extension": 5
+    },
+    "class_q_max_of_passers": {
+     "antisense": 0.142857,
+     "cds_outframe": 0.222222,
+     "intergenic": 0.222222,
+     "nterm_extension": 0.2
+    },
+    "candidates_by_class": {
+     "antisense": 4,
+     "intergenic": 4,
+     "cds_outframe": 4,
+     "nterm_extension": 5
+    },
+    "gippa_class_fdr_expected_false": 2.841268,
+    "n_controls_passing": 0,
+    "n_noncontrol_passing": 14,
+    "noncontrol_refseq_match": [
+     12,
+     14,
+     0.8571428571428571,
+     0.6005862050302965,
+     0.9599060787285351
+    ],
+    "noncontrol_refseq_match_span": [
+     12,
+     14,
+     0.8571428571428571,
+     0.6005862050302965,
+     0.9599060787285351
+    ]
+   },
+   "tpa_mexicoa": {
+    "dataset": "T. pallidum",
+    "accession": "PXD065022",
+    "n_candidates": 30,
+    "n_pass": 14,
+    "pass_by_class": {
+     "cds_outframe": 4,
+     "intergenic": 2,
+     "antisense": 2,
+     "nterm_extension": 6
+    },
+    "class_q_max_of_passers": {
+     "antisense": 0.2,
+     "cds_outframe": 0.25,
+     "intergenic": 0.2,
+     "nterm_extension": 0.166667
+    },
+    "candidates_by_class": {
+     "antisense": 14,
+     "cds_outframe": 7,
+     "intergenic": 3,
+     "nterm_extension": 6
+    },
+    "gippa_class_fdr_expected_false": 2.800002,
+    "n_controls_passing": 0,
+    "n_noncontrol_passing": 14,
+    "noncontrol_refseq_match": [
+     12,
+     14,
+     0.8571428571428571,
+     0.6005862050302965,
+     0.9599060787285351
+    ],
+    "noncontrol_refseq_match_span": [
+     13,
+     14,
+     0.9285714285714286,
+     0.6853129557584889,
+     0.9872777847521093
+    ]
+   },
+   "tpa_phil1": {
+    "dataset": "T. pallidum",
+    "accession": "PXD065022",
+    "n_candidates": 35,
+    "n_pass": 22,
+    "pass_by_class": {
+     "cds_outframe": 10,
+     "nterm_extension": 9,
+     "intergenic": 2,
+     "antisense": 1
+    },
+    "class_q_max_of_passers": {
+     "antisense": 0.166667,
+     "cds_outframe": 0.384615,
+     "intergenic": 0.166667,
+     "nterm_extension": 0.222222
+    },
+    "candidates_by_class": {
+     "cds_outframe": 10,
+     "antisense": 13,
+     "nterm_extension": 9,
+     "intergenic": 3
+    },
+    "gippa_class_fdr_expected_false": 6.346149,
+    "n_controls_passing": 0,
+    "n_noncontrol_passing": 22,
+    "noncontrol_refseq_match": [
+     15,
+     22,
+     0.6818181818181818,
+     0.47318597741042745,
+     0.8363940681864375
+    ],
+    "noncontrol_refseq_match_span": [
+     22,
+     22,
+     1.0,
+     0.8513451253913791,
+     1.0
+    ]
+   },
+   "tpa_ss14": {
+    "dataset": "T. pallidum",
+    "accession": "PXD065022",
+    "n_candidates": 25,
+    "n_pass": 19,
+    "pass_by_class": {
+     "antisense": 5,
+     "cds_outframe": 4,
+     "intergenic": 4,
+     "nterm_extension": 6
+    },
+    "class_q_max_of_passers": {
+     "antisense": 0.25,
+     "cds_outframe": 0.125,
+     "intergenic": 0.333333,
+     "nterm_extension": 0.166667
+    },
+    "candidates_by_class": {
+     "antisense": 9,
+     "cds_outframe": 4,
+     "intergenic": 6,
+     "nterm_extension": 6
+    },
+    "gippa_class_fdr_expected_false": 4.083334,
+    "n_controls_passing": 0,
+    "n_noncontrol_passing": 19,
+    "noncontrol_refseq_match": [
+     12,
+     19,
+     0.631578947368421,
+     0.41039533164803066,
+     0.8085048725486492
+    ],
+    "noncontrol_refseq_match_span": [
+     14,
+     19,
+     0.7368421052631579,
+     0.5120844910218489,
+     0.8819358765321748
+    ]
+   },
+   "ccre": {
+    "dataset": "C. crescentus",
+    "accession": "PXD069004",
+    "n_candidates": 164,
+    "n_pass": 73,
+    "pass_by_class": {
+     "nterm_extension": 49,
+     "intergenic": 18,
+     "cds_outframe": 6
+    },
+    "class_q_max_of_passers": {
+     "cds_outframe": 0.3,
+     "intergenic": 0.214286,
+     "nterm_extension": 0.265306
+    },
+    "candidates_by_class": {
+     "antisense": 65,
+     "nterm_extension": 49,
+     "cds_outframe": 21,
+     "intergenic": 29
+    },
+    "gippa_class_fdr_expected_false": 18.657142,
+    "n_controls_passing": 3,
+    "n_noncontrol_passing": 70,
+    "noncontrol_refseq_match": [
+     53,
+     70,
+     0.7571428571428571,
+     0.6450496077036256,
+     0.8424813887710942
+    ],
+    "noncontrol_refseq_match_span": [
+     63,
+     70,
+     0.9,
+     0.807670851514326,
+     0.9507106985574605
+    ]
+   },
+   "bthe": {
+    "dataset": "B. thetaiotaomicron",
+    "accession": "PXD055395",
+    "n_candidates": 99,
+    "n_pass": 45,
+    "pass_by_class": {
+     "cds_outframe": 24,
+     "antisense": 6,
+     "nterm_extension": 14,
+     "intergenic": 1
+    },
+    "class_q_max_of_passers": {
+     "antisense": 0.4,
+     "cds_outframe": 0.423077,
+     "intergenic": 0.36,
+     "nterm_extension": 0.428571
+    },
+    "candidates_by_class": {
+     "cds_outframe": 35,
+     "antisense": 38,
+     "nterm_extension": 14,
+     "intergenic": 12
+    },
+    "gippa_class_fdr_expected_false": 18.913842,
+    "n_controls_passing": 1,
+    "n_noncontrol_passing": 44,
+    "noncontrol_refseq_match": [
+     17,
+     44,
+     0.38636363636363635,
+     0.2572120275052556,
+     0.5337642460762172
+    ],
+    "noncontrol_refseq_match_span": [
+     36,
+     44,
+     0.8181818181818182,
+     0.6803944911281533,
+     0.9048719428437227
+    ]
+   },
+   "syn": {
+    "dataset": "Synechococcus CC9311",
+    "accession": "PXD072227",
+    "n_candidates": 117,
+    "n_pass": 75,
+    "pass_by_class": {
+     "nterm_extension": 43,
+     "cds_outframe": 7,
+     "intergenic": 17,
+     "antisense": 8
+    },
+    "class_q_max_of_passers": {
+     "antisense": 0.428571,
+     "cds_outframe": 0.428571,
+     "intergenic": 0.428571,
+     "nterm_extension": 0.0930233
+    },
+    "candidates_by_class": {
+     "antisense": 37,
+     "nterm_extension": 43,
+     "cds_outframe": 19,
+     "intergenic": 18
+    },
+    "gippa_class_fdr_expected_false": 17.7142739,
+    "n_controls_passing": 1,
+    "n_noncontrol_passing": 74,
+    "noncontrol_refseq_match": [
+     52,
+     74,
+     0.7027027027027027,
+     0.5906708986801543,
+     0.794727839402392
+    ],
+    "noncontrol_refseq_match_span": [
+     59,
+     74,
+     0.7972972972972973,
+     0.6921222305619936,
+     0.8731292519590741
+    ]
+   },
+   "vnat": {
+    "dataset": "V. natriegens",
+    "accession": "PXD049476",
+    "n_candidates": 78,
+    "n_pass": 15,
+    "pass_by_class": {
+     "nterm_extension": 15
+    },
+    "class_q_max_of_passers": {
+     "nterm_extension": 0.4
+    },
+    "candidates_by_class": {
+     "nterm_extension": 15,
+     "cds_outframe": 17,
+     "intergenic": 12,
+     "antisense": 34
+    },
+    "gippa_class_fdr_expected_false": 6.0,
+    "n_controls_passing": 1,
+    "n_noncontrol_passing": 14,
+    "noncontrol_refseq_match": [
+     13,
+     14,
+     0.9285714285714286,
+     0.6853129557584889,
+     0.9872777847521093
+    ],
+    "noncontrol_refseq_match_span": [
+     14,
+     14,
+     1.0,
+     0.7846891972623643,
+     1.0
+    ]
+   },
+   "mxan": {
+    "dataset": "M. xanthus",
+    "accession": "PXD060688",
+    "n_candidates": 265,
+    "n_pass": 133,
+    "pass_by_class": {
+     "nterm_extension": 114,
+     "intergenic": 15,
+     "antisense": 2,
+     "cds_outframe": 2
+    },
+    "class_q_max_of_passers": {
+     "antisense": 0.166667,
+     "cds_outframe": 0.428571,
+     "intergenic": 0.333333,
+     "nterm_extension": 0.236842
+    },
+    "candidates_by_class": {
+     "nterm_extension": 115,
+     "antisense": 96,
+     "intergenic": 26,
+     "cds_outframe": 28
+    },
+    "gippa_class_fdr_expected_false": 33.190459,
+    "n_controls_passing": 0,
+    "n_noncontrol_passing": 133,
+    "noncontrol_refseq_match": [
+     95,
+     133,
+     0.7142857142857143,
+     0.6323410797868292,
+     0.7841993494897115
+    ],
+    "noncontrol_refseq_match_span": [
+     109,
+     133,
+     0.8195488721804511,
+     0.7455242198663831,
+     0.8756325606337215
+    ]
+   },
+   "cdif": {
+    "dataset": "C. difficile",
+    "accession": "PXD065346",
+    "n_candidates": 53,
+    "n_pass": 10,
+    "pass_by_class": {
+     "nterm_extension": 10
+    },
+    "class_q_max_of_passers": {
+     "nterm_extension": 0.3
+    },
+    "candidates_by_class": {
+     "antisense": 17,
+     "cds_outframe": 11,
+     "intergenic": 13,
+     "nterm_extension": 12
+    },
+    "gippa_class_fdr_expected_false": 3.0,
+    "n_controls_passing": 3,
+    "n_noncontrol_passing": 7,
+    "noncontrol_refseq_match": [
+     1,
+     7,
+     0.14285714285714285,
+     0.02567962434474355,
+     0.5131278292743189
+    ],
+    "noncontrol_refseq_match_span": [
+     7,
+     7,
+     1.0,
+     0.6456695649333126,
+     1.0
+    ]
+   },
+   "mtb": {
+    "dataset": "M. tuberculosis",
+    "accession": "PXD057335",
+    "n_candidates": 247,
+    "n_pass": 154,
+    "pass_by_class": {
+     "nterm_extension": 109,
+     "cds_outframe": 20,
+     "intergenic": 18,
+     "antisense": 7
+    },
+    "class_q_max_of_passers": {
+     "antisense": 0.333333,
+     "cds_outframe": 0.354839,
+     "intergenic": 0.363636,
+     "nterm_extension": 0.119266
+    },
+    "candidates_by_class": {
+     "cds_outframe": 36,
+     "antisense": 76,
+     "nterm_extension": 109,
+     "intergenic": 26
+    },
+    "gippa_class_fdr_expected_false": 28.975553,
+    "n_controls_passing": 2,
+    "n_noncontrol_passing": 152,
+    "noncontrol_refseq_match": [
+     115,
+     152,
+     0.756578947368421,
+     0.6825809670618296,
+     0.8179276946912931
+    ],
+    "noncontrol_refseq_match_span": [
+     134,
+     152,
+     0.881578947368421,
+     0.8205800248754901,
+     0.9237661900394102
+    ]
+   },
+   "hvo": {
+    "dataset": "H. volcanii",
+    "accession": "PXD066008",
+    "n_candidates": 142,
+    "n_pass": 76,
+    "pass_by_class": {
+     "nterm_extension": 41,
+     "intergenic": 26,
+     "cds_outframe": 5,
+     "antisense": 4
+    },
+    "class_q_max_of_passers": {
+     "antisense": 0.166667,
+     "cds_outframe": 0.0833333,
+     "intergenic": 0.352941,
+     "nterm_extension": 0.414634
+    },
+    "candidates_by_class": {
+     "antisense": 55,
+     "nterm_extension": 41,
+     "intergenic": 30,
+     "cds_outframe": 16
+    },
+    "gippa_class_fdr_expected_false": 27.2597945,
+    "n_controls_passing": 0,
+    "n_noncontrol_passing": 76,
+    "noncontrol_refseq_match": [
+     45,
+     76,
+     0.5921052631578947,
+     0.4797855251743951,
+     0.6955619723136058
+    ],
+    "noncontrol_refseq_match_span": [
+     54,
+     76,
+     0.7105263157894737,
+     0.600404448228802,
+     0.8003898317437719
+    ]
+   },
+   "sisl": {
+    "dataset": "S. islandicus",
+    "accession": "PXD079213",
+    "n_candidates": 92,
+    "n_pass": 49,
+    "pass_by_class": {
+     "nterm_extension": 30,
+     "intergenic": 13,
+     "cds_outframe": 6
+    },
+    "class_q_max_of_passers": {
+     "cds_outframe": 0.333333,
+     "intergenic": 0.3,
+     "nterm_extension": 0.233333
+    },
+    "candidates_by_class": {
+     "antisense": 26,
+     "nterm_extension": 30,
+     "intergenic": 18,
+     "cds_outframe": 18
+    },
+    "gippa_class_fdr_expected_false": 12.899988,
+    "n_controls_passing": 2,
+    "n_noncontrol_passing": 47,
+    "noncontrol_refseq_match": [
+     18,
+     47,
+     0.3829787234042553,
+     0.25790681096421997,
+     0.5257343304358642
+    ],
+    "noncontrol_refseq_match_span": [
+     36,
+     47,
+     0.7659574468085106,
+     0.6277574244984441,
+     0.8639672541377281
+    ]
+   }
+  },
+  "tau_all_excl_tpa_rpmB_total": {
+   "n_pass": 789,
+   "pass_by_class": {
+    "intergenic": 142,
+    "nterm_extension": 488,
+    "antisense": 54,
+    "cds_outframe": 105
+   },
+   "n_controls_passing": 16,
+   "n_noncontrol_passing": 773,
+   "noncontrol_refseq_match": [
+    513,
+    773,
+    0.6636481241914618,
+    0.6296053534057755,
+    0.6960724243792487
+   ],
+   "noncontrol_refseq_match_span": [
+    633,
+    773,
+    0.8188874514877102,
+    0.7901834683921903,
+    0.8444376559082719
+   ],
+   "gippa_class_fdr_expected_false": 206.1395898,
+   "n_candidates": 1581
+  }
+ }
+}
