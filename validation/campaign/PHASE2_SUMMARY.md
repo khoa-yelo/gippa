@@ -189,7 +189,7 @@ What might explain it (not shown by these data):
 | M. xanthus | 265 | 45 | **nterm 0.0127 (115 cand.)**, intergenic 0.14, antisense 0.17, cds_outframe 0.17 | ≥ 2 pep 31 / 45 |
 | C. difficile | 53 | 4 | nterm 0.14, antisense 0.50, intergenic 0.50, cds_outframe 1.0 | ≥ 2 pep 4 / 4 |
 | M. tuberculosis | 247 | 47 | **nterm 0.0118 (109 cand.)**, others 0.091 | 127 / 247, 51.4 % [45.2, 57.6]; ≥ 2 pep 39 / 47 |
-| H. volcanii | 142 | 26 | nterm 0.048, intergenic 0.083, cds_outframe 0.083, antisense 0.167 | 74 / 142, 52.1 % [43.9, 60.2]; ≥ 2 pep 23 / 26 |
+| H. volcanii | 142 | 26 | nterm 0.048, intergenic 0.083, cds_outframe 0.083, antisense 0.167 | 50 / 142, 35.2 % [27.8, 43.4] (corrected 2026-11-24: same-replicon rule; was 74 / 142); ≥ 2 pep 23 / 26 (not rechecked) |
 | S. islandicus | 92 | 16 | nterm 0.05, intergenic 0.143, cds_outframe 0.143, antisense 0.857 | 25 / 92, 27.2 % [19.1, 37.0]; ≥ 2 pep 5 / 16 |
 | **Total Phase 2** | **1,457** | **239** | none ≤ 0.01 | |
 | *E. coli (Phase 1)* | 124 | 6 | 0.14 to 0.67 | 23 / 124, 18.5 % |
