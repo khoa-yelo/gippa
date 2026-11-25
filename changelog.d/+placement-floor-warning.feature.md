@@ -1,1 +1,0 @@
-`placement` now logs a `placement.stratum_q_floor_above_alpha` warning for each placement stratum (decoy type × difference count) whose q floor c/T is above `stats.alpha.placement`, so the stratum cannot accept any placement (ADR-0079). It only adds a warning: q-values, accepted placements, `mapping_fdr.tsv` and alpha do not change.
