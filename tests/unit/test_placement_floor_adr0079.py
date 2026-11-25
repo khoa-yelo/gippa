@@ -40,6 +40,7 @@ from helpers.placement_floor import (
     cfg,
     costs_frame,
     pep_of,
+    read_golden,
     row9_costs,
     stratum,
 )
@@ -219,7 +220,8 @@ def test_empty_costs_no_breach() -> None:
 
 def golden_cases() -> dict[str, tuple[pd.DataFrame, float]]:
     """The costs tables of the golden comparison; goldens written by the pre-ADR code (main
-    38e1cdba) to tests/data/placement_floor_adr0079/<name>.{per,fdr}.parquet."""
+    38e1cdba) to tests/data/placement_floor_adr0079/<name>.{per,fdr}.tsv with
+    ``helpers.placement_floor.write_golden``."""
     ids = Ids()
     return {
         "row1": (costs_frame(stratum(Ids(), m=1, t=13, d=7)), 0.01),
@@ -243,10 +245,10 @@ def golden_cases() -> dict[str, tuple[pd.DataFrame, float]]:
 def test_per_peptide_and_mapping_fdr_equal_the_pre_adr_golden(name: str) -> None:
     costs, alpha = golden_cases()[name]
     out = placement_tables(costs, cfg(alpha))
-    per = pd.read_parquet(GOLDEN / f"{name}.per.parquet")
-    fdr = pd.read_parquet(GOLDEN / f"{name}.fdr.parquet")
-    pd.testing.assert_frame_equal(out.per_peptide.reset_index(drop=True), per, rtol=1e-12)
-    pd.testing.assert_frame_equal(out.mapping_fdr.reset_index(drop=True), fdr, rtol=1e-12)
+    per = read_golden(GOLDEN / f"{name}.per.tsv", "per")
+    fdr = read_golden(GOLDEN / f"{name}.fdr.tsv", "fdr")
+    pd.testing.assert_frame_equal(out.per_peptide.reset_index(drop=True), per, check_exact=True)
+    pd.testing.assert_frame_equal(out.mapping_fdr.reset_index(drop=True), fdr, check_exact=True)
     assert hasattr(out, "floor_breaches")
 
 

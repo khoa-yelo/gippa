@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import dataclasses
 from collections.abc import Iterable, Mapping
+from pathlib import Path
 from typing import Any
 
 import pandas as pd
@@ -94,3 +95,62 @@ def as_dict(item: Any) -> dict[str, Any]:
     if hasattr(item, "_asdict"):
         return dict(item._asdict())
     raise AssertionError(f"a floor breach must be a mapping or a dataclass, got {type(item)}")
+
+
+#: column dtypes of the golden TSVs (``placement_tables`` output schema at main 38e1cdba)
+GOLDEN_DTYPES: dict[str, dict[str, str]] = {
+    "per": {"peptide": "str", "source": "str", "decoy_type": "str", "length": "int64",
+            "m_target": "int64", "e_target": "float64", "placement_q": "float64",
+            "accepted": "bool", "flags": "str"},
+    "fdr": {"section": "str", "decoy_type": "str", "n_diff": "int64", "length_class": "str",
+            "targets": "int64", "decoys": "int64", "pi_wrong": "float64",
+            "fdr_stratum": "float64", "n_accepted": "int64"},
+}  # fmt: skip
+
+
+def write_golden(df: pd.DataFrame, path: Path, kind: str) -> None:
+    """A golden frame as TSV: floats as ``repr`` (exact round trip), NaN as ``nan``, booleans as
+    ``True``/``False``, strings verbatim (no tabs or newlines)."""
+    dtypes = GOLDEN_DTYPES[kind]
+    assert list(df.columns) == list(dtypes), list(df.columns)
+    lines = ["\t".join(dtypes)]
+    for rec in df.to_dict("records"):
+        cells = []
+        for col, dt in dtypes.items():
+            v = rec[col]
+            if dt == "float64":
+                cells.append(repr(float(v)))
+            elif dt == "int64":
+                cells.append(str(int(v)))
+            elif dt == "bool":
+                cells.append(str(bool(v)))
+            else:
+                s = str(v)
+                assert "\t" not in s and "\n" not in s, s
+                cells.append(s)
+        lines.append("\t".join(cells))
+    path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+
+def read_golden(path: Path, kind: str) -> pd.DataFrame:
+    """Read a ``write_golden`` TSV back with the dtypes of ``GOLDEN_DTYPES[kind]``."""
+    dtypes = GOLDEN_DTYPES[kind]
+    rows = path.read_text(encoding="utf-8").rstrip("\n").split("\n")
+    header = rows[0].split("\t")
+    assert header == list(dtypes), header
+    cols: dict[str, list[Any]] = {c: [] for c in dtypes}
+    for line in rows[1:]:
+        for (col, dt), cell in zip(dtypes.items(), line.split("\t"), strict=True):
+            if dt == "float64":
+                cols[col].append(float(cell))
+            elif dt == "int64":
+                cols[col].append(int(cell))
+            elif dt == "bool":
+                assert cell in ("True", "False"), cell
+                cols[col].append(cell == "True")
+            else:
+                cols[col].append(cell)
+    out = pd.DataFrame(cols, columns=list(dtypes))
+    for col, dt in dtypes.items():
+        out[col] = out[col].astype(dt)
+    return out
