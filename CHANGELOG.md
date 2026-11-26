@@ -18,6 +18,10 @@ All notable changes are recorded here by towncrier from `changelog.d/` fragments
 - TerminatorNet terminator calls on genomes with assembly gaps (`N` runs or IUPAC codes) are now in original genome coordinates; before, every call after the first non-ACGT base was shifted by the number of such bases. Hairpins that would span a removed base are dropped, and the run logs one warning with the counts. Gap-free genomes give identical outputs. The opt-in unsharded scan (`--terminatornet_sharded false`) still shifts coordinates on gapped genomes.
 
 
+### Known limitations
+
+- The 1.1.0 limitations still apply. In particular, the pilot's mapping FDR on arm A2 is not measured, the pilot fails true example TE4 for the RplL/RplJ pair, and the standard K-12 runtime (about 3-4 h on 16 threads) is above the §13.2 range; these release criteria are waived for 1.1.1 ([ADR-0080](https://github.com/khoa-yelo/gippa/blob/main/docs/adr/ADR-0080-waivers-1-1-1.md)).
+
 ## GIPPA 1.1.0 (2026-11-11)
 
 ### Features

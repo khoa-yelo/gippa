@@ -81,3 +81,4 @@
 - [ADR-0077: Download sources and Thermo raw conversion for the demo and discovery campaign](ADR-0077-campaign-sources-and-raw-conversion.md): accepted-by-khoa (2026-11-19, in session: "Yes")
 - [ADR-0078: Decoys count in the picked gene FDR whatever the targets' acceptance](ADR-0078-decoy-pairing-independent-of-acceptance.md): accepted-by-khoa (2026-11-20, in session: "Fix now"; fix in 1.1.1, option A)
 - [ADR-0079: Warn when a placement stratum's q floor is above α](ADR-0079-placement-fdr-floor-warning.md): accepted (Option 1, Khoa 2026-11-24: "option 1, put it in 1.1.1")
+- [ADR-0080: 1.1.1 carries forward the R2, R5 (TE4 only) and R7 waivers](ADR-0080-waivers-1-1-1.md): accepted-by-khoa (2026-11-26, in session: "New ADR-0080 (Recommended)")
