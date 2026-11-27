@@ -1466,6 +1466,9 @@ the user guide is [Inputs › Genetic code](user-guide/inputs.md#genetic-code) a
 - The nightly fast tier (task 2, 3 shards, 6 h) hit its time limit on 6 of 7 nights from 2026-11-18 to
   2026-11-25, with shard 1 at 99 % and 0 failures (e.g. `2021519_2`). 4 shards with a 10 h limit
   passed in 5:32 for the longest shard (`2023930_2`). Rebalance the shards or raise the limit.
+- docs/release.md step 14 runs `pytest tests/unit -m needs_net -k example`, which selects 0 tests (1.1.1
+  smoke, 2026-11-27): write the live example pin test or drop the line. In the main checkout, `uv pip install
+  gippa==<v>` found no 1.1.1 until `--no-config` was added; say so in the step.
 
 ## Novel-ORF gene context speed (2026-11-09, M12-05b review)
 - `novel/gene_context.py` compares each ORF with every gene on its replicon: about 7.5 s for 1000
