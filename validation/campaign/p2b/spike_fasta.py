@@ -22,7 +22,7 @@ WANT = ("HVO_0758", "HVO_2212", "HVO_2753", "HVO_2922", "HVO_2983", "HVO_A0101")
 
 
 def main(genome: str, gff: str, out: str) -> int:
-    seqs = {r.id: r.seq for r in SeqIO.parse(gzip.open(genome, "rt"), "fasta")}
+    seqs = {r.id: r.seq for r in SeqIO.parse(gzip.open(genome, "rt"), "fasta")}  # noqa: SIM115
     gene_old: dict[str, str] = {}
     cds: dict[str, tuple[str, int, int, str]] = {}
     with gzip.open(gff, "rt") as fh:
@@ -48,7 +48,9 @@ def main(genome: str, gff: str, out: str) -> int:
             aa = str(Seq(str(nt)).translate(table=11, to_stop=True))
             aa = "M" + aa[1:]
             w.write(f">SPIKE_{tag}\n{aa}\n")
-            print(f"{tag}\t{c}:{s}-{e}{st}\t{len(aa)} aa\tsha256:{hashlib.sha256(aa.encode()).hexdigest()[:16]}")
+            print(
+                f"{tag}\t{c}:{s}-{e}{st}\t{len(aa)} aa\tsha256:{hashlib.sha256(aa.encode()).hexdigest()[:16]}"
+            )
     return 0
 
 
