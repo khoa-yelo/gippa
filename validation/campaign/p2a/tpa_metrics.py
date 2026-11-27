@@ -222,7 +222,7 @@ def main(out: Path) -> int:
         n = len(dfile.read_text().splitlines())
         sa = (C / f"score{SUF}" / "tpa_dal1" / "te7_tables_a.sha256").read_text().splitlines()
         doc["T7"] = {"diff_lines": n, "n_files": len(sa), "verdict": "pass" if n == 0 else "fail"}
-    out.write_text(json.dumps(doc, indent=1, default=str) + "\n")
+    out.write_text(json.dumps(doc, separators=(",", ":"), default=str) + "\n")
     print(f"wrote {out}", file=sys.stderr)
     return 0
 
