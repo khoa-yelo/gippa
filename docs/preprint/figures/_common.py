@@ -108,9 +108,24 @@ def font_check(fig: Figure) -> list[tuple[str, float]]:
     fig.canvas.draw()
     out = []
     for t in fig.findobj(Text):
-        if t.get_visible() and t.get_text().strip() and t.get_fontsize() < MIN_PT - 1e-9:
-            out.append((t.get_text()[:30], float(t.get_fontsize())))
+        s = t.get_text()
+        if not t.get_visible() or not s.strip():
+            continue
+        if t.get_fontsize() < MIN_PT - 1e-9:
+            out.append((s[:30], float(t.get_fontsize())))
+        elif "$" in s and "^" in s:  # mathtext exponents render at about 70 % of the size
+            out.append((s[:30], round(0.7 * float(t.get_fontsize()), 1)))
     return out
+
+
+def plain_log(ax, axis: str = "y") -> None:
+    """Log-axis tick labels as plain numbers (no mathtext exponents below 6 pt)."""
+    from matplotlib.ticker import FuncFormatter, NullFormatter
+
+    fmt = FuncFormatter(lambda v, _pos: f"{v:g}")
+    target = ax.yaxis if axis == "y" else ax.xaxis
+    target.set_major_formatter(fmt)
+    target.set_minor_formatter(NullFormatter())
 
 
 def wilson(k: int, n: int, z: float = 1.959963984540054) -> tuple[float, float, float]:

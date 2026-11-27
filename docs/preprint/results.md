@@ -307,7 +307,8 @@ Its two strict xfails (Python port engine) are the restricted-claim cases of ADR
 detectability-confounded sets and AR(1)-clustered sets.
 
 The suite's "111 pass" includes a detection-confounding attack on rows the detection screen did
-*not* flag, gated at 1.5α, not α (statistician decision #174: the flag is a screen). This screen and the
+*not* flag, gated at 1.5α, not α, by a constant in the attack test (the flag is treated as a screen;
+the 1.5α level is not recorded in `tolerances.yaml` or in an ADR). This screen and the
 genomic-cluster checks ran on the Python port engine and have not been re-measured on R. One arm
 (`null_b2`) rejected at 0.0833 at α = 0.05 and 0.137 at α = 0.10: within the 1.5α bounds (0.105,
 0.191) but above the α bounds at R = 300 (0.0752, 0.1346). No α-level claim is made for unflagged
@@ -1060,31 +1061,114 @@ The nightly runs around the release also produced failures and non-passing exits
 local/ci/runs/1956100_2-s2/calibration_nightly.txt (FAILED tests/unit/test_m11_03_render.py::test_property_overall); local/ci/runs/1965524_2-s3/calibration_nightly.txt (FAILED tests/unit/viz/test_m12_04_pr5_locus_style.py::test_any_status_mix_gives_the_right_fill_per_gene);
 docs/backlog.md:1470-1475; CAL/failed-1966685/task-5.json -->
 
+## 8. Campaign detail moved from the main text
+
+### 8.1 Design
+
+The ten Phase 2 datasets are the ten primary entries of the campaign's dataset list
+(`validation/campaign/datasets.tsv`, phase "2 #1" to "2 #10"); no reserve dataset was swapped in.
+The nine reserve or paired accessions were inventoried (`files.tsv` only) but not run. The sample
+is a convenience sample of public whole-lysate DIA deposits chosen to span lineages, genome sizes
+and instruments. Runs were selected within each deposit by written rules (24 rule rows). Code:
+the GIPPA 1.1.1 release candidate `bfc74ff6` for every dataset except *T. pallidum*, whose gapped
+assemblies used `38e1cdba` (main-branch code with the three assembly-gap fixes that shipped in
+1.1.1).
+
+<!-- src: validation/campaign/datasets.tsv (phase column); validation/campaign/selection_rules.tsv;
+P2S header (Code: bfc74ff6; 38e1cdba for T. pallidum) -->
+
+### 8.2 The other Phase 2 failures
+
+Of the ten Phase 2 failures, five were TE4 (main text). Of the other five, one was a wrong premise
+of the answer key (a selenoprotein tail that Bakta annotates as a separate gene). One was a vector
+caveat stated in the key in advance (pyrE/pyrF detected in *Saccharolobus islandicus*). One was a
+test-design limit: a *Clostridioides difficile* prophage region that spans a whole 7,881-bp
+plasmid, whose circular-shift p is 1 by construction (0 of 9 genes detected), plus three small
+chromosomal regions with q 0.079 after BH over four. Two were *T. pallidum* checks: pseudogene
+distal parts, one half untestable by construction, and a strain abundance comparison missed on
+two small differences whose error is unestimated.
+
+<!-- src: P2S §1 "What the 10 Phase 2 fails are", §3 (C. difficile S6 detail) -->
+
+### 8.3 Checks that passed
+
+Among the pre-registered checks that passed were the absence of pHV2 proteins (0 of 8 genes
+detected) and the pyrE2 check in *Haloferax volcanii* H26, and the ESX-1 and PE/PPE checks in
+*M. tuberculosis*. The PE/PPE check was measured differently from its pre-registration: the key
+counted 155 RefSeq CDS, the script tested the Bakta coding genes whose shared-stop RefSeq product
+matches the PE/PPE pattern, which gave 150 genes. PE/PPE genes were detected at 12.7 % (19 of 150)
+against 74.5 % for other genes (difference −61.8 points [−66.4, −55.4], Newcombe interval; Fisher
+p = 1.1 × 10⁻⁵⁴). Both the interval and the test assume independent genes, but PE/PPE genes
+cluster on the genome. Prophage regions in *Vibrio natriegens* and *M. xanthus* were
+under-detected (all four regions O < E, O/E 0.15–0.25 with no interval reported, q ≤ 0.05), and
+detection differed between the two *V. natriegens* chromosomes (65.3 % against 38.0 %, difference
+27.3 points [24.4, 30.2]; the interval treats genes as independent and is optimistic). In the four
+genomes whose prophage regions were judged, detection was below expectation in 13 of 13 regions,
+and q ≤ 0.05 in 6. That pooled count combines separate BH families (one per genome), and it has two
+selection problems: it leaves out *B. thetaiotaomicron*'s 16 regions, which were reported only
+(0 of 16 at q ≤ 0.05), and it includes the *C. difficile* whole-plasmid region.
+
+<!-- src: P2S §1 (H. volcanii pHV2, pyrE2; M. tuberculosis ESX-1, PE/PPE), §2.7 (prophage rule
+table: V. natriegens O/E 0.19, 0.25, q 0.015, 0.015; M. xanthus O/E 0.15, 0.15, q 0.008, 0.004;
+chromosomes; 13/13, 6/13; B. theta 16 regions reported); validation/campaign/PXD057335/REPORT.md
+row 8 (19/150 = 12.7 % [8.3, 18.9]; other 2,923/3,925 = 74.5 % [73.1, 75.8]; Fisher p 1.1e-54;
+"Measured differently from the pre-registration ... 155 RefSeq CDS ... 150 genes"); Newcombe
+hybrid score interval computed from the two Wilson intervals: −0.6180 [−0.6641, −0.5538] -->
+
+### 8.4 Pilot provenance and H3
+
+The pilot was measured on GIPPA 1.0.0. The values that depend on gene detection (metric 3, H1,
+the arm comparison) were recomputed with the 1.1.1 detection code on the frozen inputs; a control
+with the unchanged code reproduced the recorded tables byte for byte (Slurm 2001992; the fix run
+is 2002006). The other pilot values were not recomputed. H3 (context conclusions agree between
+arms) could not be tested as stated, because neither arm called an island or an operon flag and
+region tests were not compared. Its recorded "supported" rests on substitute criteria: abundance
+Spearman ρ = 0.978 [0.973, 0.983] over 2,613 shared genes, and a Jaccard index of 0.588 (error
+unestimated) for enriched categories, which include flagged ORA rows.
+
+<!-- src: validation/pilot/recheck_1_1_1/README.md (control 2001992 byte-identical; fix 2002006);
+PIL111 › m4 (rho 0.978173 [0.972762, 0.982741], n_shared 2613), m5 (jaccard 0.587699) -->
+
+### 8.5 Supplementary Figure S1: denominators
+
+The pilot's strain-database run has 4,688 gene-table rows: 4,613 CDS, 72 sORFs and 3 pseudogenes.
+The detection shares of Fig. 3 use the 4,685 CDS and sORFs; the gene FDR is computed over the
+4,683 of them that are eligible in the `decoy_picked` tier. Supplementary Fig. S1 shows the
+region-level rows (`subset` = all) with their gene counts; a region's eligible count is smaller
+than its gene count when some of its genes have no eligible peptide (BGC 3: 44 genes, 43 eligible;
+plasmid 2: 8 genes, 6 eligible). The CRISPR region has no gene and no test. Detection O − E q-values
+of the three prophages are 0.257, 0.0051 and 0.022; their abundance (HL shift) q-values are
+0.0186–0.0188. The calibration of the prophage stream is within tolerance but not at level (FDR
+0.063 at q = 0.05; Table S2), so these q-values may be somewhat optimistic. Intervals come from
+the TU-block bootstrap, which under-covers (about 0.92 for a nominal 95 % in the HL attack), and
+they need not agree with the circular-shift p-values (BGC 1's interval excludes 0 at q = 0.50).
+Plasmid rows are replicon contrasts with no null model and no q-value.
+
+<!-- src: $GIPPA_ROOT/preprint/pilot_render/a2/out/tables/genes.tsv (feature_type counts cds 4613,
+sorf 72, pseudogene 3); PIL111 › gene-FDR rows "eligible": 4683; PIL111 › m3 subsets.all n 4685;
+regions_stats.tsv (figS1_pilot_regions.tsv); results.md §1.2 (prophage FDR 0.063; HL bootstrap
+coverage about 0.92) -->
+
 ## Figures
 
-The outline's figures are listed with the status of their source. All pilot figures exist only as
-1.0.0-era renderings from the freeze runs (`$GIPPA_ROOT/runs/pilot/freeze/fa49b8f/`). Since then 24
-files in `src/gippa/viz/` changed, including V13, which now draws every candidate, so the figures
-need re-rendering or a label. Which pilot figures may appear is still an open question (Q-K11).
+The figures of the paper are drawn by the scripts in `docs/preprint/figures/` from committed
+aggregates or from run outputs under `$GIPPA_ROOT`; each script writes PNG, SVG and PDF, a data
+TSV and a colour-vision-deficiency twin, and fails if any visible text is below 6 pt. No figure
+uses a GIPPA report plot, and none shows a peptide sequence.
 
-- **Figure 1** (new workflow schematic): not available; it is still to be drawn (outline: pending,
-  M11-08).
-- **Figure 2** (V01 `circos`, from the A2 freeze run `out_a2/plots/V01_circos`): where the A2
-  proteome lies along the Nissle 1917 genome; descriptive.
-- **Figure 3** (new panels, from the CAL harness records): a QQ plot of null p-values and observed FDP
-  against nominal q. This figure **needs new plotting code**; no code for these panels exists.
-- **Figure 4** (V07 `obs_vs_exp` and V08 `cog_abundance`, from the A1 and A2 freeze runs
-  `out_a1/plots` and `out_a2/plots`): detection against detectability, by region and functional
-  category.
-- **Figure 5** (V11 `operon_pairs`, from the A2 freeze run `out_a2/plots/V11_operon_pairs`): operon
-  partners on the pilot. This figure is descriptive and is not evidence for the simulation
-  calibration of operon tests.
-- **Figure 6** (V13 `novel_orfs`, from the outline's A2 and A3 freeze runs `out_a2/plots` and
-  `out_a3/plots`): novel ORFs by class and call status. A2 has no novel-ORF rows, so its panel would
-  be empty. A3 has 5 rows, none of them called. A1 has the only called novel ORF and its own V13
-  rendering (`out_a1/plots/V13_novel_orfs`), so it is the candidate source; the choice needs review.
-- **Supplementary Figure S1** (V16 `compare`, from `cmp_a1_a2/` and `cmp_a1_a2_a3/` of the freeze
-  runs): detection and abundance agreement between arms.
+- **Figure 1** (`fig1_workflow.py`): workflow schematic; no data.
+- **Figure 2** (`fig2_calibration.py`): calibration records of the 1.1.1 full tier.
+- **Figure 3** (`fig3_pilot.py`): pilot detection, H1 and free entrapment
+  (`validation/pilot/recheck_1_1_1/metrics_1_1_1.json`, `validation/pilot/metrics/metrics.json`).
+- **Figure 4** (`fig4_campaign.py`): campaign detection, route-B retention, TE4 and answer-key
+  verdicts.
+- **Figure 5** (`fig5_novel_orfs.py`): campaign novel-ORF class FDRs and the post hoc tier.
+- **Figure 6** (`fig6_prfb_locus.py`): the prfB locus in the Phase 1 route-B run.
+- **Supplementary Figure S1** (`figS1_pilot_regions.py`): region tests of the pilot's
+  strain-database arm, redrawn from `tables/regions_stats.tsv` of the 1.1.1 detection rerun. The
+  earlier report renderings (V01 genome overview, V07 observed minus expected) are no longer used:
+  their labels and footnotes could not be changed without editing the report code.
 
-<!-- src: docs/preprint/outline.md §3; directory listing of local/runs/pilot/freeze/fa49b8f/{out_a1,out_a2,out_a3}/plots and cmp_a1_a2*/; out_a3/run_manifest.json › git_commit;
-validation/pilot/metrics/metrics.json › m6.A2.novel_orfs.n_rows (0), m6.A3.novel_orfs.totals; git diff --stat fa49b8f1 e43683c7 -- src/gippa/viz (24 files); PROGRESS.md:38 (M12-05a V13) -->
+Which pilot figures may appear in a publication is still open (Q-K11).
+
+<!-- src: docs/preprint/figures/*.py; _common.py › save, font_check (MIN_PT 6.0) -->

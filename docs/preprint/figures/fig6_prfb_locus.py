@@ -5,8 +5,8 @@ Reads the Phase 1 route-B run on GIPPA 1.1.1 code ($GIPPA_ROOT/campaign/ecoli_k1
 mapping/peptide_hits.tsv coordinates and locus classes only, tables/genes.tsv and
 tables/novel_orfs.tsv) and the RefSeq GFF of NC_000913.3 in the same directory tree. No peptide
 sequence is read into the figure or its data table: the peptide track is a coverage depth.
-(a) RefSeq and Bakta genes, GIPPA's two novel-ORF candidates and peptide coverage by locus
-class; (b) the gene-table rows of the three genes in the window.
+One panel: RefSeq and Bakta genes, GIPPA's two novel-ORF candidates and peptide coverage by
+locus class. The gene-table values the legend quotes are written to the data table.
 """
 
 from __future__ import annotations
@@ -18,12 +18,14 @@ from pathlib import Path
 
 import numpy as np
 
-from _common import OKABE, new_figure, out_dir, panel_label, parse_args, save
+from _common import OKABE, new_figure, out_dir, parse_args, save
 
 LO, HI = 3034950, 3036600
+# Novel-ORF class colours match Fig. 5; genes are greys so blue means in-frame coverage only.
 CLASSES = {"cds_inframe": ("in-frame CDS", OKABE["blue"]),
-           "nterm_extension": ("N-terminal extension", OKABE["vermillion"]),
+           "nterm_extension": ("N-terminal extension", OKABE["reddish_purple"]),
            "intergenic": ("intergenic", OKABE["bluish_green"])}  # fmt: skip
+REFSEQ, BAKTA = "#AAAAAA", "#555555"
 GENES = ["KOIAIB_03082", "KOIAIB_03083", "KOIAIB_03084"]
 CANDS = ["NOVEL_U00096.3_3035184_m", "NOVEL_U00096.3_3036205_m"]
 
@@ -88,107 +90,81 @@ def main() -> None:
                 cid = h["novel_candidate_id"]
                 ends[cid] = max(ends.get(cid, 0), e)
 
-    fig = new_figure("double", 3.3)
-    ax = fig.add_axes((0.09, 0.25, 0.56, 0.6))
+    fig = new_figure("double", 3.2)
+    ax = fig.add_axes((0.1, 0.43, 0.88, 0.5))
+    axc = fig.add_axes((0.1, 0.2, 0.88, 0.2), sharex=ax)
     x = np.arange(LO, HI + 1)
-    # peptide coverage, stacked by class (scaled into y 0..1.1)
+    # peptide coverage, stacked by locus class, on its own axis with a depth scale
     base = np.zeros_like(x, dtype=float)
-    dmax = max(int(sum(v for v in depth.values()).max()), 1)
-    scale = 1.1 / dmax
     for k, (lab, col) in CLASSES.items():
-        top = base + depth[k] * scale
-        ax.fill_between(x, base, top, step="mid", color=col, lw=0, label=lab)
+        top = base + depth[k]
+        axc.fill_between(x, base, top, step="mid", color=col, lw=0, label=lab)
         base = top
         rows.append({"panel": "a", "track": f"coverage_{k}", "max_depth": int(depth[k].max()),
                      "nt_covered": int((depth[k] > 0).sum())})  # fmt: skip
-    ax.text(LO + 10, 1.15, f"peptide coverage (distinct placements; max {dmax})", fontsize=6,
-            va="bottom", color="#333333")  # fmt: skip
-    # tracks
-    y_ref, y_bak, y_cand = 3.45, 2.6, 1.8
+    dmax = int(base.max())
+    axc.set_ylim(0, dmax + 1)
+    axc.set_yticks(range(0, dmax + 1, 2 if dmax > 5 else 1))
+    axc.set_ylabel("peptide\nplacements", fontsize=6)
+    for s in ("right", "top"):
+        axc.spines[s].set_visible(False)
+    # gene tracks
+    y_ref, y_bak, y_cand = 2.6, 1.75, 0.75
     for lo, hi, strand, gene in ref:
         lab = gene if gene != "prfB" else ""
-        _gene(ax, lo, hi, y_ref, strand, "#777777", lab)
+        _gene(ax, lo, hi, y_ref, strand, REFSEQ, lab)
         rows.append({"panel": "a", "track": "refseq", "gene": gene, "start": lo, "end": hi,
                      "strand": strand})  # fmt: skip
     prfb = sorted((lo, hi) for lo, hi, _s, g in ref if g == "prfB")
     ax.text((prfb[0][0] + prfb[-1][1]) / 2, y_ref + 0.22, "prfB (2 segments)",
             ha="center", va="bottom", fontsize=6)  # fmt: skip
     slip = prfb[0][1]  # 3' end of the first segment in genome order (the frameshift site)
-    ax.annotate("+1 frameshift\n(codon 26)", xy=(slip + 1, y_ref - 0.17), xytext=(slip - 260, 3.95),
+    ax.annotate("+1 frameshift\n(codon 26)", xy=(slip + 1, y_ref - 0.17), xytext=(slip - 260, 3.1),
                 fontsize=6, ha="center", arrowprops={"arrowstyle": "-", "lw": 0.6})  # fmt: skip
     for lt, g in genes.items():
-        _gene(ax, int(g["start"]), int(g["end"]), y_bak, g["strand"], OKABE["blue"],
+        _gene(ax, int(g["start"]), int(g["end"]), y_bak, g["strand"], BAKTA,
               g["gene"] if lt != "KOIAIB_03083" else f"prfB ({lt})")  # fmt: skip
         rows.append({"panel": "a", "track": "bakta", "locus_tag": lt, "gene": g["gene"],
                      "start": g["start"], "end": g["end"], "strand": g["strand"]})  # fmt: skip
     c1 = cands[CANDS[0]]
     lo1 = int(genes["KOIAIB_03083"]["end"]) + 1
-    _gene(ax, lo1, ends[CANDS[0]], y_cand, "-", OKABE["vermillion"], "", hatch="////")
+    _gene(ax, lo1, ends[CANDS[0]], y_cand, "-", CLASSES["nterm_extension"][1], "", hatch="////")
     ax.text(lo1 - 40, y_cand,
-            f"N-terminal extension, {c1['n_peptides']} peptides,\nclass FDR "
+            f"N-terminal extension: {c1['n_peptides']} peptides,\nclass FDR "
             f"{float(c1['class_fdr']):.3f}, no start codon", fontsize=6, ha="right", va="center",
-            color=OKABE["vermillion"])  # fmt: skip
+            color="#000000")  # fmt: skip
     c2 = cands[CANDS[1]]
     lo2, hi2 = int(c2["end"]), int(c2["start_longest"])
-    _gene(ax, lo2, hi2, y_cand, "-", OKABE["bluish_green"], "", hatch="\\\\\\\\")
-    ax.text(hi2 + 25, y_cand, f"intergenic,\n{c2['n_peptides']} peptide,\nFDR "
-            f"{float(c2['class_fdr']):.3f}", fontsize=6, ha="left", va="center",
-            color="#007A5E")  # fmt: skip
+    _gene(ax, lo2, hi2, y_cand, "-", CLASSES["intergenic"][1], "", hatch="\\\\\\\\")
+    ax.text(hi2 + 25, y_cand, f"prfB leader (RefSeq\ncodons 1-25; GIPPA\nclass: intergenic),\n"
+            f"{c2['n_peptides']} peptide, class\nFDR {float(c2['class_fdr']):.3f}", fontsize=6,
+            ha="left", va="center", color="#000000")  # fmt: skip
     for cid, c in cands.items():
         rows.append({"panel": "a", "track": "candidate", "orf_id": cid, "class": c["class"],
                      "n_peptides": c["n_peptides"], "class_fdr": c["class_fdr"],
                      "called": c["called"], "flags": c["flags"]})  # fmt: skip
+    for lt in GENES:  # the gene-table values quoted in the legend
+        g = genes[lt]
+        rows.append({"panel": "legend", **{k: g[k] for k in ("locus_tag", "gene", "detected",
+                     "detection_tier", "gene_q_value", "n_peptides_unique", "abundance_log2",
+                     "abundance_type", "tu_id", "uniop_p_prev", "uniop_p_next")}})  # fmt: skip
     ax.text(LO - 30, y_ref, "RefSeq", ha="right", va="center", fontsize=6)
     ax.text(LO - 30, y_bak, "Bakta", ha="right", va="center", fontsize=6)
     ax.text(LO - 30, y_cand, "GIPPA\ncandidates", ha="right", va="center", fontsize=6)
     ax.set_xlim(LO, HI)
-    ax.set_ylim(0, 4.4)
+    ax.set_ylim(0.3, 3.5)
     ax.set_yticks([])
-    for s in ("left", "right", "top"):
+    for s in ("left", "right", "top", "bottom"):
         ax.spines[s].set_visible(False)
+    ax.tick_params(bottom=False, labelbottom=False)
     ticks = np.arange(3035000, HI, 500)
-    ax.set_xticks(ticks)
-    ax.set_xticklabels([f"{t:,}" for t in ticks])
-    ax.set_xlabel("U00096.3 position (nt; genes on the minus strand point left)")
-    ax.legend(loc="upper left", bbox_to_anchor=(0.0, -0.17), frameon=False, ncol=3, fontsize=6,
-              handlelength=1.0, columnspacing=0.8)  # fmt: skip
+    axc.set_xticks(ticks)
+    axc.set_xticklabels([f"{t:,}" for t in ticks])
+    axc.set_xlabel("U00096.3 position (nt; genes on the minus strand point left)")
+    axc.legend(loc="upper left", bbox_to_anchor=(0.0, -0.5), frameon=False, ncol=3, fontsize=6,
+               handlelength=1.0, columnspacing=0.8,
+               title="peptide placements by GIPPA locus class", title_fontsize=6)  # fmt: skip
     ax.set_title("prfB: peptides upstream of the Bakta start and in the leader", loc="left")
-    panel_label(ax, "a")
-
-    # (b) gene-table rows
-    axb = fig.add_axes((0.69, 0.25, 0.3, 0.6))
-    axb.axis("off")
-    cols = ["gene", "detected", "gene q", "unique\npeptides", "log2\niBAQ", "TU"]
-    cells = []
-    for lt in GENES:
-        g = genes[lt]
-        cells.append([g["gene"], g["detected"],
-                      f"{float(g['gene_q_value']):.1e}", g["n_peptides_unique"],
-                      f"{float(g['abundance_log2']):.1f}", g["tu_id"]])  # fmt: skip
-        rows.append({"panel": "b", **{k: g[k] for k in ("locus_tag", "gene", "detected",
-                     "detection_tier", "gene_q_value", "n_peptides_unique", "abundance_log2",
-                     "abundance_type", "tu_id", "uniop_p_prev", "uniop_p_next")}})  # fmt: skip
-    tab = axb.table(
-        cellText=cells,
-        colLabels=cols,
-        loc="upper center",
-        cellLoc="center",
-        colWidths=[0.13, 0.17, 0.19, 0.17, 0.13, 0.21],
-    )
-    tab.auto_set_font_size(False)
-    tab.set_fontsize(6)
-    tab.scale(1.0, 1.9)
-    for (r, _c), cell in tab.get_celld().items():
-        cell.set_linewidth(0.4)
-        if r == 0:
-            cell.set_facecolor("#EEEEEE")
-    axb.text(0.0, 0.25, "genes.tsv rows, route B (gene q from the\ndecoy_picked tier; "
-             "locus tags KOIAIB_03082-4).\nprfB's 17 unique "
-             "peptides include the 4\nextension peptides (flag nterm_extension_\nevidence). "
-             "Neither candidate is called\nat α = 0.01.", fontsize=6, va="top",
-             transform=axb.transAxes)  # fmt: skip
-    axb.set_title("Gene table", loc="left")
-    panel_label(axb, "b")
     save(fig, d, "fig6_prfb_locus", rows)
 
 

@@ -18,7 +18,7 @@ from pathlib import Path
 import numpy as np
 from scipy import stats
 
-from _common import OKABE, new_figure, out_dir, panel_label, parse_args, save
+from _common import OKABE, new_figure, out_dir, panel_label, parse_args, plain_log, save
 
 RUN = "full-d2bd17e42dcf-20261125-073329"
 CRITERIA = {"level", "fdr", "fwer", "fdr_counts"}
@@ -44,13 +44,8 @@ REPS = [  # (suite, stream, criterion, label, method, line style, marker)
     ("placement", "placement.readthrough_stressed.shuffle", "fdr", "placement FDR (read-through)",
      "placement", "-", "s"),
     ("gene_fdr", "gene_fdr.picked.pi0.05", "fdr", "gene FDR, picked", "gene_fdr", "-", "o"),
-    ("gene_fdr", "gene_fdr.mayu_pep.pi0.05", "fdr", "gene FDR, MAYU (PEP)", "gene_fdr", "--",
-     "o"),
     ("regions", "regions.region_tests.null_full_rho0.0.chr1_pooled.hl_shift", "level",
      "region test, HL shift (pooled)", "region", ":", "v"),
-    ("islands", "islands.rho09", "fwer", "islands FWER, AR(1) ρ = 0.9", "islands", "-.", "D"),
-    ("discordance", "discordance.gate.operon_null_1800", "fdr", "operon discordance, BH FDR",
-     "discordance", "-", "o"),
     ("novel_orfs", "novel_orfs.class_fdr.picked", "fdr", "novel-ORF class FDR (database)",
      "novel", "--", "^"),
 ]  # fmt: skip
@@ -110,7 +105,7 @@ def main() -> None:
     recs = load(c)
     rows: list[dict] = []
     fig = new_figure("double", 3.8)
-    gs = fig.add_gridspec(1, 3, left=0.065, right=0.985, bottom=0.42, top=0.885, wspace=0.42)
+    gs = fig.add_gridspec(1, 3, left=0.065, right=0.985, bottom=0.45, top=0.93, wspace=0.42)
 
     # (a) QQ of null p-values, -log10 scale, with a pointwise 95 % band for n = 1,000
     ax = fig.add_subplot(gs[0, 0])
@@ -120,7 +115,7 @@ def main() -> None:
     lo = -np.log10(stats.beta.ppf(0.975, i, n_band - i + 1))
     hi = -np.log10(stats.beta.ppf(0.025, i, n_band - i + 1))
     ex = -np.log10(i / (n_band + 1))
-    ax.fill_between(ex, lo, hi, color="#DDDDDD", lw=0, label="95 % band (n = 1,000)")
+    ax.fill_between(ex, lo, hi, color="#DDDDDD", lw=0, label="pointwise 95 % band")
     ax.plot([0, lim], [0, lim], color="#333333", lw=0.6)
     for rel, stream, label, meth, ls in QQ:
         rec = next(r for r in recs if r["_file"] == f"lanes/{rel}" and r["stream"] == stream
@@ -129,8 +124,7 @@ def main() -> None:
         n = p.size
         e = -np.log10(np.arange(1, n + 1) / (n + 1))
         o = -np.log10(np.clip(p, 1e-300, 1))
-        ax.plot(e, np.minimum(o, lim), color=METHOD[meth], ls=ls, lw=1.0,
-                label=f"{label} (n = {n:,})")  # fmt: skip
+        ax.plot(e, np.minimum(o, lim), color=METHOD[meth], ls=ls, lw=1.0, label=label)
         rows.append({"panel": "a", "file": rec["_file"], "stream": stream, "n": n,
                      "ks_p": rec["observed"], "status": rec["status"]})  # fmt: skip
     ax.set_xlim(0, lim)
@@ -139,7 +133,9 @@ def main() -> None:
     ax.set_ylabel("observed −log10 p")
     ax.set_title("Null p-values (QQ)", loc="left")
     ax.legend(loc="upper left", bbox_to_anchor=(-0.2, -0.2), frameon=False, fontsize=6,
-              handlelength=2.0)  # fmt: skip
+              handlelength=2.0, title="null p-values, n = 1,000 each",
+              title_fontsize=6)  # fmt: skip
+    ax.get_legend()._legend_box.align = "left"
     panel_label(ax, "a", x=-0.22)
 
     # (b) every gated record: observed / nominal against bound / nominal
@@ -168,6 +164,7 @@ def main() -> None:
         ax.scatter(xs, ys, s=6 if key == "pass" else 12, c=col, marker=mk, lw=0, alpha=0.6
                    if key == "pass" else 0.9, label=f"{lab} ({len(xs):,})", zorder=z)  # fmt: skip
     ax.set_yscale("log")
+    plain_log(ax)
     xs = np.linspace(0.8, 3.4, 200)
     ax.plot(xs, xs, color="#333333", lw=0.6)
     ax.text(3.15, 3.6, "observed = bound", fontsize=6, ha="right", va="bottom", color="#333333")
@@ -180,8 +177,10 @@ def main() -> None:
     ax.set_title("Above the line: observed > bound", loc="left")
     total = sum(counts.values())
     ax.legend(loc="upper left", bbox_to_anchor=(-0.2, -0.2), frameon=False, fontsize=6,
-              handletextpad=0.3, title=f"{total:,} records at α or q = 0.01, 0.05, 0.10;\n"
-              f"zero observed is drawn at {floor}", title_fontsize=6)  # fmt: skip
+              handletextpad=0.3, title=f"{total:,} records at α or q = 0.01, 0.05,\n"
+              f"0.10; zero observed is drawn at {floor}.\nNot shown: GSEA arm null_b2, "
+              "checked\nagainst 1.5α; 0.083 and 0.137 at α = 0.05\nand 0.10 exceed α + 2 SE",
+              title_fontsize=6)  # fmt: skip
     ax.get_legend()._legend_box.align = "left"
     panel_label(ax, "b", x=-0.22)
 
@@ -201,7 +200,7 @@ def main() -> None:
         if not pts:
             raise SystemExit(f"missing stream {stream}")
         lv, ob, bd = (np.array(v) for v in zip(*pts, strict=True))
-        off = (j - 3) * 0.0012
+        off = (j - 1.5) * 0.0012
         ax.plot(lv + off, ob, color=METHOD[meth], marker=mk, ms=2.6, lw=0.8, ls=ls, label=label)
         ax.scatter(lv + off, bd, color=METHOD[meth], marker="_", s=18, lw=0.8)
         for a, o, b in pts:
@@ -219,9 +218,6 @@ def main() -> None:
     ax.get_legend()._legend_box.align = "left"
     panel_label(ax, "c", x=-0.22)
 
-    fig.suptitle(f"Calibration in simulation: {counts['pass']:,} of {total:,} records pass; "
-                 "every failure is a known failure or recorded only", x=0.01, ha="left",
-                 y=0.985)  # fmt: skip
     save(fig, d, "fig2_calibration", rows)
     print(json.dumps(counts))
 

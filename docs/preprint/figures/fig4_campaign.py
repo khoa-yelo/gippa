@@ -14,6 +14,7 @@ import _campaign as cam
 from _common import OKABE, new_figure, out_dir, panel_label, parse_args, save, wilson
 
 ECOLI_COL = OKABE["black"]
+THR = "#444444"  # threshold lines
 
 
 def _name(s: str) -> str:
@@ -24,7 +25,9 @@ def _name(s: str) -> str:
     s = s.replace("Phase 1 E. coli, for reference", "E. coli K-12")
     if s == "B. theta":
         s = "B. thetaiotaomicron"
-    return s.replace(" CC9311", "")
+    if s.startswith("Synechococcus"):
+        s = "Synechococcus sp. CC9311"
+    return s
 
 
 def main() -> None:
@@ -34,8 +37,8 @@ def main() -> None:
     ret = {r["run"]: r for r in cam.retention()}
     te = {_name(r["genome"]): r for r in cam.te4()}
     rows: list[dict] = []
-    fig = new_figure("double", 6.0)
-    gt = fig.add_gridspec(1, 3, left=0.175, right=0.985, bottom=0.38, top=0.92, wspace=0.12,
+    fig = new_figure("double", 6.2)
+    gt = fig.add_gridspec(1, 3, left=0.175, right=0.985, bottom=0.38, top=0.91, wspace=0.12,
                           width_ratios=[1.15, 1.0, 1.0])  # fmt: skip
     y = np.arange(len(det))[::-1]
     labels = [_name(r["dataset"]) for r in det]
@@ -72,8 +75,8 @@ def main() -> None:
         ax.errorbar(v, yi, xerr=[[v - lo], [hi - v]], fmt="o", ms=3, color=col, lw=0.8,
                     capsize=1.2)  # fmt: skip
         rows.append({"panel": "b", **r, "share": v, "ci_low": lo, "ci_high": hi})
-    ax.axvline(0.95, color=OKABE["vermillion"], lw=0.6, ls="--")
-    ax.text(0.952, -0.55, "prior\n≥ 0.95", fontsize=6, color=OKABE["vermillion"], va="bottom")
+    ax.axvline(0.95, color=THR, lw=0.6, ls="--")
+    ax.text(0.952, -0.55, "prior\n≥ 0.95", fontsize=6, color=THR, va="bottom")
     ax.tick_params(labelleft=False)
     ax.set_xlim(0.93, 1.004)
     ax.set_xlabel("route-A genes also detected\nby route B (share)")
@@ -103,13 +106,15 @@ def main() -> None:
     ax.plot([], [], "o", color="#555555", ms=3, label="iBAQ (verdict)")
     ax.plot([], [], "o", mfc="white", mec="#555555", ms=3, label="Top3")
     ax.plot([], [], "^", color=OKABE["vermillion"], ms=3, label="fail")
-    ax.legend(loc="upper left", bbox_to_anchor=(0.0, -0.16), frameon=False, fontsize=6, ncol=3,
-              handletextpad=0.2, columnspacing=0.6)  # fmt: skip
-    ax.set_title(f"TE4 fails in {n_fail} of {n_test} genomes", loc="left")
+    ax.plot([], [], "o", color=OKABE["blue"], ms=3, label="pass")
+    ax.legend(loc="lower right", frameon=True, fontsize=6, ncol=1, handletextpad=0.3,
+              borderaxespad=0.3, framealpha=1.0, edgecolor="#CCCCCC")  # fmt: skip
+    ax.set_title(f"Ribosomal stalk RplL/RplJ (TE4)\nfails in {n_fail} of {n_test} genomes",
+                 loc="left")  # fmt: skip
     panel_label(ax, "c")
 
     # (d) verdicts per dataset, same order (T. pallidum strains as one dataset)
-    ax = fig.add_axes((0.175, 0.055, 0.5, 0.2))
+    ax = fig.add_axes((0.175, 0.055, 0.45, 0.2))
     ver = {_name(v["dataset"]): v for v in cam.verdicts()}
     order = [n for n in labels if not n.startswith("T. pallidum")] + ["T. pallidum (7 strains)"]
     vv = [ver[n] for n in order]
@@ -127,7 +132,8 @@ def main() -> None:
     ax.set_yticklabels(order, fontsize=6)
     ax.set_xlabel("pre-registered answer-key checks (count)")
     ax.set_xticks(np.arange(0, 19, 2))
-    ax.legend(loc="center left", bbox_to_anchor=(1.02, 0.5), frameon=False, fontsize=6)
+    ax.set_xlim(0, 18.6)
+    ax.legend(loc="center left", bbox_to_anchor=(1.01, 0.5), frameon=False, fontsize=6)
     ax.set_title("Answer-key checks per dataset", loc="left")
     panel_label(ax, "d")
     save(fig, d, "fig4_campaign", rows)

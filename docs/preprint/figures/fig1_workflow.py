@@ -70,7 +70,7 @@ STAGES = [
             "iBAQ abundance",
             "detectability",
         ],
-        ("gene FDR q ≤ 0.01\n(2-peptide: none)", "est"),
+        ("gene FDR q ≤ 0.01", "est"),
     ),
     (
         4,
@@ -101,7 +101,7 @@ STAGES = [
         ("every value: q, CI\nor a flag", "info"),
     ),
 ]
-TAG = OKABE["vermillion"]
+TAG = OKABE["black"]
 NONE = "#666666"
 
 
@@ -118,10 +118,10 @@ def _arrow(ax, a, b, col="#333333", **kw) -> None:
 def main() -> None:
     args = parse_args(__doc__)
     d = out_dir(args)
-    fig = new_figure("double", 3.4)
+    fig = new_figure("double", 3.05)
     ax = fig.add_axes((0.0, 0.0, 1.0, 1.0))
     ax.set_xlim(0, 6)
-    ax.set_ylim(0, 3.4)
+    ax.set_ylim(0, 3.05)
     ax.axis("off")
     w, x0, yb, hb = 0.86, 0.07, 0.98, 2.0
     rows = []
@@ -133,6 +133,18 @@ def main() -> None:
         for i, line in enumerate(lines):
             ax.text(x + 0.05, yb + hb - 0.27 - 0.15 * i, line, ha="left", va="top", fontsize=6)
         col_t = {"est": TAG, "none": NONE, "info": "#333333"}[kind]
+        if title == "Gene table":  # picked and MAYU estimate; 2-peptide and list do not
+            _box(ax, x + 0.03, yb + 0.25, w - 0.06, 0.17, TAG, lw=0.9)
+            ax.text(x + w / 2, yb + 0.335, "gene FDR q ≤ 0.01", ha="center", va="center",
+                    fontsize=6, color=TAG)  # fmt: skip
+            _box(ax, x + 0.03, yb + 0.06, w - 0.06, 0.15, NONE, ls="--", lw=0.6)
+            ax.text(x + w / 2, yb + 0.135, "2-peptide, list: none", ha="center", va="center",
+                    fontsize=6, color=NONE)  # fmt: skip
+            _arrow(ax, (x + w + 0.01, yb + 1.1), (x + 1 - 0.01, yb + 1.1))
+            rows.append({"column": col, "stage": title, "contents": "; ".join(lines),
+                         "error_control": "picked, MAYU: gene FDR; 2-peptide, list: none",
+                         "kind": "est+none"})  # fmt: skip
+            continue
         _box(ax, x + 0.03, yb + 0.06, w - 0.06, 0.36, col_t, ls="--" if kind == "none" else "-",
              lw=0.9 if kind == "est" else 0.6)  # fmt: skip
         ax.text(x + w / 2, yb + 0.24, tag, ha="center", va="center", fontsize=6, color=col_t)
@@ -141,10 +153,10 @@ def main() -> None:
         rows.append({"column": col, "stage": title, "contents": "; ".join(lines),
                      "error_control": tag.replace("\n", " "), "kind": kind})  # fmt: skip
     # side loop: gippa makedb -> the user's own search -> peptide table
-    _box(ax, 1.07, 0.18, 1.86, 0.45, OKABE["blue"], ls="--")
-    ax.text(2.0, 0.405, "gippa makedb (optional): strain FASTA from the\nBakta annotation, "
-            "± six-frame ORFs, contaminants", ha="center", va="center", fontsize=6,
-            color=OKABE["blue"])  # fmt: skip
+    _box(ax, 1.07, 0.18, 2.86, 0.45, OKABE["blue"], ls="--")
+    ax.text(2.5, 0.405, "gippa makedb (optional): strain FASTA from the Bakta annotation;\n"
+            "route A: Bakta proteins; route B: plus six-frame ORFs", ha="center", va="center",
+            fontsize=6, color=OKABE["blue"])  # fmt: skip
     _box(ax, 0.07, 0.18, 0.86, 0.45, "#333333", ls=":")
     ax.text(0.5, 0.405, "your search engine\n(DIA-NN, Cascadia;\noutside GIPPA)", ha="center",
             va="center", fontsize=6)  # fmt: skip
@@ -152,13 +164,10 @@ def main() -> None:
     _arrow(ax, (1.06, 0.405), (0.94, 0.405), col=OKABE["blue"])
     _arrow(ax, (0.5, 0.64), (0.5, yb - 0.01))
     # key
-    _box(ax, 3.55, 0.36, 0.22, 0.12, TAG, lw=0.9)
-    ax.text(3.83, 0.42, "error estimate reported", va="center", fontsize=6, color=TAG)
-    _box(ax, 4.85, 0.36, 0.22, 0.12, NONE, ls="--")
-    ax.text(5.13, 0.42, "no estimate; flagged", va="center", fontsize=6, color=NONE)
-    title = ("GIPPA: one genome and any search output in, one gene table out, with an error "
-             "estimate or a flag at every step")  # fmt: skip
-    ax.text(3.0, 3.3, title, ha="center", va="top", fontsize=8)
+    _box(ax, 4.15, 0.47, 0.22, 0.12, TAG, lw=0.9)
+    ax.text(4.43, 0.53, "error estimate reported", va="center", fontsize=6, color=TAG)
+    _box(ax, 4.15, 0.25, 0.22, 0.12, NONE, ls="--")
+    ax.text(4.43, 0.31, "no estimate of its own; flagged", va="center", fontsize=6, color=NONE)
     save(fig, d, "fig1_workflow", rows)
 
 

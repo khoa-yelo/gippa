@@ -5,4 +5,4 @@ extend = "../../../pyproject.toml"
 extend-ignore = ["RUF001", "RUF002", "RUF003"]
 
 [lint.isort]
-known-first-party = ["gippa", "gippasim", "_common", "_campaign"]
+known-first-party = ["gippa", "gippasim", "_common", "_campaign", "fig4_campaign"]

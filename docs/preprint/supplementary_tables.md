@@ -30,25 +30,30 @@ FDP). R replicates; m pooled tests per replicate.
 | Method | Stream | Criterion | Observed | Bound | R (m) |
 |---|---|---|---|---|---|
 | placement | read-through, shuffled decoys | FDR | 0.0355 | 0.0510 | 300 |
+| placement | contaminant attack, q = 0.01 (known failure; placement gate not met) | FDR | 0.0150 | 0.0102 | 300 |
 | gene FDR | picked, π = 0.05, q = 0.01 | FDR | 0.00941 | 0.01031 | 300 |
 | gene FDR | MAYU (PEP), π = 0.05, q = 0.01 | FDR | 0.00962 | 0.01022 | 300 |
 | region tests | HL shift, chromosome pooled | level | 0.0505 | 0.0569 | 1,000 (4) |
 | region tests | prophage HL shift (within tolerance, not at level: 26 % above q) | FDR | 0.063 | 0.0654 | 1,000 |
 | autocorrelation | Moran's I lag 1, exact TUs | level | 0.055 | 0.0638 | 1,000 |
-| autocorrelation | same, UniOP-like TU errors (recorded only) | level | 0.071 | 0.0638 | 1,000 |
+| autocorrelation | same, UniOP-like TU errors (recorded only; rows flagged) | level | 0.071 | 0.0638 | 1,000 |
+| autocorrelation | same, UniOP's K-12 TU error rates (recorded only; rows flagged) | level | 0.432 / 0.659 / 0.758 at α 0.01 / 0.05 / 0.10 | 0.0163 / 0.0638 / 0.119 | 1,000 |
+| autocorrelation | same, distance-model operon fallback (known failure; rows flagged) | level | 0.149 / 0.354 / 0.476 at α 0.01 / 0.05 / 0.10 | 0.0163 / 0.0638 / 0.119 | 1,000 |
 | islands | AR(1) ρ = 0 / 0.5 / 0.9 | FWER | 0.022 / 0.020 / 0.024 | 0.0695 | 500 |
-| islands | ρ = 0.9, short lag, 1,800 genes (outside the claim; recorded) | FWER | 0.130 | 0.0695 | 500 |
+| islands | ρ = 0.9, short block length, 1,000 / 1,800 genes (outside the claim; recorded) | FWER | 0.096 / 0.130 | 0.0695 | 500 |
 | operon discordance | gate null, 1,800 genes | level / FDR | 0.0499 / 0.034 | 0.0510 / 0.0615 | 1,000 (200) |
+| operon discordance | step-shaped noise attack (known failure; claim narrowed to smooth noise) | level | 0.0517 / 0.1031 at α 0.05 / 0.10 | 0.0510 / 0.1013 | 1,000 (200) |
 | missed operons | shipped decoys | FDR | no calls (vacuous) | – | 300 |
 | GSEA | pooled null, R engine | level | 0.0415 | 0.0525 | 300 (100) |
-| GSEA | unflagged rows under detection confounding, arm `null_b2` (Python port engine; gated at 1.5α by a statistician decision, not by tolerances.yaml) | FWER | 0.0833 | 0.1054 (1.5α); the α-level bound is 0.0752 | 300 |
+| GSEA | unflagged rows under detection confounding, arm `null_b2` (Python port engine; gated by a 1.5α screen set in the test file, not in the tolerance file or an ADR) | FWER | 0.0833 at α 0.05; 0.1367 at α 0.10 | α + 2 SE: 0.0752 / 0.1346 (both exceeded); 1.5α screen: 0.1054 / 0.1912 (passed) | 300 |
 | novel ORFs | class FDR, database regime | FDR | 0.0453 | 0.0511 | 300 |
 | novel ORFs | de novo regime: multi-peptide false ORFs (known failure) | FDR | 0.0183 / 0.0788 / 0.1139 at q 0.01 / 0.05 / 0.10 | 0.0109 / 0.0511 / 0.1012 | 300 |
 | novel ORFs | de novo regime: exact systematic errors, G4-k3, out of frame (known failure) | FDR | 0.0749 at q 0.01 and 0.05 | 0.0102 / 0.0502 | 300 |
 | novel ORFs | de novo regime: G4-k3, antisense (known failure) | FDR | 0.0719 at q 0.01 and 0.05 | 0.0102 / 0.0502 | 300 |
 | novel ORFs | de novo regime: G4-k3, intergenic (known failure) | FDR | 0.0153 at q 0.01 | 0.0114 | 300 |
 | novel ORFs | de novo regime: exact GC-poor intergenic reads (known failure) | FDR | 0.0126 at q 0.01 | 0.0112 | 300 |
-| variants | F1 of `high` ALT calls (≥ 0.90; known failure) | F1 | 0.874 | 0.90 | 100 |
+| variants | F1 of `high` ALT calls, scope before ADR-0049 (≥ 0.90; known failure; variant gate not met) | F1 | 0.874 (SE 0.0018) | 0.90 | 100 |
+| variants | random / systematic isobaric-swap attacks (known failure) | FWER | 0.97 / 1.0 | 0.0936 | 100 |
 | compare | ρ CI non-coverage, TU block | level | 0.048 | 0.0638 | 1,000 |
 
 <!-- src: results.md Table R2 and Table R3b (CAL110 line references), re-read in CAL111 at the
@@ -61,8 +66,14 @@ novel_orfs.merged.jsonl:38, 23 and the strict-xfail records of novel_orfs.merged
 novel_orfs.attack.denovo.multi_peptide_orfs.full, novel_orfs.gc, novel_orfs.g4k3.intergenic,
 novel_orfs.g4k3.cds_outframe, novel_orfs.g4k3.antisense; block 2; tests test_attack_novel_class_fdr.py,
 test_attack_m7_gate.py, test_novel_orfs_gate.py; ADR-0050); variants.merged.jsonl:3;
-lanes/compare-group0/compare.jsonl:41; GSEA null_b2: results.md §1.2 and Table R3b (records identical
-in CAL111); prophage 26 %: results.md §1.2 line 199 -->
+lanes/compare-group0/compare.jsonl:41; GSEA null_b2: CAL111 lanes/gsea-group1/gsea.jsonl:20-21
+(screen levels 0.075 and 0.15; observed 0.08333, 0.13667; R 300; α + 2 SE bounds computed:
+0.07517, 0.13464); screen constant tests/calibration/attacks/test_attack_gsea_flags.py:367
+(SCREEN = 1.5); these records are at the screen levels 0.075 and 0.15, so they are not among the
+1,244 records of Fig. 2b; prophage 26 %: results.md §1.2 line 199; contaminant attack:
+placement.merged.jsonl:43; UniOP K-12 rates: lanes/autocorrelation-group0/autocorrelation.jsonl:47,49,51;
+distance model: :23,25,27 (strict xfail); islands_recorded.jsonl:1-2; discordance step:
+lanes/discordance-group*/discordance.jsonl:8,10 (strict xfail); variants.merged.jsonl:1-2 -->
 
 **Table S3.** Campaign datasets and headline results (route A unless stated; shares with Wilson
 95 % CI, optimistic because genes and peptides co-vary).
@@ -73,7 +84,7 @@ in CAL111); prophage 26 %: results.md §1.2 line 199 -->
 | *T. pallidum*, 7 strains | PXD065022 | 3 per strain, timsTOF Pro | 668–880 / 972–976 (0.685–0.903) | 0.0011–0.0060 | 0.973–0.999 | 200 (0) |
 | *Caulobacter crescentus* NA1000 | PXD069004 | 3, Exploris 480 | 3,005 / 3,723 (0.807 [0.794, 0.819]) | 0.0093 | 0.971 [0.964, 0.976] | 164 (0) |
 | *Bacteroides thetaiotaomicron* | PXD055395 | 16, timsTOF Pro | 2,244 / 4,931 (0.455 [0.441, 0.469]) | 0.0098 | 0.972 [0.964, 0.978] | 99 (0) |
-| *Synechococcus* CC9311 | PXD072227 | 5, Q Exactive | 1,897 / 2,859 (0.664 [0.646, 0.681]) | 0.0084 | 0.968 [0.960, 0.975] | 117 (0) |
+| *Synechococcus* sp. CC9311 | PXD072227 | 5, Q Exactive | 1,897 / 2,859 (0.664 [0.646, 0.681]) | 0.0084 | 0.968 [0.960, 0.975] | 117 (0) |
 | *Vibrio natriegens* | PXD049476 | 4, Exploris 480 | 2,515 / 4,551 (0.553 [0.538, 0.567]) | 0.0099 | 0.969 [0.961, 0.975] | 78 (0) |
 | *Myxococcus xanthus* DK1622 | PXD060688 | 4, Exploris 480 | 4,864 / 7,318 (0.665 [0.654, 0.675]) | 0.0097 | 0.985 [0.981, 0.988] | 265 (0) |
 | *Clostridioides difficile* 630Δerm | PXD065346 | 3, DIA | 1,928 / 3,824 (0.504 [0.488, 0.520]) | 0.0099 | 0.988 [0.982, 0.992] | 53 (0) |
@@ -95,11 +106,11 @@ accessions: handover plan Phase 2 table -->
 | R1 | ≥ 99.5 % of A2 peptides map exactly | pass | 100.00 % |
 | R2 | decoy-estimated mapping FDR ≤ 1 % | **waived** (ADR-0071, ADR-0080) | not measured (same-database search) |
 | R3 | every statistical method passes its calibration suite | pass (no waiver; expected failures listed) | full tier 558 tests: 462 passed, 90 skipped, 6 xfailed, 0 failed; fast tier 29,049 passed, 149 skipped, 17 xfailed, 3 xpassed; coverage 97 % |
-| R4 | every attack null stays at level | pass (expected failures listed) | 284 attack tests: 276 passed, 3 skipped, 5 xfailed |
+| R4 | every attack null stays at level | pass (expected failures listed) | 284 attack tests: 276 passed, 3 skipped, 5 xfailed. R4 passes with the GSEA detection-confounding arm `null_b2` gated at 1.5α, a screen not recorded in the tolerance file or an ADR; at the α + 2 SE bound that arm fails (Table S2) |
 | R5 | every true-example assertion the data allow passes | **waived** for TE4 only (ADR-0070, ADR-0080) | TE1–TE3, TE5, TE7, TE8 pass; TE4 fails |
 | R6 | same seed gives byte-identical tables | pass | TE7; integration 967 passed; nf-test 144 tests |
 | R7 | standard run on 16 threads and 64 GB ≈ 35 min (16–55) | **waived** (ADR-0072, ADR-0080) | 3 h 41 min |
-| R8 | core modules ≈ 25 min | reported only | 3 h 01 min |
+| R8 | core modules ≈ 25 min | pass (threshold "reported only") | 3 h 01 min |
 | R9 | the pilot passes | pass | 5 criteria; TE4 reported, cause not established; the five criteria do not include the pre-registered hypotheses, and H1 was not supported |
 | R10 | co-abundance against K-12 operons | **deferred** to full validation | – |
 
