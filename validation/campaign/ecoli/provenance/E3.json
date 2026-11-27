@@ -1,0 +1,79 @@
+{
+ "arm": "E3",
+ "dataset": "PXD058422 / PXD066241 (PMC12529367)",
+ "genome": "GCF_000005845.2 = U00096.3 by sequence",
+ "jobs": {
+  "fetch": {
+   "job_id": "1998567",
+   "name": "gippa-campaign-fetch-e3",
+   "state": "COMPLETED",
+   "elapsed": "00:25:47",
+   "exit_code": "0:0",
+   "node": "wheat-02",
+   "alloc_cpus": "2",
+   "start": "2026-11-19T14:56:21",
+   "end": "2026-11-19T15:22:08",
+   "max_rss": "2090724K"
+  },
+  "diann_search": {
+   "job_id": "1998659",
+   "name": "gippa-campaign-diann-e3",
+   "state": "COMPLETED",
+   "elapsed": "00:28:25",
+   "exit_code": "0:0",
+   "node": "wheat-05",
+   "alloc_cpus": "16",
+   "start": "2026-11-19T16:40:36",
+   "end": "2026-11-19T17:09:01",
+   "max_rss": "24103984K"
+  }
+ },
+ "files_sha256": {
+  "cassette_fasta": {
+   "path": "/home/classes/bios/270/khoa/giap/local/campaign/ecoli_k12/cassette/cassette_markers.fasta",
+   "sha256": "83670dd20b660b79c335cf41fe19800d9204a1dba5109bcb18c1e4916274dcdf"
+  },
+  "raw_SHA256SUMS": {
+   "path": "/home/classes/bios/270/khoa/giap/local/campaign/ecoli_k12/raw_e3/SHA256SUMS",
+   "sha256": "2a3d0c77fb2998acce123f41eb658717b2e63a4c5af56da95d3d815362691bc9"
+  },
+  "report": {
+   "path": "/home/classes/bios/270/khoa/giap/local/campaign/ecoli_k12/diann_e3/report_all.parquet",
+   "sha256": "07796b87a8b5b91622de4a43013207208c6f5c34a026cc881b5241c4dc993bfb"
+  }
+ },
+ "diann": [
+  {
+   "job_id": "1998659",
+   "node": "wheat-05",
+   "exit_code": 0,
+   "image": "/home/classes/bios/270/khoa/giap/local/images/diann_2.3.1.sif",
+   "image_sha256": "1946452d56d2fb0f66e05ced473df88e53484e28040f1ecbd83c4a43405a6381",
+   "cfg": "/home/classes/bios/270/khoa/giap/local/worktrees/campaign-ecoli/validation/campaign/diann_campaign.cfg",
+   "cfg_sha256": "dad24b38e315b68cb6a905dfda877404535310f030ed9f92f8e9370dae0d6a1f",
+   "campaign_commit": "42a13e2f19c68c6ac941c80ebfb52cd27c88a1c6",
+   "fasta_sha256": {
+    "/home/classes/bios/270/khoa/giap/local/campaign/ecoli_k12/db_a/strain_db.faa": "5fee719ab9d967466c905dbf960711286478e2cb1727e52989e87b250b9c41bd",
+    "/home/classes/bios/270/khoa/giap/local/campaign/ecoli_k12/cassette/cassette_markers.fasta": "83670dd20b660b79c335cf41fe19800d9204a1dba5109bcb18c1e4916274dcdf"
+   },
+   "run_list": "/home/classes/bios/270/khoa/giap/local/campaign/ecoli_k12/runs_e3_all.txt",
+   "n_runs": 8,
+   "report_stem": "report_all",
+   "step1": {
+    "status": "ran",
+    "exit": 0,
+    "wall_s": 117
+   },
+   "step2": {
+    "status": "ran",
+    "exit": 0,
+    "wall_s": 1581
+   },
+   "wall_s": 1703,
+   "library_bytes": 182577774
+  }
+ ],
+ "convert": null,
+ "gippa_run": null,
+ "notes": "No knockout run identified: all 8 deep runs carry Lon and ClpP, no CAT/TetR/TetA cassette peptide. No gippa run."
+}

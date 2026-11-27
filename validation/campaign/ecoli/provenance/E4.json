@@ -1,0 +1,354 @@
+{
+ "arm": "E4",
+ "dataset": "PXD058422 / PXD066241 (PMC12529367)",
+ "genome": "GCF_000005845.2 = U00096.3 by sequence",
+ "jobs": {
+  "trfp_env": {
+   "job_id": "1998576",
+   "name": "gippa-campaign-build-trfp",
+   "state": "COMPLETED",
+   "elapsed": "00:00:53",
+   "exit_code": "0:0",
+   "node": "oat-02",
+   "alloc_cpus": "2",
+   "start": "2026-11-19T14:48:50",
+   "end": "2026-11-19T14:49:43",
+   "max_rss": "1314328K"
+  },
+  "trfp_dia2": {
+   "job_id": "1998581",
+   "name": "gippa-campaign-trfp-dia2",
+   "state": "COMPLETED",
+   "elapsed": "00:02:56",
+   "exit_code": "0:0",
+   "node": "oat-02",
+   "alloc_cpus": "4",
+   "start": "2026-11-19T14:51:20",
+   "end": "2026-11-19T14:54:16",
+   "max_rss": "2748552K"
+  },
+  "trfp_e1": {
+   "job_id": "1998770",
+   "name": "gippa-campaign-trfp-e1",
+   "state": "COMPLETED",
+   "elapsed": "00:13:10",
+   "exit_code": "0:0",
+   "node": "wheat-06",
+   "alloc_cpus": "4",
+   "start": "2026-11-19T16:31:45",
+   "end": "2026-11-19T16:44:55",
+   "max_rss": "7945076K"
+  },
+  "cascadia_dia2": {
+   "job_id": "1998593",
+   "name": "gippa-campaign-cascadia-dia2",
+   "state": "COMPLETED",
+   "elapsed": "01:00:17",
+   "exit_code": "0:0",
+   "node": "oat-03",
+   "alloc_cpus": "16",
+   "start": "2026-11-19T18:25:15",
+   "end": "2026-11-19T19:25:32",
+   "max_rss": "10522876K"
+  },
+  "cascadia_dia1": {
+   "job_id": "1998968",
+   "name": "gippa-campaign-cascadia-dia_1",
+   "state": "COMPLETED",
+   "elapsed": "01:02:28",
+   "exit_code": "0:0",
+   "node": "oat-02",
+   "alloc_cpus": "8",
+   "start": "2026-11-19T20:07:25",
+   "end": "2026-11-19T21:09:53",
+   "max_rss": "10863156K"
+  },
+  "cascadia_dia1_2": {
+   "job_id": "1998969",
+   "name": "gippa-campaign-cascadia-dia_1_2",
+   "state": "COMPLETED",
+   "elapsed": "01:02:25",
+   "exit_code": "0:0",
+   "node": "oat-02",
+   "alloc_cpus": "8",
+   "start": "2026-11-19T21:42:13",
+   "end": "2026-11-19T22:44:38",
+   "max_rss": "10164968K"
+  },
+  "cascadia_dia2_2": {
+   "job_id": "1998970",
+   "name": "gippa-campaign-cascadia-dia_2_2",
+   "state": "COMPLETED",
+   "elapsed": "01:02:31",
+   "exit_code": "0:0",
+   "node": "oat-02",
+   "alloc_cpus": "8",
+   "start": "2026-11-20T10:05:48",
+   "end": "2026-11-20T11:08:19",
+   "max_rss": "11083636K"
+  },
+  "gippa_run": {
+   "job_id": "2000505",
+   "name": "gippa-run-e4",
+   "state": "COMPLETED",
+   "elapsed": "01:50:59",
+   "exit_code": "0:0",
+   "node": "wheat-08",
+   "alloc_cpus": "4",
+   "start": "2026-11-20T11:11:06",
+   "end": "2026-11-20T13:02:05",
+   "max_rss": "1310440K"
+  }
+ },
+ "files_sha256": {
+  "mzml_SHA256SUMS": {
+   "path": "/home/classes/bios/270/khoa/giap/local/campaign/ecoli_k12/mzml/SHA256SUMS",
+   "sha256": "bea3a68a91a5eae77d891c5021cdced5f6f8478c32903fc889f20c0a658566e1"
+  },
+  "peptides_all": {
+   "path": "/home/classes/bios/270/khoa/giap/local/campaign/ecoli_k12/in_c/peptides.tsv.gz",
+   "sha256": "8af4aa91fe6c227baf1f686c2927e0e90e1a702847ae93d3c874903a02997fc6"
+  },
+  "peptides_min7": {
+   "path": "/home/classes/bios/270/khoa/giap/local/campaign/ecoli_k12/in_c/peptides_min7.tsv.gz",
+   "sha256": "8c697dbf3a14627e71b71318391b54970ab79121c0d26ea11f6bce6af8eb2dcb"
+  },
+  "reference_peptides": {
+   "path": "/home/classes/bios/270/khoa/giap/local/campaign/ecoli_k12/in_a/peptides.tsv.gz",
+   "sha256": "50dbd6b32c379dacac3a92356b5593e8e39487412ddfda6344b1bf0088f0a138"
+  },
+  "cascadia_weights": {
+   "path": "/db/cascadia/cascadia_0.0.7.ckpt",
+   "sha256": null
+  }
+ },
+ "diann": [],
+ "convert": null,
+ "gippa_run": {
+  "git_commit": "a2a95c76b41665464002d01a4d52c11ccb7e38db",
+  "git_dirty": false,
+  "gippa_version": "1.1.0",
+  "status": "completed",
+  "exit_code": 0,
+  "started_at": "2026-11-20T19:11:34+00:00",
+  "finished_at": "2026-11-20T21:02:02+00:00",
+  "profile": "farmshare,apptainer",
+  "seeds_master": 20261014,
+  "detection_tier": "two_peptide",
+  "modules_off": [],
+  "inputs": [
+   {
+    "role": "genome",
+    "path": "/home/classes/bios/270/khoa/giap/local/campaign/ecoli_k12/genome.fna.gz",
+    "sha256": "4bfd7163f6f0de6394a2131cbfdbe75100daa55cbee227ec3e403a44640ac03c"
+   },
+   {
+    "role": "peptides",
+    "path": "/home/classes/bios/270/khoa/giap/local/campaign/ecoli_k12/in_c/peptides_min7.tsv.gz",
+    "sha256": "8c697dbf3a14627e71b71318391b54970ab79121c0d26ea11f6bce6af8eb2dcb"
+   },
+   {
+    "role": "annotation",
+    "path": "/home/classes/bios/270/khoa/giap/local/campaign/ecoli_k12/bakta/k12_mg1655.json",
+    "sha256": "ae0ccaf186b098ecd704b78c76cde8e464f8717030bd5890b38397f1c0e9b169"
+   },
+   {
+    "role": "reference_peptides",
+    "path": "/home/classes/bios/270/khoa/giap/local/campaign/ecoli_k12/in_a/peptides.tsv.gz",
+    "sha256": "50dbd6b32c379dacac3a92356b5593e8e39487412ddfda6344b1bf0088f0a138"
+   },
+   {
+    "role": "precomputed:bakta_json",
+    "path": "/home/classes/bios/270/khoa/giap/local/campaign/ecoli_k12/bakta/k12_mg1655.json",
+    "sha256": "ae0ccaf186b098ecd704b78c76cde8e464f8717030bd5890b38397f1c0e9b169"
+   }
+  ],
+  "tools": [
+   {
+    "conda_lock_hash": null,
+    "container_digest": "sha256:d3f390e687cfe02f1387be40256dddbf678e91bc56b96c36da07b56ec8bda29d",
+    "name": "antismash",
+    "processes": [
+     "ANNOTATE:ANTISMASH"
+    ],
+    "version": "8.0.4"
+   },
+   {
+    "conda_lock_hash": null,
+    "container_digest": "sha256:d54652ff868af72604ea0e54c541c5c92168c7ac821a422de05dcbad65509e5c",
+    "name": "genomad",
+    "processes": [
+     "ANNOTATE:GENOMAD"
+    ],
+    "version": "1.12.0"
+   },
+   {
+    "conda_lock_hash": null,
+    "container_digest": "sha256:d9107b9b87fd6f3d3cd329ba1d2ac66b9af9e38512f11d2b8a0210110c6c9292",
+    "name": "ostir",
+    "processes": [
+     "ANNOTATE:OSTIR",
+     "NOVEL:OSTIR_NOVEL"
+    ],
+    "version": "1.1.3"
+   },
+   {
+    "conda_lock_hash": null,
+    "container_digest": "sha256:7366eaf67d9b26c6036ed5ececa740fe2728fdcf0cd4b2a12a0d9597b87a53ac",
+    "name": "promotech",
+    "processes": [
+     "ANNOTATE:PROMOTECH",
+     "NOVEL:PROMOTECH_NOVEL"
+    ],
+    "version": "56251ad9b883ef831b4753fc623d5ec970fe65e0"
+   },
+   {
+    "conda_lock_hash": null,
+    "container_digest": "sha256:c5bd0662ceed623c00c4bf40b085c6541b7676e1ccc37a390e0efd73e02b48df",
+    "name": "promoter_calculator",
+    "processes": [
+     "ANNOTATE:PROMOTER_CALCULATOR"
+    ],
+    "version": "1.2.4"
+   },
+   {
+    "conda_lock_hash": null,
+    "container_digest": "sha256:ec415757b6b70cce8240f425b35bf3e74dc3abe8ff413049c04d808034592f7a",
+    "name": "terminatornet",
+    "processes": [
+     "ANNOTATE:TERMINATORNET_SHARDED:TERMINATORNET_MERGE"
+    ],
+    "version": "72180309545988dba63b8bd5db5d0b09bf4dba70"
+   },
+   {
+    "conda_lock_hash": null,
+    "container_digest": "sha256:fc6fe0404be9340a883ec7a7b90415dfc3826c2bca7333a0314335c7bfee2d03",
+    "name": "transtermhp",
+    "processes": [
+     "ANNOTATE:TRANSTERMHP"
+    ],
+    "version": "2.09"
+   },
+   {
+    "conda_lock_hash": "a16e1731537f901edfff5c1b7604b40e05de40ba8a062c7d4647ef54b7ff463b",
+    "container_digest": null,
+    "name": "uniop",
+    "processes": [
+     "ANNOTATE:UNIOP"
+    ],
+    "version": "3ed14dfc2a5d69b993d99a26e50c1f8e9723c087"
+   },
+   {
+    "conda_lock_hash": null,
+    "container_digest": "sha256:d9107b9b87fd6f3d3cd329ba1d2ac66b9af9e38512f11d2b8a0210110c6c9292",
+    "name": "viennarna",
+    "processes": [
+     "ANNOTATE:OSTIR",
+     "NOVEL:OSTIR_NOVEL"
+    ],
+    "version": "2.6.4"
+   }
+  ],
+  "databases": [
+   {
+    "checksum": "",
+    "name": "amrfinderplus",
+    "retrieved": "2026-10-15",
+    "size_bytes": 0,
+    "version": "2026-08-07.1"
+   },
+   {
+    "checksum": "",
+    "name": "antismash",
+    "retrieved": "2026-10-15",
+    "size_bytes": 10071420949,
+    "version": "8.0.4"
+   },
+   {
+    "checksum": "md5:4c1115e40abfa2b464ae5dd988bdd88e",
+    "name": "bakta_full",
+    "retrieved": "2026-10-15",
+    "size_bytes": 89345212518,
+    "version": "6.0"
+   },
+   {
+    "checksum": "md5:4a6e059ded39e9c5537ef4137d2f5648",
+    "name": "bakta_light",
+    "retrieved": "2026-10-15",
+    "size_bytes": 4247058425,
+    "version": "6.0"
+   },
+   {
+    "checksum": "sha256:00e93e42f38f6ada46ef6be5da4a8518829300ea29f2888261660de0ca2f7e77",
+    "name": "cog2020_def",
+    "retrieved": "2026-10-15",
+    "size_bytes": 372608,
+    "version": "2020"
+   },
+   {
+    "checksum": "sha256:fbdce778220f07a6f9701b2bde07fbcb1d3fca9fa7453fa9ab7021b5da18c4f7",
+    "name": "cog2020_fun",
+    "retrieved": "2026-10-15",
+    "size_bytes": 1131,
+    "version": "2020"
+   },
+   {
+    "checksum": "sha256:c0782146be6dad6ecf53e23e5a21a7ed4fea9b4802cb01e8d00091404ec66926",
+    "name": "contaminants",
+    "retrieved": "2026-10-15",
+    "size_bytes": 201365,
+    "version": "bddf6da9"
+   },
+   {
+    "checksum": "md5:67244b528bb8bed464d1ca147136d33e",
+    "name": "genomad",
+    "retrieved": "2026-10-15",
+    "size_bytes": 1471626195,
+    "version": "1.9"
+   },
+   {
+    "checksum": "sha256:923645000afcb1df0e72e252b64950b1c2bcc98c9393fec8c1dd1a0f7c9d4d77",
+    "name": "go_basic",
+    "retrieved": "2026-10-15",
+    "size_bytes": 32212518,
+    "version": "2026-05-19"
+   },
+   {
+    "checksum": "sha256:dfc49ced033f5f047a9729a2b434e7a70b0c395ba61f950d138beff769555a26",
+    "name": "goslim_generic",
+    "retrieved": "2026-10-15",
+    "size_bytes": 126263,
+    "version": "2026-05-19"
+   },
+   {
+    "checksum": "sha256:3da145284be2ea07c45fd401037861e43f28f42ce174147eb4c053ae561b77e2",
+    "name": "kegg_ko_pathway",
+    "retrieved": "2026-10-15",
+    "size_bytes": 2306337,
+    "version": "2026-10-15"
+   },
+   {
+    "checksum": "sha256:46c36040530f1de249615192d7b054cefd366fac0d48243cf82bec22755cfe61",
+    "name": "kegg_pathway_names",
+    "retrieved": "2026-10-15",
+    "size_bytes": 22083,
+    "version": "2026-10-15"
+   },
+   {
+    "checksum": "sha256:fcd96ffe5a43b579af965839ee2bb896de94de3601978d88bcabd32c4fb5093f",
+    "name": "promotech_models",
+    "retrieved": "2026-10-15",
+    "size_bytes": 4776674723,
+    "version": "RF-HOT"
+   }
+  ],
+  "warnings": [
+   "novel_orfs:novel_orfs.class_q_floor_above_alpha",
+   "preflight:peptides.spectrum_pairing"
+  ],
+  "layers_missing": [
+   "abundance"
+  ]
+ },
+ "notes": "gippa convert --from cascadia in the allocation (2 s, deterministic); 27 rows < 7 aa removed before preflight --strict (GIPPA drops them itself)."
+}

@@ -1,0 +1,401 @@
+{
+ "arm": "E1",
+ "dataset": "PXD058422 / PXD066241 (PMC12529367)",
+ "genome": "GCF_000005845.2 = U00096.3 by sequence",
+ "jobs": {
+  "fetch": {
+   "job_id": "1998566",
+   "name": "gippa-campaign-fetch-e1",
+   "state": "COMPLETED",
+   "elapsed": "01:44:55",
+   "exit_code": "0:0",
+   "node": "wheat-05",
+   "alloc_cpus": "2",
+   "start": "2026-11-19T14:44:41",
+   "end": "2026-11-19T16:29:36",
+   "max_rss": "2048632K"
+  },
+  "diann_lib": {
+   "job_id": "1998573",
+   "name": "gippa-campaign-diann-lib-a",
+   "state": "COMPLETED",
+   "elapsed": "00:02:01",
+   "exit_code": "0:0",
+   "node": "wheat-05",
+   "alloc_cpus": "16",
+   "start": "2026-11-19T16:28:36",
+   "end": "2026-11-19T16:30:37",
+   "max_rss": "5493540K"
+  },
+  "diann_search": {
+   "job_id": "1998769",
+   "name": "gippa-campaign-diann-e1",
+   "state": "COMPLETED",
+   "elapsed": "00:13:20",
+   "exit_code": "0:0",
+   "node": "wheat-05",
+   "alloc_cpus": "16",
+   "start": "2026-11-19T16:34:37",
+   "end": "2026-11-19T16:47:57",
+   "max_rss": "8135444K"
+  },
+  "convert_preflight": {
+   "job_id": "1998810",
+   "name": "gippa-campaign-convert-e1",
+   "state": "COMPLETED",
+   "elapsed": "00:00:33",
+   "exit_code": "0:0",
+   "node": "wheat-06",
+   "alloc_cpus": "4",
+   "start": "2026-11-19T16:49:19",
+   "end": "2026-11-19T16:49:52",
+   "max_rss": "501772K"
+  },
+  "gippa_run": {
+   "job_id": "1998814",
+   "name": "gippa-run-e1",
+   "state": "COMPLETED",
+   "elapsed": "02:31:57",
+   "exit_code": "0:0",
+   "node": "wheat-04",
+   "alloc_cpus": "4",
+   "start": "2026-11-19T18:34:49",
+   "end": "2026-11-19T21:06:46",
+   "max_rss": "1409888K"
+  },
+  "te7_rerun": {
+   "job_id": "1999366",
+   "name": "gippa-run-e1-te7",
+   "state": "COMPLETED",
+   "elapsed": "02:22:56",
+   "exit_code": "0:0",
+   "node": "wheat-04",
+   "alloc_cpus": "4",
+   "start": "2026-11-19T21:35:15",
+   "end": "2026-11-19T23:58:11",
+   "max_rss": "1211936K"
+  },
+  "report_redact": {
+   "job_id": "1999542",
+   "name": "gippa-campaign-report",
+   "state": "COMPLETED",
+   "elapsed": "00:02:35",
+   "exit_code": "0:0",
+   "node": "wheat-03",
+   "alloc_cpus": "4",
+   "start": "2026-11-19T22:24:38",
+   "end": "2026-11-19T22:27:13",
+   "max_rss": "634464K"
+  },
+  "demo_example": {
+   "job_id": "1998577",
+   "name": "gippa-campaign-demo",
+   "state": "COMPLETED",
+   "elapsed": "00:01:14",
+   "exit_code": "0:0",
+   "node": "oat-02",
+   "alloc_cpus": "4",
+   "start": "2026-11-19T14:49:50",
+   "end": "2026-11-19T14:51:04",
+   "max_rss": "934948K"
+  }
+ },
+ "files_sha256": {
+  "genome": {
+   "path": "/home/classes/bios/270/khoa/giap/local/campaign/ecoli_k12/genome.fna.gz",
+   "sha256": "4bfd7163f6f0de6394a2131cbfdbe75100daa55cbee227ec3e403a44640ac03c"
+  },
+  "bakta_json": {
+   "path": "/home/classes/bios/270/khoa/giap/local/campaign/ecoli_k12/bakta/k12_mg1655.json",
+   "sha256": "ae0ccaf186b098ecd704b78c76cde8e464f8717030bd5890b38397f1c0e9b169"
+  },
+  "bakta_gbff": {
+   "path": "/home/classes/bios/270/khoa/giap/local/campaign/ecoli_k12/bakta/k12_mg1655.gbff",
+   "sha256": "c958d300ab436f1b5574e3462718f7cedeaa067a275e05c8f6d332f017038f9b"
+  },
+  "db_a": {
+   "path": "/home/classes/bios/270/khoa/giap/local/campaign/ecoli_k12/db_a/strain_db.faa",
+   "sha256": "5fee719ab9d967466c905dbf960711286478e2cb1727e52989e87b250b9c41bd"
+  },
+  "raw_SHA256SUMS": {
+   "path": "/home/classes/bios/270/khoa/giap/local/campaign/ecoli_k12/raw/SHA256SUMS",
+   "sha256": "2a80c9146a9b6be62c9b34faeb5309630d05cc5fc1334240cc2833776f602226"
+  },
+  "report": {
+   "path": "/home/classes/bios/270/khoa/giap/local/campaign/ecoli_k12/diann_a/report.parquet",
+   "sha256": "aef9d7a2f96df75c23a2ce69c98831c8d314ae3d0b8a56f7ac615d94ac9e9cf8"
+  },
+  "peptides": {
+   "path": "/home/classes/bios/270/khoa/giap/local/campaign/ecoli_k12/in_a/peptides.tsv.gz",
+   "sha256": "50dbd6b32c379dacac3a92356b5593e8e39487412ddfda6344b1bf0088f0a138"
+  }
+ },
+ "diann": [
+  {
+   "job_id": "1998769",
+   "node": "wheat-05",
+   "exit_code": 0,
+   "image": "/home/classes/bios/270/khoa/giap/local/images/diann_2.3.1.sif",
+   "image_sha256": "1946452d56d2fb0f66e05ced473df88e53484e28040f1ecbd83c4a43405a6381",
+   "cfg": "/home/classes/bios/270/khoa/giap/local/worktrees/campaign-ecoli/validation/campaign/diann_campaign.cfg",
+   "cfg_sha256": "dad24b38e315b68cb6a905dfda877404535310f030ed9f92f8e9370dae0d6a1f",
+   "campaign_commit": "42a13e2f19c68c6ac941c80ebfb52cd27c88a1c6",
+   "fasta_sha256": {
+    "/home/classes/bios/270/khoa/giap/local/campaign/ecoli_k12/db_a/strain_db.faa": "5fee719ab9d967466c905dbf960711286478e2cb1727e52989e87b250b9c41bd"
+   },
+   "run_list": "/home/classes/bios/270/khoa/giap/local/campaign/ecoli_k12/runs_e1.txt",
+   "n_runs": 4,
+   "report_stem": "report",
+   "step1": {
+    "status": "skipped",
+    "exit": null,
+    "wall_s": null
+   },
+   "step2": {
+    "status": "ran",
+    "exit": 0,
+    "wall_s": 794
+   },
+   "wall_s": 799,
+   "library_bytes": 182445389
+  }
+ ],
+ "convert": {
+  "job_id": "1998810",
+  "pin": "/home/classes/bios/270/khoa/giap/local/worktrees/campaign-pin",
+  "commit": "a2a95c76b41665464002d01a4d52c11ccb7e38db",
+  "search_db": "same",
+  "convert_exit": 0,
+  "convert2_exit": 0,
+  "convert_wall_s": 8,
+  "deterministic": true,
+  "preflight_strict_exit": 0,
+  "preflight_wall_s": 13,
+  "sha256": {
+   "report": "aef9d7a2f96df75c23a2ce69c98831c8d314ae3d0b8a56f7ac615d94ac9e9cf8",
+   "genome": "4bfd7163f6f0de6394a2131cbfdbe75100daa55cbee227ec3e403a44640ac03c",
+   "annotation": "ae0ccaf186b098ecd704b78c76cde8e464f8717030bd5890b38397f1c0e9b169",
+   "peptides": "50dbd6b32c379dacac3a92356b5593e8e39487412ddfda6344b1bf0088f0a138",
+   "abundance": "4a72aa338c68c1ea64ebb9bd01f731164809fdffea1258008d1d2a8812c274b2"
+  }
+ },
+ "gippa_run": {
+  "git_commit": "a2a95c76b41665464002d01a4d52c11ccb7e38db",
+  "git_dirty": false,
+  "gippa_version": "1.1.0",
+  "status": "completed",
+  "exit_code": 0,
+  "started_at": "2026-11-20T02:35:13+00:00",
+  "finished_at": "2026-11-20T05:06:40+00:00",
+  "profile": "farmshare,apptainer",
+  "seeds_master": 20261014,
+  "detection_tier": "decoy_picked",
+  "modules_off": [],
+  "inputs": [
+   {
+    "role": "genome",
+    "path": "/home/classes/bios/270/khoa/giap/local/campaign/ecoli_k12/genome.fna.gz",
+    "sha256": "4bfd7163f6f0de6394a2131cbfdbe75100daa55cbee227ec3e403a44640ac03c"
+   },
+   {
+    "role": "peptides",
+    "path": "/home/classes/bios/270/khoa/giap/local/campaign/ecoli_k12/in_a/peptides.tsv.gz",
+    "sha256": "50dbd6b32c379dacac3a92356b5593e8e39487412ddfda6344b1bf0088f0a138"
+   },
+   {
+    "role": "annotation",
+    "path": "/home/classes/bios/270/khoa/giap/local/campaign/ecoli_k12/bakta/k12_mg1655.json",
+    "sha256": "ae0ccaf186b098ecd704b78c76cde8e464f8717030bd5890b38397f1c0e9b169"
+   },
+   {
+    "role": "precomputed:bakta_json",
+    "path": "/home/classes/bios/270/khoa/giap/local/campaign/ecoli_k12/bakta/k12_mg1655.json",
+    "sha256": "ae0ccaf186b098ecd704b78c76cde8e464f8717030bd5890b38397f1c0e9b169"
+   }
+  ],
+  "tools": [
+   {
+    "conda_lock_hash": null,
+    "container_digest": "sha256:d3f390e687cfe02f1387be40256dddbf678e91bc56b96c36da07b56ec8bda29d",
+    "name": "antismash",
+    "processes": [
+     "ANNOTATE:ANTISMASH"
+    ],
+    "version": "8.0.4"
+   },
+   {
+    "conda_lock_hash": null,
+    "container_digest": "sha256:d54652ff868af72604ea0e54c541c5c92168c7ac821a422de05dcbad65509e5c",
+    "name": "genomad",
+    "processes": [
+     "ANNOTATE:GENOMAD"
+    ],
+    "version": "1.12.0"
+   },
+   {
+    "conda_lock_hash": null,
+    "container_digest": "sha256:d9107b9b87fd6f3d3cd329ba1d2ac66b9af9e38512f11d2b8a0210110c6c9292",
+    "name": "ostir",
+    "processes": [
+     "ANNOTATE:OSTIR",
+     "NOVEL:OSTIR_NOVEL"
+    ],
+    "version": "1.1.3"
+   },
+   {
+    "conda_lock_hash": null,
+    "container_digest": "sha256:7366eaf67d9b26c6036ed5ececa740fe2728fdcf0cd4b2a12a0d9597b87a53ac",
+    "name": "promotech",
+    "processes": [
+     "ANNOTATE:PROMOTECH",
+     "NOVEL:PROMOTECH_NOVEL"
+    ],
+    "version": "56251ad9b883ef831b4753fc623d5ec970fe65e0"
+   },
+   {
+    "conda_lock_hash": null,
+    "container_digest": "sha256:c5bd0662ceed623c00c4bf40b085c6541b7676e1ccc37a390e0efd73e02b48df",
+    "name": "promoter_calculator",
+    "processes": [
+     "ANNOTATE:PROMOTER_CALCULATOR"
+    ],
+    "version": "1.2.4"
+   },
+   {
+    "conda_lock_hash": null,
+    "container_digest": "sha256:ec415757b6b70cce8240f425b35bf3e74dc3abe8ff413049c04d808034592f7a",
+    "name": "terminatornet",
+    "processes": [
+     "ANNOTATE:TERMINATORNET_SHARDED:TERMINATORNET_MERGE"
+    ],
+    "version": "72180309545988dba63b8bd5db5d0b09bf4dba70"
+   },
+   {
+    "conda_lock_hash": null,
+    "container_digest": "sha256:fc6fe0404be9340a883ec7a7b90415dfc3826c2bca7333a0314335c7bfee2d03",
+    "name": "transtermhp",
+    "processes": [
+     "ANNOTATE:TRANSTERMHP"
+    ],
+    "version": "2.09"
+   },
+   {
+    "conda_lock_hash": "a16e1731537f901edfff5c1b7604b40e05de40ba8a062c7d4647ef54b7ff463b",
+    "container_digest": null,
+    "name": "uniop",
+    "processes": [
+     "ANNOTATE:UNIOP"
+    ],
+    "version": "3ed14dfc2a5d69b993d99a26e50c1f8e9723c087"
+   },
+   {
+    "conda_lock_hash": null,
+    "container_digest": "sha256:d9107b9b87fd6f3d3cd329ba1d2ac66b9af9e38512f11d2b8a0210110c6c9292",
+    "name": "viennarna",
+    "processes": [
+     "ANNOTATE:OSTIR",
+     "NOVEL:OSTIR_NOVEL"
+    ],
+    "version": "2.6.4"
+   }
+  ],
+  "databases": [
+   {
+    "checksum": "",
+    "name": "amrfinderplus",
+    "retrieved": "2026-10-15",
+    "size_bytes": 0,
+    "version": "2026-08-07.1"
+   },
+   {
+    "checksum": "",
+    "name": "antismash",
+    "retrieved": "2026-10-15",
+    "size_bytes": 10071420949,
+    "version": "8.0.4"
+   },
+   {
+    "checksum": "md5:4c1115e40abfa2b464ae5dd988bdd88e",
+    "name": "bakta_full",
+    "retrieved": "2026-10-15",
+    "size_bytes": 89345212518,
+    "version": "6.0"
+   },
+   {
+    "checksum": "md5:4a6e059ded39e9c5537ef4137d2f5648",
+    "name": "bakta_light",
+    "retrieved": "2026-10-15",
+    "size_bytes": 4247058425,
+    "version": "6.0"
+   },
+   {
+    "checksum": "sha256:00e93e42f38f6ada46ef6be5da4a8518829300ea29f2888261660de0ca2f7e77",
+    "name": "cog2020_def",
+    "retrieved": "2026-10-15",
+    "size_bytes": 372608,
+    "version": "2020"
+   },
+   {
+    "checksum": "sha256:fbdce778220f07a6f9701b2bde07fbcb1d3fca9fa7453fa9ab7021b5da18c4f7",
+    "name": "cog2020_fun",
+    "retrieved": "2026-10-15",
+    "size_bytes": 1131,
+    "version": "2020"
+   },
+   {
+    "checksum": "sha256:c0782146be6dad6ecf53e23e5a21a7ed4fea9b4802cb01e8d00091404ec66926",
+    "name": "contaminants",
+    "retrieved": "2026-10-15",
+    "size_bytes": 201365,
+    "version": "bddf6da9"
+   },
+   {
+    "checksum": "md5:67244b528bb8bed464d1ca147136d33e",
+    "name": "genomad",
+    "retrieved": "2026-10-15",
+    "size_bytes": 1471626195,
+    "version": "1.9"
+   },
+   {
+    "checksum": "sha256:923645000afcb1df0e72e252b64950b1c2bcc98c9393fec8c1dd1a0f7c9d4d77",
+    "name": "go_basic",
+    "retrieved": "2026-10-15",
+    "size_bytes": 32212518,
+    "version": "2026-05-19"
+   },
+   {
+    "checksum": "sha256:dfc49ced033f5f047a9729a2b434e7a70b0c395ba61f950d138beff769555a26",
+    "name": "goslim_generic",
+    "retrieved": "2026-10-15",
+    "size_bytes": 126263,
+    "version": "2026-05-19"
+   },
+   {
+    "checksum": "sha256:3da145284be2ea07c45fd401037861e43f28f42ce174147eb4c053ae561b77e2",
+    "name": "kegg_ko_pathway",
+    "retrieved": "2026-10-15",
+    "size_bytes": 2306337,
+    "version": "2026-10-15"
+   },
+   {
+    "checksum": "sha256:46c36040530f1de249615192d7b054cefd366fac0d48243cf82bec22755cfe61",
+    "name": "kegg_pathway_names",
+    "retrieved": "2026-10-15",
+    "size_bytes": 22083,
+    "version": "2026-10-15"
+   },
+   {
+    "checksum": "sha256:fcd96ffe5a43b579af965839ee2bb896de94de3601978d88bcabd32c4fb5093f",
+    "name": "promotech_models",
+    "retrieved": "2026-10-15",
+    "size_bytes": 4776674723,
+    "version": "RF-HOT"
+   }
+  ],
+  "warnings": [
+   "novel_orfs:novel_orfs.decoys_not_makedb"
+  ],
+  "layers_missing": []
+ },
+ "notes": null
+}
