@@ -1,0 +1,22 @@
+accession	phase	organism_strain	status	note
+PXD058422	1 (demo E1-E4)	Escherichia coli K-12 MG1655 crl+ (and ΔmntS, Δlon, ΔclpP)	ok	holds the whole-lysate DIA runs (E1, E2, E4); no knockout runs (E3), see PXD066241
+PXD066241	1 (demo, paired)	Escherichia coli K-12 MG1655 crl+ (PRM, Panorama Public)	needs-decision	presumably holds the Δlon/ΔclpP DIA runs (E3) and the PRM Skyline documents
+PXD060434	1b (N1-N2)	Escherichia coli K-12 NCM3722	ok	raw formats: batch A/B Thermo, batch C SCIEX .wiff (excluded); per-file mode from Experimental_design.xlsx
+PXD065022	2 #1	Treponema pallidum, 7 strains	ok	7 named strains + isolates 171 and 176 (3 runs each); rabbit host proteome needed
+PXD055395	2 #2	Bacteroides thetaiotaomicron (strain to confirm)	ok	16 QC-passed B. theta monoculture runs; strain VPI-5482 (deposit FASTA UP000001414)
+PXD069004	2 #3	Caulobacter crescentus NA1000	ok	WT M2G block AmiX-5-4..6 (deposit AmiX.xlsx)
+PXD049476	2 #4	Vibrio natriegens ATCC 14048	needs-decision	which 4 of the 8 runs are parental is not in the deposit
+PXD065346	2 #5	Clostridioides difficile 630Δerm	needs-decision	the only DIA runs are a synthetic small-protein spike-in series (QE); growth-condition runs are Velos DDA
+PXD072227	2 #6	Synechococcus, 6 marine strains	needs-decision	WH8102 not in the deposit; N/P-stress block labels not in the deposit
+PXD057335	2 #7	Mycobacterium tuberculosis H37Rv	ok	DIA = Exploris EXP57/58/80 and Lumos EXP128 (deposit DIA-NN searches); DDA = QE Plus EXP141 (MaxQuant)
+PXD060688	2 #8	Myxococcus xanthus DK1622	needs-decision	no file-to-sample key for the 5 blocks of DdiA-4
+PXD066008	2 #9	Haloferax volcanii H26	ok	H26 wild type: 5 runs over 3 batches (SDRF.xlsx); deletion strains excluded
+PXD079213	2 #10	Saccharolobus islandicus REY15A (E233S)	ok	control strain runs cont_1..3
+PXD041262	reserve	Pyrococcus furiosus DSM 3638	needs-decision	reserve: no run-to-condition key
+PXD069492	reserve	Acinetobacter towneri RMS-02	blocked	reserve fails inventory: DDA only
+PXD073896	reserve	Pseudomonas sp. (novel glacier species)	ok	reserve: 4 strains x 0/28 °C x 3, DIA
+PXD075511	reserve	Listeria monocytogenes, 4 strains	needs-decision	reserve: one 87 GB .7z archive
+PXD065462	reserve (B. subtilis)	Bacillus subtilis 168	ok	reserve: the B. subtilis whole-lysate DIA accession (heat-shock series, WT_0 = control)
+PXD065465	reserve (B. subtilis, paired)	Bacillus subtilis 168	blocked	reserve fails inventory: DDA (MSFragger)
+PXD074523	reserve (B. subtilis, paired)	Bacillus subtilis 168	blocked	reserve fails inventory: pull-down DIA, not whole lysate
+PXD080037	reserve	Rhodococcus qingshengii PM1	needs-decision	reserve: two blocks of 3 Astral runs without a condition key

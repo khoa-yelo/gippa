@@ -1,0 +1,10 @@
+file_name	file_type	raw_format	bytes	checksum	checksum_source	url	acquisition	acquisition_source	sample	condition	sha256
+report.tsv	search	NA	372401156	sha1:1bd60c785d1cf237f5e2d61711d2f262b5f136a1	deposit:checksum.txt	https://ftp.pride.ebi.ac.uk/pride/data/archive/2024/04/PXD049476/report.tsv	NA	NA	NA	NA	NA
+Vnat-1-1.raw	raw	thermo_raw	2330482180	sha1:7a78fbeb86d0fddb93092349f2a5e17a156c91d0	deposit:checksum.txt	https://ftp.pride.ebi.ac.uk/pride/data/archive/2024/04/PXD049476/Vnat-1-1.raw	NA	NA	NA	NA	6201de24dc10e2179590a71bf97ff11ddb2da4680cce186f120149ac565e2817
+Vnat-1-2.raw	raw	thermo_raw	2391772933	sha1:7366be064c9c951bbc8ffb8380618e0e7feabf53	deposit:checksum.txt	https://ftp.pride.ebi.ac.uk/pride/data/archive/2024/04/PXD049476/Vnat-1-2.raw	NA	NA	NA	NA	d927f690a70ebb6c3bb1f7bbb6b0c26b85c9fa11fa0194d38f76cbc1102f6b18
+Vnat-1-3.raw	raw	thermo_raw	2451875699	sha1:68df2eec1b83fcf558fbd777d4e1637e9ce7ad65	deposit:checksum.txt	https://ftp.pride.ebi.ac.uk/pride/data/archive/2024/04/PXD049476/Vnat-1-3.raw	NA	NA	NA	NA	43ab7eadfa34a68daacb86ab244989a512199be75a04eba72bdab405de4d7923
+Vnat-1-4.raw	raw	thermo_raw	2430403880	sha1:6a40719e008e46082fc9903dcbc3108517e12c38	deposit:checksum.txt	https://ftp.pride.ebi.ac.uk/pride/data/archive/2024/04/PXD049476/Vnat-1-4.raw	NA	NA	NA	NA	235744f290e3fbe8310d4cfe0ce634f88d99794b353fbbf74459f73fdcd8f33e
+Vnat-1-9.raw	raw	thermo_raw	2346109762	sha1:1e8b9ca06a92caf0b37d5b8850adf4c6fe8226ab	deposit:checksum.txt	https://ftp.pride.ebi.ac.uk/pride/data/archive/2024/04/PXD049476/Vnat-1-9.raw	NA	NA	NA	NA	NA
+Vnat-1-10.raw	raw	thermo_raw	2430357976	sha1:440c5a16b0062e837dec3c748d20bb44d5ce182a	deposit:checksum.txt	https://ftp.pride.ebi.ac.uk/pride/data/archive/2024/04/PXD049476/Vnat-1-10.raw	NA	NA	NA	NA	NA
+Vnat-1-11.raw	raw	thermo_raw	2441572476	sha1:54a14d49b56792f72de8b3fd257767100591048b	deposit:checksum.txt	https://ftp.pride.ebi.ac.uk/pride/data/archive/2024/04/PXD049476/Vnat-1-11.raw	NA	NA	NA	NA	NA
+Vnat-1-12.raw	raw	thermo_raw	2414001639	sha1:8761e817a09f29a865bf7a694cf0a3ea15775c76	deposit:checksum.txt	https://ftp.pride.ebi.ac.uk/pride/data/archive/2024/04/PXD049476/Vnat-1-12.raw	NA	NA	NA	NA	NA

@@ -1,0 +1,5 @@
+file_name	file_type	raw_format	bytes	checksum	checksum_source	url	acquisition	acquisition_source	sample	condition
+Key.xlsx	other	NA	8711	NA	NA	https://ftp.pride.ebi.ac.uk/pride/data/archive/2026/04/PXD075511/Key.xlsx	NA	NA	NA	NA
+Listeria_monocytogenes_Results.tsv	search	NA	374505	NA	NA	https://ftp.pride.ebi.ac.uk/pride/data/archive/2026/04/PXD075511/Listeria_monocytogenes_Results.tsv	NA	NA	NA	NA
+Listeriamonocytogenes.7z	raw	bruker_d_archive?	87031766328	NA	NA	https://ftp.pride.ebi.ac.uk/pride/data/archive/2026/04/PXD075511/Listeriamonocytogenes.7z	DIA?	sdrf_community	PXD075511-Sample-12	factor value[strain]=EGDe
+PXD075511_community_annotated.sdrf.tsv	sdrf	NA	9905	NA	NA	https://ftp.pride.ebi.ac.uk/pride/data/archive/2026/04/PXD075511/PXD075511_community_annotated.sdrf.tsv	NA	NA	NA	NA
