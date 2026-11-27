@@ -1,0 +1,306 @@
+{
+ "arm_dir": "/home/classes/bios/270/khoa/giap/local/campaign/PXD055395/bthe_vpi5482",
+ "route": "b",
+ "diann": {
+  "job_id": "2006169",
+  "node": "wheat-06",
+  "exit_code": 0,
+  "image_sha256": "1946452d56d2fb0f66e05ced473df88e53484e28040f1ecbd83c4a43405a6381",
+  "cfg_sha256": "ad82925965810d02244503659d78d1a778185ffedd1a0b76bc211fa2ad34d946",
+  "campaign_commit": "992556d2b822b542d4bd4802243eee4975adcd44",
+  "fasta_sha256": {
+   "/home/classes/bios/270/khoa/giap/local/campaign/PXD055395/db/bthe_vpi5482/db_b/strain_db.faa": "479d1233529e0c367883b6d655a297a75dfb0203fd78d689d63058e663bc59ee"
+  },
+  "n_runs": 16,
+  "step1": {
+   "status": "ran",
+   "exit": 0,
+   "wall_s": 944
+  },
+  "step2": {
+   "status": "ran",
+   "exit": 0,
+   "wall_s": 12771
+  },
+  "wall_s": 13749,
+  "library_bytes": 1307699714,
+  "library_precursors": 5246413,
+  "ids_at_1pct_per_run": [
+   17293,
+   20141,
+   21110,
+   20803,
+   19471,
+   17169,
+   18670,
+   18554,
+   20357,
+   19526,
+   19931,
+   14772,
+   18156,
+   16064,
+   19333,
+   19289
+  ],
+  "protein_groups_global_q01": 2185,
+  "runs": [
+   "20230926_PRO1_AN_006_30-0099_StephanKamrad-GutMicrobe-AA1toBB1_P02_AB1-G11.d",
+   "20230926_PRO1_AN_159_30-0099_StephanKamrad-GutMicrobe-AA1toBB1_P02_AB1-G12.d",
+   "20230926_PRO1_AN_260_30-0099_StephanKamrad-GutMicrobe-AA1toBB1_P01_AA1-G11.d",
+   "20230926_PRO1_AN_287_30-0099_StephanKamrad-GutMicrobe-AA1toBB1_P01_AA1-G12.d",
+   "20230926_PRO1_AN_311_30-0099_StephanKamrad-GutMicrobe-AA1toBB1_P03_BA1-G9.d",
+   "20230926_PRO1_AN_338_30-0099_StephanKamrad-GutMicrobe-AA1toBB1_P03_BA1-G10.d",
+   "20230926_PRO1_AN_352_30-0099_StephanKamrad-GutMicrobe-AA1toBB1_P01_AA1-G9.d",
+   "20230926_PRO1_AN_356_30-0099_StephanKamrad-GutMicrobe-AA1toBB1_P01_AA1-G10.d",
+   "20230929_PRO1_AN_037_30-0099_StephanKamrad-GutMicrobe-AA2toBB2_P03_BA2-G9.d",
+   "20230929_PRO1_AN_050_30-0099_StephanKamrad-GutMicrobe-AA2toBB2_P01_AA2-G11.d",
+   "20230929_PRO1_AN_181_30-0099_StephanKamrad-GutMicrobe-AA2toBB2_P01_AA2-G12.d",
+   "20230929_PRO1_AN_218_30-0099_StephanKamrad-GutMicrobe-AA2toBB2_P01_AA2-G9.d",
+   "20230929_PRO1_AN_263_30-0099_StephanKamrad-GutMicrobe-AA2toBB2_P01_AA2-G10.d",
+   "20230929_PRO1_AN_276_30-0099_StephanKamrad-GutMicrobe-AA2toBB2_P02_AB2-G11.d",
+   "20230929_PRO1_AN_305_30-0099_StephanKamrad-GutMicrobe-AA2toBB2_P03_BA2-G10.d",
+   "20230929_PRO1_AN_387_30-0099_StephanKamrad-GutMicrobe-AA2toBB2_P02_AB2-G12.d"
+  ]
+ },
+ "convert": {
+  "job_id": "2006169",
+  "pin": "/home/classes/bios/270/khoa/giap/local/worktrees/rel111-pin",
+  "commit": "bfc74ff6c20acc2cfcf298cdf23cbb30d8fae0dc",
+  "search_db": "same",
+  "convert_exit": 0,
+  "convert2_exit": 0,
+  "convert_wall_s": 9,
+  "deterministic": true,
+  "preflight_strict_exit": 0,
+  "preflight_exit": 0,
+  "strict_waived": "",
+  "preflight_wall_s": 10,
+  "sha256": {
+   "report": "626cb24ba9e2c08a3876302c6f73c6f7e21cccf36cc9be004653fde8c0c71767",
+   "genome": "b739690b1d1c91803a5403cf3e3a02bad065cafbff680939c535fd504e3de018",
+   "annotation": "f67aff4002c357a9d202fddcddb708c1f04b9796cc912f4f3780c4d19d272fc2",
+   "peptides": "6fb71c553b489cbabffce6d5be57469db71ef3ad69bc3e1ba818fb18309af6b3",
+   "abundance": "cdbb1212d9c5e7f7807cea536b8560f76cbe0234060229c1ca90aa9b646e92d9"
+  }
+ },
+ "gippa_run_runtime": "run_s=10002 run_exit=0 node=wheat-06 job=2006169",
+ "gippa_run": {
+  "git_commit": "bfc74ff6c20acc2cfcf298cdf23cbb30d8fae0dc",
+  "git_dirty": false,
+  "gippa_version": "1.1.1",
+  "status": "completed",
+  "exit_code": 0,
+  "started_at": "2026-11-22T23:06:00+00:00",
+  "finished_at": "2026-11-23T01:52:24+00:00",
+  "profile": "farmshare_local,apptainer",
+  "detection_tier": "decoy_picked",
+  "modules_off": [],
+  "warnings": [
+   "novel_orfs:novel_orfs.class_q_floor_above_alpha"
+  ],
+  "layers_missing": [],
+  "tools": [
+   {
+    "conda_lock_hash": null,
+    "container_digest": "sha256:d3f390e687cfe02f1387be40256dddbf678e91bc56b96c36da07b56ec8bda29d",
+    "name": "antismash",
+    "processes": [
+     "ANNOTATE:ANTISMASH"
+    ],
+    "version": "8.0.4"
+   },
+   {
+    "conda_lock_hash": null,
+    "container_digest": "sha256:d54652ff868af72604ea0e54c541c5c92168c7ac821a422de05dcbad65509e5c",
+    "name": "genomad",
+    "processes": [
+     "ANNOTATE:GENOMAD"
+    ],
+    "version": "1.12.0"
+   },
+   {
+    "conda_lock_hash": null,
+    "container_digest": "sha256:d9107b9b87fd6f3d3cd329ba1d2ac66b9af9e38512f11d2b8a0210110c6c9292",
+    "name": "ostir",
+    "processes": [
+     "ANNOTATE:OSTIR",
+     "NOVEL:OSTIR_NOVEL"
+    ],
+    "version": "1.1.3"
+   },
+   {
+    "conda_lock_hash": null,
+    "container_digest": "sha256:7366eaf67d9b26c6036ed5ececa740fe2728fdcf0cd4b2a12a0d9597b87a53ac",
+    "name": "promotech",
+    "processes": [
+     "ANNOTATE:PROMOTECH",
+     "NOVEL:PROMOTECH_NOVEL"
+    ],
+    "version": "56251ad9b883ef831b4753fc623d5ec970fe65e0"
+   },
+   {
+    "conda_lock_hash": null,
+    "container_digest": "sha256:c5bd0662ceed623c00c4bf40b085c6541b7676e1ccc37a390e0efd73e02b48df",
+    "name": "promoter_calculator",
+    "processes": [
+     "ANNOTATE:PROMOTER_CALCULATOR"
+    ],
+    "version": "1.2.4"
+   },
+   {
+    "conda_lock_hash": null,
+    "container_digest": "sha256:ec415757b6b70cce8240f425b35bf3e74dc3abe8ff413049c04d808034592f7a",
+    "name": "terminatornet",
+    "processes": [
+     "ANNOTATE:TERMINATORNET_SHARDED:TERMINATORNET_MERGE"
+    ],
+    "version": "72180309545988dba63b8bd5db5d0b09bf4dba70"
+   },
+   {
+    "conda_lock_hash": null,
+    "container_digest": "sha256:fc6fe0404be9340a883ec7a7b90415dfc3826c2bca7333a0314335c7bfee2d03",
+    "name": "transtermhp",
+    "processes": [
+     "ANNOTATE:TRANSTERMHP"
+    ],
+    "version": "2.09"
+   },
+   {
+    "conda_lock_hash": "a16e1731537f901edfff5c1b7604b40e05de40ba8a062c7d4647ef54b7ff463b",
+    "container_digest": null,
+    "name": "uniop",
+    "processes": [
+     "ANNOTATE:UNIOP"
+    ],
+    "version": "3ed14dfc2a5d69b993d99a26e50c1f8e9723c087"
+   },
+   {
+    "conda_lock_hash": null,
+    "container_digest": "sha256:d9107b9b87fd6f3d3cd329ba1d2ac66b9af9e38512f11d2b8a0210110c6c9292",
+    "name": "viennarna",
+    "processes": [
+     "ANNOTATE:OSTIR",
+     "NOVEL:OSTIR_NOVEL"
+    ],
+    "version": "2.6.4"
+   }
+  ],
+  "databases": [
+   {
+    "checksum": "",
+    "name": "amrfinderplus",
+    "retrieved": "2026-10-15",
+    "size_bytes": 0,
+    "version": "2026-08-07.1"
+   },
+   {
+    "checksum": "",
+    "name": "antismash",
+    "retrieved": "2026-10-15",
+    "size_bytes": 10071420949,
+    "version": "8.0.4"
+   },
+   {
+    "checksum": "md5:4c1115e40abfa2b464ae5dd988bdd88e",
+    "name": "bakta_full",
+    "retrieved": "2026-10-15",
+    "size_bytes": 89345212518,
+    "version": "6.0"
+   },
+   {
+    "checksum": "md5:4a6e059ded39e9c5537ef4137d2f5648",
+    "name": "bakta_light",
+    "retrieved": "2026-10-15",
+    "size_bytes": 4247058425,
+    "version": "6.0"
+   },
+   {
+    "checksum": "sha256:00e93e42f38f6ada46ef6be5da4a8518829300ea29f2888261660de0ca2f7e77",
+    "name": "cog2020_def",
+    "retrieved": "2026-10-15",
+    "size_bytes": 372608,
+    "version": "2020"
+   },
+   {
+    "checksum": "sha256:fbdce778220f07a6f9701b2bde07fbcb1d3fca9fa7453fa9ab7021b5da18c4f7",
+    "name": "cog2020_fun",
+    "retrieved": "2026-10-15",
+    "size_bytes": 1131,
+    "version": "2020"
+   },
+   {
+    "checksum": "sha256:c0782146be6dad6ecf53e23e5a21a7ed4fea9b4802cb01e8d00091404ec66926",
+    "name": "contaminants",
+    "retrieved": "2026-10-15",
+    "size_bytes": 201365,
+    "version": "bddf6da9"
+   },
+   {
+    "checksum": "md5:67244b528bb8bed464d1ca147136d33e",
+    "name": "genomad",
+    "retrieved": "2026-10-15",
+    "size_bytes": 1471626195,
+    "version": "1.9"
+   },
+   {
+    "checksum": "sha256:923645000afcb1df0e72e252b64950b1c2bcc98c9393fec8c1dd1a0f7c9d4d77",
+    "name": "go_basic",
+    "retrieved": "2026-10-15",
+    "size_bytes": 32212518,
+    "version": "2026-05-19"
+   },
+   {
+    "checksum": "sha256:dfc49ced033f5f047a9729a2b434e7a70b0c395ba61f950d138beff769555a26",
+    "name": "goslim_generic",
+    "retrieved": "2026-10-15",
+    "size_bytes": 126263,
+    "version": "2026-05-19"
+   },
+   {
+    "checksum": "sha256:3da145284be2ea07c45fd401037861e43f28f42ce174147eb4c053ae561b77e2",
+    "name": "kegg_ko_pathway",
+    "retrieved": "2026-10-15",
+    "size_bytes": 2306337,
+    "version": "2026-10-15"
+   },
+   {
+    "checksum": "sha256:46c36040530f1de249615192d7b054cefd366fac0d48243cf82bec22755cfe61",
+    "name": "kegg_pathway_names",
+    "retrieved": "2026-10-15",
+    "size_bytes": 22083,
+    "version": "2026-10-15"
+   },
+   {
+    "checksum": "sha256:fcd96ffe5a43b579af965839ee2bb896de94de3601978d88bcabd32c4fb5093f",
+    "name": "promotech_models",
+    "retrieved": "2026-10-15",
+    "size_bytes": 4776674723,
+    "version": "RF-HOT"
+   }
+  ],
+  "seeds_master": 20261014,
+  "inputs": [
+   {
+    "role": "genome",
+    "path": "/home/classes/bios/270/khoa/giap/local/campaign/PXD055395/genome/bthe_vpi5482/bthe_vpi5482.fna.gz",
+    "sha256": "b739690b1d1c91803a5403cf3e3a02bad065cafbff680939c535fd504e3de018"
+   },
+   {
+    "role": "peptides",
+    "path": "/home/classes/bios/270/khoa/giap/local/campaign/PXD055395/bthe_vpi5482/in_b/peptides.tsv.gz",
+    "sha256": "6fb71c553b489cbabffce6d5be57469db71ef3ad69bc3e1ba818fb18309af6b3"
+   },
+   {
+    "role": "annotation",
+    "path": "/home/classes/bios/270/khoa/giap/local/campaign/PXD055395/bakta/bthe_vpi5482/out/bthe_vpi5482.json",
+    "sha256": "f67aff4002c357a9d202fddcddb708c1f04b9796cc912f4f3780c4d19d272fc2"
+   },
+   {
+    "role": "precomputed:bakta_json",
+    "path": "/home/classes/bios/270/khoa/giap/local/campaign/PXD055395/bakta/bthe_vpi5482/out/bthe_vpi5482.json",
+    "sha256": "f67aff4002c357a9d202fddcddb708c1f04b9796cc912f4f3780c4d19d272fc2"
+   }
+  ]
+ }
+}

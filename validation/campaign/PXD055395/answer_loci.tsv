@@ -1,0 +1,6 @@
+key	label	genome	contig	start	end	strand	bakta_locus	bakta_start	bakta_end	bakta_gene	match
+sus	susG_BT3698	bthe_vpi5482	NC_004663.1	4800873	4802951	-	BEBDPP_03870	4800873	4802951	susG	same_stop
+sus	susF_BT3699	bthe_vpi5482	NC_004663.1	4803061	4804518	-	BEBDPP_03871	4803061	4804518	susF	same_stop
+sus	susE_BT3700	bthe_vpi5482	NC_004663.1	4804544	4805707	-	BEBDPP_03872	4804544	4805707	susE	same_stop
+sus	susD_BT3701	bthe_vpi5482	NC_004663.1	4805742	4807397	-	BEBDPP_03873	4805742	4807397	susD	same_stop
+sus	susC_BT3702	bthe_vpi5482	NC_004663.1	4807419	4810430	-	BEBDPP_03874	4807419	4810430	susC	same_stop

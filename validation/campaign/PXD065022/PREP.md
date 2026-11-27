@@ -23,7 +23,7 @@ Selection: DAL-1, rabbit-cell co-culture, 3 replicates (`run_selection.tsv`). So
 | 5602_TIMS1_RSLC-74m_DIA_Mexiko_A_1_GA7_1_21348.d.zip | 3300506140 | none (no deposit checksum) | size | 69ff3af744df78a72e9f00c09382717e7224ed0b83b57054cc6574d2ec6b49ad |
 | 5602_TIMS1_RSLC-74m_DIA_Mexiko_B_1_GB8_1_21290.d.zip | 3479086948 | none (no deposit checksum) | size | c26e7f7db6a96a838b7c4b9e5ec942cb29c74e14f05fdad95c55b99f52e5d5b0 |
 | 5602_TIMS1_RSLC-74m_DIA_Mexiko_C_1_GD1_1_21167.d.zip | 2812776690 | none (no deposit checksum) | size | 067de0041d38ecf0111941af25716df00fa35b29bbd5774af938ba53acbdab05 |
-| 5602_TIMS1_RSLC-74m_DIA_PHIL_A_1_GA8_1_21314.d.zip | 4072674361 | none (no deposit checksum) | size | d7a07bde26016e45d0321f35a3f587e7e4581d7581bb132143d08c668962f2b7 |
+| 5602_TIMS1_RSLC-74m_DIA_PHIL_A_1_GA8_1_21314.d.zip | 4072674361 | none (no deposit checksum) | size | cd2e9aa9c51c3f283095579e72d6fc0aa592b39c014aa1c5012453b87820004f |
 | 5602_TIMS1_RSLC-74m_DIA_PHIL_B_1_GC1_1_21183.d.zip | 2909881311 | none (no deposit checksum) | size | 7ab41d2844d9607a5b0ecf53ce461bb4c4201454f2fd10fa3bf1a9efff2283f6 |
 | 5602_TIMS1_RSLC-74m_DIA_PHIL_C_1_GD2_1_21282.d.zip | 3686799333 | none (no deposit checksum) | size | d5e21000f7c5a4d73e95cf3082793b85b1ee94d21121e86f9ae355ac7d012aac |
 | 5602_TIMS1_RSLC-74m_DIA_SS14_A_1_GA6_1_21255.d.zip | 4006015867 | none (no deposit checksum) | size | 0c7908b952b5c7eb8488c7a49a5babd437ac3a64d0bec2b012330ba76d25d3e1 |
@@ -123,3 +123,6 @@ NCBI RefSeq assembly over HTTPS, MD5 checked against `md5checksums.txt`; replico
 ## Notes
 
 - Seven named strains, each annotated on its own genome. Isolates 171 and 176 skipped (Khoa, question 22). Cross-strain placement on DAL-1 comes later. Rabbit host proteome not fetched yet (needed at search time).
+
+Note (2026-11-22): the first `PHIL_A` download (sha256 `d7a07bde26016e45d0321f35a3f587e7e4581d7581bb132143d08c668962f2b7`)
+failed the zip CRC test; the refetch (job 2006167, same size) passed and its sha256 is the one listed above.
