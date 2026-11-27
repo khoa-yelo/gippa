@@ -18,7 +18,7 @@ from _common import OKABE, new_figure, out_dir, panel_label, parse_args, save
 
 CLASSES = {"nterm_extension": ("N-terminal extension", OKABE["blue"], "o"),
            "intergenic": ("intergenic", OKABE["bluish_green"], "s"),
-           "cds_outframe": ("CDS out of frame", OKABE["orange"], "D"),
+           "cds_outframe": ("CDS out of frame", OKABE["black"], "D"),
            "antisense": ("antisense", OKABE["reddish_purple"], "^")}  # fmt: skip
 ALPHA = 0.01
 
@@ -35,19 +35,19 @@ def main() -> None:
         k = (c["run"], c["class"])
         minq[k] = min(minq[k], float(c["q"]))
 
-    fig = new_figure("double", 3.1)
-    gs = fig.add_gridspec(1, 2, left=0.075, right=0.985, bottom=0.15, top=0.84, wspace=0.42,
+    fig = new_figure("double", 3.7)
+    gs = fig.add_gridspec(1, 2, left=0.075, right=0.985, bottom=0.3, top=0.86, wspace=0.45,
                           width_ratios=[1.0, 1.15])  # fmt: skip
 
     # (a) smallest class FDR against class size
     ax = fig.add_subplot(gs[0, 0])
-    nn = np.logspace(0.3, 3, 50)
+    nn = np.logspace(0.1, 3, 50)
     ax.plot(nn, 1 / nn, color="#333333", lw=0.6, ls="-")
-    ax.text(150, 1 / 150 * 1.25, "1/n (reference)", fontsize=5, color="#333333")
+    ax.text(150, 0.0052, "1/n (guide)", fontsize=6, color="#333333", ha="right")
     ax.axhline(ALPHA, color=OKABE["vermillion"], lw=0.7, ls="--")
-    ax.text(1100, ALPHA * 1.12, "α = 0.01", fontsize=5, color=OKABE["vermillion"], ha="right")
+    ax.text(1100, ALPHA * 1.12, "α = 0.01", fontsize=6, color=OKABE["vermillion"], ha="right")
     ax.axhline(tau, color=OKABE["sky_blue"], lw=0.7, ls=":")
-    ax.text(1100, tau * 1.12, f"τ_prfB = {tau:.3g}", fontsize=5, color="#0072B2", ha="right")
+    ax.text(1100, tau * 1.12, f"τ_prfB = {tau:.3g}", fontsize=6, color="#0072B2", ha="right")
     for cls, (lab, col, mk) in CLASSES.items():
         xs, ys = [], []
         for run, r in res.items():
@@ -61,12 +61,15 @@ def main() -> None:
         ax.scatter(xs, ys, s=12, c=col, marker=mk, lw=0, alpha=0.85, label=lab)
     ax.set_xscale("log")
     ax.set_yscale("log")
-    ax.set_xlim(2, 1200)
+    ax.set_xlim(1.5, 1200)
     ax.set_ylim(0.004, 1.5)
     ax.set_xlabel("candidates in the class (count)")
     ax.set_ylabel("smallest class FDR (q) in the run")
-    ax.set_title("No class reaches α: classes are too small", loc="left")
-    ax.legend(loc="lower left", frameon=False, fontsize=5)
+    ax.set_title("No class reaches α = 0.01", loc="left")
+    ax.legend(loc="upper left", bbox_to_anchor=(-0.02, -0.17), frameon=False, fontsize=6,
+              ncol=2, title="candidate class (one point per run and class)",
+              title_fontsize=6)  # fmt: skip
+    ax.get_legend()._legend_box.align = "left"
     panel_label(ax, "a")
 
     # (b) the tau_prfB tier per run
@@ -88,7 +91,7 @@ def main() -> None:
             label="non-control, no RefSeq match")  # fmt: skip
     for yi, r, c in zip(y, runs, cand, strict=True):
         tot = res[r]["n_pass"]
-        ax.text(tot + 2, yi, f"{tot} of {int(c)}", fontsize=5, va="center", color="#555555")
+        ax.text(tot + 2, yi, f"{tot} / {int(c)}", fontsize=6, va="center", color="#555555")
         rows.append(
             {
                 "panel": "b",
@@ -103,19 +106,20 @@ def main() -> None:
             }
         )
     ax.set_yticks(y)
-    ax.set_yticklabels(names, fontsize=5.5)
+    ax.set_yticklabels(names, fontsize=6)
     ax.set_xlim(0, 175)
     ax.set_xlabel(f"candidates with class FDR ≤ τ_prfB = {tau:.3g} (count)")
     tot = pc["results"]["tau_prfB_total"]
     ax.set_title(f"Post hoc tier: {tot['n_pass']} of {tot['n_candidates']:,} pass; "
                  "GIPPA calls 0", loc="left")  # fmt: skip
-    ax.legend(loc="upper right", frameon=False, fontsize=5)
+    ax.legend(loc="upper left", bbox_to_anchor=(-0.02, -0.17), frameon=False, fontsize=6,
+              ncol=1, title="bar labels: passing / all candidates in the run",
+              title_fontsize=6)  # fmt: skip
+    ax.get_legend()._legend_box.align = "left"
     panel_label(ax, "b")
 
-    fig.suptitle("Novel ORFs: none called at α = 0.01 in 17 genomes; the post hoc prfB tier "
-                 f"admits {tot['n_pass']} (≈ {tot['gippa_class_fdr_expected_false']:.0f} "
-                 "expected false, unchecked)",
-                 x=0.01, ha="left", y=0.985)  # fmt: skip
+    fig.suptitle("Novel ORFs: none called at α = 0.01 in 17 genomes; a post hoc tier shows "
+                 "where controls sit", x=0.01, ha="left", y=0.985)  # fmt: skip
     save(fig, d, "fig5_novel_orfs", rows)
 
 

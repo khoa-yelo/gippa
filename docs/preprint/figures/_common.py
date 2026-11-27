@@ -69,6 +69,9 @@ def panel_label(ax, letter: str, x: float | None = None, y: float = 1.04) -> Non
 
 def save(fig: Figure, d: Path, name: str, rows: Sequence[dict] | None = None) -> list[Path]:
     """Write ``name``.png/.svg/.pdf (deterministic metadata), the data TSV and the CVD twin."""
+    small = font_check(fig)
+    if small:
+        raise SystemExit(f"{name}: text below {MIN_PT} pt: {small[:8]}")
     paths = []
     png = d / f"{name}.png"
     fig.savefig(png, dpi=300, metadata={"Software": None})
@@ -93,6 +96,21 @@ def save(fig: Figure, d: Path, name: str, rows: Sequence[dict] | None = None) ->
             w.writerows(rows)
         paths.append(d / f"{name}.tsv")
     return paths
+
+
+MIN_PT = 6.0
+
+
+def font_check(fig: Figure) -> list[tuple[str, float]]:
+    """Visible texts (titles, labels, ticks, legends, tables) smaller than ``MIN_PT``."""
+    from matplotlib.text import Text
+
+    fig.canvas.draw()
+    out = []
+    for t in fig.findobj(Text):
+        if t.get_visible() and t.get_text().strip() and t.get_fontsize() < MIN_PT - 1e-9:
+            out.append((t.get_text()[:30], float(t.get_fontsize())))
+    return out
 
 
 def wilson(k: int, n: int, z: float = 1.959963984540054) -> tuple[float, float, float]:

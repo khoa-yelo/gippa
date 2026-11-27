@@ -26,7 +26,7 @@ STAGES = [
             "or proteins +",
             "  abundance",
         ],
-        "search-engine q\n≤ 0.01 (inherited)",
+        ("search q ≤ 0.01\n(inherited)", "none"),
     ),
     (
         1,
@@ -41,7 +41,7 @@ STAGES = [
             "  terminators, RBS",
             "codon usage",
         ],
-        None,
+        ("presence calls only;\nmissing layer flagged", "none"),
     ),
     (
         2,
@@ -56,7 +56,7 @@ STAGES = [
             "  shuffled genome",
             "  decoys",
         ],
-        "placement FDR\nq ≤ 0.01",
+        ("placement FDR\nq ≤ 0.01", "est"),
     ),
     (
         3,
@@ -70,7 +70,7 @@ STAGES = [
             "iBAQ abundance",
             "detectability",
         ],
-        "gene-level FDR\nq ≤ 0.01",
+        ("gene FDR q ≤ 0.01\n(2-peptide: none)", "est"),
     ),
     (
         4,
@@ -85,7 +85,7 @@ STAGES = [
             "ORA, GSEA",
             "determinants",
         ],
-        "BH, FWER, class\nFDR; or flagged",
+        ("BH FDR, FWER, class\nFDR; ORA flagged", "est"),
     ),
     (
         5,
@@ -98,60 +98,67 @@ STAGES = [
             "run manifest",
             "gippa compare",
         ],
-        None,
+        ("every value: q, CI\nor a flag", "info"),
     ),
 ]
 TAG = OKABE["vermillion"]
+NONE = "#666666"
+
+
+def _box(ax, x, y, w, h, ec, ls="-", fc="white", lw=0.7) -> None:
+    ax.add_patch(FancyBboxPatch((x, y), w, h, boxstyle="round,pad=0.02,rounding_size=0.04",
+                                fc=fc, ec=ec, lw=lw, ls=ls))  # fmt: skip
+
+
+def _arrow(ax, a, b, col="#333333", **kw) -> None:
+    ax.add_patch(FancyArrowPatch(a, b, arrowstyle="-|>", mutation_scale=7, lw=0.8, color=col,
+                                 **kw))  # fmt: skip
 
 
 def main() -> None:
     args = parse_args(__doc__)
     d = out_dir(args)
-    fig = new_figure("double", 3.0)
+    fig = new_figure("double", 3.4)
     ax = fig.add_axes((0.0, 0.0, 1.0, 1.0))
     ax.set_xlim(0, 6)
-    ax.set_ylim(0, 3.0)
+    ax.set_ylim(0, 3.4)
     ax.axis("off")
-    w, x0 = 0.86, 0.07
+    w, x0, yb, hb = 0.86, 0.07, 0.98, 2.0
     rows = []
-    for col, title, lines, tag in STAGES:
+    for col, title, lines, (tag, kind) in STAGES:
         x = col + x0
-        box = FancyBboxPatch((x, 0.55), w, 1.95, boxstyle="round,pad=0.02,rounding_size=0.05",
-                             fc="#F4F4F4", ec="#333333", lw=0.6)  # fmt: skip
-        ax.add_patch(box)
-        ax.text(x + w / 2, 2.42, title, ha="center", va="top", fontsize=7, fontweight="bold")
+        _box(ax, x, yb, w, hb, "#333333", fc="#F4F4F4", lw=0.6)
+        ax.text(x + w / 2, yb + hb - 0.07, title, ha="center", va="top", fontsize=7,
+                fontweight="bold")  # fmt: skip
         for i, line in enumerate(lines):
-            ax.text(x + 0.05, 2.22 - 0.148 * i, line, ha="left", va="top", fontsize=6)
-        if tag:
-            ax.add_patch(FancyBboxPatch((x + 0.04, 0.62), w - 0.08, 0.36,
-                                        boxstyle="round,pad=0.01,rounding_size=0.03",
-                                        fc="white", ec=TAG, lw=0.8))  # fmt: skip
-            ax.text(x + w / 2, 0.80, tag, ha="center", va="center", fontsize=5.5, color=TAG)
+            ax.text(x + 0.05, yb + hb - 0.27 - 0.15 * i, line, ha="left", va="top", fontsize=6)
+        col_t = {"est": TAG, "none": NONE, "info": "#333333"}[kind]
+        _box(ax, x + 0.03, yb + 0.06, w - 0.06, 0.36, col_t, ls="--" if kind == "none" else "-",
+             lw=0.9 if kind == "est" else 0.6)  # fmt: skip
+        ax.text(x + w / 2, yb + 0.24, tag, ha="center", va="center", fontsize=6, color=col_t)
         if col < 5:
-            ax.add_patch(FancyArrowPatch((x + w + 0.01, 1.55), (x + 1 - 0.01, 1.55),
-                                         arrowstyle="-|>", mutation_scale=7, lw=0.8,
-                                         color="#333333"))  # fmt: skip
+            _arrow(ax, (x + w + 0.01, yb + 1.1), (x + 1 - 0.01, yb + 1.1))
         rows.append({"column": col, "stage": title, "contents": "; ".join(lines),
-                     "error_control": (tag or "").replace("\n", " ")})  # fmt: skip
-    # side route: gippa makedb feeds the user's own spectrum search
-    ax.add_patch(FancyBboxPatch((0.07, 0.08), 1.86, 0.32,
-                                boxstyle="round,pad=0.02,rounding_size=0.04",
-                                fc="white", ec=OKABE["blue"], lw=0.7, ls="--"))  # fmt: skip
-    ax.text(1.0, 0.24, "gippa makedb: strain FASTA\n(± six-frame ORFs) for your search",
-            ha="center", va="center", fontsize=5.5, color=OKABE["blue"])  # fmt: skip
-    ax.add_patch(FancyArrowPatch((0.5, 0.42), (0.5, 0.55), arrowstyle="-|>", mutation_scale=6,
-                                 lw=0.7, color=OKABE["blue"]))  # fmt: skip
-    ax.text(5.95, 0.24, "red boxes: where GIPPA reports an error estimate",
-            ha="right", va="center", fontsize=5.5, color=TAG)  # fmt: skip
-    ax.text(
-        3.0,
-        2.88,
-        "GIPPA turns one genome and any search output into one gene table, "
-        "with an error estimate at every step",
-        ha="center",
-        va="top",
-        fontsize=8,
-    )
+                     "error_control": tag.replace("\n", " "), "kind": kind})  # fmt: skip
+    # side loop: gippa makedb -> the user's own search -> peptide table
+    _box(ax, 1.07, 0.18, 1.86, 0.45, OKABE["blue"], ls="--")
+    ax.text(2.0, 0.405, "gippa makedb (optional): strain FASTA from the\nBakta annotation, "
+            "± six-frame ORFs, contaminants", ha="center", va="center", fontsize=6,
+            color=OKABE["blue"])  # fmt: skip
+    _box(ax, 0.07, 0.18, 0.86, 0.45, "#333333", ls=":")
+    ax.text(0.5, 0.405, "your search engine\n(DIA-NN, Cascadia;\noutside GIPPA)", ha="center",
+            va="center", fontsize=6)  # fmt: skip
+    _arrow(ax, (1.5, yb - 0.01), (1.5, 0.64), col=OKABE["blue"])
+    _arrow(ax, (1.06, 0.405), (0.94, 0.405), col=OKABE["blue"])
+    _arrow(ax, (0.5, 0.64), (0.5, yb - 0.01))
+    # key
+    _box(ax, 3.55, 0.36, 0.22, 0.12, TAG, lw=0.9)
+    ax.text(3.83, 0.42, "error estimate reported", va="center", fontsize=6, color=TAG)
+    _box(ax, 4.85, 0.36, 0.22, 0.12, NONE, ls="--")
+    ax.text(5.13, 0.42, "no estimate; flagged", va="center", fontsize=6, color=NONE)
+    title = ("GIPPA: one genome and any search output in, one gene table out, with an error "
+             "estimate or a flag at every step")  # fmt: skip
+    ax.text(3.0, 3.3, title, ha="center", va="top", fontsize=8)
     save(fig, d, "fig1_workflow", rows)
 
 

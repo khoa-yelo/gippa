@@ -23,33 +23,42 @@ from _common import OKABE, new_figure, out_dir, panel_label, parse_args, save
 RUN = "full-d2bd17e42dcf-20261125-073329"
 CRITERIA = {"level", "fdr", "fwer", "fdr_counts"}
 LEVELS = (0.01, 0.05, 0.10)
-QQ = [  # (file glob under lanes/, stream, label, colour)
+#: one colour per method in panels a and c; line style separates streams of one method
+METHOD = {"region": OKABE["blue"], "discordance": OKABE["bluish_green"],
+          "autocorrelation": OKABE["reddish_purple"], "known": OKABE["vermillion"],
+          "placement": OKABE["black"], "gene_fdr": OKABE["sky_blue"], "islands": "#777777",
+          "novel": OKABE["black"]}  # fmt: skip
+QQ = [  # (file under lanes/, stream, label, method, line style)
     ("regions-group0/regions.jsonl", "sim_expression.region_effect",
-     "region test, O−E (R = 1,000)", OKABE["blue"]),
+     "region test, O−E", "region", "-"),
     ("regions-group3/regions.jsonl", "sim_expression.ar1_lag1.rho0.9",
-     "region test, AR(1) ρ = 0.9", OKABE["sky_blue"]),
+     "region test, AR(1) ρ = 0.9", "region", "--"),
     ("discordance-group1/discordance.jsonl", "discordance.gate.operon_null_1800",
-     "operon discordance, gate null", OKABE["bluish_green"]),
+     "operon discordance, gate null", "discordance", "-"),
     ("autocorrelation-group2/autocorrelation.jsonl", "sim_scenarios.tu_null.between_tu",
-     "autocorrelation, TU null", OKABE["reddish_purple"]),
+     "autocorrelation, TU null", "autocorrelation", ":"),
     ("discordance-group0/discordance.jsonl", "discordance.fallback_a.operon_null",
-     "discordance, distance-model TUs\n(known failure, conservative)", OKABE["vermillion"]),
+     "discordance, distance-model TUs\n(known failure, conservative)", "known", "-."),
 ]  # fmt: skip
-REPS = [  # (suite, stream, criterion, label)
-    ("placement", "placement.readthrough_stressed.shuffle", "fdr", "placement FDR (read-through)"),
-    ("gene_fdr", "gene_fdr.picked.pi0.05", "fdr", "gene FDR, picked"),
-    ("gene_fdr", "gene_fdr.mayu_pep.pi0.05", "fdr", "gene FDR, MAYU (PEP)"),
+REPS = [  # (suite, stream, criterion, label, method, line style, marker)
+    ("placement", "placement.readthrough_stressed.shuffle", "fdr", "placement FDR (read-through)",
+     "placement", "-", "s"),
+    ("gene_fdr", "gene_fdr.picked.pi0.05", "fdr", "gene FDR, picked", "gene_fdr", "-", "o"),
+    ("gene_fdr", "gene_fdr.mayu_pep.pi0.05", "fdr", "gene FDR, MAYU (PEP)", "gene_fdr", "--",
+     "o"),
     ("regions", "regions.region_tests.null_full_rho0.0.chr1_pooled.hl_shift", "level",
-     "region HL shift (pooled)"),
-    ("islands", "islands.rho09", "fwer", "islands FWER, ρ = 0.9"),
-    ("discordance", "discordance.gate.operon_null_1800", "fdr", "discordance BH FDR"),
-    ("novel_orfs", "novel_orfs.class_fdr.picked", "fdr", "novel-ORF class FDR"),
+     "region test, HL shift (pooled)", "region", ":", "v"),
+    ("islands", "islands.rho09", "fwer", "islands FWER, AR(1) ρ = 0.9", "islands", "-.", "D"),
+    ("discordance", "discordance.gate.operon_null_1800", "fdr", "operon discordance, BH FDR",
+     "discordance", "-", "o"),
+    ("novel_orfs", "novel_orfs.class_fdr.picked", "fdr", "novel-ORF class FDR (database)",
+     "novel", "--", "^"),
 ]  # fmt: skip
 STATUS_STYLE = {
     "pass": ("pass", OKABE["blue"], "o"),
-    "unconfirmed": ("unconfirmed (one block of two)", OKABE["orange"], "D"),
+    "unconfirmed": ("unconfirmed (over in 1 of 2 blocks)", OKABE["black"], "D"),
     "fail_flagged": ("fail, recorded only or flagged", OKABE["reddish_purple"], "s"),
-    "fail_xfail": ("fail, known (strict xfail)", OKABE["vermillion"], "^"),
+    "fail_xfail": ("fail, known failure", OKABE["vermillion"], "^"),
 }
 
 
@@ -100,8 +109,8 @@ def main() -> None:
     c = cal_dir()
     recs = load(c)
     rows: list[dict] = []
-    fig = new_figure("double", 2.75)
-    gs = fig.add_gridspec(1, 3, left=0.065, right=0.985, bottom=0.17, top=0.83, wspace=0.42)
+    fig = new_figure("double", 3.8)
+    gs = fig.add_gridspec(1, 3, left=0.065, right=0.985, bottom=0.42, top=0.885, wspace=0.42)
 
     # (a) QQ of null p-values, -log10 scale, with a pointwise 95 % band for n = 1,000
     ax = fig.add_subplot(gs[0, 0])
@@ -113,14 +122,15 @@ def main() -> None:
     ex = -np.log10(i / (n_band + 1))
     ax.fill_between(ex, lo, hi, color="#DDDDDD", lw=0, label="95 % band (n = 1,000)")
     ax.plot([0, lim], [0, lim], color="#333333", lw=0.6)
-    for rel, stream, label, colour in QQ:
+    for rel, stream, label, meth, ls in QQ:
         rec = next(r for r in recs if r["_file"] == f"lanes/{rel}" and r["stream"] == stream
                    and r.get("criterion") == "uniform")  # fmt: skip
         p = np.sort(np.asarray(rec["values"], dtype=float))
         n = p.size
         e = -np.log10(np.arange(1, n + 1) / (n + 1))
         o = -np.log10(np.clip(p, 1e-300, 1))
-        ax.plot(e, np.minimum(o, lim), color=colour, lw=0.9, label=label)
+        ax.plot(e, np.minimum(o, lim), color=METHOD[meth], ls=ls, lw=1.0,
+                label=f"{label} (n = {n:,})")  # fmt: skip
         rows.append({"panel": "a", "file": rec["_file"], "stream": stream, "n": n,
                      "ks_p": rec["observed"], "status": rec["status"]})  # fmt: skip
     ax.set_xlim(0, lim)
@@ -128,7 +138,8 @@ def main() -> None:
     ax.set_xlabel("expected −log10 p (uniform)")
     ax.set_ylabel("observed −log10 p")
     ax.set_title("Null p-values (QQ)", loc="left")
-    ax.legend(loc="upper left", frameon=False, fontsize=5, handlelength=1.2)
+    ax.legend(loc="upper left", bbox_to_anchor=(-0.2, -0.2), frameon=False, fontsize=6,
+              handlelength=2.0)  # fmt: skip
     panel_label(ax, "a", x=-0.22)
 
     # (b) every gated record: observed / nominal against bound / nominal
@@ -155,25 +166,29 @@ def main() -> None:
         lab, col, mk = STATUS_STYLE[key]
         z = 3 if key == "pass" else 4
         ax.scatter(xs, ys, s=6 if key == "pass" else 12, c=col, marker=mk, lw=0, alpha=0.6
-                   if key == "pass" else 0.9, label=f"{lab} ({len(xs)})", zorder=z)  # fmt: skip
+                   if key == "pass" else 0.9, label=f"{lab} ({len(xs):,})", zorder=z)  # fmt: skip
     ax.set_yscale("log")
-    ax.plot([0.8, 3.4], [0.8, 3.4], color="#333333", lw=0.6)
+    xs = np.linspace(0.8, 3.4, 200)
+    ax.plot(xs, xs, color="#333333", lw=0.6)
+    ax.text(3.15, 3.6, "observed = bound", fontsize=6, ha="right", va="bottom", color="#333333")
     ax.axhline(1.0, color="#999999", lw=0.5, ls=":")
+    ax.text(3.15, 0.85, "observed = nominal", fontsize=6, ha="right", va="top", color="#777777")
     ax.set_xlim(0.9, 3.2)
     ax.set_ylim(floor * 0.8, 400)
     ax.set_xlabel("bound / nominal level")
     ax.set_ylabel("observed / nominal level")
     ax.set_title("Above the line: observed > bound", loc="left")
-    ax.text(2.0, floor * 1.15, f"zero observed drawn at {floor}", fontsize=5, color="#666666")
-    ax.legend(loc="upper right", frameon=False, fontsize=5, handletextpad=0.2)
+    total = sum(counts.values())
+    ax.legend(loc="upper left", bbox_to_anchor=(-0.2, -0.2), frameon=False, fontsize=6,
+              handletextpad=0.3, title=f"{total:,} records at α or q = 0.01, 0.05, 0.10;\n"
+              f"zero observed is drawn at {floor}", title_fontsize=6)  # fmt: skip
+    ax.get_legend()._legend_box.align = "left"
     panel_label(ax, "b", x=-0.22)
 
     # (c) observed error against nominal level for representative streams
     ax = fig.add_subplot(gs[0, 2])
     ax.plot([0, 0.11], [0, 0.11], color="#333333", lw=0.6)
-    cyc = [OKABE[k] for k in ("blue", "orange", "sky_blue", "bluish_green", "reddish_purple",
-                               "vermillion", "black")]  # fmt: skip
-    for j, (suite, stream, crit, label) in enumerate(REPS):
+    for j, (suite, stream, crit, label, meth, ls, mk) in enumerate(REPS):
         pts = sorted(
             (r["level"], r["observed"], r["bound"])
             for r in recs
@@ -187,8 +202,8 @@ def main() -> None:
             raise SystemExit(f"missing stream {stream}")
         lv, ob, bd = (np.array(v) for v in zip(*pts, strict=True))
         off = (j - 3) * 0.0012
-        ax.plot(lv + off, ob, color=cyc[j], marker="o", ms=2.5, lw=0.7, label=label)
-        ax.scatter(lv + off, bd, color=cyc[j], marker="_", s=18, lw=0.8)
+        ax.plot(lv + off, ob, color=METHOD[meth], marker=mk, ms=2.6, lw=0.8, ls=ls, label=label)
+        ax.scatter(lv + off, bd, color=METHOD[meth], marker="_", s=18, lw=0.8)
         for a, o, b in pts:
             rows.append({"panel": "c", "suite": suite, "stream": stream, "criterion": crit,
                          "level": a, "observed": o, "bound": b})  # fmt: skip
@@ -198,14 +213,15 @@ def main() -> None:
     ax.set_xlabel("nominal level (α or q)")
     ax.set_ylabel("observed rate or mean FDP")
     ax.set_title("Observed vs nominal error", loc="left")
-    ax.legend(loc="upper left", frameon=False, fontsize=5, handlelength=1.2)
-    ax.text(0.107, 0.004, "dash: bound (nominal + 2 SE)", ha="right", fontsize=5, color="#666666")
+    ax.legend(loc="upper left", bbox_to_anchor=(-0.2, -0.2), frameon=False, fontsize=6,
+              handlelength=2.0, title="short bar: the stream's bound (nominal + 2 SE)",
+              title_fontsize=6)  # fmt: skip
+    ax.get_legend()._legend_box.align = "left"
     panel_label(ax, "c", x=-0.22)
 
-    fig.suptitle("Calibration, GIPPA 1.1.1 full tier (d2bd17e4): "
-                 f"{counts['pass']} records pass; every failing record is a known failure "
-                 "or recorded only",
-                 x=0.01, ha="left", y=0.985)  # fmt: skip
+    fig.suptitle(f"Calibration in simulation: {counts['pass']:,} of {total:,} records pass; "
+                 "every failure is a known failure or recorded only", x=0.01, ha="left",
+                 y=0.985)  # fmt: skip
     save(fig, d, "fig2_calibration", rows)
     print(json.dumps(counts))
 

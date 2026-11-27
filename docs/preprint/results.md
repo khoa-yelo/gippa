@@ -942,10 +942,12 @@ ORFs is not a negative result: in all four decoy-tagged classes the smallest rea
 
 <!-- src: local/example/routes/1966530/gippa-example/expected/{A..E}.json › wall_time_s; runs/measured/E.json › novel_classes (q_floor, floor_above_alpha) -->
 
-## 7. Release readiness of GIPPA 1.1.0
+## 7. Release readiness of GIPPA 1.1.1
 
-The readiness check was computed on the release code `e43683c7` at 2026-11-12T05:50 UTC and reported
-overall **pass** (Table R10). Of the ten acceptance rows:
+The readiness check was computed on the release code `3f8793e0` at 2026-11-27T01:33 UTC and reported
+overall **pass** (Table R10). It reuses the full calibration tier of `d2bd17e4` (Slurm array 2022338;
+the diff to the release commit touches no statistics path). The 1.1.0 check (`e43683c7`,
+2026-11-12) had the same row statuses. Of the ten acceptance rows:
 - five passed under readiness's rules (R1, R3, R4, R6, R9);
 - one (R8) is reported only and measured about 7× its estimate;
 - three were waived;
@@ -960,7 +962,7 @@ A readiness pass means only that the row's check succeeded; for R3 and R4, "no *
 failure". Specification §13.2 reads "Every statistical method passes its calibration
 suite … and every attack null stays at level", and §8.5 says that a failing attack blocks the merge.
 That wording is not met. Behind the two passes lie:
-- known failures: 6 xfailed tests and 13 merged strict-xfail records (Tables R3a and R3b), which the
+- known failures: 6 xfailed tests and the merged strict-xfail records (Tables R3a and R3b), which the
   calibration merge counts as non-failures (ADR-0057);
 - two methods that pass only through their flags (ORA, determinants);
 - GSEA unflagged rows that pass only under a 1.5α screen (Python port engine);
@@ -971,38 +973,38 @@ That wording is not met. Behind the two passes lie:
   ΔR² interval (0.388 miss rate) and distance-fallback CIs (0.074 / 0.072), and the `two_peptide`
   gene FDP (0.054 at q = 0.01).
 
-<!-- src: validation/release/1.1.0/READINESS.md:9-18; scripts/release/readiness.py:373 (R4), R3 threshold "exit 0 and 0 failed for R or an ancestor C with reusable(C, R)"; GIPPA_SPEC.md §13.2, §8.5:1991;
+<!-- src: validation/release/1.1.1/READINESS.md (rows R1-R10; computed 2026-11-27T01:33:41Z); validation/release/1.1.0/READINESS.md:9-18 (1.1.0, same statuses); scripts/release/readiness.py:373 (R4), R3 threshold "exit 0 and 0 failed for R or an ancestor C with reusable(C, R)"; GIPPA_SPEC.md §13.2, §8.5:1991;
 docs/adr/ADR-0057-calibration-merge-honours-strict-xfail.md:1-8; benchmarks/baseline.json › standard_run.wheat.k12_core.ratio_to_estimate 7.249 -->
 
-**Table R10.** Readiness 1.1.0.
+**Table R10.** Readiness 1.1.1.
 
 | Row | Criterion | Status | Value (abridged) | Where the evidence was produced |
 |---|---|---|---|---|
 | R1 | ≥ 99.5 % of A2 peptides map exactly | pass | 100.00 % | 1.0.0-era pilot |
 | R2 | decoy-estimated mapping FDR ≤ 1 % | **waived**ᵃ | "no mapping_fdr in validation/pilot/metrics/metrics.json and no --freeze-run" | 1.0.0-era pilot |
-| R3 | every method passes its calibration suite | readiness pass (no waiver)ᵇ | full tier: 15 suites, 0 failed; 555 tests: 459 passed, 90 skipped, 6 xfailed, 0 failed; fast tier: 28,937 passed, 148 skipped, 17 xfailed, 3 xpassed; coverage 97 % | full tier at `4a6fa998` (reused); fast tier at `e43683c7` |
-| R4 | every attack null stays at level | readiness passᵇ | 14 suites, 0 failed; 281 attack tests: 273 passed, 3 skipped, 5 xfailed | `4a6fa998` (reused) |
-| R5 | every true-example assertion the data allow passes | **waived**ᵃ (TE4 only) | TE1, TE2, TE3, TE5, TE7, TE8 pass; TE4 fail | pilot 1.0.0-era; TE8 release code |
-| R6 | same seed gives byte-identical tables | pass | TE7 pass; integration 967 passed; nf-test 144 tests | TE7 1.0.0-era; integration release code |
+| R3 | every method passes its calibration suite | readiness pass (no waiver)ᵇ | full tier: 15 suites, 0 failed; 558 tests: 462 passed, 90 skipped, 6 xfailed, 0 failed; fast tier: 29,049 passed, 149 skipped, 17 xfailed, 3 xpassed; coverage 97 % | full tier and fast tier at `d2bd17e4` (reused) |
+| R4 | every attack null stays at level | readiness passᵇ | 14 suites, 0 failed; 284 attack tests: 276 passed, 3 skipped, 5 xfailed | `d2bd17e4` (reused) |
+| R5 | every true-example assertion the data allow passes | **waived**ᵃ (TE4 only) | TE1, TE2, TE3, TE5, TE7, TE8 pass; TE4 fail | pilot 1.0.0-era; TE8 weekly 2020593_0 at `d2bd17e4` |
+| R6 | same seed gives byte-identical tables | pass | TE7 pass; integration 967 passed; nf-test 144 tests | TE7 1.0.0-era; integration nightly 2025930_0 at `d2bd17e4` |
 | R7 | standard run ≈ 35 min (16–55) | **waived**ᵃ | 3:41 > 0:55 (13,232 s); wheat | 1.0.0-era benchmark |
 | R8 | core modules ≈ 25 min | reported only (readiness marks it pass) | 3:01 (10,874 s), about 7× the estimate; wheat | 1.0.0-era benchmark |
 | R9 | the pilot passes (§15.6) | pass | 5 bullets; not passed: 0 | 1.0.0-era pilot |
 | R10 | co-abundance (moves to the full validation) | **deferred** | by specification | none |
 | H1 | milestone gates M1–M10 recorded in PROGRESS.md | pass | 10 gate blocks | 1.0.0-era gate records |
-| H2 | version agreement; no release tag yet | pass | 1.1.0 everywhere; no tag v1.1.0 | release code |
+| H2 | version agreement; no release tag yet | pass | 1.1.1 everywhere; no tag v1.1.1 | release code |
 | H3 | changelog built | pass | built | release code |
 | H4 | containers pinned by digest | pass | 17 digests; 3 conda-only or in-process | release code |
 | H5 | licences listed; GIPPA is MIT | pass | all tools listed; MIT | release code |
 | H6 | CI check runs on the commit | pass | 11 check runs succeeded; summary, deploy, guards skipped | release code |
 
 ᵃ The readiness file applies the 1.0.0 waiver records ADR-0071 (R2), ADR-0070 (R5) and ADR-0072 (R7).
-The waiver mechanism does not check a record's version. ADR-0076 is the decision that extends these
-records to 1.1.0, for R5 only for TE4's rplL/rplJ pair.
+The waiver mechanism does not check a record's version. ADR-0076 extended these records to 1.1.0 and
+ADR-0080 (accepted by Khoa, 2026-11-26) carries them to 1.1.1, for R5 only for TE4's rplL/rplJ pair.
 ᵇ Readiness checks exit 0 and "0 failed" for the release commit or a reusable ancestor; strict
-xfails do not count as failures. The §13.2 wording is not met: see Tables R3a and R3b (6 xfailed tests,
-13 merged records), the flagged methods (ORA, determinants) and the GSEA 1.5α screen (Python port engine).
+xfails do not count as failures. The §13.2 wording is not met: see Tables R3a and R3b (6 xfailed tests and
+the merged strict-xfail records), the flagged methods (ORA, determinants) and the GSEA 1.5α screen (Python port engine).
 
-<!-- src: validation/release/1.1.0/READINESS.md:1-24; validation/release/1.1.0/readiness.json › rows[*].status, value, evidence, waiver (ADR-0071, ADR-0070, ADR-0072);
+<!-- src: validation/release/1.1.1/READINESS.md:1-24; validation/release/1.1.1/readiness.json › rows[*].status, value, evidence, waiver (ADR-0071, ADR-0070, ADR-0072); docs/adr/ADR-0080;
 docs/adr/ADR-0076-waivers-1-1.md:10-14 (apply_waivers does not read the version), 28-33 -->
 
 Three rows need a precise reading.
