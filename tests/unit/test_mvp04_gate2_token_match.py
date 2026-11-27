@@ -12,6 +12,9 @@ An exact token still fails the gate wherever it appears: a manifest ``warnings``
 (``<step>:<event>``), a bare manifest flag, or an events.jsonl line (as the event name's last
 dotted part or as a ``data.flag`` value).
 
+The ADR-0079 placement warning ``placement.stratum_q_floor_above_alpha`` is a different warning
+too: ``_q_floor`` is not a token boundary (end of file).
+
 Uses the all-pass fixture of tests/helpers/mvp04_summary_data.py unchanged.
 """
 
@@ -190,3 +193,63 @@ def test_a_token_inside_a_longer_word_does_not_fail_gate2(d: S.Dirs, token: str,
     _manifest_warning(d, f"novel_orfs:{form.format(t=token)}")
     res = gate2(d)
     assert res["warnings_found"] == [] and res["status"] == "pass", res
+
+
+# --------------------------------------------------- ADR-0079: the placement stratum floor warning
+
+PLACEMENT_FLOOR = "placement.stratum_q_floor_above_alpha"
+
+
+def _placement_floor_event() -> dict[str, Any]:
+    """The placement per-stratum floor warning as ADR-0079 specifies it."""
+    return {
+        "event": PLACEMENT_FLOOR,
+        "level": "WARNING",
+        "step": "placement",
+        "message": "placement: stratum reverse m=1 has 13 targets; its q floor 0.0769 > alpha "
+        "0.01, so none can be accepted",
+        "data": {"decoy_type": "reverse", "n_diff": 1, "n_targets": 13, "n_decoys": 7,
+                 "q_floor": 1 / 13, "alpha": 0.01},
+    }  # fmt: skip
+
+
+@pytest.mark.parametrize(
+    "form",
+    [f"placement:{PLACEMENT_FLOOR}", PLACEMENT_FLOOR, "stratum_q_floor_above_alpha"],
+    ids=["step_colon_event", "event_only", "bare"],
+)
+def test_the_placement_stratum_floor_in_the_manifest_does_not_fail_gate2(
+    d: S.Dirs, form: str
+) -> None:
+    _manifest_warning(d, form)
+    res = gate2(d)
+    assert res["warnings_found"] == [], res
+    assert res["gate_ok"] is True and res["status"] == "pass", res
+
+
+def test_the_placement_stratum_floor_event_does_not_fail_gate2(d: S.Dirs) -> None:
+    _event(d, _placement_floor_event())
+    res = gate2(d)
+    assert res["warnings_found"] == [], res
+    assert res["gate_ok"] is True and res["status"] == "pass", res
+
+
+def test_n2_like_run_placement_and_class_floors_pass_gate2(d: S.Dirs) -> None:
+    """Campaign N2's shape: two placement strata below the floor plus a class floor."""
+    _manifest_warning(d, f"placement:{PLACEMENT_FLOOR}")
+    _manifest_warning(d, "novel_orfs:novel_orfs.class_q_floor_above_alpha")
+    for m, t, dd in ((1, 13, 7), (2, 1, 4)):
+        ev = _placement_floor_event()
+        ev["data"] |= {"n_diff": m, "n_targets": t, "n_decoys": dd, "q_floor": 1 / t}
+        _event(d, ev)
+    _event(d, _novel_class_event("q_floor_above_alpha"))
+    res = gate2(d)
+    assert res["warnings_found"] == [] and res["status"] == "pass", res
+
+
+def test_exact_token_found_next_to_the_placement_stratum_floor(d: S.Dirs) -> None:
+    _manifest_warning(d, f"placement:{PLACEMENT_FLOOR}")
+    _event(d, _placement_floor_event())
+    _manifest_warning(d, "gene_table:detection.q_floor_above_alpha")
+    res = gate2(d)
+    assert res["warnings_found"] == ["q_floor_above_alpha"] and res["status"] == "fail", res

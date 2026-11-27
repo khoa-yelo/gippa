@@ -40,6 +40,11 @@ _LAYER_COLS = [("contig", _STR), ("strand", _STR), ("end3p", _INT), ("score", _F
 
 
 def _rows(df: pd.DataFrame) -> list[tuple[object, ...]]:
+    """Row tuples; a missing string (the null ``header`` of a skipped window, #611) is ``None``."""
+    text = [c for c in df.columns if not pd.api.types.is_numeric_dtype(df[c])]
+    if text and df[text].isna().any().any():
+        df = df.astype(dict.fromkeys(text, object))
+        df[text] = df[text].where(df[text].notna(), None)
     return list(df.itertuples(index=False, name=None))
 
 
@@ -93,4 +98,11 @@ def promoter_layer_step(ctx: StepContext) -> None:
     for path in _prediction_files(ctx.inputs["promotech"]):
         scores.update(parse_promotech(path))
     layer = promoter_layer(wmap, scores)
+    skipped = int(layer["score"].isna().sum())
+    if skipped:
+        ctx.log.warning(
+            "promoter_layer: %d window position(s) contain non-ACGT bases (assembly gaps or "
+            "IUPAC codes); not scored by Promotech, score NaN",
+            skipped,
+        )
     write_parquet_deterministic(ctx.outputs["promoter_windows"], _LAYER_COLS, _rows(layer))

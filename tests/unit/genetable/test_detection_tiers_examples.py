@@ -233,10 +233,12 @@ def test_first_matching_decoy_prefix_is_stripped() -> None:
 # ------------------------------------------------------------------------- ADR-0009 rescaling
 
 
-def test_adr0009_decoy_wins_rescaled_by_paired_share() -> None:
-    """f = 8/10: T0..T4 (scores 100..96) above a decoy-only gene X (60), T5..T9 (50..46) below;
-    seven more paired decoy-only genes below every target; two unpaired decoys.
-    FDR at T9 = (1/0.8 + 1)/10 = 0.225 (not 0.2 unscaled, not 2/(0.8*10) = 0.25)."""
+def test_adr0078_unpaired_decoys_compete_without_rescaling() -> None:
+    """ADR-0078 (retires ADR-0009's 1/f): T0..T4 (scores 100..96) above a decoy-only gene X (60),
+    T5..T9 (50..46) below; seven more paired decoy-only genes below every target; two unpaired
+    decoys (score 1) in their own units, below every target. FDR at T4 = (0 + 1)/5 = 0.2, at
+    T9 = (1 + 1)/10 = 0.2 (1.1.0 gave (1/0.8 + 1)/10 = 0.225). f = 0.8 is still reported; the
+    ``decoy_win_weight`` row is 1.0."""
     b = Builder(18)
     t = b.tags or []
     for i in range(5):
@@ -251,12 +253,13 @@ def test_adr0009_decoy_wins_rescaled_by_paired_share() -> None:
     r = b.run()
     assert r.det.tier == "decoy_picked"
     np.testing.assert_allclose([r.q(g) for g in t[:5]], 0.2, rtol=1e-12)
-    np.testing.assert_allclose([r.q(g) for g in t[5:10]], 0.225, rtol=1e-12)
+    np.testing.assert_allclose([r.q(g) for g in t[5:10]], 0.2, rtol=1e-12)
     assert all(math.isnan(r.q(g)) for g in t[10:])
     s = fx.summary(r.det)
     vals = s.loc[s["group_type"] == "tier", "value"].astype(float).to_numpy()
     assert np.isclose(vals, 0.8).any(), "paired share f reported (ADR-0009)"
-    assert np.isclose(vals, 1.25).any(), "rescaling factor 1/f reported (ADR-0009)"
+    assert fx.tier_metric(r.det, "decoy_win_weight") == 1.0, "1/f retired (ADR-0078 rule 5)"
+    assert not np.isclose(vals, 1.25).any(), "no 1/f row left (ADR-0078)"
 
 
 # ------------------------------------------------------------------------- example 6 (B.3 MAYU)

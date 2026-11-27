@@ -1,0 +1,5 @@
+# Campaign validation scripts write report lines as long f-strings; only E501 is relaxed here.
+extend = "../../pyproject.toml"
+
+[lint]
+extend-ignore = ["E501"]

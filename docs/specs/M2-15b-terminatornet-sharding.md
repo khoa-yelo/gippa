@@ -28,6 +28,8 @@ Source: `$CONDA_PREFIX/share/terminatornet/{TerminatorNet.py,Features.py}` in `g
 | `merge_overlapping` is a greedy sweep in list order. A later call replaces the best one when `pred >= best_pred`. With `-s` the − strand is mapped back with `seq_length` and its block is sorted by forward stop | TerminatorNet.py | merging must run **once per (contig, strand)**, over all of its chunks, in the upstream order |
 | Output: every contig's + block in FASTA order, then every contig's − block. `TERM_k` restarts in each block. An empty block is written as `name\tNO TERMINATORS FOUND` | `run_TerminatorNet`, `output_terms` | the merge writes blocks in this order |
 
+> **Addendum (1.1.1, issue #615).** Plan and chunks stay in cleaned coordinates, but `merge` maps every call back to the original sequence and drops calls whose hairpin would span a removed base, so on records with removed non-ACGT bases the output is no longer byte-identical to unsharded `TerminatorNet.py` (which shifts those calls). Gap-free records are unchanged.
+
 Probe (2026-10-27, 4-record FASTA, `-s -n 2`): the empty record wrote nothing. The 2-nt record wrote
 `NO TERMINATORS FOUND` on both strands. A record with Ns and lower-case letters was reported in
 N-stripped coordinates.
