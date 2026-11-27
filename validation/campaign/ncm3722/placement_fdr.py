@@ -17,6 +17,7 @@ from pathlib import Path
 
 import pandas as pd
 import te_proxies as te
+
 from gippa.config import resolve_config
 
 
@@ -26,11 +27,15 @@ def main(pep: Path, genome: Path, bakta_json: Path, out: Path) -> None:
     dec = t.get("is_decoy", pd.Series(["false"] * len(t))).str.lower().isin(["true", "1"])
     q = pd.to_numeric(t.get("q_value", pd.Series(["0"] * len(t))), errors="coerce").fillna(0.0)
     pids = t.get("protein_ids", pd.Series([""] * len(t)))
-    cont = pids.str.split(";").apply(lambda xs: bool(xs) and all(
-        any(x.startswith(p) for p in cfg.input.contaminant_prefixes) for x in xs if x))
+    cont = pids.str.split(";").apply(
+        lambda xs: (
+            bool(xs)
+            and all(any(x.startswith(p) for p in cfg.input.contaminant_prefixes) for x in xs if x)
+        )
+    )
     keep = t[(~dec) & (q <= cfg.input.q_value_max) & (~cont)]
     sources: dict[str, set[str]] = {}
-    for p, ids in zip(keep["peptide"], keep["protein_ids"]):
+    for p, ids in zip(keep["peptide"], keep["protein_ids"], strict=False):
         sources.setdefault(p, set()).update(i for i in ids.split(";") if i)
     with tempfile.TemporaryDirectory(prefix="gippa-1b5-") as tmp:
         w = te.run_chain(cfg, genome, bakta_json, sources, "other", Path(tmp), ["placement"])
@@ -40,8 +45,8 @@ def main(pep: Path, genome: Path, bakta_json: Path, out: Path) -> None:
     m = acc["m_target"].to_numpy()
     res = {
         "peptides": len(sources),
-        "placed_rows": int(len(per)),
-        "accepted": int(len(acc)),
+        "placed_rows": len(per),
+        "accepted": len(acc),
         "accepted_exact": int((m == 0).sum()),
         "accepted_m1": int((m == 1).sum()),
         "accepted_m2": int((m == 2).sum()),

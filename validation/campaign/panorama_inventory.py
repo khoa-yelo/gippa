@@ -30,8 +30,17 @@ BASE = "https://panoramaweb.org"
 USER_AGENT = "gippa-campaign-inventory/1"
 NA = "NA"
 FILE_COLUMNS = (
-    "file_name", "file_type", "raw_format", "bytes", "checksum", "checksum_source", "url",
-    "acquisition", "acquisition_source", "sample", "condition",
+    "file_name",
+    "file_type",
+    "raw_format",
+    "bytes",
+    "checksum",
+    "checksum_source",
+    "url",
+    "acquisition",
+    "acquisition_source",
+    "sample",
+    "condition",
 )
 
 
@@ -45,7 +54,7 @@ def get_json(href: str) -> tuple[dict, bytes]:
             with urllib.request.urlopen(req, timeout=120) as r:
                 body = r.read()
             return json.loads(body), body
-        except Exception as e:  # noqa: BLE001 - one retry, then fail loudly
+        except Exception as e:
             last = e
             if attempt == 1:
                 time.sleep(20)
@@ -76,8 +85,9 @@ def classify(rel: str) -> tuple[str, str, str]:
         else:
             acq = NA
         return "raw", "thermo_raw", acq
-    if low.endswith((".sky", ".sky.zip", ".skyd", ".skyl", ".sky.view", ".blib", ".protdb",
-                     ".msp")):
+    if low.endswith(
+        (".sky", ".sky.zip", ".skyd", ".skyl", ".sky.view", ".blib", ".protdb", ".msp")
+    ):
         return "skyline", NA, NA
     if low.endswith((".pepxml", ".pep.xml", ".mzml", ".parquet")):
         return "result", NA, NA
@@ -97,23 +107,31 @@ def main(argv: list[str] | None = None) -> int:
     a.record_dir.mkdir(parents=True, exist_ok=True)
     blob = b"\n".join(records)
     (a.record_dir / "panorama_listing.jsonl").write_bytes(blob)
-    utc = dt.datetime.now(dt.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    utc = dt.datetime.now(dt.UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
     (a.record_dir / "panorama_listing.sha256").write_text(
-        f"{hashlib.sha256(blob).hexdigest()}  panorama_listing.jsonl  retrieved={utc}\n")
+        f"{hashlib.sha256(blob).hexdigest()}  panorama_listing.jsonl  retrieved={utc}\n"
+    )
     rows = []
     prefix = urllib.parse.unquote(root)
     for f in files:
         path = urllib.parse.unquote(f["href"])
-        rel = path[len(prefix):]
+        rel = path[len(prefix) :]
         ftype, fmt, acq = classify(rel)
-        rows.append({
-            "file_name": rel, "file_type": ftype, "raw_format": fmt,
-            "bytes": str(f.get("size", NA)), "checksum": NA, "checksum_source": NA,
-            "url": BASE + f["href"], "acquisition": acq,
-            "acquisition_source": "file_name" if acq != NA else NA,
-            "sample": rel.rsplit("/", 1)[-1].rsplit(".", 1)[0] if ftype == "raw" else NA,
-            "condition": NA,
-        })
+        rows.append(
+            {
+                "file_name": rel,
+                "file_type": ftype,
+                "raw_format": fmt,
+                "bytes": str(f.get("size", NA)),
+                "checksum": NA,
+                "checksum_source": NA,
+                "url": BASE + f["href"],
+                "acquisition": acq,
+                "acquisition_source": "file_name" if acq != NA else NA,
+                "sample": rel.rsplit("/", 1)[-1].rsplit(".", 1)[0] if ftype == "raw" else NA,
+                "condition": NA,
+            }
+        )
     rows.sort(key=lambda r: r["file_name"])
     out = a.out_dir / a.accession / "files.tsv"
     out.parent.mkdir(parents=True, exist_ok=True)
