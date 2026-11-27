@@ -166,9 +166,10 @@ def test_h4_determinants_needs_100_genes_in_25_units() -> None:
     assert re.search(r"abundance", text, re.I), text
 
 
-def test_l1_decoy_picked_divides_by_the_paired_share() -> None:
+def test_l1_decoy_picked_has_no_paired_share_rescaling() -> None:
+    """ADR-0078 retired the 1/f rescaling of decoy wins."""
     text = block("detection-tiers", "decoy_picked")
-    assert "divided by" in text, text
+    assert "share of decoys that paired" not in text, text
     assert "scaled up by" not in text, text
 
 

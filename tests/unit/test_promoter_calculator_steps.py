@@ -192,7 +192,7 @@ def test_tx_layer_step_accepts_a_single_csv(
 ) -> None:
     one = work["pc"][0]  # type: ignore[index]
     out = _run(steps, work, tmp_path / "tx_rates.parquet", pc=one)
-    rows = {tuple(r.values()) for r in pq.read_table(out).to_pylist()}
+    rows = {tuple(r.values()) for r in pq.read_table(out).to_pylist()}  # #614: no marker rows
     assert rows == {r for r in WANT if r[4] == "TU_1"}
 
 
@@ -202,7 +202,7 @@ def test_tx_layer_step_with_only_header_only_csvs_writes_an_empty_layer(
     pc = [header_only(tmp_path / "pc0" / f"TU_{i}.csv") for i in (1, 2, 3)]
     out = _run(steps, work, tmp_path / "tx_rates.parquet", pc=pc)
     t = pq.read_table(out)
-    assert len(t) == 0
+    assert len(t) == 0  # #614: a TU without a CSV adds no marker row
     assert t.column_names == ["contig", "strand", "tss", "tx_rate", "tu_id"]
 
 

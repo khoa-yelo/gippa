@@ -1,0 +1,927 @@
+{
+ "schema": "gippa-pilot-addendum/1",
+ "addendum": "1.1.1 detection recheck (ADR-0078)",
+ "supersedes": "validation/pilot/metrics/metrics.json",
+ "adr": "ADR-0078",
+ "pr": 607,
+ "code_before": "a2a95c76 (1.1.0)",
+ "code_after": "7d4c4bfd (ADR-0078 fix, squash-merged as 92fbf3af)",
+ "freeze_commit": "fa49b8f145ea4598a5f896f9d0b1956912fc5df3",
+ "method": "freeze code fa49b8f with gippa/genetable/detection.py swapped; gene_table, detectability, context_stats, function and compare rerun on the freeze outputs",
+ "slurm": {
+  "control": 2001992,
+  "fix": 2002006
+ },
+ "control_matches_recorded": true,
+ "detection_recheck": [
+  {
+   "run": "pilot/pass1/out_a1_pre390",
+   "commit": "6f969ee7",
+   "tier": "decoy_picked",
+   "eligible": 4686,
+   "genes_q01_before": 2670,
+   "maxq_before": 0.0022,
+   "gene_paired_before": 189,
+   "unpaired_own_before": 38,
+   "own_units_before": 0,
+   "decoy_wins_before": 4,
+   "genes_q01_after": 2642,
+   "maxq_after": 0.0098,
+   "gene_paired_after": 189,
+   "unpaired_own_after": 38,
+   "own_units_after": 33,
+   "decoy_wins_after": 37
+  },
+  {
+   "run": "pilot/pass1/out_a2_pre390",
+   "commit": "6f969ee7",
+   "tier": "decoy_picked",
+   "eligible": 4686,
+   "genes_q01_before": 3039,
+   "maxq_before": 0.0096,
+   "gene_paired_before": 261,
+   "unpaired_own_before": 2,
+   "own_units_before": 0,
+   "decoy_wins_before": 41,
+   "genes_q01_after": 3034,
+   "maxq_after": 0.0086,
+   "gene_paired_after": 261,
+   "unpaired_own_after": 2,
+   "own_units_after": 2,
+   "decoy_wins_after": 43
+  },
+  {
+   "run": "pilot/pass1/out_a1",
+   "commit": "8b6e93d4",
+   "tier": "decoy_picked",
+   "eligible": 4686,
+   "genes_q01_before": 2670,
+   "maxq_before": 0.0022,
+   "gene_paired_before": 189,
+   "unpaired_own_before": 38,
+   "own_units_before": 0,
+   "decoy_wins_before": 4,
+   "genes_q01_after": 2642,
+   "maxq_after": 0.0098,
+   "gene_paired_after": 189,
+   "unpaired_own_after": 38,
+   "own_units_after": 33,
+   "decoy_wins_after": 37
+  },
+  {
+   "run": "pilot/pass1/out_a2",
+   "commit": "8b6e93d4",
+   "tier": "decoy_picked",
+   "eligible": 4686,
+   "genes_q01_before": 3039,
+   "maxq_before": 0.0096,
+   "gene_paired_before": 261,
+   "unpaired_own_before": 2,
+   "own_units_before": 0,
+   "decoy_wins_before": 41,
+   "genes_q01_after": 3034,
+   "maxq_after": 0.0086,
+   "gene_paired_after": 261,
+   "unpaired_own_after": 2,
+   "own_units_after": 2,
+   "decoy_wins_after": 43
+  },
+  {
+   "run": "pilot/pass3/out_a1",
+   "commit": "8b6e93d4",
+   "tier": "decoy_picked",
+   "eligible": 4683,
+   "genes_q01_before": 2673,
+   "maxq_before": 0.0022,
+   "gene_paired_before": 189,
+   "unpaired_own_before": 38,
+   "own_units_before": 0,
+   "decoy_wins_before": 4,
+   "genes_q01_after": 2645,
+   "maxq_after": 0.0098,
+   "gene_paired_after": 189,
+   "unpaired_own_after": 38,
+   "own_units_after": 33,
+   "decoy_wins_after": 37
+  },
+  {
+   "run": "pilot/pass3/out_a2",
+   "commit": "8b6e93d4",
+   "tier": "decoy_picked",
+   "eligible": 4683,
+   "genes_q01_before": 3057,
+   "maxq_before": 0.0095,
+   "gene_paired_before": 323,
+   "unpaired_own_before": 2,
+   "own_units_before": 0,
+   "decoy_wins_before": 49,
+   "genes_q01_after": 3051,
+   "maxq_after": 0.0098,
+   "gene_paired_after": 323,
+   "unpaired_own_after": 2,
+   "own_units_after": 2,
+   "decoy_wins_after": 51
+  },
+  {
+   "run": "freeze/fa49b8f/out_a1",
+   "commit": "fa49b8f1",
+   "tier": "decoy_picked",
+   "eligible": 4683,
+   "genes_q01_before": 2673,
+   "maxq_before": 0.0022,
+   "gene_paired_before": 189,
+   "unpaired_own_before": 38,
+   "own_units_before": 0,
+   "decoy_wins_before": 4,
+   "genes_q01_after": 2645,
+   "maxq_after": 0.0098,
+   "gene_paired_after": 189,
+   "unpaired_own_after": 38,
+   "own_units_after": 33,
+   "decoy_wins_after": 37
+  },
+  {
+   "run": "freeze/fa49b8f/out_a2",
+   "commit": "fa49b8f1",
+   "tier": "decoy_picked",
+   "eligible": 4683,
+   "genes_q01_before": 3057,
+   "maxq_before": 0.0095,
+   "gene_paired_before": 323,
+   "unpaired_own_before": 2,
+   "own_units_before": 0,
+   "decoy_wins_before": 49,
+   "genes_q01_after": 3051,
+   "maxq_after": 0.0098,
+   "gene_paired_after": 323,
+   "unpaired_own_after": 2,
+   "own_units_after": 2,
+   "decoy_wins_after": 51
+  },
+  {
+   "run": "freeze/fa49b8f/out_a2_rep",
+   "commit": "fa49b8f1",
+   "tier": "decoy_picked",
+   "eligible": 4683,
+   "genes_q01_before": 3057,
+   "maxq_before": 0.0095,
+   "gene_paired_before": 323,
+   "unpaired_own_before": 2,
+   "own_units_before": 0,
+   "decoy_wins_before": 49,
+   "genes_q01_after": 3051,
+   "maxq_after": 0.0098,
+   "gene_paired_after": 323,
+   "unpaired_own_after": 2,
+   "own_units_after": 2,
+   "decoy_wins_after": 51
+  },
+  {
+   "run": "pilot/sixframe-fa49b8f/out_a4",
+   "commit": "fa49b8f1",
+   "tier": "decoy_picked",
+   "eligible": 4683,
+   "genes_q01_before": 2965,
+   "maxq_before": 0.0055,
+   "gene_paired_before": 168,
+   "unpaired_own_before": 5,
+   "own_units_before": 0,
+   "decoy_wins_before": 15,
+   "genes_q01_after": 2965,
+   "maxq_after": 0.0067,
+   "gene_paired_after": 168,
+   "unpaired_own_after": 5,
+   "own_units_after": 4,
+   "decoy_wins_after": 19
+  }
+ ],
+ "m3": {
+  "A1": {
+   "subsets": {
+    "all": {
+     "k": 2645,
+     "n": 4685,
+     "value": 0.5645677694770544,
+     "ci_low": 0.5503230974550901,
+     "ci_high": 0.5787066437535551
+    },
+    "chromosome": {
+     "k": 2644,
+     "n": 4672,
+     "value": 0.5659246575342466,
+     "ci_low": 0.5516641234428502,
+     "ci_high": 0.5800768702210716
+    },
+    "plasmid": {
+     "k": 1,
+     "n": 13,
+     "value": 0.07692307692307693,
+     "ci_low": 0.013710421242556586,
+     "ci_high": 0.3331395092109959
+    },
+    "plasmid:NZ_CP058218.1": {
+     "k": 0,
+     "n": 5,
+     "value": 0.0,
+     "ci_low": 0.0,
+     "ci_high": 0.43448246478317476
+    },
+    "plasmid:NZ_CP058219.1": {
+     "k": 1,
+     "n": 8,
+     "value": 0.125,
+     "ci_low": 0.02241749145005667,
+     "ci_high": 0.4708881822128535
+    },
+    "unknown": {
+     "k": 0,
+     "n": 0,
+     "value": null,
+     "ci_low": null,
+     "ci_high": null,
+     "reason": "empty_denominator"
+    },
+    "prophage": {
+     "k": 3,
+     "n": 136,
+     "value": 0.022058823529411766,
+     "ci_low": 0.007529925310275402,
+     "ci_high": 0.06284590531741366
+    },
+    "bgc": {
+     "k": 76,
+     "n": 251,
+     "value": 0.30278884462151395,
+     "ci_low": 0.24927213945877996,
+     "ci_high": 0.36225103868447434
+    },
+    "strain_specific": {
+     "k": 0,
+     "n": 916,
+     "value": 0.0,
+     "ci_low": 0.0,
+     "ci_high": 0.004176218394873355
+    },
+    "k12_shared": {
+     "k": 2645,
+     "n": 3759,
+     "value": 0.7036445863261506,
+     "ci_low": 0.6888446029575842,
+     "ci_high": 0.7180287709952552
+    },
+    "no_peptides": {
+     "k": 0,
+     "n": 10,
+     "value": 0.0,
+     "ci_low": 0.0,
+     "ci_high": 0.2775327998628892
+    },
+    "pseudogene": {
+     "k": 0,
+     "n": 3,
+     "value": 0.0,
+     "ci_low": 0.0,
+     "ci_high": 0.5614970317550454
+    }
+   }
+  },
+  "A2": {
+   "subsets": {
+    "all": {
+     "k": 3051,
+     "n": 4685,
+     "value": 0.6512273212379937,
+     "ci_low": 0.6374616529276045,
+     "ci_high": 0.664745195489999
+    },
+    "chromosome": {
+     "k": 3041,
+     "n": 4672,
+     "value": 0.6508989726027398,
+     "ci_low": 0.6371112971789845,
+     "ci_high": 0.6644387045517457
+    },
+    "plasmid": {
+     "k": 10,
+     "n": 13,
+     "value": 0.7692307692307693,
+     "ci_low": 0.49743624053272495,
+     "ci_high": 0.9182047128150143
+    },
+    "plasmid:NZ_CP058218.1": {
+     "k": 5,
+     "n": 5,
+     "value": 1.0,
+     "ci_low": 0.5655175352168251,
+     "ci_high": 1.0
+    },
+    "plasmid:NZ_CP058219.1": {
+     "k": 5,
+     "n": 8,
+     "value": 0.625,
+     "ci_low": 0.30574239460262737,
+     "ci_high": 0.8631557141764026
+    },
+    "unknown": {
+     "k": 0,
+     "n": 0,
+     "value": null,
+     "ci_low": null,
+     "ci_high": null,
+     "reason": "empty_denominator"
+    },
+    "prophage": {
+     "k": 37,
+     "n": 136,
+     "value": 0.27205882352941174,
+     "ci_low": 0.2042969938206384,
+     "ci_high": 0.35234378694025936
+    },
+    "bgc": {
+     "k": 137,
+     "n": 251,
+     "value": 0.545816733067729,
+     "ci_low": 0.48399252615151733,
+     "ci_high": 0.6062596647848982
+    },
+    "strain_specific": {
+     "k": 316,
+     "n": 916,
+     "value": 0.34497816593886466,
+     "ci_low": 0.3148991683844181,
+     "ci_high": 0.3763519735633374
+    },
+    "k12_shared": {
+     "k": 2735,
+     "n": 3759,
+     "value": 0.7275871242351689,
+     "ci_low": 0.7131280755862095,
+     "ci_high": 0.7415814886419474
+    },
+    "no_peptides": {
+     "k": 0,
+     "n": 10,
+     "value": 0.0,
+     "ci_low": 0.0,
+     "ci_high": 0.2775327998628892
+    },
+    "pseudogene": {
+     "k": 0,
+     "n": 3,
+     "value": 0.0,
+     "ci_low": 0.0,
+     "ci_high": 0.5614970317550454
+    }
+   }
+  }
+ },
+ "m4": {
+  "n_shared": 2613,
+  "n_units": 1674,
+  "spearman_rho": 0.978173,
+  "ci_low": 0.972762,
+  "ci_high": 0.982741,
+  "method": "spearman_tu_bootstrap",
+  "n_boot": 1000,
+  "ba_bias_log2": -0.193573,
+  "ba_loa_low": -1.36199,
+  "ba_loa_high": 0.974842,
+  "flags": null
+ },
+ "m5": {
+  "islands": {
+   "n_a": 0,
+   "n_b": 0,
+   "n_shared": 0,
+   "jaccard": null,
+   "flags": "both_empty",
+   "note": "none in either arm"
+  },
+  "operon_flags": {
+   "n_a": 0,
+   "n_b": 0,
+   "n_shared": 0,
+   "jaccard": null,
+   "flags": "both_empty",
+   "note": "none in either arm"
+  },
+  "enriched_categories": {
+   "n_a": 405,
+   "n_b": 292,
+   "n_shared": 258,
+   "jaccard": 0.587699,
+   "flags": null,
+   "note": null
+  },
+  "other_families": {
+   "novel_orfs": {
+    "n_a": 1,
+    "n_b": 0,
+    "n_shared": 0,
+    "jaccard": 0.0,
+    "flags": null,
+    "note": null
+   },
+   "alt_sites": {
+    "n_a": 118,
+    "n_b": 0,
+    "n_shared": 0,
+    "jaccard": 0.0,
+    "flags": null,
+    "note": null
+   }
+  }
+ },
+ "h1": {
+  "b": 434,
+  "c": 28,
+  "n_genes": 4685,
+  "prop_a2_only": {
+   "value": 0.9393939393939394,
+   "ci_low": 0.913802098621319,
+   "ci_high": 0.9577390497938815,
+   "k": 434,
+   "n": 462
+  },
+  "coverage_diff": 0.08665955176093917,
+  "b_tu": 290,
+  "c_tu": 24,
+  "mixed_tu": 3,
+  "p_tu": 1.8021046447376627e-59,
+  "p_gene": 5.202285808337615e-95,
+  "unit_effect": {
+   "value": 0.9235668789808917,
+   "ci_low": 0.8887933242882833,
+   "ci_high": 0.9481019032473426,
+   "k": 290,
+   "n": 314
+  },
+  "mostly": {
+   "value": 0.24423963133640553,
+   "ci_low": 0.20617811857914778,
+   "ci_high": 0.28678903761947533,
+   "k": 106,
+   "n": 434
+  },
+  "mostly_base_rate": {
+   "value": 0.08537886872998933,
+   "ci_low": 0.07771280077816156,
+   "ci_high": 0.0937243155927705,
+   "k": 400,
+   "n": 4685
+  },
+  "strain_specific_share": {
+   "value": 0.728110599078341,
+   "ci_low": 0.6843853642974228,
+   "ci_high": 0.7678331180119132,
+   "k": 316,
+   "n": 434
+  },
+  "verdict": "not_supported",
+  "failed_clauses": [
+   "mostly"
+  ],
+  "warnings": []
+ },
+ "h3": {
+  "verdict": "supported",
+  "criteria": {
+   "rho": {
+    "status": "holds",
+    "rho": 0.978173,
+    "ci_low": 0.972762,
+    "ci_high": 0.982741
+   },
+   "islands": {
+    "status": "not_evaluable",
+    "n_a": 0,
+    "n_b": 0,
+    "n_shared": 0,
+    "union": 0,
+    "jaccard": null
+   },
+   "operon_flags": {
+    "status": "not_evaluable",
+    "n_a": 0,
+    "n_b": 0,
+    "n_shared": 0,
+    "union": 0,
+    "jaccard": null
+   },
+   "enriched_categories": {
+    "status": "holds",
+    "n_a": 405,
+    "n_b": 292,
+    "n_shared": 258,
+    "union": 439,
+    "jaccard": 0.587699
+   }
+  },
+  "region_tests": "not compared in pass 1"
+ },
+ "changed": [
+  {
+   "key": "h1.b",
+   "old": 417,
+   "new": 434
+  },
+  {
+   "key": "h1.b_tu",
+   "old": 275,
+   "new": 290
+  },
+  {
+   "key": "h1.c",
+   "old": 33,
+   "new": 28
+  },
+  {
+   "key": "h1.c_tu",
+   "old": 31,
+   "new": 24
+  },
+  {
+   "key": "h1.coverage_diff",
+   "old": 0.08196371398078975,
+   "new": 0.08665955176093917
+  },
+  {
+   "key": "h1.mixed_tu",
+   "old": 1,
+   "new": 3
+  },
+  {
+   "key": "h1.mostly.ci_high",
+   "old": 0.2981000992827279,
+   "new": 0.28678903761947533
+  },
+  {
+   "key": "h1.mostly.ci_low",
+   "old": 0.2147805931888202,
+   "new": 0.20617811857914778
+  },
+  {
+   "key": "h1.mostly.n",
+   "old": 417,
+   "new": 434
+  },
+  {
+   "key": "h1.mostly.value",
+   "old": 0.2541966426858513,
+   "new": 0.24423963133640553
+  },
+  {
+   "key": "h1.p_gene",
+   "old": 4.646636057980401e-86,
+   "new": 5.202285808337615e-95
+  },
+  {
+   "key": "h1.p_tu",
+   "old": 2.4866492906738706e-50,
+   "new": 1.8021046447376627e-59
+  },
+  {
+   "key": "h1.prop_a2_only.ci_high",
+   "old": 0.9473088836594662,
+   "new": 0.9577390497938815
+  },
+  {
+   "key": "h1.prop_a2_only.ci_low",
+   "old": 0.8988015642441322,
+   "new": 0.913802098621319
+  },
+  {
+   "key": "h1.prop_a2_only.k",
+   "old": 417,
+   "new": 434
+  },
+  {
+   "key": "h1.prop_a2_only.n",
+   "old": 450,
+   "new": 462
+  },
+  {
+   "key": "h1.prop_a2_only.value",
+   "old": 0.9266666666666666,
+   "new": 0.9393939393939394
+  },
+  {
+   "key": "h1.strain_specific_share.ci_high",
+   "old": 0.7986785818388008,
+   "new": 0.7678331180119132
+  },
+  {
+   "key": "h1.strain_specific_share.ci_low",
+   "old": 0.7169550266181458,
+   "new": 0.6843853642974228
+  },
+  {
+   "key": "h1.strain_specific_share.k",
+   "old": 317,
+   "new": 316
+  },
+  {
+   "key": "h1.strain_specific_share.n",
+   "old": 417,
+   "new": 434
+  },
+  {
+   "key": "h1.strain_specific_share.value",
+   "old": 0.7601918465227818,
+   "new": 0.728110599078341
+  },
+  {
+   "key": "h1.unit_effect.ci_high",
+   "old": 0.9277087180694124,
+   "new": 0.9481019032473426
+  },
+  {
+   "key": "h1.unit_effect.ci_low",
+   "old": 0.859790801616245,
+   "new": 0.8887933242882833
+  },
+  {
+   "key": "h1.unit_effect.k",
+   "old": 275,
+   "new": 290
+  },
+  {
+   "key": "h1.unit_effect.n",
+   "old": 306,
+   "new": 314
+  },
+  {
+   "key": "h1.unit_effect.value",
+   "old": 0.8986928104575164,
+   "new": 0.9235668789808917
+  },
+  {
+   "key": "h3.criteria.enriched_categories.jaccard",
+   "old": 0.562771,
+   "new": 0.587699
+  },
+  {
+   "key": "h3.criteria.enriched_categories.n_a",
+   "old": 437,
+   "new": 405
+  },
+  {
+   "key": "h3.criteria.enriched_categories.n_b",
+   "old": 285,
+   "new": 292
+  },
+  {
+   "key": "h3.criteria.enriched_categories.n_shared",
+   "old": 260,
+   "new": 258
+  },
+  {
+   "key": "h3.criteria.enriched_categories.union",
+   "old": 462,
+   "new": 439
+  },
+  {
+   "key": "h3.criteria.rho.ci_high",
+   "old": 0.982577,
+   "new": 0.982741
+  },
+  {
+   "key": "h3.criteria.rho.ci_low",
+   "old": 0.973089,
+   "new": 0.972762
+  },
+  {
+   "key": "h3.criteria.rho.rho",
+   "old": 0.978429,
+   "new": 0.978173
+  },
+  {
+   "key": "m3.A1.subsets.all.ci_high",
+   "old": 0.5846549600140503,
+   "new": 0.5787066437535551
+  },
+  {
+   "key": "m3.A1.subsets.all.ci_low",
+   "old": 0.5563180299676265,
+   "new": 0.5503230974550901
+  },
+  {
+   "key": "m3.A1.subsets.all.k",
+   "old": 2673,
+   "new": 2645
+  },
+  {
+   "key": "m3.A1.subsets.all.value",
+   "old": 0.5705442902881537,
+   "new": 0.5645677694770544
+  },
+  {
+   "key": "m3.A1.subsets.bgc.ci_high",
+   "old": 0.37050227287304444,
+   "new": 0.36225103868447434
+  },
+  {
+   "key": "m3.A1.subsets.bgc.ci_low",
+   "old": 0.2567169384765429,
+   "new": 0.24927213945877996
+  },
+  {
+   "key": "m3.A1.subsets.bgc.k",
+   "old": 78,
+   "new": 76
+  },
+  {
+   "key": "m3.A1.subsets.bgc.value",
+   "old": 0.3107569721115538,
+   "new": 0.30278884462151395
+  },
+  {
+   "key": "m3.A1.subsets.chromosome.ci_high",
+   "old": 0.586041209758102,
+   "new": 0.5800768702210716
+  },
+  {
+   "key": "m3.A1.subsets.chromosome.ci_low",
+   "old": 0.5576762378752671,
+   "new": 0.5516641234428502
+  },
+  {
+   "key": "m3.A1.subsets.chromosome.k",
+   "old": 2672,
+   "new": 2644
+  },
+  {
+   "key": "m3.A1.subsets.chromosome.value",
+   "old": 0.571917808219178,
+   "new": 0.5659246575342466
+  },
+  {
+   "key": "m3.A1.subsets.k12_shared.ci_high",
+   "old": 0.7253615973080455,
+   "new": 0.7180287709952552
+  },
+  {
+   "key": "m3.A1.subsets.k12_shared.ci_low",
+   "old": 0.6963941469526703,
+   "new": 0.6888446029575842
+  },
+  {
+   "key": "m3.A1.subsets.k12_shared.k",
+   "old": 2673,
+   "new": 2645
+  },
+  {
+   "key": "m3.A1.subsets.k12_shared.value",
+   "old": 0.7110933758978452,
+   "new": 0.7036445863261506
+  },
+  {
+   "key": "m3.A2.subsets.all.ci_high",
+   "old": 0.6660131532147354,
+   "new": 0.664745195489999
+  },
+  {
+   "key": "m3.A2.subsets.all.ci_low",
+   "old": 0.638752962797089,
+   "new": 0.6374616529276045
+  },
+  {
+   "key": "m3.A2.subsets.all.k",
+   "old": 3057,
+   "new": 3051
+  },
+  {
+   "key": "m3.A2.subsets.all.value",
+   "old": 0.6525080042689434,
+   "new": 0.6512273212379937
+  },
+  {
+   "key": "m3.A2.subsets.chromosome.ci_high",
+   "old": 0.665710199013234,
+   "new": 0.6644387045517457
+  },
+  {
+   "key": "m3.A2.subsets.chromosome.ci_low",
+   "old": 0.6384061857109492,
+   "new": 0.6371112971789845
+  },
+  {
+   "key": "m3.A2.subsets.chromosome.k",
+   "old": 3047,
+   "new": 3041
+  },
+  {
+   "key": "m3.A2.subsets.chromosome.value",
+   "old": 0.6521832191780822,
+   "new": 0.6508989726027398
+  },
+  {
+   "key": "m3.A2.subsets.k12_shared.ci_high",
+   "old": 0.7428884907202988,
+   "new": 0.7415814886419474
+  },
+  {
+   "key": "m3.A2.subsets.k12_shared.ci_low",
+   "old": 0.7144786396342646,
+   "new": 0.7131280755862095
+  },
+  {
+   "key": "m3.A2.subsets.k12_shared.k",
+   "old": 2740,
+   "new": 2735
+  },
+  {
+   "key": "m3.A2.subsets.k12_shared.value",
+   "old": 0.7289172652301144,
+   "new": 0.7275871242351689
+  },
+  {
+   "key": "m3.A2.subsets.strain_specific.ci_high",
+   "old": 0.3774619344144114,
+   "new": 0.3763519735633374
+  },
+  {
+   "key": "m3.A2.subsets.strain_specific.ci_low",
+   "old": 0.3159634952661064,
+   "new": 0.3148991683844181
+  },
+  {
+   "key": "m3.A2.subsets.strain_specific.k",
+   "old": 317,
+   "new": 316
+  },
+  {
+   "key": "m3.A2.subsets.strain_specific.value",
+   "old": 0.3460698689956332,
+   "new": 0.34497816593886466
+  },
+  {
+   "key": "m4.ba_bias_log2",
+   "old": -0.19455,
+   "new": -0.193573
+  },
+  {
+   "key": "m4.ba_loa_high",
+   "old": 0.986878,
+   "new": 0.974842
+  },
+  {
+   "key": "m4.ba_loa_low",
+   "old": -1.37598,
+   "new": -1.36199
+  },
+  {
+   "key": "m4.ci_high",
+   "old": 0.982577,
+   "new": 0.982741
+  },
+  {
+   "key": "m4.ci_low",
+   "old": 0.973089,
+   "new": 0.972762
+  },
+  {
+   "key": "m4.n_shared",
+   "old": 2635,
+   "new": 2613
+  },
+  {
+   "key": "m4.n_units",
+   "old": 1683,
+   "new": 1674
+  },
+  {
+   "key": "m4.spearman_rho",
+   "old": 0.978429,
+   "new": 0.978173
+  },
+  {
+   "key": "m5.enriched_categories.jaccard",
+   "old": 0.562771,
+   "new": 0.587699
+  },
+  {
+   "key": "m5.enriched_categories.n_a",
+   "old": 437,
+   "new": 405
+  },
+  {
+   "key": "m5.enriched_categories.n_b",
+   "old": 285,
+   "new": 292
+  },
+  {
+   "key": "m5.enriched_categories.n_shared",
+   "old": 260,
+   "new": 258
+  }
+ ],
+ "verdicts_unchanged": [
+  "h1",
+  "h3",
+  "te3",
+  "te4",
+  "m3 plasmid",
+  "m3 prophage"
+ ]
+}
