@@ -1,0 +1,8 @@
+# Preprint figure scripts: the root settings, plus Unicode plot labels (α, τ, ›, −) allowed.
+extend = "../../../pyproject.toml"
+
+[lint]
+extend-ignore = ["RUF001", "RUF002", "RUF003"]
+
+[lint.isort]
+known-first-party = ["gippa", "gippasim", "_common", "_campaign"]
