@@ -1,0 +1,8 @@
+file_name	file_type	raw_format	bytes	checksum	checksum_source	url	acquisition	acquisition_source	sample	condition
+Ib10JZH_PM1_2_1_1.raw	raw	thermo_raw	4288671853	NA	NA	https://download.iprox.cn/IPX0017907000/IPX0017907001/Ib10JZH_PM1_2_1_1.raw	NA	NA	NA	NA
+Ib10JZH_PM1_2_2_2.raw	raw	thermo_raw	4326034328	NA	NA	https://download.iprox.cn/IPX0017907000/IPX0017907001/Ib10JZH_PM1_2_2_2.raw	NA	NA	NA	NA
+Ib10JZH_PM1_2_3_3.raw	raw	thermo_raw	4296139672	NA	NA	https://download.iprox.cn/IPX0017907000/IPX0017907001/Ib10JZH_PM1_2_3_3.raw	NA	NA	NA	NA
+Ib26JZH_PM1_1_4.raw	raw	thermo_raw	4345522167	NA	NA	https://download.iprox.cn/IPX0017907000/IPX0017907001/Ib26JZH_PM1_1_4.raw	NA	NA	NA	NA
+Ib26JZH_PM1_2_5.raw	raw	thermo_raw	4270352654	NA	NA	https://download.iprox.cn/IPX0017907000/IPX0017907001/Ib26JZH_PM1_2_5.raw	NA	NA	NA	NA
+Ib26JZH_PM1_3_6.raw	raw	thermo_raw	4333029566	NA	NA	https://download.iprox.cn/IPX0017907000/IPX0017907001/Ib26JZH_PM1_3_6.raw	NA	NA	NA	NA
+protein.fa	search	NA	1229085	NA	NA	https://download.iprox.cn/IPX0017907000/IPX0017907001/protein.fa	NA	NA	NA	NA
