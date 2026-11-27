@@ -1,0 +1,1132 @@
+{
+ "schema": "gippa-campaign-p2b/1",
+ "acc": "PXD049476",
+ "A": {
+  "commit": "bfc74ff6c20acc2cfcf298cdf23cbb30d8fae0dc",
+  "git_dirty": false,
+  "exit_code": 0,
+  "status": "completed",
+  "detection_tier": "decoy_picked",
+  "started_at": "2026-11-22T15:52:08+00:00",
+  "finished_at": "2026-11-22T18:01:41+00:00",
+  "warnings": [
+   "novel_orfs:novel_orfs.decoys_not_makedb",
+   "novel_orfs:novel_orfs.layer_missing"
+  ],
+  "layers_missing": [
+   "rbs_novel"
+  ],
+  "modules_off": [],
+  "seeds": {
+   "codon_usage": 3129038944,
+   "context_layers": 1365550599,
+   "context_stats": 105909204,
+   "detectability": 3987542110,
+   "determinants": 3593833509,
+   "function": 3400406589,
+   "gene_table": 393846822,
+   "loci": 1770125858,
+   "map_exact": 3911246953,
+   "map_tolerant": 1491420984,
+   "master": 20261014,
+   "novel_candidates": 2908536744,
+   "novel_orfs": 388090210,
+   "operon_pairs": 4034643963,
+   "operons": 179147819,
+   "ostir_input": 1327200810,
+   "parse_bakta": 642799015,
+   "placement": 1222341902,
+   "plots": 2413055744,
+   "promoter_layer": 2441405911,
+   "promoter_windows": 28991342,
+   "rbs_layer": 2821979816,
+   "region_layer": 1556029954,
+   "report": 3291445124,
+   "sensitivity": 4237340471,
+   "sixframe_index": 3300501706,
+   "terminator_layer": 1571130219,
+   "transterm_input": 732194518,
+   "tx_layer": 1302245994,
+   "uniop_input": 3714929077,
+   "variants": 3013104609
+  },
+  "inputs": {
+   "genome": "abffc6c36484a117c0646297a477452e3284bbae011f543d9c23a1f4377527cc",
+   "peptides": "b5cd13c37f190c1ee017ff64d0dcc58bee29f57037b608002cd1a19eadde3e73",
+   "annotation": "e96c6a7eacd3f9eed56cdbdc5f426c1691718e054ce815a6dcb538f15b17ac20",
+   "precomputed:bakta_json": "e96c6a7eacd3f9eed56cdbdc5f426c1691718e054ce815a6dcb538f15b17ac20"
+  },
+  "n_coding_genes": 4551,
+  "detection_status": {
+   "detected": 2515,
+   "not_detected": 2035,
+   "partial_excluded": 1
+  },
+  "detected_by_tier": {
+   "decoy_picked": 2515
+  },
+  "n_detected": 2515,
+  "n_detected_2pep": 2199,
+  "gene_fdr_at_q01": 0.00994036,
+  "mapping_fdr_all": [
+   {
+    "section": "placement",
+    "n_diff": 0,
+    "targets": 0,
+    "decoys": 1,
+    "n_accepted": 0,
+    "precision": null,
+    "ci_low": null,
+    "ci_high": null,
+    "flags": null
+   },
+   {
+    "section": "placement",
+    "n_diff": 1,
+    "targets": 1,
+    "decoys": 7,
+    "n_accepted": 0,
+    "precision": null,
+    "ci_low": null,
+    "ci_high": null,
+    "flags": null
+   },
+   {
+    "section": "placement",
+    "n_diff": 2,
+    "targets": 0,
+    "decoys": 1,
+    "n_accepted": 0,
+    "precision": null,
+    "ci_low": null,
+    "ci_high": null,
+    "flags": null
+   },
+   {
+    "section": "placement",
+    "n_diff": 0,
+    "targets": 0,
+    "decoys": 0,
+    "n_accepted": 0,
+    "precision": null,
+    "ci_low": null,
+    "ci_high": null,
+    "flags": null
+   },
+   {
+    "section": "placement",
+    "n_diff": 1,
+    "targets": 0,
+    "decoys": 0,
+    "n_accepted": 0,
+    "precision": null,
+    "ci_low": null,
+    "ci_high": null,
+    "flags": null
+   },
+   {
+    "section": "placement",
+    "n_diff": 2,
+    "targets": 0,
+    "decoys": 0,
+    "n_accepted": 0,
+    "precision": null,
+    "ci_low": null,
+    "ci_high": null,
+    "flags": null
+   }
+  ]
+ },
+ "B": {
+  "commit": "bfc74ff6c20acc2cfcf298cdf23cbb30d8fae0dc",
+  "git_dirty": false,
+  "exit_code": 0,
+  "status": "completed",
+  "detection_tier": "decoy_picked",
+  "started_at": "2026-11-22T18:02:01+00:00",
+  "finished_at": "2026-11-22T20:12:28+00:00",
+  "warnings": [
+   "novel_orfs:novel_orfs.class_q_floor_above_alpha"
+  ],
+  "layers_missing": [],
+  "modules_off": [],
+  "seeds": {
+   "codon_usage": 3129038944,
+   "context_layers": 1365550599,
+   "context_stats": 105909204,
+   "detectability": 3987542110,
+   "determinants": 3593833509,
+   "function": 3400406589,
+   "gene_table": 393846822,
+   "loci": 1770125858,
+   "map_exact": 3911246953,
+   "map_tolerant": 1491420984,
+   "master": 20261014,
+   "novel_candidates": 2908536744,
+   "novel_orfs": 388090210,
+   "novel_promoter_layer": 1428708026,
+   "novel_rbs_layer": 1423765203,
+   "operon_pairs": 4034643963,
+   "operons": 179147819,
+   "ostir_input": 1327200810,
+   "parse_bakta": 642799015,
+   "placement": 1222341902,
+   "plots": 2413055744,
+   "promoter_layer": 2441405911,
+   "promoter_windows": 28991342,
+   "rbs_layer": 2821979816,
+   "region_layer": 1556029954,
+   "report": 3291445124,
+   "sensitivity": 4237340471,
+   "sixframe_index": 3300501706,
+   "terminator_layer": 1571130219,
+   "transterm_input": 732194518,
+   "tx_layer": 1302245994,
+   "uniop_input": 3714929077,
+   "variants": 3013104609
+  },
+  "inputs": {
+   "genome": "abffc6c36484a117c0646297a477452e3284bbae011f543d9c23a1f4377527cc",
+   "peptides": "72dda0ad320d4261a593c5ff40036003d4758ff4098ac1e22d00190521810650",
+   "annotation": "e96c6a7eacd3f9eed56cdbdc5f426c1691718e054ce815a6dcb538f15b17ac20",
+   "precomputed:bakta_json": "e96c6a7eacd3f9eed56cdbdc5f426c1691718e054ce815a6dcb538f15b17ac20"
+  },
+  "n_coding_genes": 4551,
+  "detection_status": {
+   "detected": 2468,
+   "not_detected": 2082,
+   "partial_excluded": 1
+  },
+  "detected_by_tier": {
+   "decoy_picked": 2468
+  },
+  "n_detected": 2468,
+  "n_detected_2pep": 2129,
+  "gene_fdr_at_q01": 0.00931929,
+  "mapping_fdr_all": [
+   {
+    "section": "placement",
+    "n_diff": 0,
+    "targets": 0,
+    "decoys": 1,
+    "n_accepted": 0,
+    "precision": null,
+    "ci_low": null,
+    "ci_high": null,
+    "flags": null
+   },
+   {
+    "section": "placement",
+    "n_diff": 1,
+    "targets": 1,
+    "decoys": 5,
+    "n_accepted": 0,
+    "precision": null,
+    "ci_low": null,
+    "ci_high": null,
+    "flags": null
+   },
+   {
+    "section": "placement",
+    "n_diff": 2,
+    "targets": 0,
+    "decoys": 1,
+    "n_accepted": 0,
+    "precision": null,
+    "ci_low": null,
+    "ci_high": null,
+    "flags": null
+   },
+   {
+    "section": "placement",
+    "n_diff": 0,
+    "targets": 0,
+    "decoys": 0,
+    "n_accepted": 0,
+    "precision": null,
+    "ci_low": null,
+    "ci_high": null,
+    "flags": null
+   },
+   {
+    "section": "placement",
+    "n_diff": 1,
+    "targets": 0,
+    "decoys": 0,
+    "n_accepted": 0,
+    "precision": null,
+    "ci_low": null,
+    "ci_high": null,
+    "flags": null
+   },
+   {
+    "section": "placement",
+    "n_diff": 2,
+    "targets": 0,
+    "decoys": 0,
+    "n_accepted": 0,
+    "precision": null,
+    "ci_low": null,
+    "ci_high": null,
+    "flags": null
+   }
+  ]
+ },
+ "S1_te1": {
+  "n_peptides": 22438,
+  "exact_inframe": 22438,
+  "exact_inframe_masked": 5,
+  "share_exact_inframe": 1.0,
+  "ci_low": 0.9998288260422952,
+  "ci_high": 1.0,
+  "threshold": 0.995,
+  "passed": true,
+  "ci_low_below_threshold": false,
+  "target_q_na": 0,
+  "unknown_source": 0,
+  "non_atg_nterm": {
+   "peptides": 29,
+   "misses": 0
+  },
+  "misses": {
+   "non_atg_nterm": 0,
+   "exact_other_gene": 0,
+   "exact_other_class": {},
+   "tolerant_only": 0,
+   "unplaced": {}
+  },
+  "n_misses": 0,
+  "share_excluding_non_atg": {
+   "value": 1.0,
+   "ci_low": 0.9998286045601247,
+   "ci_high": 1.0,
+   "k": 22409,
+   "n": 22409
+  },
+  "share_without_q_at_cutoff": {
+   "value": null,
+   "ci_low": null,
+   "ci_high": null,
+   "k": 0,
+   "n": 0,
+   "reason": "no_crossings",
+   "removed": null,
+   "q_crossings": 0,
+   "pass_becomes_fail": false
+  },
+  "n_exceptions": 0
+ },
+ "S2_te3": {
+  "n_ribosomal": 56,
+  "abundance": {
+   "m": 32.6469,
+   "q3": 26.12345,
+   "percentile_rank": 0.9889101338432122,
+   "holds": true,
+   "n_r_measured": 56,
+   "n_measured": 2615,
+   "abundance_type": "ibaq"
+  },
+  "detection": {
+   "share": {
+    "value": 1.0,
+    "ci_low": 0.9358060632812366,
+    "ci_high": 1.0,
+    "k": 56,
+    "n": 56
+   },
+   "holds": true
+  },
+  "secondary": {
+   "without_type_b": {
+    "n_ribosomal": 55,
+    "abundance": {
+     "m": 32.6743,
+     "q3": 26.12345,
+     "percentile_rank": 0.9892925430210325,
+     "holds": true,
+     "n_r_measured": 55,
+     "n_measured": 2615,
+     "abundance_type": "ibaq"
+    },
+    "detection": {
+     "share": {
+      "value": 1.0,
+      "ci_low": 0.9347150988829137,
+      "ci_high": 1.0,
+      "k": 55,
+      "n": 55
+     },
+     "holds": true
+    }
+   },
+   "section_7_1_2": {
+    "n_ribosomal": 60,
+    "abundance": {
+     "m": 32.601,
+     "q3": 26.12345,
+     "percentile_rank": 0.988527724665392,
+     "holds": true,
+     "n_r_measured": 58,
+     "n_measured": 2615,
+     "abundance_type": "ibaq"
+    },
+    "detection": {
+     "share": {
+      "value": 0.9666666666666667,
+      "ci_low": 0.886362257256914,
+      "ci_high": 0.9908106807438021,
+      "k": 58,
+      "n": 60
+     },
+     "holds": true
+    }
+   }
+  },
+  "status": "pass"
+ },
+ "S3_te4": {
+  "genes": {
+   "KGNFJJ_00023": {
+    "locus_tag": "KGNFJJ_00023",
+    "gene": "rplL",
+    "contig": "NZ_CP009977.1",
+    "start": 16159,
+    "end": 16527,
+    "strand": "+",
+    "length_aa": 122,
+    "detection_status": "detected",
+    "detection_tier": "decoy_picked",
+    "gene_q_value": 0.000439754,
+    "n_peptides_unique": 6,
+    "n_peptides_shared": 0,
+    "coverage_frac": 0.357724,
+    "abundance_log2": 33.1543,
+    "abundance_scale": "molar",
+    "flags": "cai_reference"
+   },
+   "KGNFJJ_00022": {
+    "locus_tag": "KGNFJJ_00022",
+    "gene": "rplJ",
+    "contig": "NZ_CP009977.1",
+    "start": 15607,
+    "end": 16101,
+    "strand": "+",
+    "length_aa": 164,
+    "detection_status": "detected",
+    "detection_tier": "decoy_picked",
+    "gene_q_value": 0.000439754,
+    "n_peptides_unique": 9,
+    "n_peptides_shared": 0,
+    "coverage_frac": 0.593939,
+    "abundance_log2": 32.1978,
+    "abundance_scale": "molar",
+    "flags": "cai_reference"
+   },
+   "KGNFJJ_02722": {
+    "locus_tag": "KGNFJJ_02722",
+    "gene": "atpA",
+    "contig": "NZ_CP009977.1",
+    "start": 2927838,
+    "end": 2929379,
+    "strand": "+",
+    "length_aa": 513,
+    "detection_status": "detected",
+    "detection_tier": "decoy_picked",
+    "gene_q_value": 0.000439754,
+    "n_peptides_unique": 41,
+    "n_peptides_shared": 0,
+    "coverage_frac": 0.678988,
+    "abundance_log2": 31.3073,
+    "abundance_scale": "molar",
+    "flags": null
+   },
+   "KGNFJJ_02724": {
+    "locus_tag": "KGNFJJ_02724",
+    "gene": "atpD",
+    "contig": "NZ_CP009977.1",
+    "start": 2930326,
+    "end": 2931729,
+    "strand": "+",
+    "length_aa": 467,
+    "detection_status": "detected",
+    "detection_tier": "decoy_picked",
+    "gene_q_value": 0.000439754,
+    "n_peptides_unique": 25,
+    "n_peptides_shared": 0,
+    "coverage_frac": 0.653846,
+    "abundance_log2": 31.121,
+    "abundance_scale": "molar",
+    "flags": null
+   }
+  },
+  "pairs": {
+   "RplL/RplJ": {
+    "log2_ratio": 0.9564999999999984,
+    "low": 1.0,
+    "high": 3.0,
+    "scale": [
+     "molar"
+    ],
+    "status": "fail"
+   },
+   "AtpA/AtpD": {
+    "log2_ratio": 0.1863000000000028,
+    "low": -1.0,
+    "high": 1.0,
+    "scale": [
+     "molar"
+    ],
+    "status": "pass"
+   }
+  },
+  "verdict": "fail",
+  "te4_name_based": {
+   "status": "fail",
+   "pairs": {
+    "rplL/rplJ": {
+     "status": "fail",
+     "reason": [],
+     "low": 1,
+     "high": 3,
+     "log2_ratio": 0.9564999999999984,
+     "top3_log2_ratio": 0.9086999999999961
+    },
+    "atpA/atpD": {
+     "status": "not_evaluable",
+     "reason": [
+      "gene_ambiguous:atpD"
+     ],
+     "low": -1,
+     "high": 1,
+     "log2_ratio": null,
+     "top3_log2_ratio": null
+    }
+   },
+   "secondary": {
+    "genes": {
+     "rplL": {
+      "n_peptides_unique": 6,
+      "n_observable_peptides": 5
+     },
+     "rplJ": {
+      "n_peptides_unique": 9,
+      "n_observable_peptides": 5
+     },
+     "atpA": {
+      "n_peptides_unique": 41,
+      "n_observable_peptides": 30
+     },
+     "atpD": {
+      "n_peptides_unique": null,
+      "n_observable_peptides": null
+     }
+    }
+   },
+   "abundance_type": "ibaq",
+   "reason": [
+    "rplL/rplJ:fail",
+    "atpA/atpD:not_evaluable"
+   ]
+  }
+ },
+ "S4_te5": {
+  "n_s": 97,
+  "families": {
+   "trypsin": 4,
+   "keratin": 93
+  },
+  "counts": {
+   "genome_exact": 0,
+   "bucket": 97,
+   "placed_tolerant": 0,
+   "labelled_unmapped": 0,
+   "absent": 0,
+   "match_other_entry": 97
+  },
+  "share_bucket": {
+   "value": 1.0,
+   "ci_low": 0.9619059574740523,
+   "ci_high": 1.0,
+   "k": 97,
+   "n": 97
+  },
+  "secondary": {
+   "keratin_associated": {
+    "n_s": 0,
+    "families": {
+     "keratin_associated": 0
+    },
+    "counts": {
+     "genome_exact": 0,
+     "bucket": 0,
+     "placed_tolerant": 0,
+     "labelled_unmapped": 0,
+     "absent": 0,
+     "match_other_entry": 0
+    }
+   }
+  },
+  "status": "pass"
+ },
+ "S5_gene_fdr": {
+  "A": 0.00994036,
+  "B": 0.00931929,
+  "verdict": "pass"
+ },
+ "S6_regions": {
+  "regions": [
+   {
+    "region_id": "prophage_1",
+    "region_type": "prophage",
+    "contig": "NZ_CP009977.1",
+    "start": 936639,
+    "end": 972714,
+    "n_genes": 51,
+    "n_eligible": 51,
+    "observed": 5.0,
+    "expected": 26.1148,
+    "o_over_e": 0.191462,
+    "o_minus_e": -21.1148,
+    "ci_low": -43.2535,
+    "ci_high": -4.86233,
+    "p_value": 0.0135747,
+    "q_value": 0.015315
+   },
+   {
+    "region_id": "prophage_2",
+    "region_type": "prophage",
+    "contig": "NZ_CP009977.1",
+    "start": 1495937,
+    "end": 1532177,
+    "n_genes": 44,
+    "n_eligible": 44,
+    "observed": 6.0,
+    "expected": 24.2668,
+    "o_over_e": 0.247252,
+    "o_minus_e": -18.2668,
+    "ci_low": -43.0267,
+    "ci_high": -1.639,
+    "p_value": 0.015315,
+    "q_value": 0.015315
+   },
+   {
+    "region_id": "bgc_1",
+    "region_type": "bgc",
+    "contig": "NZ_CP009977.1",
+    "start": 1117626,
+    "end": 1128012,
+    "n_genes": 9,
+    "n_eligible": 9,
+    "observed": 2.0,
+    "expected": 4.91646,
+    "o_over_e": 0.406797,
+    "o_minus_e": -2.91646,
+    "ci_low": -6.04351,
+    "ci_high": 0.0808374,
+    "p_value": 0.100592,
+    "q_value": 0.804734
+   },
+   {
+    "region_id": "bgc_2",
+    "region_type": "bgc",
+    "contig": "NZ_CP009977.1",
+    "start": 1976364,
+    "end": 2026370,
+    "n_genes": 41,
+    "n_eligible": 41,
+    "observed": 29.0,
+    "expected": 23.6459,
+    "o_over_e": 1.22643,
+    "o_minus_e": 5.3541,
+    "ci_low": -2.16572,
+    "ci_high": 12.4302,
+    "p_value": 0.846502,
+    "q_value": 0.98867
+   },
+   {
+    "region_id": "bgc_3",
+    "region_type": "bgc",
+    "contig": "NZ_CP009977.1",
+    "start": 2179454,
+    "end": 2200338,
+    "n_genes": 21,
+    "n_eligible": 21,
+    "observed": 18.0,
+    "expected": 12.5744,
+    "o_over_e": 1.43148,
+    "o_minus_e": 5.42561,
+    "ci_low": 3.76568,
+    "ci_high": 7.19599,
+    "p_value": 0.412461,
+    "q_value": 0.98867
+   },
+   {
+    "region_id": "bgc_4",
+    "region_type": "bgc",
+    "contig": "NZ_CP009977.1",
+    "start": 2533895,
+    "end": 2562217,
+    "n_genes": 21,
+    "n_eligible": 21,
+    "observed": 16.0,
+    "expected": 12.852,
+    "o_over_e": 1.24494,
+    "o_minus_e": 3.14796,
+    "ci_low": -0.534534,
+    "ci_high": 6.75571,
+    "p_value": 0.809259,
+    "q_value": 0.98867
+   },
+   {
+    "region_id": "bgc_5",
+    "region_type": "bgc",
+    "contig": "NZ_CP009977.1",
+    "start": 2984272,
+    "end": 2995144,
+    "n_genes": 10,
+    "n_eligible": 10,
+    "observed": 4.0,
+    "expected": 5.41395,
+    "o_over_e": 0.738833,
+    "o_minus_e": -1.41395,
+    "ci_low": -5.29807,
+    "ci_high": 1.8832,
+    "p_value": 0.333797,
+    "q_value": 0.98867
+   },
+   {
+    "region_id": "bgc_6",
+    "region_type": "bgc",
+    "contig": "NZ_CP009978.1",
+    "start": 193044,
+    "end": 203430,
+    "n_genes": 8,
+    "n_eligible": 8,
+    "observed": 3.0,
+    "expected": 4.2293,
+    "o_over_e": 0.709337,
+    "o_minus_e": -1.2293,
+    "ci_low": -3.37007,
+    "ci_high": 0.839531,
+    "p_value": 0.98867,
+    "q_value": 0.98867
+   },
+   {
+    "region_id": "bgc_7",
+    "region_type": "bgc",
+    "contig": "NZ_CP009978.1",
+    "start": 1196060,
+    "end": 1208912,
+    "n_genes": 15,
+    "n_eligible": 15,
+    "observed": 6.0,
+    "expected": 8.02256,
+    "o_over_e": 0.747891,
+    "o_minus_e": -2.02256,
+    "ci_low": -9.50411,
+    "ci_high": 2.94091,
+    "p_value": 0.902206,
+    "q_value": 0.98867
+   },
+   {
+    "region_id": "bgc_8",
+    "region_type": "bgc",
+    "contig": "NZ_CP009978.1",
+    "start": 1383809,
+    "end": 1426637,
+    "n_genes": 34,
+    "n_eligible": 34,
+    "observed": 12.0,
+    "expected": 19.0648,
+    "o_over_e": 0.629432,
+    "o_minus_e": -7.0648,
+    "ci_low": -15.9974,
+    "ci_high": 1.16749,
+    "p_value": 0.816339,
+    "q_value": 0.98867
+   }
+  ],
+  "n_prophage": 2,
+  "n_prophage_lower": 2,
+  "n_prophage_lower_q05": 2,
+  "n_regions_q05_any_type": 2,
+  "verdict": "pass",
+  "islands": []
+ },
+ "S7_operons": {
+  "n_ribo_atp_genes": 65,
+  "n_pairs": 41,
+  "pair_class": {
+   "OP": 36,
+   "NO": 5
+  },
+  "n_pairs_q_le_0.05": 0,
+  "median_abs_delta_log2": 0.9896655,
+  "min_q": 0.79888,
+  "operon_flags": [],
+  "n_flags_all": 16,
+  "flag_counts_all": {
+   "conflict_terminator_in_operon": 16
+  },
+  "discordant": [],
+  "verdict": "pass"
+ },
+ "S8_novel": {
+  "n_candidates": 78,
+  "candidates_by_class": {
+   "nterm_extension": 15,
+   "cds_outframe": 17,
+   "intergenic": 12,
+   "antisense": 34
+  },
+  "n_called": 0,
+  "called_by_class": {},
+  "min_class_fdr_by_class": {
+   "nterm_extension": 0.166667,
+   "cds_outframe": 1.0,
+   "intergenic": 0.5,
+   "antisense": 0.666667
+  },
+  "share_matching_refseq": {
+   "k": 0,
+   "n": 0,
+   "value": null,
+   "ci_low": null,
+   "ci_high": null
+  },
+  "called": [],
+  "candidates_ge2_peptides": [
+   {
+    "orf_id": "NOVEL_NZ_CP009977.1_1994672_p",
+    "class": "nterm_extension",
+    "contig": "NZ_CP009977.1",
+    "start": 1994672,
+    "end": 1995412,
+    "strand": "+",
+    "length_aa": 246,
+    "n_peptides": 2,
+    "best_peptide_q": 0.000460624,
+    "class_fdr": 0.166667,
+    "flags": "rbs_supported;promoter_supported",
+    "overlapping_gene": "KGNFJJ_01839",
+    "refseq_name": "WP_020336123.1",
+    "refseq_locus": "PN96_RS09195",
+    "refseq_product": "4'-phosphopantetheinyl transferase family protein",
+    "overlap_frac": 0.984
+   },
+   {
+    "orf_id": "NOVEL_NZ_CP009977.1_2297530_m",
+    "class": "nterm_extension",
+    "contig": "NZ_CP009977.1",
+    "start": 2297530,
+    "end": 2298054,
+    "strand": "-",
+    "length_aa": 174,
+    "n_peptides": 2,
+    "best_peptide_q": 3.01718e-05,
+    "class_fdr": 0.166667,
+    "flags": "rbs_supported;promoter_supported",
+    "overlapping_gene": "KGNFJJ_02135",
+    "refseq_name": "iscR",
+    "refseq_locus": "PN96_RS10675",
+    "refseq_product": "Fe-S cluster assembly transcriptional regulator IscR",
+    "overlap_frac": 0.966
+   },
+   {
+    "orf_id": "NOVEL_NZ_CP009977.1_2396209_m",
+    "class": "nterm_extension",
+    "contig": "NZ_CP009977.1",
+    "start": 2396209,
+    "end": 2397213,
+    "strand": "-",
+    "length_aa": 334,
+    "n_peptides": 2,
+    "best_peptide_q": 7.63043e-07,
+    "class_fdr": 0.166667,
+    "flags": "no_start_codon",
+    "overlapping_gene": "KGNFJJ_02223",
+    "refseq_name": "prfB",
+    "refseq_locus": "PN96_RS11120",
+    "refseq_product": "peptide chain release factor 2",
+    "overlap_frac": 1.0
+   },
+   {
+    "orf_id": "NOVEL_NZ_CP009977.1_2668644_p",
+    "class": "nterm_extension",
+    "contig": "NZ_CP009977.1",
+    "start": 2668644,
+    "end": 2669573,
+    "strand": "+",
+    "length_aa": 309,
+    "n_peptides": 2,
+    "best_peptide_q": 0.0011956,
+    "class_fdr": 0.166667,
+    "flags": "rbs_supported",
+    "overlapping_gene": "KGNFJJ_02477",
+    "refseq_name": "rfbA",
+    "refseq_locus": "PN96_RS12375",
+    "refseq_product": "glucose-1-phosphate thymidylyltransferase RfbA",
+    "overlap_frac": 0.961
+   },
+   {
+    "orf_id": "NOVEL_NZ_CP009977.1_2877833_p",
+    "class": "nterm_extension",
+    "contig": "NZ_CP009977.1",
+    "start": 2877833,
+    "end": 2878750,
+    "strand": "+",
+    "length_aa": 305,
+    "n_peptides": 2,
+    "best_peptide_q": 0.000460624,
+    "class_fdr": 0.166667,
+    "flags": "rbs_supported;promoter_supported",
+    "overlapping_gene": "KGNFJJ_02674",
+    "refseq_name": "ilvY",
+    "refseq_locus": "PN96_RS13350",
+    "refseq_product": "HTH-type transcriptional activator IlvY",
+    "overlap_frac": 0.971
+   },
+   {
+    "orf_id": "NOVEL_NZ_CP009977.1_3086294_m",
+    "class": "nterm_extension",
+    "contig": "NZ_CP009977.1",
+    "start": 3086294,
+    "end": 3087289,
+    "strand": "-",
+    "length_aa": 331,
+    "n_peptides": 2,
+    "best_peptide_q": 0.000424946,
+    "class_fdr": 0.166667,
+    "flags": "promoter_supported",
+    "overlapping_gene": "KGNFJJ_02879",
+    "refseq_name": "dusB",
+    "refseq_locus": "PN96_RS14385",
+    "refseq_product": "tRNA dihydrouridine synthase DusB",
+    "overlap_frac": 0.973
+   },
+   {
+    "orf_id": "NOVEL_NZ_CP009977.1_3240449_p",
+    "class": "nterm_extension",
+    "contig": "NZ_CP009977.1",
+    "start": 3240449,
+    "end": 3241429,
+    "strand": "+",
+    "length_aa": 326,
+    "n_peptides": 2,
+    "best_peptide_q": 6.13155e-07,
+    "class_fdr": 0.166667,
+    "flags": "rbs_supported;promoter_supported;terminator_supported",
+    "overlapping_gene": "KGNFJJ_03030",
+    "refseq_name": "dusA",
+    "refseq_locus": "PN96_RS15145",
+    "refseq_product": "tRNA dihydrouridine(20/20a) synthase DusA",
+    "overlap_frac": 1.0
+   }
+  ]
+ },
+ "S9_q_floor": {
+  "warnings": [
+   "novel_orfs:novel_orfs.class_q_floor_above_alpha"
+  ],
+  "classes_below_100_and_fdr_above_alpha": [
+   "nterm_extension",
+   "cds_outframe",
+   "intergenic",
+   "antisense"
+  ],
+  "verdict": "pass"
+ },
+ "S10_route_b": {
+  "A_detected": 2515,
+  "B_detected": 2468,
+  "A_kept_by_B": {
+   "k": 2436,
+   "n": 2515,
+   "value": 0.9685884691848906,
+   "ci_low": 0.9610246455148583,
+   "ci_high": 0.9747230140871606
+  },
+  "B_only": 32
+ },
+ "compare": {
+  "compare_abundance": [
+   {
+    "run_a": "genes",
+    "run_b": "sixframe",
+    "n_shared": 2436,
+    "n_units": 1747,
+    "spearman_rho": 0.99448,
+    "ci_low": 0.992394,
+    "ci_high": 0.996087,
+    "ba_bias_log2": 0.0474556,
+    "ba_loa_low": -0.79558,
+    "ba_loa_high": 0.890492,
+    "method": "spearman_tu_bootstrap",
+    "n_boot": 1000,
+    "flags": null
+   }
+  ],
+  "compare_detection": [
+   {
+    "section": "intersection",
+    "locus_tag": null,
+    "run": null,
+    "detected": null,
+    "detection_status": null,
+    "intersection": "genes&sixframe",
+    "n_genes": 2436.0
+   },
+   {
+    "section": "intersection",
+    "locus_tag": null,
+    "run": null,
+    "detected": null,
+    "detection_status": null,
+    "intersection": "none",
+    "n_genes": 2006.0
+   },
+   {
+    "section": "intersection",
+    "locus_tag": null,
+    "run": null,
+    "detected": null,
+    "detection_status": null,
+    "intersection": "genes",
+    "n_genes": 79.0
+   },
+   {
+    "section": "intersection",
+    "locus_tag": null,
+    "run": null,
+    "detected": null,
+    "detection_status": null,
+    "intersection": "sixframe",
+    "n_genes": 32.0
+   }
+  ],
+  "compare_stability": [
+   {
+    "family": "islands",
+    "run_a": "genes",
+    "run_b": "sixframe",
+    "n_a": 0,
+    "n_b": 0,
+    "n_shared": 0,
+    "jaccard": null,
+    "flags": "both_empty"
+   },
+   {
+    "family": "operon_flags",
+    "run_a": "genes",
+    "run_b": "sixframe",
+    "n_a": 0,
+    "n_b": 0,
+    "n_shared": 0,
+    "jaccard": null,
+    "flags": "both_empty"
+   },
+   {
+    "family": "enriched_categories",
+    "run_a": "genes",
+    "run_b": "sixframe",
+    "n_a": 364,
+    "n_b": 374,
+    "n_shared": 351,
+    "jaccard": 0.906977,
+    "flags": null
+   },
+   {
+    "family": "novel_orfs",
+    "run_a": "genes",
+    "run_b": "sixframe",
+    "n_a": 0,
+    "n_b": 0,
+    "n_shared": 0,
+    "jaccard": null,
+    "flags": "both_empty"
+   },
+   {
+    "family": "alt_sites",
+    "run_a": "genes",
+    "run_b": "sixframe",
+    "n_a": 0,
+    "n_b": 0,
+    "n_shared": 0,
+    "jaccard": null,
+    "flags": "both_empty"
+   }
+  ]
+ },
+ "S12_variants": {
+  "A": {
+   "n_rows": 0,
+   "n_high_alt": 0,
+   "verdict": "pass"
+  },
+  "B": {
+   "n_rows": 0,
+   "n_high_alt": 0,
+   "verdict": "pass"
+  }
+ },
+ "V": {
+  "per_chromosome": {
+   "chr1": {
+    "contig": "NZ_CP009977.1",
+    "n_coding": 2873,
+    "detected": {
+     "k": 1877,
+     "n": 2873,
+     "value": 0.6533240515140968,
+     "ci_low": 0.6357274424752822,
+     "ci_high": 0.6705111920169881
+    },
+    "median_abundance_log2": 24.4828,
+    "B_kept": {
+     "k": 1829,
+     "n": 1877,
+     "value": 0.9744272775705913,
+     "ci_low": 0.9662587610913759,
+     "ci_high": 0.9806578392672233
+    }
+   },
+   "chr2": {
+    "contig": "NZ_CP009978.1",
+    "n_coding": 1678,
+    "detected": {
+     "k": 638,
+     "n": 1678,
+     "value": 0.3802145411203814,
+     "ci_low": 0.35728638676893787,
+     "ci_high": 0.4036898943831023
+    },
+    "median_abundance_log2": 22.499650000000003,
+    "B_kept": {
+     "k": 607,
+     "n": 638,
+     "value": 0.95141065830721,
+     "ci_low": 0.9318572601355998,
+     "ci_high": 0.9655606178842001
+    }
+   }
+  },
+  "V1": {
+   "diff": 0.2731095103937154,
+   "ci_low": 0.2437712612899527,
+   "ci_high": 0.3017643190761991,
+   "verdict": "pass"
+  },
+  "V2": {
+   "median_x": 24.4828,
+   "median_y": 22.499650000000003,
+   "diff": 1.9831499999999984,
+   "ci_low": 1.6826537500000005,
+   "ci_high": 2.3136224999999975,
+   "n_x": 1877,
+   "n_y": 638,
+   "n_boot": 2000,
+   "verdict": "pass"
+  }
+ }
+}

@@ -1,0 +1,404 @@
+{
+ "dataset": "PXD049476",
+ "lane_steps": [
+  {
+   "step": "makedb",
+   "exit": "0",
+   "wall_s": "13",
+   "job": "2008649"
+  },
+  {
+   "step": "lib_a",
+   "exit": "0",
+   "wall_s": "129",
+   "job": "2008649"
+  },
+  {
+   "step": "lib_b",
+   "exit": "0",
+   "wall_s": "552",
+   "job": "2008649"
+  },
+  {
+   "step": "diann_a",
+   "exit": "0",
+   "wall_s": "1059",
+   "job": "2008649"
+  },
+  {
+   "step": "diann_b",
+   "exit": "0",
+   "wall_s": "3025",
+   "job": "2008649"
+  },
+  {
+   "step": "conv_a",
+   "exit": "0",
+   "wall_s": "17",
+   "job": "2008649"
+  },
+  {
+   "step": "conv_b",
+   "exit": "0",
+   "wall_s": "13",
+   "job": "2008649"
+  },
+  {
+   "step": "run_a",
+   "exit": "0",
+   "wall_s": "7787",
+   "job": "2008649"
+  },
+  {
+   "step": "run_b",
+   "exit": "0",
+   "wall_s": "7846",
+   "job": "2008649"
+  },
+  {
+   "step": "post",
+   "exit": "0",
+   "wall_s": "149",
+   "job": "2008649"
+  }
+ ],
+ "jobs": {
+  "2008649": {
+   "job_id": "2008649",
+   "name": "gippa-camp-p2b-vnat",
+   "state": "COMPLETED",
+   "elapsed": "05:43:18",
+   "exit_code": "0:0",
+   "node": "wheat-05",
+   "alloc_cpus": "16",
+   "start": "2026-11-22T06:31:47",
+   "end": "2026-11-22T12:15:05",
+   "max_rss": "51705984K"
+  }
+ },
+ "raw_sha256": {
+  "Vnat-1-1.raw": "6201de24dc10e2179590a71bf97ff11ddb2da4680cce186f120149ac565e2817",
+  "Vnat-1-2.raw": "d927f690a70ebb6c3bb1f7bbb6b0c26b85c9fa11fa0194d38f76cbc1102f6b18",
+  "Vnat-1-3.raw": "43ab7eadfa34a68daacb86ab244989a512199be75a04eba72bdab405de4d7923",
+  "Vnat-1-4.raw": "235744f290e3fbe8310d4cfe0ce634f88d99794b353fbbf74459f73fdcd8f33e"
+ },
+ "db": {
+  "a": {
+   "records": 4932,
+   "contaminant_records": 381,
+   "bytes": 1890882,
+   "sha256": "431f6a6fa60966943ccd45d0283c3f56b939988a74e179815bc7cb31a885df7e"
+  },
+  "b": {
+   "records": 154248,
+   "contaminant_records": 381,
+   "bytes": 15657076,
+   "sha256": "67be2211554c05069ce3e38adc3756ddff4b1d00667106a977bdb1c4ed71e66b"
+  }
+ },
+ "diann": {
+  "a": {
+   "library_precursors": 782456,
+   "step1_job": "2008649",
+   "step1_wall_s": 122,
+   "library_bytes": 191949806,
+   "step2_job": "2008649",
+   "step2_wall_s": 1053,
+   "n_runs": 4,
+   "image_sha256": "1946452d56d2fb0f66e05ced473df88e53484e28040f1ecbd83c4a43405a6381",
+   "cfg_sha256": "f89dfab40ef5d1195b96c38d29f813a0e848587d1917ec5555ea6f68fc2959cf",
+   "fasta_sha256": {
+    "/home/classes/bios/270/khoa/giap/local/campaign/PXD049476/db_a/strain_db.faa": "431f6a6fa60966943ccd45d0283c3f56b939988a74e179815bc7cb31a885df7e"
+   },
+   "per_run": [
+    {
+     "run": "Vnat-1-1.raw",
+     "Precursors.Identified": "23231",
+     "Proteins.Identified": "1173"
+    },
+    {
+     "run": "Vnat-1-2.raw",
+     "Precursors.Identified": "24313",
+     "Proteins.Identified": "1195"
+    },
+    {
+     "run": "Vnat-1-3.raw",
+     "Precursors.Identified": "26389",
+     "Proteins.Identified": "1256"
+    },
+    {
+     "run": "Vnat-1-4.raw",
+     "Precursors.Identified": "27522",
+     "Proteins.Identified": "1250"
+    }
+   ],
+   "report_sha256": "2ad6225bb9be6b7142453ba64b23aa466a5cfe842c159da5ae035c5276c786c0"
+  },
+  "b": {
+   "library_precursors": 4075479,
+   "step1_job": "2008649",
+   "step1_wall_s": 542,
+   "library_bytes": 1018493240,
+   "step2_job": "2008649",
+   "step2_wall_s": 3015,
+   "n_runs": 4,
+   "image_sha256": "1946452d56d2fb0f66e05ced473df88e53484e28040f1ecbd83c4a43405a6381",
+   "cfg_sha256": "f89dfab40ef5d1195b96c38d29f813a0e848587d1917ec5555ea6f68fc2959cf",
+   "fasta_sha256": {
+    "/home/classes/bios/270/khoa/giap/local/campaign/PXD049476/db_b/strain_db.faa": "67be2211554c05069ce3e38adc3756ddff4b1d00667106a977bdb1c4ed71e66b"
+   },
+   "per_run": [
+    {
+     "run": "Vnat-1-1.raw",
+     "Precursors.Identified": "22159",
+     "Proteins.Identified": "1146"
+    },
+    {
+     "run": "Vnat-1-2.raw",
+     "Precursors.Identified": "23329",
+     "Proteins.Identified": "1173"
+    },
+    {
+     "run": "Vnat-1-3.raw",
+     "Precursors.Identified": "25559",
+     "Proteins.Identified": "1211"
+    },
+    {
+     "run": "Vnat-1-4.raw",
+     "Precursors.Identified": "26748",
+     "Proteins.Identified": "1219"
+    }
+   ],
+   "report_sha256": "e1508dd6a268c13886fe4ca41221174eac78c8613fc3ebf1c1567bd273f79f8e"
+  }
+ },
+ "convert": {
+  "a": {
+   "job_id": "2008649",
+   "pin": "/home/classes/bios/270/khoa/giap/local/worktrees/rel111-pin",
+   "commit": "bfc74ff6c20acc2cfcf298cdf23cbb30d8fae0dc",
+   "search_db": "same",
+   "convert_exit": 0,
+   "convert2_exit": 0,
+   "convert_wall_s": 5,
+   "deterministic": true,
+   "preflight_strict_exit": 0,
+   "preflight_wall_s": 6,
+   "sha256": {
+    "report": "2ad6225bb9be6b7142453ba64b23aa466a5cfe842c159da5ae035c5276c786c0",
+    "genome": "abffc6c36484a117c0646297a477452e3284bbae011f543d9c23a1f4377527cc",
+    "annotation": "e96c6a7eacd3f9eed56cdbdc5f426c1691718e054ce815a6dcb538f15b17ac20",
+    "peptides": "b5cd13c37f190c1ee017ff64d0dcc58bee29f57037b608002cd1a19eadde3e73",
+    "abundance": "4c1231d4ad4b43541ce4e5a99ed21bee6806a58a7d7f4a55130ef6113d5659a1"
+   }
+  },
+  "b": {
+   "job_id": "2008649",
+   "pin": "/home/classes/bios/270/khoa/giap/local/worktrees/rel111-pin",
+   "commit": "bfc74ff6c20acc2cfcf298cdf23cbb30d8fae0dc",
+   "search_db": "same",
+   "convert_exit": 0,
+   "convert2_exit": 0,
+   "convert_wall_s": 4,
+   "deterministic": true,
+   "preflight_strict_exit": 0,
+   "preflight_wall_s": 6,
+   "sha256": {
+    "report": "e1508dd6a268c13886fe4ca41221174eac78c8613fc3ebf1c1567bd273f79f8e",
+    "genome": "abffc6c36484a117c0646297a477452e3284bbae011f543d9c23a1f4377527cc",
+    "annotation": "e96c6a7eacd3f9eed56cdbdc5f426c1691718e054ce815a6dcb538f15b17ac20",
+    "peptides": "72dda0ad320d4261a593c5ff40036003d4758ff4098ac1e22d00190521810650",
+    "abundance": "82dffd3ed6bfe8564820c7e4e6c02fa55cc9a4a6cd754091457c1f5f36994b0b"
+   }
+  }
+ },
+ "runs": {
+  "a": {
+   "git_commit": "bfc74ff6c20acc2cfcf298cdf23cbb30d8fae0dc",
+   "git_dirty": false,
+   "gippa_version": "1.1.1",
+   "profile": "farmshare_local,apptainer",
+   "exit_code": 0,
+   "started_at": "2026-11-22T15:52:08+00:00",
+   "finished_at": "2026-11-22T18:01:41+00:00",
+   "seeds": {
+    "codon_usage": 3129038944,
+    "context_layers": 1365550599,
+    "context_stats": 105909204,
+    "detectability": 3987542110,
+    "determinants": 3593833509,
+    "function": 3400406589,
+    "gene_table": 393846822,
+    "loci": 1770125858,
+    "map_exact": 3911246953,
+    "map_tolerant": 1491420984,
+    "master": 20261014,
+    "novel_candidates": 2908536744,
+    "novel_orfs": 388090210,
+    "operon_pairs": 4034643963,
+    "operons": 179147819,
+    "ostir_input": 1327200810,
+    "parse_bakta": 642799015,
+    "placement": 1222341902,
+    "plots": 2413055744,
+    "promoter_layer": 2441405911,
+    "promoter_windows": 28991342,
+    "rbs_layer": 2821979816,
+    "region_layer": 1556029954,
+    "report": 3291445124,
+    "sensitivity": 4237340471,
+    "sixframe_index": 3300501706,
+    "terminator_layer": 1571130219,
+    "transterm_input": 732194518,
+    "tx_layer": 1302245994,
+    "uniop_input": 3714929077,
+    "variants": 3013104609
+   },
+   "modules_off": [],
+   "layers_missing": [
+    "rbs_novel"
+   ],
+   "warnings": [
+    "novel_orfs:novel_orfs.decoys_not_makedb",
+    "novel_orfs:novel_orfs.layer_missing"
+   ],
+   "inputs": {
+    "genome": "abffc6c36484a117c0646297a477452e3284bbae011f543d9c23a1f4377527cc",
+    "peptides": "b5cd13c37f190c1ee017ff64d0dcc58bee29f57037b608002cd1a19eadde3e73",
+    "annotation": "e96c6a7eacd3f9eed56cdbdc5f426c1691718e054ce815a6dcb538f15b17ac20",
+    "precomputed:bakta_json": "e96c6a7eacd3f9eed56cdbdc5f426c1691718e054ce815a6dcb538f15b17ac20"
+   },
+   "tools": {
+    "antismash": {
+     "version": "8.0.4",
+     "digest": "sha256:d3f390e687cfe02f1387be40256dddbf678e91bc56b96c36da07b56ec8bda29d"
+    },
+    "genomad": {
+     "version": "1.12.0",
+     "digest": "sha256:d54652ff868af72604ea0e54c541c5c92168c7ac821a422de05dcbad65509e5c"
+    },
+    "ostir": {
+     "version": "1.1.3",
+     "digest": "sha256:d9107b9b87fd6f3d3cd329ba1d2ac66b9af9e38512f11d2b8a0210110c6c9292"
+    },
+    "promotech": {
+     "version": "56251ad9b883ef831b4753fc623d5ec970fe65e0",
+     "digest": "sha256:7366eaf67d9b26c6036ed5ececa740fe2728fdcf0cd4b2a12a0d9597b87a53ac"
+    },
+    "promoter_calculator": {
+     "version": "1.2.4",
+     "digest": "sha256:c5bd0662ceed623c00c4bf40b085c6541b7676e1ccc37a390e0efd73e02b48df"
+    },
+    "terminatornet": {
+     "version": "72180309545988dba63b8bd5db5d0b09bf4dba70",
+     "digest": "sha256:ec415757b6b70cce8240f425b35bf3e74dc3abe8ff413049c04d808034592f7a"
+    },
+    "transtermhp": {
+     "version": "2.09",
+     "digest": "sha256:fc6fe0404be9340a883ec7a7b90415dfc3826c2bca7333a0314335c7bfee2d03"
+    },
+    "uniop": {
+     "version": "3ed14dfc2a5d69b993d99a26e50c1f8e9723c087",
+     "digest": null
+    },
+    "viennarna": {
+     "version": "2.6.4",
+     "digest": "sha256:d9107b9b87fd6f3d3cd329ba1d2ac66b9af9e38512f11d2b8a0210110c6c9292"
+    }
+   }
+  },
+  "b": {
+   "git_commit": "bfc74ff6c20acc2cfcf298cdf23cbb30d8fae0dc",
+   "git_dirty": false,
+   "gippa_version": "1.1.1",
+   "profile": "farmshare_local,apptainer",
+   "exit_code": 0,
+   "started_at": "2026-11-22T18:02:01+00:00",
+   "finished_at": "2026-11-22T20:12:28+00:00",
+   "seeds": {
+    "codon_usage": 3129038944,
+    "context_layers": 1365550599,
+    "context_stats": 105909204,
+    "detectability": 3987542110,
+    "determinants": 3593833509,
+    "function": 3400406589,
+    "gene_table": 393846822,
+    "loci": 1770125858,
+    "map_exact": 3911246953,
+    "map_tolerant": 1491420984,
+    "master": 20261014,
+    "novel_candidates": 2908536744,
+    "novel_orfs": 388090210,
+    "novel_promoter_layer": 1428708026,
+    "novel_rbs_layer": 1423765203,
+    "operon_pairs": 4034643963,
+    "operons": 179147819,
+    "ostir_input": 1327200810,
+    "parse_bakta": 642799015,
+    "placement": 1222341902,
+    "plots": 2413055744,
+    "promoter_layer": 2441405911,
+    "promoter_windows": 28991342,
+    "rbs_layer": 2821979816,
+    "region_layer": 1556029954,
+    "report": 3291445124,
+    "sensitivity": 4237340471,
+    "sixframe_index": 3300501706,
+    "terminator_layer": 1571130219,
+    "transterm_input": 732194518,
+    "tx_layer": 1302245994,
+    "uniop_input": 3714929077,
+    "variants": 3013104609
+   },
+   "modules_off": [],
+   "layers_missing": [],
+   "warnings": [
+    "novel_orfs:novel_orfs.class_q_floor_above_alpha"
+   ],
+   "inputs": {
+    "genome": "abffc6c36484a117c0646297a477452e3284bbae011f543d9c23a1f4377527cc",
+    "peptides": "72dda0ad320d4261a593c5ff40036003d4758ff4098ac1e22d00190521810650",
+    "annotation": "e96c6a7eacd3f9eed56cdbdc5f426c1691718e054ce815a6dcb538f15b17ac20",
+    "precomputed:bakta_json": "e96c6a7eacd3f9eed56cdbdc5f426c1691718e054ce815a6dcb538f15b17ac20"
+   },
+   "tools": {
+    "antismash": {
+     "version": "8.0.4",
+     "digest": "sha256:d3f390e687cfe02f1387be40256dddbf678e91bc56b96c36da07b56ec8bda29d"
+    },
+    "genomad": {
+     "version": "1.12.0",
+     "digest": "sha256:d54652ff868af72604ea0e54c541c5c92168c7ac821a422de05dcbad65509e5c"
+    },
+    "ostir": {
+     "version": "1.1.3",
+     "digest": "sha256:d9107b9b87fd6f3d3cd329ba1d2ac66b9af9e38512f11d2b8a0210110c6c9292"
+    },
+    "promotech": {
+     "version": "56251ad9b883ef831b4753fc623d5ec970fe65e0",
+     "digest": "sha256:7366eaf67d9b26c6036ed5ececa740fe2728fdcf0cd4b2a12a0d9597b87a53ac"
+    },
+    "promoter_calculator": {
+     "version": "1.2.4",
+     "digest": "sha256:c5bd0662ceed623c00c4bf40b085c6541b7676e1ccc37a390e0efd73e02b48df"
+    },
+    "terminatornet": {
+     "version": "72180309545988dba63b8bd5db5d0b09bf4dba70",
+     "digest": "sha256:ec415757b6b70cce8240f425b35bf3e74dc3abe8ff413049c04d808034592f7a"
+    },
+    "transtermhp": {
+     "version": "2.09",
+     "digest": "sha256:fc6fe0404be9340a883ec7a7b90415dfc3826c2bca7333a0314335c7bfee2d03"
+    },
+    "uniop": {
+     "version": "3ed14dfc2a5d69b993d99a26e50c1f8e9723c087",
+     "digest": null
+    },
+    "viennarna": {
+     "version": "2.6.4",
+     "digest": "sha256:d9107b9b87fd6f3d3cd329ba1d2ac66b9af9e38512f11d2b8a0210110c6c9292"
+    }
+   }
+  }
+ }
+}

@@ -1,0 +1,515 @@
+{
+ "dataset": "PXD072227",
+ "lane_steps": [
+  {
+   "step": "makedb",
+   "exit": "0",
+   "wall_s": "9",
+   "job": "2005461"
+  },
+  {
+   "step": "lib_a",
+   "exit": "0",
+   "wall_s": "95",
+   "job": "2005461"
+  },
+  {
+   "step": "lib_b",
+   "exit": "0",
+   "wall_s": "442",
+   "job": "2005461"
+  },
+  {
+   "step": "diann_a",
+   "exit": "0",
+   "wall_s": "1112",
+   "job": "2005461"
+  },
+  {
+   "step": "diann_b",
+   "exit": "0",
+   "wall_s": "4098",
+   "job": "2005461"
+  },
+  {
+   "step": "conv_a",
+   "exit": "0",
+   "wall_s": "15",
+   "job": "2005461"
+  },
+  {
+   "step": "conv_b",
+   "exit": "0",
+   "wall_s": "13",
+   "job": "2005461"
+  },
+  {
+   "step": "run_a",
+   "exit": "0",
+   "wall_s": "5294",
+   "job": "2005461"
+  },
+  {
+   "step": "run_b",
+   "exit": "0",
+   "wall_s": "5080",
+   "job": "2005461"
+  },
+  {
+   "step": "post",
+   "exit": "0",
+   "wall_s": "115",
+   "job": "2005461"
+  },
+  {
+   "step": "te7",
+   "exit": "0",
+   "wall_s": "4513",
+   "job": "2005461"
+  }
+ ],
+ "jobs": {
+  "2005461": {
+   "job_id": "2005461",
+   "name": "gippa-camp-p2b-syn",
+   "state": "COMPLETED",
+   "elapsed": "05:46:34",
+   "exit_code": "0:0",
+   "node": "wheat-07",
+   "alloc_cpus": "16",
+   "start": "2026-11-21T22:13:31",
+   "end": "2026-11-22T04:00:05",
+   "max_rss": "49092084K"
+  }
+ },
+ "raw_sha256": {
+  "231113_Garcia_DIA_2ug_23_9311_T1.raw": "84b33b766d3326a611a87b01a55d7709c8210a3d299016f378ac71f1d87aaa30",
+  "231113_Garcia_DIA_2ug_24_9311_T2.raw": "06ab67a00b70b574c9e38e5738771bb57cab6bd8db90b79bbf8da7ccb6ba60b7",
+  "231113_Garcia_DIA_2ug_25_9311_T3.raw": "d46f7bd814d86245805c312aada2502e31ca9c0580be5f72c56df02c6b26ab2e",
+  "231113_Garcia_DIA_2ug_26_9311_T4.raw": "1491cc26ba46e61c3d2e0d7a34c5ac3dfa44a00ba67a38c997c998fa13c552bc",
+  "231113_Garcia_DIA_2ug_27_9311_T5.raw": "e9d804a2be2da8c951289cd8106374df71c8502f722666f75b74a99447870162"
+ },
+ "db": {
+  "a": {
+   "records": 3240,
+   "contaminant_records": 381,
+   "bytes": 1077512,
+   "sha256": "e6320d96f93e8215db1b1dae89ccfc45f222ebd7b63f0e7cd06048724da47244"
+  },
+  "b": {
+   "records": 78782,
+   "contaminant_records": 381,
+   "bytes": 8517883,
+   "sha256": "759c2797e7c122f6f194f9ef181d4e679d8ad977969593d7d79aaf5a9ad20adc"
+  }
+ },
+ "diann": {
+  "a": {
+   "library_precursors": 424472,
+   "step1_job": "2005461",
+   "step1_wall_s": 88,
+   "library_bytes": 104123478,
+   "step2_job": "2005461",
+   "step2_wall_s": 1106,
+   "n_runs": 5,
+   "image_sha256": "1946452d56d2fb0f66e05ced473df88e53484e28040f1ecbd83c4a43405a6381",
+   "cfg_sha256": "f89dfab40ef5d1195b96c38d29f813a0e848587d1917ec5555ea6f68fc2959cf",
+   "fasta_sha256": {
+    "/home/classes/bios/270/khoa/giap/local/campaign/PXD072227/db_a/strain_db.faa": "e6320d96f93e8215db1b1dae89ccfc45f222ebd7b63f0e7cd06048724da47244"
+   },
+   "per_run": [
+    {
+     "run": "231113_Garcia_DIA_2ug_23_9311_T1.raw",
+     "Precursors.Identified": "16553",
+     "Proteins.Identified": "933"
+    },
+    {
+     "run": "231113_Garcia_DIA_2ug_24_9311_T2.raw",
+     "Precursors.Identified": "17445",
+     "Proteins.Identified": "956"
+    },
+    {
+     "run": "231113_Garcia_DIA_2ug_25_9311_T3.raw",
+     "Precursors.Identified": "16819",
+     "Proteins.Identified": "936"
+    },
+    {
+     "run": "231113_Garcia_DIA_2ug_26_9311_T4.raw",
+     "Precursors.Identified": "15914",
+     "Proteins.Identified": "906"
+    },
+    {
+     "run": "231113_Garcia_DIA_2ug_27_9311_T5.raw",
+     "Precursors.Identified": "17535",
+     "Proteins.Identified": "966"
+    }
+   ],
+   "report_sha256": "e981ae11df3ead103cf95f84e62008bfc7fb8c1233d24e26fbb2e7a3ece6bf0b"
+  },
+  "b": {
+   "library_precursors": 2372086,
+   "step1_job": "2005461",
+   "step1_wall_s": 429,
+   "library_bytes": 590605341,
+   "step2_job": "2005461",
+   "step2_wall_s": 4089,
+   "n_runs": 5,
+   "image_sha256": "1946452d56d2fb0f66e05ced473df88e53484e28040f1ecbd83c4a43405a6381",
+   "cfg_sha256": "f89dfab40ef5d1195b96c38d29f813a0e848587d1917ec5555ea6f68fc2959cf",
+   "fasta_sha256": {
+    "/home/classes/bios/270/khoa/giap/local/campaign/PXD072227/db_b/strain_db.faa": "759c2797e7c122f6f194f9ef181d4e679d8ad977969593d7d79aaf5a9ad20adc"
+   },
+   "per_run": [
+    {
+     "run": "231113_Garcia_DIA_2ug_23_9311_T1.raw",
+     "Precursors.Identified": "15451",
+     "Proteins.Identified": "906"
+    },
+    {
+     "run": "231113_Garcia_DIA_2ug_24_9311_T2.raw",
+     "Precursors.Identified": "16450",
+     "Proteins.Identified": "945"
+    },
+    {
+     "run": "231113_Garcia_DIA_2ug_25_9311_T3.raw",
+     "Precursors.Identified": "15726",
+     "Proteins.Identified": "919"
+    },
+    {
+     "run": "231113_Garcia_DIA_2ug_26_9311_T4.raw",
+     "Precursors.Identified": "14830",
+     "Proteins.Identified": "872"
+    },
+    {
+     "run": "231113_Garcia_DIA_2ug_27_9311_T5.raw",
+     "Precursors.Identified": "16295",
+     "Proteins.Identified": "958"
+    }
+   ],
+   "report_sha256": "98e63e0848c9a1a87ac84ea271cca50e1c5ac37242637af38ea906415e48bc88"
+  }
+ },
+ "convert": {
+  "a": {
+   "job_id": "2005461",
+   "pin": "/home/classes/bios/270/khoa/giap/local/worktrees/rel111-pin",
+   "commit": "bfc74ff6c20acc2cfcf298cdf23cbb30d8fae0dc",
+   "search_db": "same",
+   "convert_exit": 0,
+   "convert2_exit": 0,
+   "convert_wall_s": 4,
+   "deterministic": true,
+   "preflight_strict_exit": 0,
+   "preflight_wall_s": 6,
+   "sha256": {
+    "report": "e981ae11df3ead103cf95f84e62008bfc7fb8c1233d24e26fbb2e7a3ece6bf0b",
+    "genome": "675d870a5605c3a2658e71dc8118679b58101d034b139a79ef0654f9eaf0a726",
+    "annotation": "700356c0f46b3bf5d44d025b187a927875b98a0dc0617b90947977e8639afa28",
+    "peptides": "3638ee60ed93b4871405eac7958822e6bc9282f206d58cfec5cfdfbfaa93d923",
+    "abundance": "198d922457aa328ba109c29a11b54a38844ee7ac66d698089529778eef60cbd6"
+   }
+  },
+  "b": {
+   "job_id": "2005461",
+   "pin": "/home/classes/bios/270/khoa/giap/local/worktrees/rel111-pin",
+   "commit": "bfc74ff6c20acc2cfcf298cdf23cbb30d8fae0dc",
+   "search_db": "same",
+   "convert_exit": 0,
+   "convert2_exit": 0,
+   "convert_wall_s": 4,
+   "deterministic": true,
+   "preflight_strict_exit": 0,
+   "preflight_wall_s": 5,
+   "sha256": {
+    "report": "98e63e0848c9a1a87ac84ea271cca50e1c5ac37242637af38ea906415e48bc88",
+    "genome": "675d870a5605c3a2658e71dc8118679b58101d034b139a79ef0654f9eaf0a726",
+    "annotation": "700356c0f46b3bf5d44d025b187a927875b98a0dc0617b90947977e8639afa28",
+    "peptides": "6826a028594808173912f13703b2bd27e87a29a13b5581d1d65dcdd08da438d0",
+    "abundance": "59329b5b6a8ad6d9b0b3bfaf7536fc8238feb295ae42f9d635dcad6726542662"
+   }
+  }
+ },
+ "runs": {
+  "a": {
+   "git_commit": "bfc74ff6c20acc2cfcf298cdf23cbb30d8fae0dc",
+   "git_dirty": false,
+   "gippa_version": "1.1.1",
+   "profile": "farmshare_local,apptainer",
+   "exit_code": 0,
+   "started_at": "2026-11-22T07:50:11+00:00",
+   "finished_at": "2026-11-22T09:18:14+00:00",
+   "seeds": {
+    "codon_usage": 3129038944,
+    "context_layers": 1365550599,
+    "context_stats": 105909204,
+    "detectability": 3987542110,
+    "determinants": 3593833509,
+    "function": 3400406589,
+    "gene_table": 393846822,
+    "loci": 1770125858,
+    "map_exact": 3911246953,
+    "map_tolerant": 1491420984,
+    "master": 20261014,
+    "novel_candidates": 2908536744,
+    "novel_orfs": 388090210,
+    "operon_pairs": 4034643963,
+    "operons": 179147819,
+    "ostir_input": 1327200810,
+    "parse_bakta": 642799015,
+    "placement": 1222341902,
+    "plots": 2413055744,
+    "promoter_layer": 2441405911,
+    "promoter_windows": 28991342,
+    "rbs_layer": 2821979816,
+    "region_layer": 1556029954,
+    "report": 3291445124,
+    "sensitivity": 4237340471,
+    "sixframe_index": 3300501706,
+    "terminator_layer": 1571130219,
+    "transterm_input": 732194518,
+    "tx_layer": 1302245994,
+    "uniop_input": 3714929077,
+    "variants": 3013104609
+   },
+   "modules_off": [],
+   "layers_missing": [
+    "rbs_novel"
+   ],
+   "warnings": [
+    "novel_orfs:novel_orfs.decoys_not_makedb",
+    "novel_orfs:novel_orfs.layer_missing"
+   ],
+   "inputs": {
+    "genome": "675d870a5605c3a2658e71dc8118679b58101d034b139a79ef0654f9eaf0a726",
+    "peptides": "3638ee60ed93b4871405eac7958822e6bc9282f206d58cfec5cfdfbfaa93d923",
+    "annotation": "700356c0f46b3bf5d44d025b187a927875b98a0dc0617b90947977e8639afa28",
+    "precomputed:bakta_json": "700356c0f46b3bf5d44d025b187a927875b98a0dc0617b90947977e8639afa28"
+   },
+   "tools": {
+    "antismash": {
+     "version": "8.0.4",
+     "digest": "sha256:d3f390e687cfe02f1387be40256dddbf678e91bc56b96c36da07b56ec8bda29d"
+    },
+    "genomad": {
+     "version": "1.12.0",
+     "digest": "sha256:d54652ff868af72604ea0e54c541c5c92168c7ac821a422de05dcbad65509e5c"
+    },
+    "ostir": {
+     "version": "1.1.3",
+     "digest": "sha256:d9107b9b87fd6f3d3cd329ba1d2ac66b9af9e38512f11d2b8a0210110c6c9292"
+    },
+    "promotech": {
+     "version": "56251ad9b883ef831b4753fc623d5ec970fe65e0",
+     "digest": "sha256:7366eaf67d9b26c6036ed5ececa740fe2728fdcf0cd4b2a12a0d9597b87a53ac"
+    },
+    "promoter_calculator": {
+     "version": "1.2.4",
+     "digest": "sha256:c5bd0662ceed623c00c4bf40b085c6541b7676e1ccc37a390e0efd73e02b48df"
+    },
+    "terminatornet": {
+     "version": "72180309545988dba63b8bd5db5d0b09bf4dba70",
+     "digest": "sha256:ec415757b6b70cce8240f425b35bf3e74dc3abe8ff413049c04d808034592f7a"
+    },
+    "transtermhp": {
+     "version": "2.09",
+     "digest": "sha256:fc6fe0404be9340a883ec7a7b90415dfc3826c2bca7333a0314335c7bfee2d03"
+    },
+    "uniop": {
+     "version": "3ed14dfc2a5d69b993d99a26e50c1f8e9723c087",
+     "digest": null
+    },
+    "viennarna": {
+     "version": "2.6.4",
+     "digest": "sha256:d9107b9b87fd6f3d3cd329ba1d2ac66b9af9e38512f11d2b8a0210110c6c9292"
+    }
+   }
+  },
+  "b": {
+   "git_commit": "bfc74ff6c20acc2cfcf298cdf23cbb30d8fae0dc",
+   "git_dirty": false,
+   "gippa_version": "1.1.1",
+   "profile": "farmshare_local,apptainer",
+   "exit_code": 0,
+   "started_at": "2026-11-22T09:18:25+00:00",
+   "finished_at": "2026-11-22T10:42:53+00:00",
+   "seeds": {
+    "codon_usage": 3129038944,
+    "context_layers": 1365550599,
+    "context_stats": 105909204,
+    "detectability": 3987542110,
+    "determinants": 3593833509,
+    "function": 3400406589,
+    "gene_table": 393846822,
+    "loci": 1770125858,
+    "map_exact": 3911246953,
+    "map_tolerant": 1491420984,
+    "master": 20261014,
+    "novel_candidates": 2908536744,
+    "novel_orfs": 388090210,
+    "novel_promoter_layer": 1428708026,
+    "novel_rbs_layer": 1423765203,
+    "operon_pairs": 4034643963,
+    "operons": 179147819,
+    "ostir_input": 1327200810,
+    "parse_bakta": 642799015,
+    "placement": 1222341902,
+    "plots": 2413055744,
+    "promoter_layer": 2441405911,
+    "promoter_windows": 28991342,
+    "rbs_layer": 2821979816,
+    "region_layer": 1556029954,
+    "report": 3291445124,
+    "sensitivity": 4237340471,
+    "sixframe_index": 3300501706,
+    "terminator_layer": 1571130219,
+    "transterm_input": 732194518,
+    "tx_layer": 1302245994,
+    "uniop_input": 3714929077,
+    "variants": 3013104609
+   },
+   "modules_off": [],
+   "layers_missing": [],
+   "warnings": [
+    "novel_orfs:novel_orfs.class_q_floor_above_alpha"
+   ],
+   "inputs": {
+    "genome": "675d870a5605c3a2658e71dc8118679b58101d034b139a79ef0654f9eaf0a726",
+    "peptides": "6826a028594808173912f13703b2bd27e87a29a13b5581d1d65dcdd08da438d0",
+    "annotation": "700356c0f46b3bf5d44d025b187a927875b98a0dc0617b90947977e8639afa28",
+    "precomputed:bakta_json": "700356c0f46b3bf5d44d025b187a927875b98a0dc0617b90947977e8639afa28"
+   },
+   "tools": {
+    "antismash": {
+     "version": "8.0.4",
+     "digest": "sha256:d3f390e687cfe02f1387be40256dddbf678e91bc56b96c36da07b56ec8bda29d"
+    },
+    "genomad": {
+     "version": "1.12.0",
+     "digest": "sha256:d54652ff868af72604ea0e54c541c5c92168c7ac821a422de05dcbad65509e5c"
+    },
+    "ostir": {
+     "version": "1.1.3",
+     "digest": "sha256:d9107b9b87fd6f3d3cd329ba1d2ac66b9af9e38512f11d2b8a0210110c6c9292"
+    },
+    "promotech": {
+     "version": "56251ad9b883ef831b4753fc623d5ec970fe65e0",
+     "digest": "sha256:7366eaf67d9b26c6036ed5ececa740fe2728fdcf0cd4b2a12a0d9597b87a53ac"
+    },
+    "promoter_calculator": {
+     "version": "1.2.4",
+     "digest": "sha256:c5bd0662ceed623c00c4bf40b085c6541b7676e1ccc37a390e0efd73e02b48df"
+    },
+    "terminatornet": {
+     "version": "72180309545988dba63b8bd5db5d0b09bf4dba70",
+     "digest": "sha256:ec415757b6b70cce8240f425b35bf3e74dc3abe8ff413049c04d808034592f7a"
+    },
+    "transtermhp": {
+     "version": "2.09",
+     "digest": "sha256:fc6fe0404be9340a883ec7a7b90415dfc3826c2bca7333a0314335c7bfee2d03"
+    },
+    "uniop": {
+     "version": "3ed14dfc2a5d69b993d99a26e50c1f8e9723c087",
+     "digest": null
+    },
+    "viennarna": {
+     "version": "2.6.4",
+     "digest": "sha256:d9107b9b87fd6f3d3cd329ba1d2ac66b9af9e38512f11d2b8a0210110c6c9292"
+    }
+   }
+  },
+  "a_te7": {
+   "git_commit": "bfc74ff6c20acc2cfcf298cdf23cbb30d8fae0dc",
+   "git_dirty": false,
+   "gippa_version": "1.1.1",
+   "profile": "farmshare_local,apptainer",
+   "exit_code": 0,
+   "started_at": "2026-11-22T10:45:01+00:00",
+   "finished_at": "2026-11-22T12:00:02+00:00",
+   "seeds": {
+    "codon_usage": 3129038944,
+    "context_layers": 1365550599,
+    "context_stats": 105909204,
+    "detectability": 3987542110,
+    "determinants": 3593833509,
+    "function": 3400406589,
+    "gene_table": 393846822,
+    "loci": 1770125858,
+    "map_exact": 3911246953,
+    "map_tolerant": 1491420984,
+    "master": 20261014,
+    "novel_candidates": 2908536744,
+    "novel_orfs": 388090210,
+    "operon_pairs": 4034643963,
+    "operons": 179147819,
+    "ostir_input": 1327200810,
+    "parse_bakta": 642799015,
+    "placement": 1222341902,
+    "plots": 2413055744,
+    "promoter_layer": 2441405911,
+    "promoter_windows": 28991342,
+    "rbs_layer": 2821979816,
+    "region_layer": 1556029954,
+    "report": 3291445124,
+    "sensitivity": 4237340471,
+    "sixframe_index": 3300501706,
+    "terminator_layer": 1571130219,
+    "transterm_input": 732194518,
+    "tx_layer": 1302245994,
+    "uniop_input": 3714929077,
+    "variants": 3013104609
+   },
+   "modules_off": [],
+   "layers_missing": [
+    "rbs_novel"
+   ],
+   "warnings": [
+    "novel_orfs:novel_orfs.decoys_not_makedb",
+    "novel_orfs:novel_orfs.layer_missing"
+   ],
+   "inputs": {
+    "genome": "675d870a5605c3a2658e71dc8118679b58101d034b139a79ef0654f9eaf0a726",
+    "peptides": "3638ee60ed93b4871405eac7958822e6bc9282f206d58cfec5cfdfbfaa93d923",
+    "annotation": "700356c0f46b3bf5d44d025b187a927875b98a0dc0617b90947977e8639afa28",
+    "precomputed:bakta_json": "700356c0f46b3bf5d44d025b187a927875b98a0dc0617b90947977e8639afa28"
+   },
+   "tools": {
+    "antismash": {
+     "version": "8.0.4",
+     "digest": "sha256:d3f390e687cfe02f1387be40256dddbf678e91bc56b96c36da07b56ec8bda29d"
+    },
+    "genomad": {
+     "version": "1.12.0",
+     "digest": "sha256:d54652ff868af72604ea0e54c541c5c92168c7ac821a422de05dcbad65509e5c"
+    },
+    "ostir": {
+     "version": "1.1.3",
+     "digest": "sha256:d9107b9b87fd6f3d3cd329ba1d2ac66b9af9e38512f11d2b8a0210110c6c9292"
+    },
+    "promotech": {
+     "version": "56251ad9b883ef831b4753fc623d5ec970fe65e0",
+     "digest": "sha256:7366eaf67d9b26c6036ed5ececa740fe2728fdcf0cd4b2a12a0d9597b87a53ac"
+    },
+    "promoter_calculator": {
+     "version": "1.2.4",
+     "digest": "sha256:c5bd0662ceed623c00c4bf40b085c6541b7676e1ccc37a390e0efd73e02b48df"
+    },
+    "terminatornet": {
+     "version": "72180309545988dba63b8bd5db5d0b09bf4dba70",
+     "digest": "sha256:ec415757b6b70cce8240f425b35bf3e74dc3abe8ff413049c04d808034592f7a"
+    },
+    "transtermhp": {
+     "version": "2.09",
+     "digest": "sha256:fc6fe0404be9340a883ec7a7b90415dfc3826c2bca7333a0314335c7bfee2d03"
+    },
+    "uniop": {
+     "version": "3ed14dfc2a5d69b993d99a26e50c1f8e9723c087",
+     "digest": null
+    },
+    "viennarna": {
+     "version": "2.6.4",
+     "digest": "sha256:d9107b9b87fd6f3d3cd329ba1d2ac66b9af9e38512f11d2b8a0210110c6c9292"
+    }
+   }
+  }
+ }
+}

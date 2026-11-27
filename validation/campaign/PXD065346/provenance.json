@@ -1,0 +1,395 @@
+{
+ "dataset": "PXD065346",
+ "lane_steps": [
+  {
+   "step": "makedb",
+   "exit": "0",
+   "wall_s": "27",
+   "job": "2011418"
+  },
+  {
+   "step": "lib_a",
+   "exit": "0",
+   "wall_s": "225",
+   "job": "2011418"
+  },
+  {
+   "step": "lib_b",
+   "exit": "0",
+   "wall_s": "492",
+   "job": "2011418"
+  },
+  {
+   "step": "diann_a",
+   "exit": "0",
+   "wall_s": "2012",
+   "job": "2011418"
+  },
+  {
+   "step": "diann_b",
+   "exit": "0",
+   "wall_s": "4958",
+   "job": "2011418"
+  },
+  {
+   "step": "conv_a",
+   "exit": "0",
+   "wall_s": "24",
+   "job": "2011418"
+  },
+  {
+   "step": "conv_b",
+   "exit": "0",
+   "wall_s": "17",
+   "job": "2011418"
+  },
+  {
+   "step": "run_a",
+   "exit": "0",
+   "wall_s": "11077",
+   "job": "2011418"
+  },
+  {
+   "step": "run_b",
+   "exit": "0",
+   "wall_s": "9654",
+   "job": "2011418"
+  },
+  {
+   "step": "post",
+   "exit": "0",
+   "wall_s": "177",
+   "job": "2011418"
+  }
+ ],
+ "jobs": {
+  "2011418": {
+   "job_id": "2011418",
+   "name": "gippa-camp-p2b-cdif",
+   "state": "COMPLETED",
+   "elapsed": "07:57:54",
+   "exit_code": "0:0",
+   "node": "wheat-01",
+   "alloc_cpus": "16",
+   "start": "2026-11-22T17:44:22",
+   "end": "2026-11-23T01:42:16",
+   "max_rss": "43729696K"
+  }
+ },
+ "raw_sha256": {
+  "221217_QE1_PM1_SK_JB_Cdiff_SpikeIn_05pg_ug_DIA_Ctrl_A.raw": "d727fda637da57de71db75250f5a374266f0a58b13b6bd9de08213708b5bb603",
+  "221219_QE1_PM1_SK_JB_Cdiff_SpikeIn_05pg_ug_DIA_Ctrl_B.raw": "c6036cd32cae72bc8459e745c2b85376dc790f9dba0b1515de9c2a4986c2058b",
+  "230106_QE1_PM1_SK_JB_Cdiff_SpikeIn_05pg_ug_DIA_Ctrl_C.raw": "e523e3c8494d79feefdb96cdfe6871024417760064be2e99ada725267928506f"
+ },
+ "db": {
+  "a": {
+   "records": 4205,
+   "contaminant_records": 381,
+   "bytes": 1560612,
+   "sha256": "bc1c2bc2d62d9efd21bd74cedc074c20b3949176f2017e5ad87b8e5aca5ac08c"
+  },
+  "b": {
+   "records": 100852,
+   "contaminant_records": 381,
+   "bytes": 10273231,
+   "sha256": "713b21252866313b2ed3ace1e95dd56573720665aa362bbe49640a4237ed2afb"
+  }
+ },
+ "diann": {
+  "a": {
+   "library_precursors": 754760,
+   "step1_job": "2011418",
+   "step1_wall_s": 213,
+   "library_bytes": 184384295,
+   "step2_job": "2011418",
+   "step2_wall_s": 2004,
+   "n_runs": 3,
+   "image_sha256": "1946452d56d2fb0f66e05ced473df88e53484e28040f1ecbd83c4a43405a6381",
+   "cfg_sha256": "f89dfab40ef5d1195b96c38d29f813a0e848587d1917ec5555ea6f68fc2959cf",
+   "fasta_sha256": {
+    "/home/classes/bios/270/khoa/giap/local/campaign/PXD065346/db_a/strain_db.faa": "bc1c2bc2d62d9efd21bd74cedc074c20b3949176f2017e5ad87b8e5aca5ac08c",
+    "/home/classes/bios/270/khoa/giap/local/campaign/PXD065346/spike/spike.faa": "793fcdf08f7a69c01e22708980d5009995151952d6791034431549b258d67fe7"
+   },
+   "per_run": [
+    {
+     "run": "221217_QE1_PM1_SK_JB_Cdiff_SpikeIn_05pg_ug_DIA_Ctrl_A.raw",
+     "Precursors.Identified": "18647",
+     "Proteins.Identified": "850"
+    },
+    {
+     "run": "221219_QE1_PM1_SK_JB_Cdiff_SpikeIn_05pg_ug_DIA_Ctrl_B.raw",
+     "Precursors.Identified": "16951",
+     "Proteins.Identified": "831"
+    },
+    {
+     "run": "230106_QE1_PM1_SK_JB_Cdiff_SpikeIn_05pg_ug_DIA_Ctrl_C.raw",
+     "Precursors.Identified": "22839",
+     "Proteins.Identified": "911"
+    }
+   ],
+   "report_sha256": "392ec4b771458f8f183fb3946ba698122dd9d0774edd3ec7adc2cbe2ba338905"
+  },
+  "b": {
+   "library_precursors": 2333967,
+   "step1_job": "2011418",
+   "step1_wall_s": 472,
+   "library_bytes": 585116097,
+   "step2_job": "2011418",
+   "step2_wall_s": 4939,
+   "n_runs": 3,
+   "image_sha256": "1946452d56d2fb0f66e05ced473df88e53484e28040f1ecbd83c4a43405a6381",
+   "cfg_sha256": "f89dfab40ef5d1195b96c38d29f813a0e848587d1917ec5555ea6f68fc2959cf",
+   "fasta_sha256": {
+    "/home/classes/bios/270/khoa/giap/local/campaign/PXD065346/db_b/strain_db.faa": "713b21252866313b2ed3ace1e95dd56573720665aa362bbe49640a4237ed2afb",
+    "/home/classes/bios/270/khoa/giap/local/campaign/PXD065346/spike/spike.faa": "793fcdf08f7a69c01e22708980d5009995151952d6791034431549b258d67fe7"
+   },
+   "per_run": [
+    {
+     "run": "221217_QE1_PM1_SK_JB_Cdiff_SpikeIn_05pg_ug_DIA_Ctrl_A.raw",
+     "Precursors.Identified": "18207",
+     "Proteins.Identified": "839"
+    },
+    {
+     "run": "221219_QE1_PM1_SK_JB_Cdiff_SpikeIn_05pg_ug_DIA_Ctrl_B.raw",
+     "Precursors.Identified": "16421",
+     "Proteins.Identified": "832"
+    },
+    {
+     "run": "230106_QE1_PM1_SK_JB_Cdiff_SpikeIn_05pg_ug_DIA_Ctrl_C.raw",
+     "Precursors.Identified": "22094",
+     "Proteins.Identified": "869"
+    }
+   ],
+   "report_sha256": "59350567b806a6c03e96394cac7ee5aed046b29b19343663f00fbcaf90f75e53"
+  }
+ },
+ "convert": {
+  "a": {
+   "job_id": "2011418",
+   "pin": "/home/classes/bios/270/khoa/giap/local/worktrees/rel111-pin",
+   "commit": "bfc74ff6c20acc2cfcf298cdf23cbb30d8fae0dc",
+   "search_db": "same",
+   "convert_exit": 0,
+   "convert2_exit": 0,
+   "convert_wall_s": 5,
+   "deterministic": true,
+   "preflight_strict_exit": 0,
+   "preflight_wall_s": 14,
+   "sha256": {
+    "report": "392ec4b771458f8f183fb3946ba698122dd9d0774edd3ec7adc2cbe2ba338905",
+    "genome": "49065d7c83c1d51f6f16acbafec642af68c91437fac5348a3858e0f4d323e95f",
+    "annotation": "7ae26fcc437be51b3fbdb016fab37502c436ee86d665b70bb9a03836d339c406",
+    "peptides": "1940ffa3c7d5a6b3c86480010c2cb071ee49097d2a9a25c577554d9729f9c82c",
+    "abundance": "28b0d8e320c73acc124e353c5a04780574017f58a5cac6cfa660ff1dc8b6d461"
+   }
+  },
+  "b": {
+   "job_id": "2011418",
+   "pin": "/home/classes/bios/270/khoa/giap/local/worktrees/rel111-pin",
+   "commit": "bfc74ff6c20acc2cfcf298cdf23cbb30d8fae0dc",
+   "search_db": "same",
+   "convert_exit": 0,
+   "convert2_exit": 0,
+   "convert_wall_s": 4,
+   "deterministic": true,
+   "preflight_strict_exit": 0,
+   "preflight_wall_s": 7,
+   "sha256": {
+    "report": "59350567b806a6c03e96394cac7ee5aed046b29b19343663f00fbcaf90f75e53",
+    "genome": "49065d7c83c1d51f6f16acbafec642af68c91437fac5348a3858e0f4d323e95f",
+    "annotation": "7ae26fcc437be51b3fbdb016fab37502c436ee86d665b70bb9a03836d339c406",
+    "peptides": "c19372c485cab2511a5a0c1c240574b22c71c258d2707acf6e1bcc82892507df",
+    "abundance": "f6b0ebfbabb0f895f6c2a15d94eaa7350c8396b8c55c1625afe7136070424d88"
+   }
+  }
+ },
+ "runs": {
+  "a": {
+   "git_commit": "bfc74ff6c20acc2cfcf298cdf23cbb30d8fae0dc",
+   "git_dirty": false,
+   "gippa_version": "1.1.1",
+   "profile": "farmshare_local,apptainer",
+   "exit_code": 0,
+   "started_at": "2026-11-23T03:53:58+00:00",
+   "finished_at": "2026-11-23T06:58:17+00:00",
+   "seeds": {
+    "codon_usage": 3129038944,
+    "context_layers": 1365550599,
+    "context_stats": 105909204,
+    "detectability": 3987542110,
+    "determinants": 3593833509,
+    "function": 3400406589,
+    "gene_table": 393846822,
+    "loci": 1770125858,
+    "map_exact": 3911246953,
+    "map_tolerant": 1491420984,
+    "master": 20261014,
+    "novel_candidates": 2908536744,
+    "novel_orfs": 388090210,
+    "operon_pairs": 4034643963,
+    "operons": 179147819,
+    "ostir_input": 1327200810,
+    "parse_bakta": 642799015,
+    "placement": 1222341902,
+    "plots": 2413055744,
+    "promoter_layer": 2441405911,
+    "promoter_windows": 28991342,
+    "rbs_layer": 2821979816,
+    "region_layer": 1556029954,
+    "report": 3291445124,
+    "sensitivity": 4237340471,
+    "sixframe_index": 3300501706,
+    "terminator_layer": 1571130219,
+    "transterm_input": 732194518,
+    "tx_layer": 1302245994,
+    "uniop_input": 3714929077,
+    "variants": 3013104609
+   },
+   "modules_off": [],
+   "layers_missing": [
+    "rbs_novel"
+   ],
+   "warnings": [
+    "novel_orfs:novel_orfs.decoys_not_makedb",
+    "novel_orfs:novel_orfs.layer_missing"
+   ],
+   "inputs": {
+    "genome": "49065d7c83c1d51f6f16acbafec642af68c91437fac5348a3858e0f4d323e95f",
+    "peptides": "1940ffa3c7d5a6b3c86480010c2cb071ee49097d2a9a25c577554d9729f9c82c",
+    "annotation": "7ae26fcc437be51b3fbdb016fab37502c436ee86d665b70bb9a03836d339c406",
+    "precomputed:bakta_json": "7ae26fcc437be51b3fbdb016fab37502c436ee86d665b70bb9a03836d339c406"
+   },
+   "tools": {
+    "antismash": {
+     "version": "8.0.4",
+     "digest": "sha256:d3f390e687cfe02f1387be40256dddbf678e91bc56b96c36da07b56ec8bda29d"
+    },
+    "genomad": {
+     "version": "1.12.0",
+     "digest": "sha256:d54652ff868af72604ea0e54c541c5c92168c7ac821a422de05dcbad65509e5c"
+    },
+    "ostir": {
+     "version": "1.1.3",
+     "digest": "sha256:d9107b9b87fd6f3d3cd329ba1d2ac66b9af9e38512f11d2b8a0210110c6c9292"
+    },
+    "promotech": {
+     "version": "56251ad9b883ef831b4753fc623d5ec970fe65e0",
+     "digest": "sha256:7366eaf67d9b26c6036ed5ececa740fe2728fdcf0cd4b2a12a0d9597b87a53ac"
+    },
+    "promoter_calculator": {
+     "version": "1.2.4",
+     "digest": "sha256:c5bd0662ceed623c00c4bf40b085c6541b7676e1ccc37a390e0efd73e02b48df"
+    },
+    "terminatornet": {
+     "version": "72180309545988dba63b8bd5db5d0b09bf4dba70",
+     "digest": "sha256:ec415757b6b70cce8240f425b35bf3e74dc3abe8ff413049c04d808034592f7a"
+    },
+    "transtermhp": {
+     "version": "2.09",
+     "digest": "sha256:fc6fe0404be9340a883ec7a7b90415dfc3826c2bca7333a0314335c7bfee2d03"
+    },
+    "uniop": {
+     "version": "3ed14dfc2a5d69b993d99a26e50c1f8e9723c087",
+     "digest": null
+    },
+    "viennarna": {
+     "version": "2.6.4",
+     "digest": "sha256:d9107b9b87fd6f3d3cd329ba1d2ac66b9af9e38512f11d2b8a0210110c6c9292"
+    }
+   }
+  },
+  "b": {
+   "git_commit": "bfc74ff6c20acc2cfcf298cdf23cbb30d8fae0dc",
+   "git_dirty": false,
+   "gippa_version": "1.1.1",
+   "profile": "farmshare_local,apptainer",
+   "exit_code": 0,
+   "started_at": "2026-11-23T06:58:37+00:00",
+   "finished_at": "2026-11-23T09:39:11+00:00",
+   "seeds": {
+    "codon_usage": 3129038944,
+    "context_layers": 1365550599,
+    "context_stats": 105909204,
+    "detectability": 3987542110,
+    "determinants": 3593833509,
+    "function": 3400406589,
+    "gene_table": 393846822,
+    "loci": 1770125858,
+    "map_exact": 3911246953,
+    "map_tolerant": 1491420984,
+    "master": 20261014,
+    "novel_candidates": 2908536744,
+    "novel_orfs": 388090210,
+    "novel_promoter_layer": 1428708026,
+    "novel_rbs_layer": 1423765203,
+    "operon_pairs": 4034643963,
+    "operons": 179147819,
+    "ostir_input": 1327200810,
+    "parse_bakta": 642799015,
+    "placement": 1222341902,
+    "plots": 2413055744,
+    "promoter_layer": 2441405911,
+    "promoter_windows": 28991342,
+    "rbs_layer": 2821979816,
+    "region_layer": 1556029954,
+    "report": 3291445124,
+    "sensitivity": 4237340471,
+    "sixframe_index": 3300501706,
+    "terminator_layer": 1571130219,
+    "transterm_input": 732194518,
+    "tx_layer": 1302245994,
+    "uniop_input": 3714929077,
+    "variants": 3013104609
+   },
+   "modules_off": [],
+   "layers_missing": [],
+   "warnings": [
+    "novel_orfs:novel_orfs.class_q_floor_above_alpha"
+   ],
+   "inputs": {
+    "genome": "49065d7c83c1d51f6f16acbafec642af68c91437fac5348a3858e0f4d323e95f",
+    "peptides": "c19372c485cab2511a5a0c1c240574b22c71c258d2707acf6e1bcc82892507df",
+    "annotation": "7ae26fcc437be51b3fbdb016fab37502c436ee86d665b70bb9a03836d339c406",
+    "precomputed:bakta_json": "7ae26fcc437be51b3fbdb016fab37502c436ee86d665b70bb9a03836d339c406"
+   },
+   "tools": {
+    "antismash": {
+     "version": "8.0.4",
+     "digest": "sha256:d3f390e687cfe02f1387be40256dddbf678e91bc56b96c36da07b56ec8bda29d"
+    },
+    "genomad": {
+     "version": "1.12.0",
+     "digest": "sha256:d54652ff868af72604ea0e54c541c5c92168c7ac821a422de05dcbad65509e5c"
+    },
+    "ostir": {
+     "version": "1.1.3",
+     "digest": "sha256:d9107b9b87fd6f3d3cd329ba1d2ac66b9af9e38512f11d2b8a0210110c6c9292"
+    },
+    "promotech": {
+     "version": "56251ad9b883ef831b4753fc623d5ec970fe65e0",
+     "digest": "sha256:7366eaf67d9b26c6036ed5ececa740fe2728fdcf0cd4b2a12a0d9597b87a53ac"
+    },
+    "promoter_calculator": {
+     "version": "1.2.4",
+     "digest": "sha256:c5bd0662ceed623c00c4bf40b085c6541b7676e1ccc37a390e0efd73e02b48df"
+    },
+    "terminatornet": {
+     "version": "72180309545988dba63b8bd5db5d0b09bf4dba70",
+     "digest": "sha256:ec415757b6b70cce8240f425b35bf3e74dc3abe8ff413049c04d808034592f7a"
+    },
+    "transtermhp": {
+     "version": "2.09",
+     "digest": "sha256:fc6fe0404be9340a883ec7a7b90415dfc3826c2bca7333a0314335c7bfee2d03"
+    },
+    "uniop": {
+     "version": "3ed14dfc2a5d69b993d99a26e50c1f8e9723c087",
+     "digest": null
+    },
+    "viennarna": {
+     "version": "2.6.4",
+     "digest": "sha256:d9107b9b87fd6f3d3cd329ba1d2ac66b9af9e38512f11d2b8a0210110c6c9292"
+    }
+   }
+  }
+ }
+}
