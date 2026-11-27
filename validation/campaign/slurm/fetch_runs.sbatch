@@ -18,7 +18,8 @@
 # makes progress, and declared blocked after 3 consecutive resumes that add no byte (R6: one
 # retry of a failed transfer, not of every dropped connection). Verified: byte size, and the
 # deposit's checksum when the manifest has one (sha1:/md5:); sha256 always recorded in
-# DEST_DIR/SHA256SUMS. Hosts: ftp.pride.ebi.ac.uk and panoramaweb.org over https only.
+# DEST_DIR/SHA256SUMS. Hosts: ftp.pride.ebi.ac.uk, panoramaweb.org and download.iprox.cn (iProX,
+# ADR-0077 decision 1) over https only.
 # Exit 0 all verified; 1 at least one file blocked or failed verification; 2 precondition.
 set -uo pipefail
 source "${GIPPA_REPO:-/home/classes/bios/270/khoa/giap}/scripts/farmshare_env.sh"
@@ -45,7 +46,7 @@ for FILE in "$@"; do
   [ -n "$row" ] || { echo "$FILE is not in $MANIFEST" >&2; failed=1; continue; }
   BYTES="$(cut -f4 <<<"$row")" CK="$(cut -f5 <<<"$row")" URL="$(cut -f7 <<<"$row")"
   case "$URL" in
-    https://ftp.pride.ebi.ac.uk/* | https://panoramaweb.org/_webdav/*) ;;
+    https://ftp.pride.ebi.ac.uk/* | https://panoramaweb.org/_webdav/* | https://download.iprox.cn/*) ;;
     *) echo "not an ADR-0077 https URL: $URL" >&2; failed=1; continue ;;
   esac
   NAME="$(basename "$FILE")"

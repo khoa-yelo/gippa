@@ -38,6 +38,7 @@ from gippa.annotate.layers import (
     tus_of,
     write_annotation,
 )
+from gippa.annotate.operons import region_is_acgt
 from gippa.annotate.precomputed import load_precomputed
 from gippa.annotate.promoters import promoter_records
 from gippa.annotate.regions import MODULE_REGION_TYPES
@@ -51,6 +52,7 @@ _TYPES = {c: pa.int64() for c in INT_COLUMNS} | {c: pa.list_(pa.string()) for c 
 _TYPES |= {c: pa.string() for c in STR_COLUMNS}
 _COLS = [(c, _TYPES.get(c, pa.float64())) for c in LAYER_COLUMNS]
 _PARQUET_MAGIC = b"PAR1"
+_TX_COLUMNS = ("tx_rate_max_tu", "tx_rate_sum_tu", "tss_distance_bp")
 
 
 def _frame(ctx: StepContext, key: str, pre: str, reps: dict[str, Replicon]) -> pd.DataFrame | None:
@@ -133,6 +135,10 @@ def context_layers(ctx: StepContext) -> None:
     k = cfg.annotation.promoters.window_3p_range
     df = gene_layers(genes, tus, pairs, prom, tx, terms, rbs, codon, region_genes, rep_df,
                      genome=genome, yes=yes, k_range=(k[0], k[1]))  # fmt: skip
+    if tx is not None and cfg.annotation.precomputed.tx_rates is None:
+        # TUs not sent to Promoter Calculator (#614): unscored, not "scored, no hit"
+        gapped = {t.tu_id for t in tu_objs if not region_is_acgt(t, genome)}
+        df.loc[df["tu_id"].isin(gapped), list(_TX_COLUMNS)] = pd.NA
     rows = [tuple(_cell(c, v) for c, v in zip(LAYER_COLUMNS, r, strict=True))
             for r in df.itertuples(index=False, name=None)]  # fmt: skip
     write_parquet_deterministic(ctx.outputs["layers"], _COLS, rows)

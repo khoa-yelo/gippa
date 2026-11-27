@@ -143,16 +143,24 @@ def window_lists(draw: st.DrawFn) -> list:
 @SETTINGS
 @given(window_lists(), st.integers(1, 7))
 def test_dedupe_and_chunk_invariants(ws: list, size: int) -> None:
+    """#611: windows with a non-ACGT base are not written; their map row has a null header."""
     chunks, wmap = api("dedupe_and_chunk")(ws, chunk_size=size)
     records = [r for c in chunks for r in c]
-    uniq = list(dict.fromkeys(w.seq for w in ws))  # first-seen order
+    ok = [set(w.seq.upper()) <= set("ACGT") for w in ws]
+    uniq = list(dict.fromkeys(w.seq for w, k in zip(ws, ok, strict=True) if k))  # first-seen
     assert records == [(f"w{i}", s) for i, s in enumerate(uniq)]
-    assert all(len(c) == size for c in chunks[:-1]) and 1 <= len(chunks[-1]) <= size
+    if uniq:
+        assert all(len(c) == size for c in chunks[:-1]) and 1 <= len(chunks[-1]) <= size
+    else:
+        assert records == []
     assert list(wmap.columns) == ["header", "contig", "strand", "end3p", "owner", "k"]
     seq_of = dict(records)
     assert len(wmap) == len(ws)
-    for w, r in zip(ws, wmap.itertuples(index=False), strict=True):
-        assert seq_of[r.header] == w.seq
+    for w, k, r in zip(ws, ok, wmap.itertuples(index=False), strict=True):
+        if k:
+            assert seq_of[r.header] == w.seq
+        else:
+            assert r.header is None or r.header != r.header  # null: None or NaN
         assert (r.contig, r.strand, r.end3p, r.owner, r.k) == (
             w.contig, w.strand, w.end3p, w.owner, w.k,
         )  # fmt: skip

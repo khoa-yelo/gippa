@@ -1,60 +1,60 @@
-file_name	file_type	raw_format	bytes	checksum	checksum_source	url	acquisition	acquisition_source	sample	condition
-231106_Garcia_DIA_2ug_01_9902_T1.raw	raw	thermo_raw	1104394346	NA	NA	https://ftp.pride.ebi.ac.uk/pride/data/archive/2026/10/PXD072227/231106_Garcia_DIA_2ug_01_9902_T1.raw	DIA	file_name	NA	NA
-231106_Garcia_DIA_2ug_02_9902_T1.raw	raw	thermo_raw	539870160	NA	NA	https://ftp.pride.ebi.ac.uk/pride/data/archive/2026/10/PXD072227/231106_Garcia_DIA_2ug_02_9902_T1.raw	DIA	file_name	NA	NA
-231106_Garcia_DIA_2ug_03_9902_T2.raw	raw	thermo_raw	1144387101	NA	NA	https://ftp.pride.ebi.ac.uk/pride/data/archive/2026/10/PXD072227/231106_Garcia_DIA_2ug_03_9902_T2.raw	DIA	file_name	NA	NA
-231106_Garcia_DIA_2ug_04_9902_T3.raw	raw	thermo_raw	1026024626	NA	NA	https://ftp.pride.ebi.ac.uk/pride/data/archive/2026/10/PXD072227/231106_Garcia_DIA_2ug_04_9902_T3.raw	DIA	file_name	NA	NA
-231106_Garcia_DIA_2ug_05_9902_T4.raw	raw	thermo_raw	1294813396	NA	NA	https://ftp.pride.ebi.ac.uk/pride/data/archive/2026/10/PXD072227/231106_Garcia_DIA_2ug_05_9902_T4.raw	DIA	file_name	NA	NA
-231106_Garcia_DIA_2ug_06_9902_T5.raw	raw	thermo_raw	1101275150	NA	NA	https://ftp.pride.ebi.ac.uk/pride/data/archive/2026/10/PXD072227/231106_Garcia_DIA_2ug_06_9902_T5.raw	DIA	file_name	NA	NA
-231106_Garcia_DIA_2ug_07_9902_T1.raw	raw	thermo_raw	1068207187	NA	NA	https://ftp.pride.ebi.ac.uk/pride/data/archive/2026/10/PXD072227/231106_Garcia_DIA_2ug_07_9902_T1.raw	DIA	file_name	NA	NA
-231106_Garcia_DIA_2ug_08_9902_T1.raw	raw	thermo_raw	1085707643	NA	NA	https://ftp.pride.ebi.ac.uk/pride/data/archive/2026/10/PXD072227/231106_Garcia_DIA_2ug_08_9902_T1.raw	DIA	file_name	NA	NA
-231106_Garcia_DIA_2ug_09_9902_T2.raw	raw	thermo_raw	993928482	NA	NA	https://ftp.pride.ebi.ac.uk/pride/data/archive/2026/10/PXD072227/231106_Garcia_DIA_2ug_09_9902_T2.raw	DIA	file_name	NA	NA
-231106_Garcia_DIA_2ug_10_9902_T3.raw	raw	thermo_raw	1270105264	NA	NA	https://ftp.pride.ebi.ac.uk/pride/data/archive/2026/10/PXD072227/231106_Garcia_DIA_2ug_10_9902_T3.raw	DIA	file_name	NA	NA
-231106_Garcia_DIA_2ug_11_9902_T4.raw	raw	thermo_raw	1146173347	NA	NA	https://ftp.pride.ebi.ac.uk/pride/data/archive/2026/10/PXD072227/231106_Garcia_DIA_2ug_11_9902_T4.raw	DIA	file_name	NA	NA
-231106_Garcia_DIA_2ug_12_9902_T5.raw	raw	thermo_raw	1217874329	NA	NA	https://ftp.pride.ebi.ac.uk/pride/data/archive/2026/10/PXD072227/231106_Garcia_DIA_2ug_12_9902_T5.raw	DIA	file_name	NA	NA
-231108_Garcia_DIA_2ug_13_8604_T1.raw	raw	thermo_raw	1131357117	NA	NA	https://ftp.pride.ebi.ac.uk/pride/data/archive/2026/10/PXD072227/231108_Garcia_DIA_2ug_13_8604_T1.raw	DIA	file_name	NA	NA
-231108_Garcia_DIA_2ug_14_8604_T2.raw	raw	thermo_raw	1093179413	NA	NA	https://ftp.pride.ebi.ac.uk/pride/data/archive/2026/10/PXD072227/231108_Garcia_DIA_2ug_14_8604_T2.raw	DIA	file_name	NA	NA
-231108_Garcia_DIA_2ug_15_8604_T3.raw	raw	thermo_raw	1101039219	NA	NA	https://ftp.pride.ebi.ac.uk/pride/data/archive/2026/10/PXD072227/231108_Garcia_DIA_2ug_15_8604_T3.raw	DIA	file_name	NA	NA
-231108_Garcia_DIA_2ug_16_8604_T4.raw	raw	thermo_raw	1090062693	NA	NA	https://ftp.pride.ebi.ac.uk/pride/data/archive/2026/10/PXD072227/231108_Garcia_DIA_2ug_16_8604_T4.raw	DIA	file_name	NA	NA
-231108_Garcia_DIA_2ug_17_8604_T5.raw	raw	thermo_raw	1094533539	NA	NA	https://ftp.pride.ebi.ac.uk/pride/data/archive/2026/10/PXD072227/231108_Garcia_DIA_2ug_17_8604_T5.raw	DIA	file_name	NA	NA
-231108_Garcia_DIA_2ug_18_8604_T1.raw	raw	thermo_raw	1157193411	NA	NA	https://ftp.pride.ebi.ac.uk/pride/data/archive/2026/10/PXD072227/231108_Garcia_DIA_2ug_18_8604_T1.raw	DIA	file_name	NA	NA
-231108_Garcia_DIA_2ug_19_8604_T2.raw	raw	thermo_raw	1152171727	NA	NA	https://ftp.pride.ebi.ac.uk/pride/data/archive/2026/10/PXD072227/231108_Garcia_DIA_2ug_19_8604_T2.raw	DIA	file_name	NA	NA
-231108_Garcia_DIA_2ug_20_8604_T3.raw	raw	thermo_raw	1143392989	NA	NA	https://ftp.pride.ebi.ac.uk/pride/data/archive/2026/10/PXD072227/231108_Garcia_DIA_2ug_20_8604_T3.raw	DIA	file_name	NA	NA
-231108_Garcia_DIA_2ug_21_8604_T4.raw	raw	thermo_raw	1104927247	NA	NA	https://ftp.pride.ebi.ac.uk/pride/data/archive/2026/10/PXD072227/231108_Garcia_DIA_2ug_21_8604_T4.raw	DIA	file_name	NA	NA
-231108_Garcia_DIA_2ug_22_8604_T5.raw	raw	thermo_raw	1162367442	NA	NA	https://ftp.pride.ebi.ac.uk/pride/data/archive/2026/10/PXD072227/231108_Garcia_DIA_2ug_22_8604_T5.raw	DIA	file_name	NA	NA
-231113_Garcia_DIA_2ug_23_9311_T1.raw	raw	thermo_raw	1149210140	NA	NA	https://ftp.pride.ebi.ac.uk/pride/data/archive/2026/10/PXD072227/231113_Garcia_DIA_2ug_23_9311_T1.raw	DIA	file_name	NA	NA
-231113_Garcia_DIA_2ug_24_9311_T2.raw	raw	thermo_raw	1230595300	NA	NA	https://ftp.pride.ebi.ac.uk/pride/data/archive/2026/10/PXD072227/231113_Garcia_DIA_2ug_24_9311_T2.raw	DIA	file_name	NA	NA
-231113_Garcia_DIA_2ug_25_9311_T3.raw	raw	thermo_raw	1237520860	NA	NA	https://ftp.pride.ebi.ac.uk/pride/data/archive/2026/10/PXD072227/231113_Garcia_DIA_2ug_25_9311_T3.raw	DIA	file_name	NA	NA
-231113_Garcia_DIA_2ug_26_9311_T4.raw	raw	thermo_raw	1203011159	NA	NA	https://ftp.pride.ebi.ac.uk/pride/data/archive/2026/10/PXD072227/231113_Garcia_DIA_2ug_26_9311_T4.raw	DIA	file_name	NA	NA
-231113_Garcia_DIA_2ug_27_9311_T5.raw	raw	thermo_raw	1207038226	NA	NA	https://ftp.pride.ebi.ac.uk/pride/data/archive/2026/10/PXD072227/231113_Garcia_DIA_2ug_27_9311_T5.raw	DIA	file_name	NA	NA
-231113_Garcia_DIA_2ug_28_9311_T1.raw	raw	thermo_raw	1275687844	NA	NA	https://ftp.pride.ebi.ac.uk/pride/data/archive/2026/10/PXD072227/231113_Garcia_DIA_2ug_28_9311_T1.raw	DIA	file_name	NA	NA
-231113_Garcia_DIA_2ug_29_9311_T2.raw	raw	thermo_raw	1266010156	NA	NA	https://ftp.pride.ebi.ac.uk/pride/data/archive/2026/10/PXD072227/231113_Garcia_DIA_2ug_29_9311_T2.raw	DIA	file_name	NA	NA
-231113_Garcia_DIA_2ug_30_9311_T3.raw	raw	thermo_raw	1244615522	NA	NA	https://ftp.pride.ebi.ac.uk/pride/data/archive/2026/10/PXD072227/231113_Garcia_DIA_2ug_30_9311_T3.raw	DIA	file_name	NA	NA
-231113_Garcia_DIA_2ug_31_9311_T4.raw	raw	thermo_raw	1515166995	NA	NA	https://ftp.pride.ebi.ac.uk/pride/data/archive/2026/10/PXD072227/231113_Garcia_DIA_2ug_31_9311_T4.raw	DIA	file_name	NA	NA
-231113_Garcia_DIA_2ug_32_9311_T5.raw	raw	thermo_raw	1231440795	NA	NA	https://ftp.pride.ebi.ac.uk/pride/data/archive/2026/10/PXD072227/231113_Garcia_DIA_2ug_32_9311_T5.raw	DIA	file_name	NA	NA
-231120_Garcia_DIA_2ug_33_2033_T2.raw	raw	thermo_raw	1183904120	NA	NA	https://ftp.pride.ebi.ac.uk/pride/data/archive/2026/10/PXD072227/231120_Garcia_DIA_2ug_33_2033_T2.raw	DIA	file_name	NA	NA
-231120_Garcia_DIA_2ug_34_2033_T3.raw	raw	thermo_raw	1127352345	NA	NA	https://ftp.pride.ebi.ac.uk/pride/data/archive/2026/10/PXD072227/231120_Garcia_DIA_2ug_34_2033_T3.raw	DIA	file_name	NA	NA
-231120_Garcia_DIA_2ug_35_2033_T5.raw	raw	thermo_raw	1213566981	NA	NA	https://ftp.pride.ebi.ac.uk/pride/data/archive/2026/10/PXD072227/231120_Garcia_DIA_2ug_35_2033_T5.raw	DIA	file_name	NA	NA
-231120_Garcia_DIA_2ug_36_2033_T4.raw	raw	thermo_raw	1172102952	NA	NA	https://ftp.pride.ebi.ac.uk/pride/data/archive/2026/10/PXD072227/231120_Garcia_DIA_2ug_36_2033_T4.raw	DIA	file_name	NA	NA
-231120_Garcia_DIA_2ug_37_2033_T1.raw	raw	thermo_raw	1198753835	NA	NA	https://ftp.pride.ebi.ac.uk/pride/data/archive/2026/10/PXD072227/231120_Garcia_DIA_2ug_37_2033_T1.raw	DIA	file_name	NA	NA
-231120_Garcia_DIA_2ug_38_2033_T4.raw	raw	thermo_raw	1285642124	NA	NA	https://ftp.pride.ebi.ac.uk/pride/data/archive/2026/10/PXD072227/231120_Garcia_DIA_2ug_38_2033_T4.raw	DIA	file_name	NA	NA
-231120_Garcia_DIA_2ug_39_2033_T1.raw	raw	thermo_raw	1259422426	NA	NA	https://ftp.pride.ebi.ac.uk/pride/data/archive/2026/10/PXD072227/231120_Garcia_DIA_2ug_39_2033_T1.raw	DIA	file_name	NA	NA
-231120_Garcia_DIA_2ug_40_2033_T2.raw	raw	thermo_raw	1309646930	NA	NA	https://ftp.pride.ebi.ac.uk/pride/data/archive/2026/10/PXD072227/231120_Garcia_DIA_2ug_40_2033_T2.raw	DIA	file_name	NA	NA
-231120_Garcia_DIA_2ug_41_2033_T3.raw	raw	thermo_raw	1268333498	NA	NA	https://ftp.pride.ebi.ac.uk/pride/data/archive/2026/10/PXD072227/231120_Garcia_DIA_2ug_41_2033_T3.raw	DIA	file_name	NA	NA
-231120_Garcia_DIA_2ug_42_2033_T5.raw	raw	thermo_raw	1282621268	NA	NA	https://ftp.pride.ebi.ac.uk/pride/data/archive/2026/10/PXD072227/231120_Garcia_DIA_2ug_42_2033_T5.raw	DIA	file_name	NA	NA
-231120_Garcia_DIA_2ug_43_9605_T1.raw	raw	thermo_raw	722450712	NA	NA	https://ftp.pride.ebi.ac.uk/pride/data/archive/2026/10/PXD072227/231120_Garcia_DIA_2ug_43_9605_T1.raw	DIA	file_name	NA	NA
-231120_Garcia_DIA_2ug_44_9605_T2.raw	raw	thermo_raw	780442657	NA	NA	https://ftp.pride.ebi.ac.uk/pride/data/archive/2026/10/PXD072227/231120_Garcia_DIA_2ug_44_9605_T2.raw	DIA	file_name	NA	NA
-231120_Garcia_DIA_2ug_45_9605_T1.raw	raw	thermo_raw	1278546115	NA	NA	https://ftp.pride.ebi.ac.uk/pride/data/archive/2026/10/PXD072227/231120_Garcia_DIA_2ug_45_9605_T1.raw	DIA	file_name	NA	NA
-231120_Garcia_DIA_2ug_46_9605_T2.raw	raw	thermo_raw	1372006530	NA	NA	https://ftp.pride.ebi.ac.uk/pride/data/archive/2026/10/PXD072227/231120_Garcia_DIA_2ug_46_9605_T2.raw	DIA	file_name	NA	NA
-231120_Garcia_DIA_2ug_47_9605_T3.raw	raw	thermo_raw	1190793542	NA	NA	https://ftp.pride.ebi.ac.uk/pride/data/archive/2026/10/PXD072227/231120_Garcia_DIA_2ug_47_9605_T3.raw	DIA	file_name	NA	NA
-231120_Garcia_DIA_2ug_48_9605_T3.raw	raw	thermo_raw	1342914294	NA	NA	https://ftp.pride.ebi.ac.uk/pride/data/archive/2026/10/PXD072227/231120_Garcia_DIA_2ug_48_9605_T3.raw	DIA	file_name	NA	NA
-231120_Garcia_DIA_2ug_49_9605_T4.raw	raw	thermo_raw	1158567021	NA	NA	https://ftp.pride.ebi.ac.uk/pride/data/archive/2026/10/PXD072227/231120_Garcia_DIA_2ug_49_9605_T4.raw	DIA	file_name	NA	NA
-231120_Garcia_DIA_2ug_50_9605_T4.raw	raw	thermo_raw	1281543205	NA	NA	https://ftp.pride.ebi.ac.uk/pride/data/archive/2026/10/PXD072227/231120_Garcia_DIA_2ug_50_9605_T4.raw	DIA	file_name	NA	NA
-231120_Garcia_DIA_2ug_51_9605_T5.raw	raw	thermo_raw	1131107868	NA	NA	https://ftp.pride.ebi.ac.uk/pride/data/archive/2026/10/PXD072227/231120_Garcia_DIA_2ug_51_9605_T5.raw	DIA	file_name	NA	NA
-231120_Garcia_DIA_2ug_52_9605_T5.raw	raw	thermo_raw	1004256687	NA	NA	https://ftp.pride.ebi.ac.uk/pride/data/archive/2026/10/PXD072227/231120_Garcia_DIA_2ug_52_9605_T5.raw	DIA	file_name	NA	NA
-231120_Garcia_DIA_2ug_53_9605_T6.raw	raw	thermo_raw	1023695799	NA	NA	https://ftp.pride.ebi.ac.uk/pride/data/archive/2026/10/PXD072227/231120_Garcia_DIA_2ug_53_9605_T6.raw	DIA	file_name	NA	NA
-231120_Garcia_DIA_2ug_54_9605_T6.raw	raw	thermo_raw	1054610472	NA	NA	https://ftp.pride.ebi.ac.uk/pride/data/archive/2026/10/PXD072227/231120_Garcia_DIA_2ug_54_9605_T6.raw	DIA	file_name	NA	NA
-MzTab_CC9311.mztab	result	NA	20707597	NA	NA	https://ftp.pride.ebi.ac.uk/pride/data/archive/2026/10/PXD072227/MzTab_CC9311.mztab	NA	NA	NA	NA
-MzTab_CC9605.mztab	result	NA	16524458	NA	NA	https://ftp.pride.ebi.ac.uk/pride/data/archive/2026/10/PXD072227/MzTab_CC9605.mztab	NA	NA	NA	NA
-MzTab_CC9902.mztab	result	NA	19221135	NA	NA	https://ftp.pride.ebi.ac.uk/pride/data/archive/2026/10/PXD072227/MzTab_CC9902.mztab	NA	NA	NA	NA
-MzTab_RCC2033_WH8109.mztab	result	NA	14726753	NA	NA	https://ftp.pride.ebi.ac.uk/pride/data/archive/2026/10/PXD072227/MzTab_RCC2033_WH8109.mztab	NA	NA	NA	NA
-MzTab_ROS8604.mztab	result	NA	17029421	NA	NA	https://ftp.pride.ebi.ac.uk/pride/data/archive/2026/10/PXD072227/MzTab_ROS8604.mztab	NA	NA	NA	NA
+file_name	file_type	raw_format	bytes	checksum	checksum_source	url	acquisition	acquisition_source	sample	condition	sha256
+231106_Garcia_DIA_2ug_01_9902_T1.raw	raw	thermo_raw	1104394346	NA	NA	https://ftp.pride.ebi.ac.uk/pride/data/archive/2026/10/PXD072227/231106_Garcia_DIA_2ug_01_9902_T1.raw	DIA	file_name	NA	NA	NA
+231106_Garcia_DIA_2ug_02_9902_T1.raw	raw	thermo_raw	539870160	NA	NA	https://ftp.pride.ebi.ac.uk/pride/data/archive/2026/10/PXD072227/231106_Garcia_DIA_2ug_02_9902_T1.raw	DIA	file_name	NA	NA	NA
+231106_Garcia_DIA_2ug_03_9902_T2.raw	raw	thermo_raw	1144387101	NA	NA	https://ftp.pride.ebi.ac.uk/pride/data/archive/2026/10/PXD072227/231106_Garcia_DIA_2ug_03_9902_T2.raw	DIA	file_name	NA	NA	NA
+231106_Garcia_DIA_2ug_04_9902_T3.raw	raw	thermo_raw	1026024626	NA	NA	https://ftp.pride.ebi.ac.uk/pride/data/archive/2026/10/PXD072227/231106_Garcia_DIA_2ug_04_9902_T3.raw	DIA	file_name	NA	NA	NA
+231106_Garcia_DIA_2ug_05_9902_T4.raw	raw	thermo_raw	1294813396	NA	NA	https://ftp.pride.ebi.ac.uk/pride/data/archive/2026/10/PXD072227/231106_Garcia_DIA_2ug_05_9902_T4.raw	DIA	file_name	NA	NA	NA
+231106_Garcia_DIA_2ug_06_9902_T5.raw	raw	thermo_raw	1101275150	NA	NA	https://ftp.pride.ebi.ac.uk/pride/data/archive/2026/10/PXD072227/231106_Garcia_DIA_2ug_06_9902_T5.raw	DIA	file_name	NA	NA	NA
+231106_Garcia_DIA_2ug_07_9902_T1.raw	raw	thermo_raw	1068207187	NA	NA	https://ftp.pride.ebi.ac.uk/pride/data/archive/2026/10/PXD072227/231106_Garcia_DIA_2ug_07_9902_T1.raw	DIA	file_name	NA	NA	NA
+231106_Garcia_DIA_2ug_08_9902_T1.raw	raw	thermo_raw	1085707643	NA	NA	https://ftp.pride.ebi.ac.uk/pride/data/archive/2026/10/PXD072227/231106_Garcia_DIA_2ug_08_9902_T1.raw	DIA	file_name	NA	NA	NA
+231106_Garcia_DIA_2ug_09_9902_T2.raw	raw	thermo_raw	993928482	NA	NA	https://ftp.pride.ebi.ac.uk/pride/data/archive/2026/10/PXD072227/231106_Garcia_DIA_2ug_09_9902_T2.raw	DIA	file_name	NA	NA	NA
+231106_Garcia_DIA_2ug_10_9902_T3.raw	raw	thermo_raw	1270105264	NA	NA	https://ftp.pride.ebi.ac.uk/pride/data/archive/2026/10/PXD072227/231106_Garcia_DIA_2ug_10_9902_T3.raw	DIA	file_name	NA	NA	NA
+231106_Garcia_DIA_2ug_11_9902_T4.raw	raw	thermo_raw	1146173347	NA	NA	https://ftp.pride.ebi.ac.uk/pride/data/archive/2026/10/PXD072227/231106_Garcia_DIA_2ug_11_9902_T4.raw	DIA	file_name	NA	NA	NA
+231106_Garcia_DIA_2ug_12_9902_T5.raw	raw	thermo_raw	1217874329	NA	NA	https://ftp.pride.ebi.ac.uk/pride/data/archive/2026/10/PXD072227/231106_Garcia_DIA_2ug_12_9902_T5.raw	DIA	file_name	NA	NA	NA
+231108_Garcia_DIA_2ug_13_8604_T1.raw	raw	thermo_raw	1131357117	NA	NA	https://ftp.pride.ebi.ac.uk/pride/data/archive/2026/10/PXD072227/231108_Garcia_DIA_2ug_13_8604_T1.raw	DIA	file_name	NA	NA	NA
+231108_Garcia_DIA_2ug_14_8604_T2.raw	raw	thermo_raw	1093179413	NA	NA	https://ftp.pride.ebi.ac.uk/pride/data/archive/2026/10/PXD072227/231108_Garcia_DIA_2ug_14_8604_T2.raw	DIA	file_name	NA	NA	NA
+231108_Garcia_DIA_2ug_15_8604_T3.raw	raw	thermo_raw	1101039219	NA	NA	https://ftp.pride.ebi.ac.uk/pride/data/archive/2026/10/PXD072227/231108_Garcia_DIA_2ug_15_8604_T3.raw	DIA	file_name	NA	NA	NA
+231108_Garcia_DIA_2ug_16_8604_T4.raw	raw	thermo_raw	1090062693	NA	NA	https://ftp.pride.ebi.ac.uk/pride/data/archive/2026/10/PXD072227/231108_Garcia_DIA_2ug_16_8604_T4.raw	DIA	file_name	NA	NA	NA
+231108_Garcia_DIA_2ug_17_8604_T5.raw	raw	thermo_raw	1094533539	NA	NA	https://ftp.pride.ebi.ac.uk/pride/data/archive/2026/10/PXD072227/231108_Garcia_DIA_2ug_17_8604_T5.raw	DIA	file_name	NA	NA	NA
+231108_Garcia_DIA_2ug_18_8604_T1.raw	raw	thermo_raw	1157193411	NA	NA	https://ftp.pride.ebi.ac.uk/pride/data/archive/2026/10/PXD072227/231108_Garcia_DIA_2ug_18_8604_T1.raw	DIA	file_name	NA	NA	NA
+231108_Garcia_DIA_2ug_19_8604_T2.raw	raw	thermo_raw	1152171727	NA	NA	https://ftp.pride.ebi.ac.uk/pride/data/archive/2026/10/PXD072227/231108_Garcia_DIA_2ug_19_8604_T2.raw	DIA	file_name	NA	NA	NA
+231108_Garcia_DIA_2ug_20_8604_T3.raw	raw	thermo_raw	1143392989	NA	NA	https://ftp.pride.ebi.ac.uk/pride/data/archive/2026/10/PXD072227/231108_Garcia_DIA_2ug_20_8604_T3.raw	DIA	file_name	NA	NA	NA
+231108_Garcia_DIA_2ug_21_8604_T4.raw	raw	thermo_raw	1104927247	NA	NA	https://ftp.pride.ebi.ac.uk/pride/data/archive/2026/10/PXD072227/231108_Garcia_DIA_2ug_21_8604_T4.raw	DIA	file_name	NA	NA	NA
+231108_Garcia_DIA_2ug_22_8604_T5.raw	raw	thermo_raw	1162367442	NA	NA	https://ftp.pride.ebi.ac.uk/pride/data/archive/2026/10/PXD072227/231108_Garcia_DIA_2ug_22_8604_T5.raw	DIA	file_name	NA	NA	NA
+231113_Garcia_DIA_2ug_23_9311_T1.raw	raw	thermo_raw	1149210140	NA	NA	https://ftp.pride.ebi.ac.uk/pride/data/archive/2026/10/PXD072227/231113_Garcia_DIA_2ug_23_9311_T1.raw	DIA	file_name	NA	NA	84b33b766d3326a611a87b01a55d7709c8210a3d299016f378ac71f1d87aaa30
+231113_Garcia_DIA_2ug_24_9311_T2.raw	raw	thermo_raw	1230595300	NA	NA	https://ftp.pride.ebi.ac.uk/pride/data/archive/2026/10/PXD072227/231113_Garcia_DIA_2ug_24_9311_T2.raw	DIA	file_name	NA	NA	06ab67a00b70b574c9e38e5738771bb57cab6bd8db90b79bbf8da7ccb6ba60b7
+231113_Garcia_DIA_2ug_25_9311_T3.raw	raw	thermo_raw	1237520860	NA	NA	https://ftp.pride.ebi.ac.uk/pride/data/archive/2026/10/PXD072227/231113_Garcia_DIA_2ug_25_9311_T3.raw	DIA	file_name	NA	NA	d46f7bd814d86245805c312aada2502e31ca9c0580be5f72c56df02c6b26ab2e
+231113_Garcia_DIA_2ug_26_9311_T4.raw	raw	thermo_raw	1203011159	NA	NA	https://ftp.pride.ebi.ac.uk/pride/data/archive/2026/10/PXD072227/231113_Garcia_DIA_2ug_26_9311_T4.raw	DIA	file_name	NA	NA	1491cc26ba46e61c3d2e0d7a34c5ac3dfa44a00ba67a38c997c998fa13c552bc
+231113_Garcia_DIA_2ug_27_9311_T5.raw	raw	thermo_raw	1207038226	NA	NA	https://ftp.pride.ebi.ac.uk/pride/data/archive/2026/10/PXD072227/231113_Garcia_DIA_2ug_27_9311_T5.raw	DIA	file_name	NA	NA	e9d804a2be2da8c951289cd8106374df71c8502f722666f75b74a99447870162
+231113_Garcia_DIA_2ug_28_9311_T1.raw	raw	thermo_raw	1275687844	NA	NA	https://ftp.pride.ebi.ac.uk/pride/data/archive/2026/10/PXD072227/231113_Garcia_DIA_2ug_28_9311_T1.raw	DIA	file_name	NA	NA	NA
+231113_Garcia_DIA_2ug_29_9311_T2.raw	raw	thermo_raw	1266010156	NA	NA	https://ftp.pride.ebi.ac.uk/pride/data/archive/2026/10/PXD072227/231113_Garcia_DIA_2ug_29_9311_T2.raw	DIA	file_name	NA	NA	NA
+231113_Garcia_DIA_2ug_30_9311_T3.raw	raw	thermo_raw	1244615522	NA	NA	https://ftp.pride.ebi.ac.uk/pride/data/archive/2026/10/PXD072227/231113_Garcia_DIA_2ug_30_9311_T3.raw	DIA	file_name	NA	NA	NA
+231113_Garcia_DIA_2ug_31_9311_T4.raw	raw	thermo_raw	1515166995	NA	NA	https://ftp.pride.ebi.ac.uk/pride/data/archive/2026/10/PXD072227/231113_Garcia_DIA_2ug_31_9311_T4.raw	DIA	file_name	NA	NA	NA
+231113_Garcia_DIA_2ug_32_9311_T5.raw	raw	thermo_raw	1231440795	NA	NA	https://ftp.pride.ebi.ac.uk/pride/data/archive/2026/10/PXD072227/231113_Garcia_DIA_2ug_32_9311_T5.raw	DIA	file_name	NA	NA	NA
+231120_Garcia_DIA_2ug_33_2033_T2.raw	raw	thermo_raw	1183904120	NA	NA	https://ftp.pride.ebi.ac.uk/pride/data/archive/2026/10/PXD072227/231120_Garcia_DIA_2ug_33_2033_T2.raw	DIA	file_name	NA	NA	NA
+231120_Garcia_DIA_2ug_34_2033_T3.raw	raw	thermo_raw	1127352345	NA	NA	https://ftp.pride.ebi.ac.uk/pride/data/archive/2026/10/PXD072227/231120_Garcia_DIA_2ug_34_2033_T3.raw	DIA	file_name	NA	NA	NA
+231120_Garcia_DIA_2ug_35_2033_T5.raw	raw	thermo_raw	1213566981	NA	NA	https://ftp.pride.ebi.ac.uk/pride/data/archive/2026/10/PXD072227/231120_Garcia_DIA_2ug_35_2033_T5.raw	DIA	file_name	NA	NA	NA
+231120_Garcia_DIA_2ug_36_2033_T4.raw	raw	thermo_raw	1172102952	NA	NA	https://ftp.pride.ebi.ac.uk/pride/data/archive/2026/10/PXD072227/231120_Garcia_DIA_2ug_36_2033_T4.raw	DIA	file_name	NA	NA	NA
+231120_Garcia_DIA_2ug_37_2033_T1.raw	raw	thermo_raw	1198753835	NA	NA	https://ftp.pride.ebi.ac.uk/pride/data/archive/2026/10/PXD072227/231120_Garcia_DIA_2ug_37_2033_T1.raw	DIA	file_name	NA	NA	NA
+231120_Garcia_DIA_2ug_38_2033_T4.raw	raw	thermo_raw	1285642124	NA	NA	https://ftp.pride.ebi.ac.uk/pride/data/archive/2026/10/PXD072227/231120_Garcia_DIA_2ug_38_2033_T4.raw	DIA	file_name	NA	NA	NA
+231120_Garcia_DIA_2ug_39_2033_T1.raw	raw	thermo_raw	1259422426	NA	NA	https://ftp.pride.ebi.ac.uk/pride/data/archive/2026/10/PXD072227/231120_Garcia_DIA_2ug_39_2033_T1.raw	DIA	file_name	NA	NA	NA
+231120_Garcia_DIA_2ug_40_2033_T2.raw	raw	thermo_raw	1309646930	NA	NA	https://ftp.pride.ebi.ac.uk/pride/data/archive/2026/10/PXD072227/231120_Garcia_DIA_2ug_40_2033_T2.raw	DIA	file_name	NA	NA	NA
+231120_Garcia_DIA_2ug_41_2033_T3.raw	raw	thermo_raw	1268333498	NA	NA	https://ftp.pride.ebi.ac.uk/pride/data/archive/2026/10/PXD072227/231120_Garcia_DIA_2ug_41_2033_T3.raw	DIA	file_name	NA	NA	NA
+231120_Garcia_DIA_2ug_42_2033_T5.raw	raw	thermo_raw	1282621268	NA	NA	https://ftp.pride.ebi.ac.uk/pride/data/archive/2026/10/PXD072227/231120_Garcia_DIA_2ug_42_2033_T5.raw	DIA	file_name	NA	NA	NA
+231120_Garcia_DIA_2ug_43_9605_T1.raw	raw	thermo_raw	722450712	NA	NA	https://ftp.pride.ebi.ac.uk/pride/data/archive/2026/10/PXD072227/231120_Garcia_DIA_2ug_43_9605_T1.raw	DIA	file_name	NA	NA	NA
+231120_Garcia_DIA_2ug_44_9605_T2.raw	raw	thermo_raw	780442657	NA	NA	https://ftp.pride.ebi.ac.uk/pride/data/archive/2026/10/PXD072227/231120_Garcia_DIA_2ug_44_9605_T2.raw	DIA	file_name	NA	NA	NA
+231120_Garcia_DIA_2ug_45_9605_T1.raw	raw	thermo_raw	1278546115	NA	NA	https://ftp.pride.ebi.ac.uk/pride/data/archive/2026/10/PXD072227/231120_Garcia_DIA_2ug_45_9605_T1.raw	DIA	file_name	NA	NA	NA
+231120_Garcia_DIA_2ug_46_9605_T2.raw	raw	thermo_raw	1372006530	NA	NA	https://ftp.pride.ebi.ac.uk/pride/data/archive/2026/10/PXD072227/231120_Garcia_DIA_2ug_46_9605_T2.raw	DIA	file_name	NA	NA	NA
+231120_Garcia_DIA_2ug_47_9605_T3.raw	raw	thermo_raw	1190793542	NA	NA	https://ftp.pride.ebi.ac.uk/pride/data/archive/2026/10/PXD072227/231120_Garcia_DIA_2ug_47_9605_T3.raw	DIA	file_name	NA	NA	NA
+231120_Garcia_DIA_2ug_48_9605_T3.raw	raw	thermo_raw	1342914294	NA	NA	https://ftp.pride.ebi.ac.uk/pride/data/archive/2026/10/PXD072227/231120_Garcia_DIA_2ug_48_9605_T3.raw	DIA	file_name	NA	NA	NA
+231120_Garcia_DIA_2ug_49_9605_T4.raw	raw	thermo_raw	1158567021	NA	NA	https://ftp.pride.ebi.ac.uk/pride/data/archive/2026/10/PXD072227/231120_Garcia_DIA_2ug_49_9605_T4.raw	DIA	file_name	NA	NA	NA
+231120_Garcia_DIA_2ug_50_9605_T4.raw	raw	thermo_raw	1281543205	NA	NA	https://ftp.pride.ebi.ac.uk/pride/data/archive/2026/10/PXD072227/231120_Garcia_DIA_2ug_50_9605_T4.raw	DIA	file_name	NA	NA	NA
+231120_Garcia_DIA_2ug_51_9605_T5.raw	raw	thermo_raw	1131107868	NA	NA	https://ftp.pride.ebi.ac.uk/pride/data/archive/2026/10/PXD072227/231120_Garcia_DIA_2ug_51_9605_T5.raw	DIA	file_name	NA	NA	NA
+231120_Garcia_DIA_2ug_52_9605_T5.raw	raw	thermo_raw	1004256687	NA	NA	https://ftp.pride.ebi.ac.uk/pride/data/archive/2026/10/PXD072227/231120_Garcia_DIA_2ug_52_9605_T5.raw	DIA	file_name	NA	NA	NA
+231120_Garcia_DIA_2ug_53_9605_T6.raw	raw	thermo_raw	1023695799	NA	NA	https://ftp.pride.ebi.ac.uk/pride/data/archive/2026/10/PXD072227/231120_Garcia_DIA_2ug_53_9605_T6.raw	DIA	file_name	NA	NA	NA
+231120_Garcia_DIA_2ug_54_9605_T6.raw	raw	thermo_raw	1054610472	NA	NA	https://ftp.pride.ebi.ac.uk/pride/data/archive/2026/10/PXD072227/231120_Garcia_DIA_2ug_54_9605_T6.raw	DIA	file_name	NA	NA	NA
+MzTab_CC9311.mztab	result	NA	20707597	NA	NA	https://ftp.pride.ebi.ac.uk/pride/data/archive/2026/10/PXD072227/MzTab_CC9311.mztab	NA	NA	NA	NA	NA
+MzTab_CC9605.mztab	result	NA	16524458	NA	NA	https://ftp.pride.ebi.ac.uk/pride/data/archive/2026/10/PXD072227/MzTab_CC9605.mztab	NA	NA	NA	NA	NA
+MzTab_CC9902.mztab	result	NA	19221135	NA	NA	https://ftp.pride.ebi.ac.uk/pride/data/archive/2026/10/PXD072227/MzTab_CC9902.mztab	NA	NA	NA	NA	NA
+MzTab_RCC2033_WH8109.mztab	result	NA	14726753	NA	NA	https://ftp.pride.ebi.ac.uk/pride/data/archive/2026/10/PXD072227/MzTab_RCC2033_WH8109.mztab	NA	NA	NA	NA	NA
+MzTab_ROS8604.mztab	result	NA	17029421	NA	NA	https://ftp.pride.ebi.ac.uk/pride/data/archive/2026/10/PXD072227/MzTab_ROS8604.mztab	NA	NA	NA	NA	NA

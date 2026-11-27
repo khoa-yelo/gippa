@@ -20,7 +20,7 @@ from __future__ import annotations
 import math
 from collections.abc import Sequence
 from dataclasses import dataclass
-from typing import Literal
+from typing import Literal, TypedDict
 
 import numpy as np
 import numpy.typing as npt
@@ -37,6 +37,7 @@ __all__ = [
     "STRATUM0_CLASS_COLUMNS",
     "PeptideCosts",
     "PlacementTables",
+    "StratumFloorBreach",
     "best_costs",
     "clopper_pearson_upper",
     "input_prefiltered",
@@ -45,6 +46,7 @@ __all__ = [
     "placement",
     "placement_tables",
     "stratum0_pi_classes",
+    "stratum_floor_breach",
     "stratum_qvalues",
 ]
 
@@ -110,15 +112,29 @@ class PeptideCosts:
 _COST_COLUMNS: tuple[str, ...] = tuple(PeptideCosts.__dataclass_fields__)
 
 
+class StratumFloorBreach(TypedDict):
+    """ADR-0079: one placement list whose q floor c/T is above alpha (the event data of
+    ``placement.stratum_q_floor_above_alpha``)."""
+
+    decoy_type: str
+    n_diff: int
+    n_targets: int
+    n_decoys: int
+    q_floor: float
+    alpha: float
+
+
 @dataclass(frozen=True, slots=True)
 class PlacementTables:
-    """Everything ``placement`` produces: the two §9.3 tables, the ADR-0019 stratum-0 class table
-    and the run flags the calling step logs (``input_prefiltered``)."""
+    """Everything ``placement`` produces: the two §9.3 tables, the ADR-0019 stratum-0 class table,
+    the run flags the calling step logs (``input_prefiltered``) and the ADR-0079 floor breaches
+    (one per list whose q floor is above alpha, ordered by decoy type then m)."""
 
     per_peptide: pd.DataFrame
     mapping_fdr: pd.DataFrame
     stratum0_classes: pd.DataFrame
     run_flags: tuple[str, ...]
+    floor_breaches: tuple[StratumFloorBreach, ...] = ()
 
 
 def _vec(x: npt.ArrayLike, name: str) -> npt.NDArray[np.float64]:
@@ -172,6 +188,47 @@ def stratum_qvalues(
     out[order] = q_sorted
     q[ok] = out
     return q
+
+
+def stratum_floor_breach(
+    *, decoy_type: str, n_diff: int, n_targets: int, n_decoys: int, c: float, alpha: float
+) -> StratumFloorBreach | None:
+    """ADR-0079: the q floor of one placement list when it is strictly above ``alpha``.
+
+    No q of a list with T = ``n_targets`` targets and constant ``c`` can fall below c/T (W >= 0
+    and T(e) <= T), so a list with c/T > alpha cannot accept anything. The floor is sufficient
+    for zero acceptances, not necessary.
+
+    Parameters
+    ----------
+    decoy_type, n_diff:
+        The list (``reverse`` / ``shuffle``, difference stratum m).
+    n_targets, n_decoys:
+        The list's target and decoy counts (``mapping_fdr`` ``all`` row).
+    c:
+        The list's constant: 1 for m >= 1; for stratum 0 the de novo max pi-hat or the largest
+        ADR-0019 class pi-hat.
+    alpha:
+        ``stats.alpha.placement``.
+
+    Returns
+    -------
+    StratumFloorBreach or None
+        The event data, or None when T = 0 or c/T <= alpha.
+    """
+    if n_targets <= 0:
+        return None
+    q_floor = float(c) / int(n_targets)
+    if not q_floor > alpha:
+        return None
+    return StratumFloorBreach(
+        decoy_type=str(decoy_type),
+        n_diff=int(n_diff),
+        n_targets=int(n_targets),
+        n_decoys=int(n_decoys),
+        q_floor=q_floor,
+        alpha=float(alpha),
+    )
 
 
 def clopper_pearson_upper(k: int, n: int, level: float = CP_LEVEL) -> float:
@@ -468,8 +525,9 @@ def placement_tables(costs: pd.DataFrame, cfg: GippaConfig) -> PlacementTables:
     Returns
     -------
     PlacementTables
-        The three tables and the run flags (``input_prefiltered`` when ADR-0019 decision 4's
-        binomial test says the input was pre-filtered to genome matches).
+        The three tables, the run flags (``input_prefiltered`` when ADR-0019 decision 4's
+        binomial test says the input was pre-filtered to genome matches) and the ADR-0079 floor
+        breaches (``stratum_floor_breach`` per list, ordered by decoy type then m).
     """
     alpha = float(cfg.stats.alpha.placement)
     classes = [list(c) for c in cfg.mapping.length_classes]
@@ -502,6 +560,7 @@ def placement_tables(costs: pd.DataFrame, cfg: GippaConfig) -> PlacementTables:
     q = np.full(n, np.nan)
     q[same_exact] = 0.0
     rows: list[dict[str, object]] = []
+    breaches: list[StratumFloorBreach] = []
     n_cls = len(classes)
     for source, dt in sorted(DECOY_TYPE_OF.items(), key=lambda kv: kv[1]):
         of_src = src == source
@@ -530,6 +589,12 @@ def placement_tables(costs: pd.DataFrame, cfg: GippaConfig) -> PlacementTables:
             rows.append(
                 _row(dt, m, "all", int(is_t.sum()), int(is_d.sum()), w_all, c, int(acc.sum()))
             )
+            breach = stratum_floor_breach(
+                decoy_type=dt, n_diff=m, n_targets=int(is_t.sum()), n_decoys=int(is_d.sum()),
+                c=c, alpha=alpha,
+            )  # fmt: skip
+            if breach is not None:
+                breaches.append(breach)
 
     fdr = pd.DataFrame(rows, columns=list(MAPPING_FDR_COLUMNS))
     for col in ("n_diff", "targets", "decoys", "n_accepted"):
@@ -561,4 +626,4 @@ def placement_tables(costs: pd.DataFrame, cfg: GippaConfig) -> PlacementTables:
         },
         columns=list(PER_PEPTIDE_COLUMNS),
     )
-    return PlacementTables(per, fdr, table, flags)
+    return PlacementTables(per, fdr, table, flags, tuple(breaches))
