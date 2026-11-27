@@ -20,7 +20,22 @@ import sys
 from collections import Counter
 from pathlib import Path
 
-COLS = "qseqid sseqid pident length qlen slen qstart qend sstart send evalue bitscore qseq sseq".split()
+COLS = [
+    "qseqid",
+    "sseqid",
+    "pident",
+    "length",
+    "qlen",
+    "slen",
+    "qstart",
+    "qend",
+    "sstart",
+    "send",
+    "evalue",
+    "bitscore",
+    "qseq",
+    "sseq",
+]
 
 
 def proteins(ncm_json: Path, mg_json: Path, out: Path) -> None:
@@ -36,15 +51,25 @@ def proteins(ncm_json: Path, mg_json: Path, out: Path) -> None:
                     if f["type"] not in ("cds", "sorf") or not f.get("aa"):
                         continue
                     fa.write(f">{f['locus']}\n{f['aa']}\n")
-                    w.writerow([tag, f["locus"], f["sequence"], f["start"], f["stop"], f["strand"],
-                                lens[f["sequence"]], len(f["aa"])])
+                    w.writerow(
+                        [
+                            tag,
+                            f["locus"],
+                            f["sequence"],
+                            f["start"],
+                            f["stop"],
+                            f["strand"],
+                            lens[f["sequence"]],
+                            len(f["aa"]),
+                        ]
+                    )
 
 
 def read_blast(path: Path) -> dict[str, dict[str, str]]:
     best: dict[str, dict[str, str]] = {}
     with path.open() as fh:
         for line in fh:
-            r = dict(zip(COLS, line.rstrip("\n").split("\t")))
+            r = dict(zip(COLS, line.rstrip("\n").split("\t"), strict=False))
             q = r["qseqid"]
             if q not in best or float(r["bitscore"]) > float(best[q]["bitscore"]):
                 best[q] = r
@@ -58,8 +83,13 @@ def codon(g: dict[str, str], pos: int) -> int:
     return (c - 1) % n + 1
 
 
-CODE = dict(zip((a + b + c for a in "TCAG" for b in "TCAG" for c in "TCAG"),
-                "FFLLSSSSYY**CC*WLLLLPPPPHHQQRRRRIIIMTTTTNNKKSSRRVVVVAAAADDEEGGGG"))
+CODE = dict(
+    zip(
+        (a + b + c for a in "TCAG" for b in "TCAG" for c in "TCAG"),
+        "FFLLSSSSYY**CC*WLLLLPPPPHHQQRRRRIIIMTTTTNNKKSSRRVVVVAAAADDEEGGGG",
+        strict=False,
+    )
+)
 COMP = str.maketrans("ACGT", "TGCA")
 
 
@@ -70,8 +100,15 @@ def residue(seqs: dict[str, str], contig: str, start: int, strand: str) -> str:
 
 
 def sites(out: Path, ncm_json: Path, mg_json: Path) -> None:
-    seqs = {s["id"]: s["nt"] for p in (ncm_json, mg_json) for s in json.loads(p.read_text())["sequences"]}
-    genes = {(r["genome"], r["locus"]): r for r in csv.DictReader((out / "genes.tsv").open(), delimiter="\t")}
+    seqs = {
+        s["id"]: s["nt"]
+        for p in (ncm_json, mg_json)
+        for s in json.loads(p.read_text())["sequences"]
+    }
+    genes = {
+        (r["genome"], r["locus"]): r
+        for r in csv.DictReader((out / "genes.tsv").open(), delimiter="\t")
+    }
     n2m, m2n = read_blast(out / "n2m.tsv"), read_blast(out / "m2n.tsv")
     cnt: Counter[str] = Counter()
     cnt["ncm_proteins"] = sum(1 for k in genes if k[0] == "ncm")
@@ -82,7 +119,7 @@ def sites(out: Path, ncm_json: Path, mg_json: Path) -> None:
         if m2n.get(s, {}).get("sseqid") != q:
             cnt["ncm_no_rbh"] += 1
             continue
-        qlen, slen, ln = int(r["qlen"]), int(r["slen"]), int(r["length"])
+        qlen, slen, _ln = int(r["qlen"]), int(r["slen"]), int(r["length"])
         qcov = (int(r["qend"]) - int(r["qstart"]) + 1) / qlen
         scov = (int(r["send"]) - int(r["sstart"]) + 1) / slen
         if float(r["pident"]) < 90 or qcov < 0.8 or scov < 0.8:
@@ -92,10 +129,11 @@ def sites(out: Path, ncm_json: Path, mg_json: Path) -> None:
         cnt["pairs"] += 1
         cnt[f"pairs_ncm_{gn['contig']}"] += 1
         cnt["outside_hsp_residues"] += (qlen - (int(r["qend"]) - int(r["qstart"]) + 1)) + (
-            slen - (int(r["send"]) - int(r["sstart"]) + 1))
+            slen - (int(r["send"]) - int(r["sstart"]) + 1)
+        )
         qi, si = int(r["qstart"]) - 1, int(r["sstart"]) - 1
         nd = 0
-        for a, b in zip(r["qseq"], r["sseq"]):
+        for a, b in zip(r["qseq"], r["sseq"], strict=False):
             if a != "-":
                 qi += 1
             if b != "-":
@@ -109,12 +147,22 @@ def sites(out: Path, ncm_json: Path, mg_json: Path) -> None:
                 cnt["il_columns"] += 1
                 continue
             nd += 1
-            rows.append({
-                "mg_locus": s, "mg_contig": gm["contig"], "mg_strand": gm["strand"], "mg_aa_pos": si,
-                "mg_codon_start": codon(gm, si), "ref_aa": b, "alt_aa": a,
-                "ncm_locus": q, "ncm_contig": gn["contig"], "ncm_strand": gn["strand"],
-                "ncm_aa_pos": qi, "ncm_codon_start": codon(gn, qi),
-            })
+            rows.append(
+                {
+                    "mg_locus": s,
+                    "mg_contig": gm["contig"],
+                    "mg_strand": gm["strand"],
+                    "mg_aa_pos": si,
+                    "mg_codon_start": codon(gm, si),
+                    "ref_aa": b,
+                    "alt_aa": a,
+                    "ncm_locus": q,
+                    "ncm_contig": gn["contig"],
+                    "ncm_strand": gn["strand"],
+                    "ncm_aa_pos": qi,
+                    "ncm_codon_start": codon(gn, qi),
+                }
+            )
         cnt["pairs_identical"] += int(nd == 0 and float(r["pident"]) == 100.0 and qlen == slen)
         orth.append({"ncm_locus": q, "mg_locus": s, "pident": r["pident"], "n_sub": nd})
     kept = []

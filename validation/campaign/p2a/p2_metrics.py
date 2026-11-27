@@ -63,24 +63,47 @@ def arm_summary(out: Path) -> dict[str, Any]:
     g = tbl(out, "genes")
     cod = g[g["feature_type"].astype(str).isin(["cds", "sorf"])]
     st = Counter(cod["detection_status"].astype(str))
-    tier = Counter(cod.loc[cod["detection_status"].astype(str) == "detected", "detection_tier"].astype(str))
+    tier = Counter(
+        cod.loc[cod["detection_status"].astype(str) == "detected", "detection_tier"].astype(str)
+    )
     q = pd.to_numeric(cod["gene_q_value"], errors="coerce")
     fdr = tbl(out, "mapping_fdr", "mapping")
     fdr_rows = []
     if fdr is not None:
         f = fdr[(fdr["length_class"].astype(str) == "all")]
         for r in f.itertuples(index=False):
-            fdr_rows.append({k: clean(getattr(r, k)) for k in ("section", "n_diff", "targets",
-                             "decoys", "n_accepted", "precision", "ci_low", "ci_high", "flags")})
+            fdr_rows.append(
+                {
+                    k: clean(getattr(r, k))
+                    for k in (
+                        "section",
+                        "n_diff",
+                        "targets",
+                        "decoys",
+                        "n_accepted",
+                        "precision",
+                        "ci_low",
+                        "ci_high",
+                        "flags",
+                    )
+                }
+            )
     return {
-        "commit": man.get("git_commit"), "git_dirty": man.get("git_dirty"),
-        "exit_code": man.get("exit_code"), "status": man.get("status"),
-        "detection_tier": man.get("detection_tier"), "started_at": man.get("started_at"),
-        "finished_at": man.get("finished_at"), "warnings": man.get("warnings"),
-        "layers_missing": man.get("layers_missing"), "modules_off": man.get("modules_off"),
+        "commit": man.get("git_commit"),
+        "git_dirty": man.get("git_dirty"),
+        "exit_code": man.get("exit_code"),
+        "status": man.get("status"),
+        "detection_tier": man.get("detection_tier"),
+        "started_at": man.get("started_at"),
+        "finished_at": man.get("finished_at"),
+        "warnings": man.get("warnings"),
+        "layers_missing": man.get("layers_missing"),
+        "modules_off": man.get("modules_off"),
         "seeds": man.get("seeds"),
         "inputs": {i.get("role"): i.get("sha256") for i in man.get("inputs", [])},
-        "n_coding_genes": int(len(cod)), "detection_status": dict(st), "detected_by_tier": dict(tier),
+        "n_coding_genes": len(cod),
+        "detection_status": dict(st),
+        "detected_by_tier": dict(tier),
         "n_detected": int(st.get("detected", 0)),
         "n_gene_q_le_0.01": int((q <= 0.01).sum()),
         "mapping_fdr_all": fdr_rows,
@@ -98,30 +121,55 @@ def gene_row(out: Path, tag: str) -> dict[str, Any] | None:
     if not len(r):
         return None
     r = r.iloc[0]
-    return {k: clean(r[k]) for k in ("locus_tag", "gene", "start", "end", "strand", "detection_status",
-            "detection_tier", "gene_q_value", "n_peptides_unique", "n_peptides_shared",
-            "coverage_frac", "abundance_log2", "flags")}
+    return {
+        k: clean(r[k])
+        for k in (
+            "locus_tag",
+            "gene",
+            "start",
+            "end",
+            "strand",
+            "detection_status",
+            "detection_tier",
+            "gene_q_value",
+            "n_peptides_unique",
+            "n_peptides_shared",
+            "coverage_frac",
+            "abundance_log2",
+            "flags",
+        )
+    }
 
 
 def hits_in(out: Path, contig: str, lo: int, hi: int, strand: str) -> pd.DataFrame:
     h = tbl(out, "peptide_hits", "mapping")
     s = pd.to_numeric(h["start"], errors="coerce")
     e = pd.to_numeric(h["end"], errors="coerce")
-    return h[(h["contig"].astype(str) == contig) & (h["strand"].astype(str) == strand)
-             & (s <= hi) & (e >= lo)]
+    return h[
+        (h["contig"].astype(str) == contig)
+        & (h["strand"].astype(str) == strand)
+        & (s <= hi)
+        & (e >= lo)
+    ]
 
 
-def window_counts(out: Path, contig: str, windows: dict[str, tuple[int, int]], strand: str) -> dict[str, Any]:
+def window_counts(
+    out: Path, contig: str, windows: dict[str, tuple[int, int]], strand: str
+) -> dict[str, Any]:
     res = {}
     for name, (lo, hi) in windows.items():
         h = hits_in(out, contig, lo, hi, strand)
         ex = h[h["route"].astype(str) == "exact"]
-        res[name] = {"window": [lo, hi], "strand": strand,
-                     "distinct_peptides_exact": int(ex["peptide"].nunique()),
-                     "distinct_peptides_any_route": int(h["peptide"].nunique()),
-                     "locus_class": dict(Counter(ex["locus_class"].astype(str))),
-                     "best_q": clean(pd.to_numeric(ex["best_q_input"], errors="coerce").min())
-                     if len(ex) else None}
+        res[name] = {
+            "window": [lo, hi],
+            "strand": strand,
+            "distinct_peptides_exact": int(ex["peptide"].nunique()),
+            "distinct_peptides_any_route": int(h["peptide"].nunique()),
+            "locus_class": dict(Counter(ex["locus_class"].astype(str))),
+            "best_q": clean(pd.to_numeric(ex["best_q_input"], errors="coerce").min())
+            if len(ex)
+            else None,
+        }
     return res
 
 
@@ -133,9 +181,26 @@ def novel_in(out: Path, lo: int, hi: int, strand: str) -> list[dict[str, Any]]:
     e = pd.to_numeric(n["end"], errors="coerce")
     lo_c = pd.concat([s, e], axis=1).min(axis=1)
     hi_c = pd.concat([s, e], axis=1).max(axis=1)
-    sel = n[((n["strand"].astype(str) == strand) & (lo_c <= hi) & (hi_c >= lo)).fillna(False).astype(bool)]
-    keep = ("orf_id", "class", "strand", "start_longest", "start_best_ostir", "end", "length_aa_longest",
-            "n_peptides", "best_peptide_q", "class_fdr", "called", "overlapping_gene", "flags")
+    sel = n[
+        ((n["strand"].astype(str) == strand) & (lo_c <= hi) & (hi_c >= lo))
+        .fillna(False)
+        .astype(bool)
+    ]
+    keep = (
+        "orf_id",
+        "class",
+        "strand",
+        "start_longest",
+        "start_best_ostir",
+        "end",
+        "length_aa_longest",
+        "n_peptides",
+        "best_peptide_q",
+        "class_fdr",
+        "called",
+        "overlapping_gene",
+        "flags",
+    )
     return [{k: clean(r[k]) for k in keep} for _, r in sel.iterrows()]
 
 
@@ -151,10 +216,19 @@ def refseq(gff: Path) -> pd.DataFrame:
             attr = dict(kv.split("=", 1) for kv in f[8].split(";") if "=" in kv)
             if f[2] == "gene" and attr.get("gene_biotype") not in ("protein_coding", "pseudogene"):
                 continue
-            rows.append({"type": f[2], "start": int(f[3]), "end": int(f[4]), "strand": f[6],
-                         "name": attr.get("gene") or attr.get("Name"), "locus_tag": attr.get("locus_tag"),
-                         "pseudo": attr.get("pseudo") == "true" or f[2] == "pseudogene"
-                         or attr.get("gene_biotype") == "pseudogene"})
+            rows.append(
+                {
+                    "type": f[2],
+                    "start": int(f[3]),
+                    "end": int(f[4]),
+                    "strand": f[6],
+                    "name": attr.get("gene") or attr.get("Name"),
+                    "locus_tag": attr.get("locus_tag"),
+                    "pseudo": attr.get("pseudo") == "true"
+                    or f[2] == "pseudogene"
+                    or attr.get("gene_biotype") == "pseudogene",
+                }
+            )
     return pd.DataFrame(rows)
 
 
@@ -177,21 +251,40 @@ def novel_vs_refseq(out: Path, ref: pd.DataFrame) -> dict[str, Any]:
                 best = (ov, c)
         match = best is not None and best[0] >= 0.5 * L
         k += match
-        out_rows.append({"orf_id": clean(r["orf_id"]), "class": clean(r["class"]), "start": a, "end": b,
-                         "strand": r["strand"], "n_peptides": clean(r["n_peptides"]),
-                         "class_fdr": clean(r["class_fdr"]), "matches_refseq": bool(match),
-                         "refseq_name": None if best is None else best[1]["name"],
-                         "refseq_locus": None if best is None else best[1]["locus_tag"],
-                         "refseq_pseudo": None if best is None else bool(best[1]["pseudo"]),
-                         "overlap_frac": None if best is None else best[0] / L})
+        out_rows.append(
+            {
+                "orf_id": clean(r["orf_id"]),
+                "class": clean(r["class"]),
+                "start": a,
+                "end": b,
+                "strand": r["strand"],
+                "n_peptides": clean(r["n_peptides"]),
+                "class_fdr": clean(r["class_fdr"]),
+                "matches_refseq": bool(match),
+                "refseq_name": None if best is None else best[1]["name"],
+                "refseq_locus": None if best is None else best[1]["locus_tag"],
+                "refseq_pseudo": None if best is None else bool(best[1]["pseudo"]),
+                "overlap_frac": None if best is None else best[0] / L,
+            }
+        )
     cls = Counter(n["class"].astype(str))
     ccls = Counter(called["class"].astype(str))
-    fdr = {c: clean(pd.to_numeric(n.loc[n["class"].astype(str) == c, "class_fdr"], errors="coerce").min())
-           for c in cls}
-    return {"n_candidates": int(len(n)), "candidates_by_class": dict(cls), "n_called": int(len(called)),
-            "called_by_class": dict(ccls), "min_class_fdr_by_class": fdr,
-            "share_matching_refseq": share(k, len(called)), "called": out_rows,
-            "exploratory_all_candidates": res_all}
+    fdr = {
+        c: clean(
+            pd.to_numeric(n.loc[n["class"].astype(str) == c, "class_fdr"], errors="coerce").min()
+        )
+        for c in cls
+    }
+    return {
+        "n_candidates": len(n),
+        "candidates_by_class": dict(cls),
+        "n_called": len(called),
+        "called_by_class": dict(ccls),
+        "min_class_fdr_by_class": fdr,
+        "share_matching_refseq": share(k, len(called)),
+        "called": out_rows,
+        "exploratory_all_candidates": res_all,
+    }
 
 
 def _match(n: pd.DataFrame, ref: pd.DataFrame) -> dict[str, Any]:
@@ -206,17 +299,28 @@ def _match(n: pd.DataFrame, ref: pd.DataFrame) -> dict[str, Any]:
         a, b = sorted((int(st), e)) if st is not None else (e, e)
         L = b - a + 1
         same = cds[(cds["strand"] == r["strand"]) & (cds["start"] <= b) & (cds["end"] >= a)]
-        best = max(((min(b, c["end"]) - max(a, c["start"]) + 1, c) for _, c in same.iterrows()),
-                   key=lambda x: x[0], default=None)
-        rows.append({"class": str(r["class"]), "n_peptides": int(clean(r["n_peptides"]) or 0),
-                     "match": best is not None and st is not None and best[0] >= 0.5 * L,
-                     "pseudo": bool(best[1]["pseudo"]) if best is not None else False})
+        best = max(
+            ((min(b, c["end"]) - max(a, c["start"]) + 1, c) for _, c in same.iterrows()),
+            key=lambda x: x[0],
+            default=None,
+        )
+        rows.append(
+            {
+                "class": str(r["class"]),
+                "n_peptides": int(clean(r["n_peptides"]) or 0),
+                "match": best is not None and st is not None and best[0] >= 0.5 * L,
+                "pseudo": bool(best[1]["pseudo"]) if best is not None else False,
+            }
+        )
     out: dict[str, Any] = {}
     for key, sub in (("all", rows), ("n_peptides_ge_2", [x for x in rows if x["n_peptides"] >= 2])):
         out[key] = share(sum(x["match"] for x in sub), len(sub))
-        out[key + "_by_class"] = {c: share(sum(x["match"] for x in sub if x["class"] == c),
-                                           sum(x["class"] == c for x in sub))
-                                  for c in sorted({x["class"] for x in sub})}
+        out[key + "_by_class"] = {
+            c: share(
+                sum(x["match"] for x in sub if x["class"] == c), sum(x["class"] == c for x in sub)
+            )
+            for c in sorted({x["class"] for x in sub})
+        }
         out[key + "_pseudogene_matches"] = sum(x["match"] and x["pseudo"] for x in sub)
     return out
 
@@ -226,7 +330,9 @@ def operons(out: Path) -> dict[str, Any]:
     within-operon abundance test of ``pairs.tsv`` (q <= 0.05 = discordant) and any
     ``operon_flags.tsv`` row whose abundance pattern is not concordant/coabundant."""
     g = tbl(out, "genes")
-    name = dict(zip(g["locus_tag"].astype(str), g["gene"].map(lambda v: clean(v) or "")))
+    name = dict(
+        zip(g["locus_tag"].astype(str), g["gene"].map(lambda v: clean(v) or ""), strict=False)
+    )
     ra = {t for t, n in name.items() if RIBO_ATP.match(n)}
     pairs = tbl(out, "pairs")
     fl = tbl(out, "operon_flags")
@@ -236,30 +342,48 @@ def operons(out: Path) -> dict[str, Any]:
         inside = pairs[pairs["gene_a"].astype(str).isin(ra) & pairs["gene_b"].astype(str).isin(ra)]
         q = pd.to_numeric(inside["q_value"], errors="coerce")
         d = pd.to_numeric(inside["delta_log2"], errors="coerce").abs()
-        both = inside["detected_a"].map(lambda v: str(v).lower() == "true") & inside["detected_b"].map(lambda v: str(v).lower() == "true")
-        res |= {"n_pairs": int(len(inside)), "n_pairs_both_detected": int(both.sum()),
-                "pair_class": dict(Counter(inside["pair_class"].astype(str))),
-                "n_pairs_q_le_0.05": int((q <= 0.05).sum()),
-                "median_abs_delta_log2": clean(d.median()), "max_abs_delta_log2": clean(d.max()),
-                "min_q": clean(q.min())}
+        both = inside["detected_a"].map(lambda v: str(v).lower() == "true") & inside[
+            "detected_b"
+        ].map(lambda v: str(v).lower() == "true")
+        res |= {
+            "n_pairs": len(inside),
+            "n_pairs_both_detected": int(both.sum()),
+            "pair_class": dict(Counter(inside["pair_class"].astype(str))),
+            "n_pairs_q_le_0.05": int((q <= 0.05).sum()),
+            "median_abs_delta_log2": clean(d.median()),
+            "max_abs_delta_log2": clean(d.max()),
+            "min_q": clean(q.min()),
+        }
         for _, r in inside[q <= 0.05].iterrows():
-            disc.append({"gene_a": name.get(str(r["gene_a"])), "gene_b": name.get(str(r["gene_b"])),
-                         "delta_log2": clean(r["delta_log2"]), "q_value": clean(r["q_value"]), "source": "pairs"})
+            disc.append(
+                {
+                    "gene_a": name.get(str(r["gene_a"])),
+                    "gene_b": name.get(str(r["gene_b"])),
+                    "delta_log2": clean(r["delta_log2"]),
+                    "q_value": clean(r["q_value"]),
+                    "source": "pairs",
+                }
+            )
     if fl is not None:
         f = fl[fl["gene_a"].astype(str).isin(ra) & fl["gene_b"].astype(str).isin(ra)]
-        res["operon_flags"] = [{"gene_a": name.get(str(r["gene_a"])), "gene_b": name.get(str(r["gene_b"])),
-                                "flags": clean(r["flags"]), "abundance_pattern": clean(r["abundance_pattern"]),
-                                "q_value": clean(r["q_value"])} for _, r in f.iterrows()]
+        res["operon_flags"] = [
+            {
+                "gene_a": name.get(str(r["gene_a"])),
+                "gene_b": name.get(str(r["gene_b"])),
+                "flags": clean(r["flags"]),
+                "abundance_pattern": clean(r["abundance_pattern"]),
+                "q_value": clean(r["q_value"]),
+            }
+            for _, r in f.iterrows()
+        ]
         for x in res["operon_flags"]:
             if x["abundance_pattern"] not in ("concordant", "coabundant", "none", None):
                 disc.append(x | {"source": "operon_flags"})
-        res["n_flags_all"] = int(len(fl))
+        res["n_flags_all"] = len(fl)
         res["flag_counts_all"] = dict(Counter(fl["flags"].astype(str)))
     res["discordant"] = disc
     res["verdict"] = "not testable" if pairs is None else ("pass" if not disc else "fail")
     return res
-
-
 
 
 def coding_genes(out: Path) -> pd.DataFrame:
@@ -276,7 +400,12 @@ def host_share(pep: Path, prefixes: tuple[str, ...] = ("CONT_",)) -> dict[str, A
     split into rabbit host (CONT_RABIT_) and the contaminant library."""
     P = read_peptide_table(pep)[0]
     acc = pm._target(P) & (pm._q(P) <= pm.Q_ACCEPT)
-    kinds: dict[str, set[str]] = {"all": set(), "cont_only": set(), "rabbit_only": set(), "library_only": set()}
+    kinds: dict[str, set[str]] = {
+        "all": set(),
+        "cont_only": set(),
+        "rabbit_only": set(),
+        "library_only": set(),
+    }
     for p, ids, ok in zip(P["peptide"].astype(str), P["protein_ids"], acc, strict=True):
         if not ok:
             continue
@@ -289,9 +418,12 @@ def host_share(pep: Path, prefixes: tuple[str, ...] = ("CONT_",)) -> dict[str, A
             elif not any(i.startswith("CONT_RABIT_") for i in it):
                 kinds["library_only"].add(p)
     n = len(kinds["all"])
-    return {"n_accepted_peptides": n, "cont_only": share(len(kinds["cont_only"]), n),
-            "rabbit_only": share(len(kinds["rabbit_only"]), n),
-            "library_only": share(len(kinds["library_only"]), n)}
+    return {
+        "n_accepted_peptides": n,
+        "cont_only": share(len(kinds["cont_only"]), n),
+        "rabbit_only": share(len(kinds["rabbit_only"]), n),
+        "library_only": share(len(kinds["library_only"]), n),
+    }
 
 
 def loci_status(outs: dict[str, Path], loci: list[dict[str, str]]) -> list[dict[str, Any]]:
@@ -299,12 +431,41 @@ def loci_status(outs: dict[str, Path], loci: list[dict[str, str]]) -> list[dict[
     plus exact peptides inside the locus span on its strand and frame (route B when present)."""
     res = []
     for r in loci:
-        row: dict[str, Any] = {k: r[k] for k in ("key", "label", "genome", "contig", "start", "end", "strand",
-                                                 "bakta_locus", "match")}
+        row: dict[str, Any] = {
+            k: r[k]
+            for k in (
+                "key",
+                "label",
+                "genome",
+                "contig",
+                "start",
+                "end",
+                "strand",
+                "bakta_locus",
+                "match",
+            )
+        }
         for lab, out in outs.items():
-            gr = gene_row(out, r["bakta_locus"]) if r["bakta_locus"] and r["match"] == "same_stop" else None
-            row[f"{lab}_gene"] = None if gr is None else {k: gr[k] for k in (
-                "detection_status", "gene_q_value", "n_peptides_unique", "n_peptides_shared", "abundance_log2", "flags")}
+            gr = (
+                gene_row(out, r["bakta_locus"])
+                if r["bakta_locus"] and r["match"] == "same_stop"
+                else None
+            )
+            row[f"{lab}_gene"] = (
+                None
+                if gr is None
+                else {
+                    k: gr[k]
+                    for k in (
+                        "detection_status",
+                        "gene_q_value",
+                        "n_peptides_unique",
+                        "n_peptides_shared",
+                        "abundance_log2",
+                        "flags",
+                    )
+                }
+            )
             a, b = int(r["start"]), int(r["end"])
             h = hits_in(out, r["contig"], a, b, r["strand"])
             h = h[h["route"].astype(str) == "exact"]
@@ -312,7 +473,9 @@ def loci_status(outs: dict[str, Path], loci: list[dict[str, str]]) -> list[dict[
             e = pd.to_numeric(h["end"], errors="coerce")
             inframe = ((s - a) % 3 == 0) if r["strand"] == "+" else ((b - e) % 3 == 0)
             # peptide_hits coordinates are 1-based closed (writer convention), as the loci
-            row[f"{lab}_peptides_in_span_inframe"] = int(h.loc[inframe.fillna(False).astype(bool), "peptide"].nunique())
+            row[f"{lab}_peptides_in_span_inframe"] = int(
+                h.loc[inframe.fillna(False).astype(bool), "peptide"].nunique()
+            )
             row[f"{lab}_peptides_in_span"] = int(h["peptide"].nunique())
         res.append(row)
     return res
@@ -328,8 +491,12 @@ def detected_q(gr: dict[str, Any] | None) -> bool:
 def per_contig(out: Path) -> dict[str, Any]:
     g = coding_genes(out)
     d = is_det(g)
-    return {str(c): share(int(d[g["contig"].astype(str) == c].sum()), int((g["contig"].astype(str) == c).sum()))
-            for c in sorted(g["contig"].astype(str).unique())}
+    return {
+        str(c): share(
+            int(d[g["contig"].astype(str) == c].sum()), int((g["contig"].astype(str) == c).sum())
+        )
+        for c in sorted(g["contig"].astype(str).unique())
+    }
 
 
 def abundance_percentile(out: Path, tags: list[str]) -> dict[str, Any]:
@@ -339,9 +506,14 @@ def abundance_percentile(out: Path, tags: list[str]) -> dict[str, Any]:
     g["pct"] = ab.rank(pct=True)
     sub = g[g["locus_tag"].astype(str).isin(tags)]
     pct = sub["pct"].dropna()
-    return {"n_tags": len(tags), "n_detected": int(len(sub)),
-            "median_percentile": clean(pct.median()) if len(pct) else None,
-            "percentiles": {str(t): clean(p) for t, p in zip(sub["locus_tag"], sub["pct"])}}
+    return {
+        "n_tags": len(tags),
+        "n_detected": len(sub),
+        "median_percentile": clean(pct.median()) if len(pct) else None,
+        "percentiles": {
+            str(t): clean(p) for t, p in zip(sub["locus_tag"], sub["pct"], strict=False)
+        },
+    }
 
 
 def regions_summary(out: Path) -> dict[str, Any]:
@@ -351,19 +523,50 @@ def regions_summary(out: Path) -> dict[str, Any]:
     if rs is not None:
         q = pd.to_numeric(rs["q_value"], errors="coerce")
         sig = rs[q <= 0.05]
-        res["n_region_tests"] = int(len(rs))
-        res["n_q_le_0.05"] = int(len(sig))
+        res["n_region_tests"] = len(rs)
+        res["n_q_le_0.05"] = len(sig)
         res["by_type_tested"] = dict(Counter(rs["region_type"].astype(str)))
-        keep = [c for c in ("region_id", "region_type", "subset", "method", "start", "end", "n_genes",
-                            "observed", "expected", "o_over_e", "effect", "q_value") if c in rs.columns]
+        keep = [
+            c
+            for c in (
+                "region_id",
+                "region_type",
+                "subset",
+                "method",
+                "start",
+                "end",
+                "n_genes",
+                "observed",
+                "expected",
+                "o_over_e",
+                "effect",
+                "q_value",
+            )
+            if c in rs.columns
+        ]
         res["significant"] = [{k: clean(r[k]) for k in keep} for _, r in sig.iterrows()]
     if isl is not None:
-        res["islands"] = [{k: clean(r[k]) for k in ("island_id", "direction", "start", "end", "n_genes",
-                           "detected_frac", "mean_abundance_log2", "effect", "q_value") if k in isl.columns}
-                          for _, r in isl.iterrows()]
+        res["islands"] = [
+            {
+                k: clean(r[k])
+                for k in (
+                    "island_id",
+                    "direction",
+                    "start",
+                    "end",
+                    "n_genes",
+                    "detected_frac",
+                    "mean_abundance_log2",
+                    "effect",
+                    "q_value",
+                )
+                if k in isl.columns
+            }
+            for _, r in isl.iterrows()
+        ]
     fl = tbl(out, "operon_flags")
     if fl is not None:
-        res["operon_flags"] = {"n": int(len(fl)), "by_flag": dict(Counter(fl["flags"].astype(str)))}
+        res["operon_flags"] = {"n": len(fl), "by_flag": dict(Counter(fl["flags"].astype(str)))}
     return res
 
 
@@ -387,18 +590,55 @@ def candidates_ge2(out: Path, ref: pd.DataFrame, min_pep: int = 2) -> list[dict[
         a, b = sorted((int(st), e)) if st is not None else (e, e)
         same = cds[(cds["strand"] == r["strand"]) & (cds["start"] <= b) & (cds["end"] >= a)]
         anys = cds[(cds["start"] <= b) & (cds["end"] >= a)]
-        best = max(((min(b, c["end"]) - max(a, c["start"]) + 1, c) for _, c in same.iterrows()),
-                   key=lambda x: x[0], default=None)
-        other = max(((min(b, c["end"]) - max(a, c["start"]) + 1, c) for _, c in anys.iterrows()),
-                    key=lambda x: x[0], default=None)
-        rows.append({k: clean(r[k]) for k in ("orf_id", "class", "strand", "start_longest", "end",
-                     "length_aa_longest", "n_peptides", "best_peptide_q", "class_fdr", "called",
-                     "overlapping_gene", "flags")} | {
-            "refseq_same_strand": None if best is None else {"name": best[1]["name"], "locus": best[1]["locus_tag"],
-                "start": int(best[1]["start"]), "end": int(best[1]["end"]), "pseudo": bool(best[1]["pseudo"]),
-                "overlap_frac_of_orf": round(best[0] / (b - a + 1), 3)},
-            "refseq_any_strand": None if other is None else {"name": other[1]["name"], "locus": other[1]["locus_tag"],
-                "strand": other[1]["strand"], "pseudo": bool(other[1]["pseudo"])}})
+        best = max(
+            ((min(b, c["end"]) - max(a, c["start"]) + 1, c) for _, c in same.iterrows()),
+            key=lambda x: x[0],
+            default=None,
+        )
+        other = max(
+            ((min(b, c["end"]) - max(a, c["start"]) + 1, c) for _, c in anys.iterrows()),
+            key=lambda x: x[0],
+            default=None,
+        )
+        rows.append(
+            {
+                k: clean(r[k])
+                for k in (
+                    "orf_id",
+                    "class",
+                    "strand",
+                    "start_longest",
+                    "end",
+                    "length_aa_longest",
+                    "n_peptides",
+                    "best_peptide_q",
+                    "class_fdr",
+                    "called",
+                    "overlapping_gene",
+                    "flags",
+                )
+            }
+            | {
+                "refseq_same_strand": None
+                if best is None
+                else {
+                    "name": best[1]["name"],
+                    "locus": best[1]["locus_tag"],
+                    "start": int(best[1]["start"]),
+                    "end": int(best[1]["end"]),
+                    "pseudo": bool(best[1]["pseudo"]),
+                    "overlap_frac_of_orf": round(best[0] / (b - a + 1), 3),
+                },
+                "refseq_any_strand": None
+                if other is None
+                else {
+                    "name": other[1]["name"],
+                    "locus": other[1]["locus_tag"],
+                    "strand": other[1]["strand"],
+                    "pseudo": bool(other[1]["pseudo"]),
+                },
+            }
+        )
     return rows
 
 
@@ -437,7 +677,10 @@ def main(argv: list[str] | None = None) -> int:
     doc["S2_te3"] = t3
     doc["S3_te4"] = tr.te4(genes)
     heads = [ln[1:] for ln in a.contaminants.read_text().splitlines() if ln.startswith(">")]
-    fam = {f: set(ids) | {"CONT_" + i for i in ids} for f, ids in tr.contaminant_families(heads).items()}
+    fam = {
+        f: set(ids) | {"CONT_" + i for i in ids}
+        for f, ids in tr.contaminant_families(heads).items()
+    }
     t5 = tr.te5_arm(P, hits, unm, fam, cfg)
     t5.pop("_violations", None)
     doc["S4_te5"] = t5
@@ -453,25 +696,36 @@ def main(argv: list[str] | None = None) -> int:
         doc["S10_B"] = gene_fdr(B)
         doc["S6_context_B"] = regions_summary(B)
         doc["S7_novel"] = novel_vs_refseq(B, ref)
-        doc["S8_q_floor"] = {"warnings": [x for x in (doc["B"]["warnings"] or []) if "class_q_floor" in str(x)]}
+        doc["S8_q_floor"] = {
+            "warnings": [x for x in (doc["B"]["warnings"] or []) if "class_q_floor" in str(x)]
+        }
         doc["S7_candidates_ge2"] = candidates_ge2(B, ref)
         d1, d2 = detected(A), detected(B)
-        doc["S9_route_b"] = {"A_detected": len(d1), "B_detected": len(d2),
-                             "A_kept_by_B": share(len(d1 & d2), len(d1)), "B_only": len(d2 - d1)}
+        doc["S9_route_b"] = {
+            "A_detected": len(d1),
+            "B_detected": len(d2),
+            "A_kept_by_B": share(len(d1 & d2), len(d1)),
+            "B_only": len(d2 - d1),
+        }
     if a.cmp:
         ab = a.cmp / "tables" / "compare_abundance.tsv"
         st = a.cmp / "tables" / "compare_stability.tsv"
-        doc["compare"] = {"abundance": pd.read_csv(ab, sep="\t").to_dict("records") if ab.is_file() else None,
-                          "stability": pd.read_csv(st, sep="\t").to_dict("records") if st.is_file() else None}
+        doc["compare"] = {
+            "abundance": pd.read_csv(ab, sep="\t").to_dict("records") if ab.is_file() else None,
+            "stability": pd.read_csv(st, sep="\t").to_dict("records") if st.is_file() else None,
+        }
     if a.loci:
         import csv
+
         rows = [r for r in csv.DictReader(a.loci.open(), delimiter="\t") if r["genome"] == a.tag]
         doc["loci"] = loci_status(outs, rows)
         doc["loci_by_key_A"] = {}
         for key in sorted({r["key"] for r in rows}):
             tags = [r["bakta_locus"] for r in rows if r["key"] == key and r["match"] == "same_stop"]
             pct = abundance_percentile(A, tags)
-            pct["n_detected_q01"] = sum(detected_q(x["A_gene"]) for x in doc["loci"] if x["key"] == key)
+            pct["n_detected_q01"] = sum(
+                detected_q(x["A_gene"]) for x in doc["loci"] if x["key"] == key
+            )
             pct["n_loci"] = sum(1 for r in rows if r["key"] == key)
             doc["loci_by_key_A"][key] = pct
     if a.patched:

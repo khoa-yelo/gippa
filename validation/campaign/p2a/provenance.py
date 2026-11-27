@@ -26,24 +26,61 @@ def diann(d: Path) -> dict | None:
     s2 = (d / "step2_report.log").read_text() if (d / "step2_report.log").is_file() else ""
     m = re.search(r"(\d+) precursors generated", s1)
     pg = re.search(r"Protein groups with global q-value <= 0.01: (\d+)", s2)
-    return {k: prov.get(k) for k in ("job_id", "node", "exit_code", "image_sha256", "cfg_sha256",
-                                      "campaign_commit", "fasta_sha256", "n_runs", "step1", "step2",
-                                      "wall_s", "library_bytes")} | {
+    return {
+        k: prov.get(k)
+        for k in (
+            "job_id",
+            "node",
+            "exit_code",
+            "image_sha256",
+            "cfg_sha256",
+            "campaign_commit",
+            "fasta_sha256",
+            "n_runs",
+            "step1",
+            "step2",
+            "wall_s",
+            "library_bytes",
+        )
+    } | {
         "library_precursors": int(m.group(1)) if m else None,
-        "ids_at_1pct_per_run": [int(x) for x in re.findall(r"Number of IDs at 0.01 FDR: (\d+)", s2)],
+        "ids_at_1pct_per_run": [
+            int(x) for x in re.findall(r"Number of IDs at 0.01 FDR: (\d+)", s2)
+        ],
         "protein_groups_global_q01": int(pg.group(1)) if pg else None,
-        "runs": [Path(r).name for r in (prov.get("run_list") and Path(prov["run_list"]).read_text().split() or [])]}
+        "runs": [
+            Path(r).name
+            for r in ((prov.get("run_list") and Path(prov["run_list"]).read_text().split()) or [])
+        ],
+    }
 
 
 def run_info(run: Path) -> dict | None:
     m = jl(run / "run_manifest.json")
     if m is None:
         return None
-    return {k: m.get(k) for k in ("git_commit", "git_dirty", "gippa_version", "status", "exit_code",
-                                  "started_at", "finished_at", "profile", "detection_tier",
-                                  "modules_off", "warnings", "layers_missing", "tools", "databases")} | {
+    return {
+        k: m.get(k)
+        for k in (
+            "git_commit",
+            "git_dirty",
+            "gippa_version",
+            "status",
+            "exit_code",
+            "started_at",
+            "finished_at",
+            "profile",
+            "detection_tier",
+            "modules_off",
+            "warnings",
+            "layers_missing",
+            "tools",
+            "databases",
+        )
+    } | {
         "seeds_master": (m.get("seeds") or {}).get("master"),
-        "inputs": [{k: i.get(k) for k in ("role", "path", "sha256")} for i in m.get("inputs", [])]}
+        "inputs": [{k: i.get(k) for k in ("role", "path", "sha256")} for i in m.get("inputs", [])],
+    }
 
 
 def main() -> int:
@@ -53,10 +90,14 @@ def main() -> int:
     in_dir = arm / (("in_" + route if route.startswith("x_") else "in_" + base) + suf)
     out_dir = arm / (f"out_a{suf}_te7" if route == "te7" else "out_" + route + suf)
     rt = in_dir / f"runtime_{out_dir.name}.txt"
-    doc = {"arm_dir": str(arm), "route": route, "diann": diann(arm / f"diann_{base}"),
-           "convert": jl(in_dir / "convert_provenance.json"),
-           "gippa_run_runtime": rt.read_text().strip() if rt.is_file() else None,
-           "gippa_run": run_info(out_dir)}
+    doc = {
+        "arm_dir": str(arm),
+        "route": route,
+        "diann": diann(arm / f"diann_{base}"),
+        "convert": jl(in_dir / "convert_provenance.json"),
+        "gippa_run_runtime": rt.read_text().strip() if rt.is_file() else None,
+        "gippa_run": run_info(out_dir),
+    }
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(json.dumps(doc, indent=1) + "\n")
     return 0

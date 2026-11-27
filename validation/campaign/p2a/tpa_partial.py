@@ -6,13 +6,12 @@ tables), T6 truth-set counts, and the failed gippa runs' exit/step. Aggregates o
 """
 
 import json
-import re
 import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
-import p2_metrics as m  # noqa: E402
-import provenance as pv  # noqa: E402
+import p2_metrics as m
+import provenance as pv
 
 C = Path("/home/classes/bios/270/khoa/giap/local/campaign/PXD065022")
 TAGS = ["tpa_dal1", "tpa_grady", "tpa_haitib", "tpa_madras", "tpa_mexicoa", "tpa_phil1", "tpa_ss14"]
@@ -23,7 +22,11 @@ def failed_run(out: Path) -> dict | None:
     if not man.is_file():
         return None
     d = json.loads(man.read_text())
-    return {"git_commit": d.get("git_commit"), "exit_code": d.get("exit_code"), "status": d.get("status")}
+    return {
+        "git_commit": d.get("git_commit"),
+        "exit_code": d.get("exit_code"),
+        "status": d.get("status"),
+    }
 
 
 def main() -> int:

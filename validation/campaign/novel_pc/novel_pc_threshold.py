@@ -34,19 +34,68 @@ import pandas as pd
 # (dataset label, accession, run label, run dir rel. to root, genome dir rel. to root,
 #  contig alias novel_orfs contig -> GFF seqid)
 RUNS: list[tuple[str, str, str, str, str, dict[str, str]]] = [
-    ("E. coli K-12 (Phase 1 E2)", "ecoli", "ecoli_e2", "ecoli_k12/runs/out_e2_fix", "ecoli_k12/ref",
-     {"U00096.3": "NC_000913.3"}),
-    *[("T. pallidum", "PXD065022", s, f"PXD065022/{s}/out_b_fix2", f"PXD065022/genome/{s}", {})
-      for s in ("tpa_dal1", "tpa_grady", "tpa_haitib", "tpa_madras", "tpa_mexicoa", "tpa_phil1",
-                "tpa_ss14")],
-    ("C. crescentus", "PXD069004", "ccre", "PXD069004/ccre_na1000/out_b", "PXD069004/genome/ccre_na1000", {}),
-    ("B. thetaiotaomicron", "PXD055395", "bthe", "PXD055395/bthe_vpi5482/out_b",
-     "PXD055395/genome/bthe_vpi5482", {}),
-    ("Synechococcus CC9311", "PXD072227", "syn", "PXD072227/out_b", "PXD072227/genome/syn_cc9311", {}),
-    ("V. natriegens", "PXD049476", "vnat", "PXD049476/out_b", "PXD049476/genome/vnat_atcc14048", {}),
+    (
+        "E. coli K-12 (Phase 1 E2)",
+        "ecoli",
+        "ecoli_e2",
+        "ecoli_k12/runs/out_e2_fix",
+        "ecoli_k12/ref",
+        {"U00096.3": "NC_000913.3"},
+    ),
+    *[
+        ("T. pallidum", "PXD065022", s, f"PXD065022/{s}/out_b_fix2", f"PXD065022/genome/{s}", {})
+        for s in (
+            "tpa_dal1",
+            "tpa_grady",
+            "tpa_haitib",
+            "tpa_madras",
+            "tpa_mexicoa",
+            "tpa_phil1",
+            "tpa_ss14",
+        )
+    ],
+    (
+        "C. crescentus",
+        "PXD069004",
+        "ccre",
+        "PXD069004/ccre_na1000/out_b",
+        "PXD069004/genome/ccre_na1000",
+        {},
+    ),
+    (
+        "B. thetaiotaomicron",
+        "PXD055395",
+        "bthe",
+        "PXD055395/bthe_vpi5482/out_b",
+        "PXD055395/genome/bthe_vpi5482",
+        {},
+    ),
+    (
+        "Synechococcus CC9311",
+        "PXD072227",
+        "syn",
+        "PXD072227/out_b",
+        "PXD072227/genome/syn_cc9311",
+        {},
+    ),
+    (
+        "V. natriegens",
+        "PXD049476",
+        "vnat",
+        "PXD049476/out_b",
+        "PXD049476/genome/vnat_atcc14048",
+        {},
+    ),
     ("M. xanthus", "PXD060688", "mxan", "PXD060688/out_b", "PXD060688/genome/mxan_dk1622", {}),
     ("C. difficile", "PXD065346", "cdif", "PXD065346/out_b", "PXD065346/genome/cdif_630derm", {}),
-    ("M. tuberculosis", "PXD057335", "mtb", "PXD057335/out_b", "PXD057335/genome/mtb_h37rv_circ", {}),
+    (
+        "M. tuberculosis",
+        "PXD057335",
+        "mtb",
+        "PXD057335/out_b",
+        "PXD057335/genome/mtb_h37rv_circ",
+        {},
+    ),
     ("H. volcanii", "PXD066008", "hvo", "PXD066008/out_b", "PXD066008/genome/hvol_ds2", {}),
     ("S. islandicus", "PXD079213", "sisl", "PXD079213/out_b", "PXD079213/genome/sisl_rey15a", {}),
 ]
@@ -65,31 +114,93 @@ RUNS: list[tuple[str, str, str, str, str, dict[str, str]]] = [
 #                     of the RefSeq CDS, same strand.
 # Datasets are listed where the control is expected; prfB is searched in every run.
 CONTROLS: list[dict[str, Any]] = [
-    {"name": "prfB N-terminal extension", "kind": "prfB", "match": {"gene": "prfB"}, "runs": "all",
-     "reason": "PrfB (RF2) is essential; its N-terminus is made by a programmed +1 frameshift that "
-               "Bakta cannot model, so peptides upstream of Bakta's start are true by biology"},
-    {"name": "infC late start", "kind": "infC", "match": {"gene": "infC"}, "runs": ["ecoli_e2", "cdif"],
-     "reason": "IF3 starts at the AUU codon upstream of Bakta's later ATG/GTG start; peptides there "
-               "are true N-terminal sequence"},
-    {"name": "PrdB read-through (Sec)", "kind": "prdB", "match": {"gene": "prdB"}, "runs": ["cdif"],
-     "reason": "PrdB is a selenoprotein; translation continues through the UGA (Sec) codon"},
-    {"name": "rpmB (L28)", "kind": "missed", "match": {"product": "50S ribosomal protein L28"},
-     "runs": ["tpa_dal1", "tpa_grady", "tpa_haitib", "tpa_madras", "tpa_mexicoa", "tpa_phil1", "tpa_ss14"],
-     "reason": "RefSeq ribosomal protein L28 not called by Bakta"},
-    {"name": "L36 Rv3461c", "kind": "missed", "match": {"locus_tag": "Rv3461c"}, "runs": ["mtb"],
-     "reason": "RefSeq ribosomal protein L36 (MS-supported in RefSeq) not called by Bakta"},
-    {"name": "L34 Rv3924c", "kind": "missed", "match": {"locus_tag": "Rv3924c"}, "runs": ["mtb"],
-     "reason": "RefSeq ribosomal protein L34 not called by Bakta"},
-    {"name": "L37ae", "kind": "missed", "match": {"product": "50S ribosomal protein L37ae"}, "runs": ["sisl"],
-     "reason": "RefSeq ribosomal protein L37ae not called by Bakta"},
-    {"name": "L40e", "kind": "missed", "match": {"product": "50S ribosomal protein L40e"}, "runs": ["sisl"],
-     "reason": "RefSeq ribosomal protein L40e not called by Bakta"},
-    {"name": "cdzC", "kind": "missed", "match": {"locus_tag": "CCNA_03933"}, "runs": ["ccre"],
-     "reason": "RefSeq bacteriocin cdzC (LC-MS / Ribo-seq evidence in RefSeq) not called by Bakta"},
-    {"name": "cdzD", "kind": "missed", "match": {"locus_tag": "CCNA_03932"}, "runs": ["ccre"],
-     "reason": "RefSeq bacteriocin cdzD not called by Bakta"},
-    {"name": "cdzI", "kind": "missed", "match": {"locus_tag": "CCNA_03931"}, "runs": ["ccre"],
-     "reason": "RefSeq bacteriocin immunity cdzI not called by Bakta"},
+    {
+        "name": "prfB N-terminal extension",
+        "kind": "prfB",
+        "match": {"gene": "prfB"},
+        "runs": "all",
+        "reason": "PrfB (RF2) is essential; its N-terminus is made by a programmed +1 frameshift that "
+        "Bakta cannot model, so peptides upstream of Bakta's start are true by biology",
+    },
+    {
+        "name": "infC late start",
+        "kind": "infC",
+        "match": {"gene": "infC"},
+        "runs": ["ecoli_e2", "cdif"],
+        "reason": "IF3 starts at the AUU codon upstream of Bakta's later ATG/GTG start; peptides there "
+        "are true N-terminal sequence",
+    },
+    {
+        "name": "PrdB read-through (Sec)",
+        "kind": "prdB",
+        "match": {"gene": "prdB"},
+        "runs": ["cdif"],
+        "reason": "PrdB is a selenoprotein; translation continues through the UGA (Sec) codon",
+    },
+    {
+        "name": "rpmB (L28)",
+        "kind": "missed",
+        "match": {"product": "50S ribosomal protein L28"},
+        "runs": [
+            "tpa_dal1",
+            "tpa_grady",
+            "tpa_haitib",
+            "tpa_madras",
+            "tpa_mexicoa",
+            "tpa_phil1",
+            "tpa_ss14",
+        ],
+        "reason": "RefSeq ribosomal protein L28 not called by Bakta",
+    },
+    {
+        "name": "L36 Rv3461c",
+        "kind": "missed",
+        "match": {"locus_tag": "Rv3461c"},
+        "runs": ["mtb"],
+        "reason": "RefSeq ribosomal protein L36 (MS-supported in RefSeq) not called by Bakta",
+    },
+    {
+        "name": "L34 Rv3924c",
+        "kind": "missed",
+        "match": {"locus_tag": "Rv3924c"},
+        "runs": ["mtb"],
+        "reason": "RefSeq ribosomal protein L34 not called by Bakta",
+    },
+    {
+        "name": "L37ae",
+        "kind": "missed",
+        "match": {"product": "50S ribosomal protein L37ae"},
+        "runs": ["sisl"],
+        "reason": "RefSeq ribosomal protein L37ae not called by Bakta",
+    },
+    {
+        "name": "L40e",
+        "kind": "missed",
+        "match": {"product": "50S ribosomal protein L40e"},
+        "runs": ["sisl"],
+        "reason": "RefSeq ribosomal protein L40e not called by Bakta",
+    },
+    {
+        "name": "cdzC",
+        "kind": "missed",
+        "match": {"locus_tag": "CCNA_03933"},
+        "runs": ["ccre"],
+        "reason": "RefSeq bacteriocin cdzC (LC-MS / Ribo-seq evidence in RefSeq) not called by Bakta",
+    },
+    {
+        "name": "cdzD",
+        "kind": "missed",
+        "match": {"locus_tag": "CCNA_03932"},
+        "runs": ["ccre"],
+        "reason": "RefSeq bacteriocin cdzD not called by Bakta",
+    },
+    {
+        "name": "cdzI",
+        "kind": "missed",
+        "match": {"locus_tag": "CCNA_03931"},
+        "runs": ["ccre"],
+        "reason": "RefSeq bacteriocin immunity cdzI not called by Bakta",
+    },
 ]
 
 TWO_PEPTIDE_CLASSES = {"cds_outframe", "antisense"}  # gippa.novel.evidence (read-only reference)
@@ -123,11 +234,21 @@ def read_gff(gdir: Path) -> pd.DataFrame:
                 continue
             g = genes.get(attr.get("Parent", ""), {})
             olt = (attr.get("old_locus_tag") or g.get("old_locus_tag") or "").replace("%2C", ",")
-            rows.append({"seqid": f[0], "type": f[2], "start": int(f[3]), "end": int(f[4]), "strand": f[6],
-                         "id": attr.get("ID"), "gene": attr.get("gene") or g.get("gene") or g.get("Name"),
-                         "locus_tag": attr.get("locus_tag") or g.get("locus_tag"),
-                         "old_locus_tag": olt, "product": attr.get("product", ""),
-                         "pseudo": attr.get("pseudo") == "true" or f[2] == "pseudogene"})
+            rows.append(
+                {
+                    "seqid": f[0],
+                    "type": f[2],
+                    "start": int(f[3]),
+                    "end": int(f[4]),
+                    "strand": f[6],
+                    "id": attr.get("ID"),
+                    "gene": attr.get("gene") or g.get("gene") or g.get("Name"),
+                    "locus_tag": attr.get("locus_tag") or g.get("locus_tag"),
+                    "old_locus_tag": olt,
+                    "product": attr.get("product", ""),
+                    "pseudo": attr.get("pseudo") == "true" or f[2] == "pseudogene",
+                }
+            )
     return pd.DataFrame(rows)
 
 
@@ -161,8 +282,13 @@ def load_novel(run: Path) -> pd.DataFrame:
 
 
 def peptide_spans(run: Path) -> dict[str, tuple[int, int]]:
-    h = pd.read_csv(run / "mapping" / "peptide_hits.tsv", sep="\t", dtype=str, keep_default_na=False,
-                    usecols=["start", "end", "novel_candidate_id"])
+    h = pd.read_csv(
+        run / "mapping" / "peptide_hits.tsv",
+        sep="\t",
+        dtype=str,
+        keep_default_na=False,
+        usecols=["start", "end", "novel_candidate_id"],
+    )
     h = h[h["novel_candidate_id"].astype(str).str.startswith("NOVEL_")]
     out: dict[str, tuple[int, int]] = {}
     for cid, g in h.groupby("novel_candidate_id"):
@@ -170,8 +296,15 @@ def peptide_spans(run: Path) -> dict[str, tuple[int, int]]:
     return out
 
 
-def best_same_strand(r: pd.Series, ref: pd.DataFrame, seqid: str, lo: int, hi: int) -> tuple[int, Any]:
-    same = ref[(ref["seqid"] == seqid) & (ref["strand"] == r["strand"]) & (ref["start"] <= hi) & (ref["end"] >= lo)]
+def best_same_strand(
+    r: pd.Series, ref: pd.DataFrame, seqid: str, lo: int, hi: int
+) -> tuple[int, Any]:
+    same = ref[
+        (ref["seqid"] == seqid)
+        & (ref["strand"] == r["strand"])
+        & (ref["start"] <= hi)
+        & (ref["end"] >= lo)
+    ]
     best = (0, None)
     for _, c in same.iterrows():
         ov = min(hi, c["end"]) - max(lo, c["start"]) + 1
@@ -186,19 +319,30 @@ def refseq_match(r: pd.Series, ref: pd.DataFrame, seqid: str) -> dict[str, Any]:
     lo, hi = int(r["lo"]), int(r["hi"])
     ov, c = best_same_strand(r, ref, seqid, lo, hi)
     frac = ov / (hi - lo + 1)
-    return {"strict": bool(r["has_start"] and c is not None and frac >= 0.5),
-            "span": bool(c is not None and frac >= 0.5),
-            "refseq_gene": None if c is None else (c["gene"] or c["locus_tag"]),
-            "refseq_locus": None if c is None else c["locus_tag"], "overlap_frac": round(frac, 3)}
+    return {
+        "strict": bool(r["has_start"] and c is not None and frac >= 0.5),
+        "span": bool(c is not None and frac >= 0.5),
+        "refseq_gene": None if c is None else (c["gene"] or c["locus_tag"]),
+        "refseq_locus": None if c is None else c["locus_tag"],
+        "overlap_frac": round(frac, 3),
+    }
 
 
-def find_controls(label: str, n: pd.DataFrame, ref: pd.DataFrame, alias: dict[str, str]) -> list[dict[str, Any]]:
+def find_controls(
+    label: str, n: pd.DataFrame, ref: pd.DataFrame, alias: dict[str, str]
+) -> list[dict[str, Any]]:
     out = []
     for ctl in CONTROLS:
         if ctl["runs"] != "all" and label not in ctl["runs"]:
             continue
         key, val = next(iter(ctl["match"].items()))
-        feats = ref[(ref[key] == val) | ((key == "locus_tag") & ref["old_locus_tag"].str.split(",").map(lambda x: val in x))]
+        feats = ref[
+            (ref[key] == val)
+            | (
+                (key == "locus_tag")
+                & ref["old_locus_tag"].str.split(",").map(lambda x, val=val: val in x)
+            )
+        ]
         if feats.empty:
             continue
         for _, r in n.iterrows():
@@ -217,18 +361,35 @@ def find_controls(label: str, n: pd.DataFrame, ref: pd.DataFrame, alias: dict[st
                 if cls != "nterm_extension":
                     continue
                 role = "secondary"
-            elif ctl["kind"] == "prdB":  # stop = prdB stop: past the Sec; else the part up to the Sec
+            elif (
+                ctl["kind"] == "prdB"
+            ):  # stop = prdB stop: past the Sec; else the part up to the Sec
                 past = int(r["end"]) == (glo if r["strand"] == "-" else ghi)
-                role = "secondary" if past else "secondary (prdB N-terminal part, ends at the Sec codon)"
+                role = (
+                    "secondary"
+                    if past
+                    else "secondary (prdB N-terminal part, ends at the Sec codon)"
+                )
             else:  # missed: candidate covers >= 50 % of the RefSeq CDS
                 cov = max(0, min(hi, ghi) - max(lo, glo) + 1) / (ghi - glo + 1)
                 if cov < 0.5:
                     continue
                 role = "secondary"
-            out.append({"control": ctl["name"], "kind": ctl["kind"], "role": role, "run": label,
-                        "orf_id": r["orf_id"], "class": cls, "q": r["q"], "n_peptides": int(r["npep"]),
-                        "has_start": bool(r["has_start"]), "flags": r["flags"],
-                        "refseq_feature": f"{val} {glo}-{ghi} ({r['strand']})"})
+            out.append(
+                {
+                    "control": ctl["name"],
+                    "kind": ctl["kind"],
+                    "role": role,
+                    "run": label,
+                    "orf_id": r["orf_id"],
+                    "class": cls,
+                    "q": r["q"],
+                    "n_peptides": int(r["npep"]),
+                    "has_start": bool(r["has_start"]),
+                    "flags": r["flags"],
+                    "refseq_feature": f"{val} {glo}-{ghi} ({r['strand']})",
+                }
+            )
     return out
 
 
@@ -255,14 +416,18 @@ def main() -> None:
     for ds, acc, label, rd, gd, alias in RUNS:
         n = load_novel(a.root / rd)
         spans = peptide_spans(a.root / rd)
-        n["pep_lo"] = n["orf_id"].map(lambda i: spans.get(i, (None, None))[0])
-        n["pep_hi"] = n["orf_id"].map(lambda i: spans.get(i, (None, None))[1])
+        n["pep_lo"] = n["orf_id"].map(lambda i, spans=spans: spans.get(i, (None, None))[0])
+        n["pep_hi"] = n["orf_id"].map(lambda i, spans=spans: spans.get(i, (None, None))[1])
         ref = read_gff(a.root / gd)
         data[label] = (n, ref, alias, (ds, acc))
         controls += find_controls(label, n, ref, alias)
 
     ctl_ids = {(c["run"], c["orf_id"]) for c in controls}
-    prfb_q = [c["q"] for c in controls if c["kind"] == "prfB" and c["role"] == "primary" and c["q"] is not None]
+    prfb_q = [
+        c["q"]
+        for c in controls
+        if c["kind"] == "prfB" and c["role"] == "primary" and c["q"] is not None
+    ]
     all_q = [c["q"] for c in controls if c["q"] is not None]
     tau = {"tau_prfB": max(prfb_q), "tau_all": max(all_q)}
     per_class: dict[str, float] = {}
@@ -272,8 +437,9 @@ def main() -> None:
     tau.update({f"tau_class:{k}": v for k, v in sorted(per_class.items())})
     # post hoc sensitivity (not pre-registered): tau_all without the T. pallidum rpmB controls,
     # whose classes have 17-41 candidates and q in {0.5, 1.0}
-    tau["tau_all_excl_tpa_rpmB"] = max(c["q"] for c in controls if c["q"] is not None
-                                       and not (c["control"] == "rpmB (L28)"))
+    tau["tau_all_excl_tpa_rpmB"] = max(
+        c["q"] for c in controls if c["q"] is not None and c["control"] != "rpmB (L28)"
+    )
     tiers: dict[str, dict[str, float]] = {
         "tau_prfB": defaultdict(lambda: tau["tau_prfB"]),
         "tau_all": defaultdict(lambda: tau["tau_all"]),
@@ -285,11 +451,18 @@ def main() -> None:
     passer_rows = []
     for tname, tmap in tiers.items():
         for label, (n, ref, alias, (ds, acc)) in data.items():
-            p = n[[r["q"] is not None and r["q"] <= tmap[r["class"]] + 1e-12 for _, r in n.iterrows()]]
-            rec: dict[str, Any] = {"dataset": ds, "accession": acc, "n_candidates": int(len(n)),
-                                   "n_pass": int(len(p)), "pass_by_class": dict(Counter(p["class"])),
-                                   "class_q_max_of_passers": {c: float(g["q"].max()) for c, g in p.groupby("class")},
-                                   "candidates_by_class": dict(Counter(n["class"]))}
+            p = n[
+                [r["q"] is not None and r["q"] <= tmap[r["class"]] + 1e-12 for _, r in n.iterrows()]
+            ]
+            rec: dict[str, Any] = {
+                "dataset": ds,
+                "accession": acc,
+                "n_candidates": len(n),
+                "n_pass": len(p),
+                "pass_by_class": dict(Counter(p["class"])),
+                "class_q_max_of_passers": {c: float(g["q"].max()) for c, g in p.groupby("class")},
+                "candidates_by_class": dict(Counter(n["class"])),
+            }
             exp_false = sum(len(g) * float(g["q"].max()) for _, g in p.groupby("class"))
             rec["gippa_class_fdr_expected_false"] = exp_false
             ks = ksp = nc = 0
@@ -297,24 +470,46 @@ def main() -> None:
             for _, r in p.iterrows():
                 is_ctl = (label, r["orf_id"]) in ctl_ids
                 m = refseq_match(r, ref, alias.get(r["contig"], r["contig"]))
-                row = {"threshold": tname, "tau": tmap[r["class"]], "dataset": ds, "accession": acc, "run": label,
-                       "orf_id": r["orf_id"], "class": r["class"], "contig": r["contig"], "strand": r["strand"],
-                       "lo": int(r["lo"]), "hi": int(r["hi"]), "has_start": bool(r["has_start"]),
-                       "aa": int(r["length_aa_longest"]), "n_peptides": int(r["npep"]), "q": float(r["q"]),
-                       "control": is_ctl, "refseq_match": m["strict"], "refseq_match_span": m["span"],
-                       "refseq_gene": m["refseq_gene"], "refseq_locus": m["refseq_locus"],
-                       "overlap_frac": m["overlap_frac"],
-                       "needs_2_peptides": r["class"] in TWO_PEPTIDE_CLASSES, "class_rule": class_rule(r),
-                       "flags": r["flags"]}
+                row = {
+                    "threshold": tname,
+                    "tau": tmap[r["class"]],
+                    "dataset": ds,
+                    "accession": acc,
+                    "run": label,
+                    "orf_id": r["orf_id"],
+                    "class": r["class"],
+                    "contig": r["contig"],
+                    "strand": r["strand"],
+                    "lo": int(r["lo"]),
+                    "hi": int(r["hi"]),
+                    "has_start": bool(r["has_start"]),
+                    "aa": int(r["length_aa_longest"]),
+                    "n_peptides": int(r["npep"]),
+                    "q": float(r["q"]),
+                    "control": is_ctl,
+                    "refseq_match": m["strict"],
+                    "refseq_match_span": m["span"],
+                    "refseq_gene": m["refseq_gene"],
+                    "refseq_locus": m["refseq_locus"],
+                    "overlap_frac": m["overlap_frac"],
+                    "needs_2_peptides": r["class"] in TWO_PEPTIDE_CLASSES,
+                    "class_rule": class_rule(r),
+                    "flags": r["flags"],
+                }
                 passer_rows.append(row)
                 if not is_ctl:
                     nc += 1
                     ks += m["strict"]
                     ksp += m["span"]
                     lst.append(row)
-            rec.update({"n_controls_passing": int(len(p)) - nc, "n_noncontrol_passing": nc,
-                        "noncontrol_refseq_match": [ks, nc, *wilson(ks, nc)],
-                        "noncontrol_refseq_match_span": [ksp, nc, *wilson(ksp, nc)]})
+            rec.update(
+                {
+                    "n_controls_passing": len(p) - nc,
+                    "n_noncontrol_passing": nc,
+                    "noncontrol_refseq_match": [ks, nc, *wilson(ks, nc)],
+                    "noncontrol_refseq_match_span": [ksp, nc, *wilson(ksp, nc)],
+                }
+            )
             runs_out.setdefault(tname, {})[label] = rec
         tot = runs_out[tname]
         K = sum(r["noncontrol_refseq_match"][0] for r in tot.values())
@@ -323,16 +518,26 @@ def main() -> None:
         byc: Counter[str] = Counter()
         for r in tot.values():
             byc.update(r["pass_by_class"])
-        runs_out[tname + "_total"] = {"n_pass": sum(r["n_pass"] for r in tot.values()), "pass_by_class": dict(byc),
-                                      "n_controls_passing": sum(r["n_controls_passing"] for r in tot.values()),
-                                      "n_noncontrol_passing": N,
-                                      "noncontrol_refseq_match": [K, N, *wilson(K, N)],
-                                      "noncontrol_refseq_match_span": [Ks, N, *wilson(Ks, N)],
-                                      "gippa_class_fdr_expected_false": sum(r["gippa_class_fdr_expected_false"] for r in tot.values()),
-                                      "n_candidates": sum(r["n_candidates"] for r in tot.values())}
+        runs_out[tname + "_total"] = {
+            "n_pass": sum(r["n_pass"] for r in tot.values()),
+            "pass_by_class": dict(byc),
+            "n_controls_passing": sum(r["n_controls_passing"] for r in tot.values()),
+            "n_noncontrol_passing": N,
+            "noncontrol_refseq_match": [K, N, *wilson(K, N)],
+            "noncontrol_refseq_match_span": [Ks, N, *wilson(Ks, N)],
+            "gippa_class_fdr_expected_false": sum(
+                r["gippa_class_fdr_expected_false"] for r in tot.values()
+            ),
+            "n_candidates": sum(r["n_candidates"] for r in tot.values()),
+        }
 
-    doc = {"q_column": "class_fdr", "controls_spec": CONTROLS, "controls_found": controls, "tau": tau,
-           "results": runs_out}
+    doc = {
+        "q_column": "class_fdr",
+        "controls_spec": CONTROLS,
+        "controls_found": controls,
+        "tau": tau,
+        "results": runs_out,
+    }
     (a.outdir / "novel_pc_threshold.json").write_text(json.dumps(doc, indent=1, default=str))
     pd.DataFrame(passer_rows).to_csv(a.outdir / "passers.tsv", sep="\t", index=False)
     print(json.dumps({"tau": tau, "n_controls": len(controls)}, indent=1))

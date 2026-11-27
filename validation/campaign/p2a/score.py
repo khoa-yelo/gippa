@@ -37,7 +37,13 @@ def wilson(k: int, n: int, z: float = 1.96) -> dict[str, float | int | None]:
     p = k / n
     c = (p + z * z / (2 * n)) / (1 + z * z / n)
     h = z * math.sqrt(p * (1 - p) / n + z * z / (4 * n * n)) / (1 + z * z / n)
-    return {"k": k, "n": n, "p": round(p, 4), "lo": round(max(0, c - h), 4), "hi": round(min(1, c + h), 4)}
+    return {
+        "k": k,
+        "n": n,
+        "p": round(p, 4),
+        "lo": round(max(0, c - h), 4),
+        "hi": round(min(1, c + h), 4),
+    }
 
 
 def fold(s: str) -> str:
@@ -64,8 +70,11 @@ def main(tdir: Path, n1: Path, n2: Path, out: Path, seed: int) -> None:
     out.mkdir(parents=True, exist_ok=True)
     truth = rd(tdir / "truth_sites.tsv")
     orth = {r["ncm_locus"]: r["mg_locus"] for r in rd(tdir / "orthologs.tsv")}
-    h1 = [h for h in rd(n1 / "mapping" / "peptide_hits.tsv") if fnum(h["best_q_input"]) <= 0.01
-          or h["best_q_input"] in ("", "NA")]
+    h1 = [
+        h
+        for h in rd(n1 / "mapping" / "peptide_hits.tsv")
+        if fnum(h["best_q_input"]) <= 0.01 or h["best_q_input"] in ("", "NA")
+    ]
     h2 = rd(n2 / "mapping" / "peptide_hits.tsv")
     var = rd(n2 / "tables" / "variants.tsv")
     res: dict[str, object] = {}
@@ -80,7 +89,11 @@ def main(tdir: Path, n1: Path, n2: Path, out: Path, seed: int) -> None:
     covered, eligible = [], []
     for t in truth:
         c = int(t["ncm_codon_start"])
-        hs = [h for h in by_contig[(t["ncm_contig"], t["ncm_strand"])] if covers(h, t["ncm_contig"], t["ncm_strand"], c)]
+        hs = [
+            h
+            for h in by_contig[(t["ncm_contig"], t["ncm_strand"])]
+            if covers(h, t["ncm_contig"], t["ncm_strand"], c)
+        ]
         if not hs:
             continue
         covered.append(t)
@@ -89,7 +102,10 @@ def main(tdir: Path, n1: Path, n2: Path, out: Path, seed: int) -> None:
             ln = int(h["peptide_len_aa"])
             if ln < 10:
                 continue
-            nd = sum(covers(h, u["ncm_contig"], u["ncm_strand"], int(u["ncm_codon_start"])) for u in sites_by_ncm[t["ncm_locus"]])
+            nd = sum(
+                covers(h, u["ncm_contig"], u["ncm_strand"], int(u["ncm_codon_start"]))
+                for u in sites_by_ncm[t["ncm_locus"]]
+            )
             ok |= nd <= MAXD.get(ln, 2)
         if ok:
             eligible.append(t)
@@ -141,8 +157,11 @@ def main(tdir: Path, n1: Path, n2: Path, out: Path, seed: int) -> None:
     res["precision_high_alt"] = wilson(len(tp), len(high_alt))
     res["precision_high_mixed"] = wilson(sum(bool(match(v)) for v in high_mixed), len(high_mixed))
     res["variants_rows"] = len(var)
-    res["variants_by_call_conf"] = {f"{c}_{q}": sum(v["call"] == c and v["confidence"] == q for v in var)
-                                    for c in ("ALT", "mixed") for q in ("high", "candidate")}
+    res["variants_by_call_conf"] = {
+        f"{c}_{q}": sum(v["call"] == c and v["confidence"] == q for v in var)
+        for c in ("ALT", "mixed")
+        for q in ("high", "candidate")
+    }
     cands = []
     for v in high_alt + high_mixed:
         if match(v):
@@ -154,12 +173,28 @@ def main(tdir: Path, n1: Path, n2: Path, out: Path, seed: int) -> None:
             cls = "start_or_stop_codon"
         else:
             cls = "unexplained"
-        cands.append({"variant_id": v["variant_id"], "contig": v["contig"], "codon_start": v["codon_start"],
-                      "strand": v["strand"], "gene": v["gene"], "aa_pos": v["aa_pos"], "ref_aa": v["ref_aa"],
-                      "alt_aa": v["alt_aa"], "alt_type": v["alt_type"], "call": v["call"], "n_ref": v["n_ref"],
-                      "n_alt": v["n_alt"], "flags": v["flags"], "class": cls})
-    res["candidates_by_class"] = {c: sum(x["class"] == c for x in cands)
-                                  for c in ("mass_equivalent", "start_or_stop_codon", "unexplained")}
+        cands.append(
+            {
+                "variant_id": v["variant_id"],
+                "contig": v["contig"],
+                "codon_start": v["codon_start"],
+                "strand": v["strand"],
+                "gene": v["gene"],
+                "aa_pos": v["aa_pos"],
+                "ref_aa": v["ref_aa"],
+                "alt_aa": v["alt_aa"],
+                "alt_type": v["alt_type"],
+                "call": v["call"],
+                "n_ref": v["n_ref"],
+                "n_alt": v["n_alt"],
+                "flags": v["flags"],
+                "class": cls,
+            }
+        )
+    res["candidates_by_class"] = {
+        c: sum(x["class"] == c for x in cands)
+        for c in ("mass_equivalent", "start_or_stop_codon", "unexplained")
+    }
     if cands:
         with (out / "candidates.tsv").open("w", newline="") as fh:
             w = csv.DictWriter(fh, fieldnames=list(cands[0]), delimiter="\t", lineterminator="\n")
@@ -175,7 +210,9 @@ def main(tdir: Path, n1: Path, n2: Path, out: Path, seed: int) -> None:
     groups: dict[str, list[str]] = defaultdict(list)
     for p, cs in origin.items():
         groups[next(iter(cs)) if len(cs) == 1 else "both"].append(p)
-    res["unplaced_by_origin"] = {g: wilson(sum(p not in placed2 for p in ps), len(ps)) for g, ps in sorted(groups.items())}
+    res["unplaced_by_origin"] = {
+        g: wilson(sum(p not in placed2 for p in ps), len(ps)) for g, ps in sorted(groups.items())
+    }
     res["unplaced_all"] = wilson(sum(p not in placed2 for p in origin), len(origin))
     res["n1_contigs"] = contigs
     res["n2_route"] = {r: sum(h["route"] == r for h in h2) for r in ("exact", "tolerant")}
@@ -187,9 +224,21 @@ def main(tdir: Path, n1: Path, n2: Path, out: Path, seed: int) -> None:
 
     # ---- run-level mapping_fdr placement totals
     res["n2_mapping_fdr_all"] = [
-        {k: r[k] for k in ("decoy_type", "n_diff", "targets", "decoys", "pi_wrong", "fdr_stratum", "n_accepted")}
+        {
+            k: r[k]
+            for k in (
+                "decoy_type",
+                "n_diff",
+                "targets",
+                "decoys",
+                "pi_wrong",
+                "fdr_stratum",
+                "n_accepted",
+            )
+        }
         for r in rd(n2 / "mapping" / "mapping_fdr.tsv")
-        if r["section"] == "placement" and r["length_class"] == "all"]
+        if r["section"] == "placement" and r["length_class"] == "all"
+    ]
 
     # ---- ortholog-joined comparison (1b-6)
     g1 = {r["locus_tag"]: r for r in rd(n1 / "tables" / "genes.tsv")}
@@ -200,13 +249,18 @@ def main(tdir: Path, n1: Path, n2: Path, out: Path, seed: int) -> None:
         res[f"{tag}_tier"] = next(iter(g.values()))["detection_tier"]
     pairs = [(n, m) for n, m in orth.items() if n in g1 and m in g2]
     res["ortholog_pairs_in_tables"] = len(pairs)
-    det_both = [(n, m) for n, m in pairs if g1[n]["detected"] == "true" and g2[m]["detected"] == "true"]
+    det_both = [
+        (n, m) for n, m in pairs if g1[n]["detected"] == "true" and g2[m]["detected"] == "true"
+    ]
     det1 = {n for n, m in pairs if g1[n]["detected"] == "true"}
     det2 = {n for n, m in pairs if g2[m]["detected"] == "true"}
     res["detected_jaccard_orthologs"] = round(len(det1 & det2) / max(1, len(det1 | det2)), 4)
     res["n1_detected_orthologs_kept_in_n2"] = wilson(len(det1 & det2), len(det1))
-    ab = [(fnum(g1[n]["abundance_log2"]), fnum(g2[m]["abundance_log2"])) for n, m in det_both
-          if g1[n]["abundance_imputed"] != "true" and g2[m]["abundance_imputed"] != "true"]
+    ab = [
+        (fnum(g1[n]["abundance_log2"]), fnum(g2[m]["abundance_log2"]))
+        for n, m in det_both
+        if g1[n]["abundance_imputed"] != "true" and g2[m]["abundance_imputed"] != "true"
+    ]
     ab = [(a, b) for a, b in ab if not (math.isnan(a) or math.isnan(b))]
     x = np.array(ab)
     rho = float(spearmanr(x[:, 0], x[:, 1]).statistic)
@@ -215,8 +269,14 @@ def main(tdir: Path, n1: Path, n2: Path, out: Path, seed: int) -> None:
     for _ in range(1000):
         i = rng.integers(0, len(x), len(x))
         boots.append(spearmanr(x[i, 0], x[i, 1]).statistic)
-    res["spearman_orthologs"] = {"n": len(x), "rho": round(rho, 4), "lo": round(float(np.quantile(boots, 0.025)), 4),
-                                 "hi": round(float(np.quantile(boots, 0.975)), 4), "draws": 1000, "seed": seed}
+    res["spearman_orthologs"] = {
+        "n": len(x),
+        "rho": round(rho, 4),
+        "lo": round(float(np.quantile(boots, 0.025)), 4),
+        "hi": round(float(np.quantile(boots, 0.975)), 4),
+        "draws": 1000,
+        "seed": seed,
+    }
     m2n = {m: n for n, m in orth.items()}
     for tab in ("islands",):
         s1, s2 = set(), set()
@@ -226,20 +286,39 @@ def main(tdir: Path, n1: Path, n2: Path, out: Path, seed: int) -> None:
             s2 |= {(r["direction"], m2n[gname]) for gname in r["genes"].split(";") if gname in m2n}
         res["islands_n1"] = len(rd(n1 / "tables" / "islands.tsv"))
         res["islands_n2"] = len(rd(n2 / "tables" / "islands.tsv"))
-        res["island_gene_jaccard_orthologs"] = {"n1": len(s1), "n2": len(s2), "shared": len(s1 & s2),
-                                                "jaccard": round(len(s1 & s2) / max(1, len(s1 | s2)), 4)}
-    f1 = {(frozenset((r["gene_a"], r["gene_b"])), r["flags"]) for r in rd(n1 / "tables" / "operon_flags.tsv")
-          if r["gene_a"] in orth and r["gene_b"] in orth}
-    f2 = {(frozenset((m2n[r["gene_a"]], m2n[r["gene_b"]])), r["flags"]) for r in rd(n2 / "tables" / "operon_flags.tsv")
-          if r["gene_a"] in m2n and r["gene_b"] in m2n}
+        res["island_gene_jaccard_orthologs"] = {
+            "n1": len(s1),
+            "n2": len(s2),
+            "shared": len(s1 & s2),
+            "jaccard": round(len(s1 & s2) / max(1, len(s1 | s2)), 4),
+        }
+    f1 = {
+        (frozenset((r["gene_a"], r["gene_b"])), r["flags"])
+        for r in rd(n1 / "tables" / "operon_flags.tsv")
+        if r["gene_a"] in orth and r["gene_b"] in orth
+    }
+    f2 = {
+        (frozenset((m2n[r["gene_a"]], m2n[r["gene_b"]])), r["flags"])
+        for r in rd(n2 / "tables" / "operon_flags.tsv")
+        if r["gene_a"] in m2n and r["gene_b"] in m2n
+    }
     res["operon_flags_n1"] = len(rd(n1 / "tables" / "operon_flags.tsv"))
     res["operon_flags_n2"] = len(rd(n2 / "tables" / "operon_flags.tsv"))
-    res["operon_flag_jaccard_orthologs"] = {"n1": len(f1), "n2": len(f2), "shared": len(f1 & f2),
-                                            "jaccard": round(len(f1 & f2) / max(1, len(f1 | f2)), 4)}
+    res["operon_flag_jaccard_orthologs"] = {
+        "n1": len(f1),
+        "n2": len(f2),
+        "shared": len(f1 & f2),
+        "jaccard": round(len(f1 & f2) / max(1, len(f1 | f2)), 4),
+    }
     (out / "score.json").write_text(json.dumps(res, indent=2) + "\n")
     print(json.dumps(res, indent=1))
 
 
 if __name__ == "__main__":
-    main(Path(sys.argv[1]), Path(sys.argv[2]), Path(sys.argv[3]), Path(sys.argv[4]),
-         int(sys.argv[5]) if len(sys.argv) > 5 else 20261014)
+    main(
+        Path(sys.argv[1]),
+        Path(sys.argv[2]),
+        Path(sys.argv[3]),
+        Path(sys.argv[4]),
+        int(sys.argv[5]) if len(sys.argv) > 5 else 20261014,
+    )
