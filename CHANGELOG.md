@@ -4,6 +4,24 @@ All notable changes are recorded here by towncrier from `changelog.d/` fragments
 
 <!-- towncrier release notes start -->
 
+## GIPPA 1.1.1 (2026-11-24)
+
+### Features
+
+- `placement` now logs a `placement.stratum_q_floor_above_alpha` warning for each placement stratum (decoy type × difference count) whose q floor c/T is above `stats.alpha.placement`, so the stratum cannot accept any placement (ADR-0079). It only adds a warning: q-values, accepted placements, `mapping_fdr.tsv` and alpha do not change.
+
+### Fixes
+
+- The `decoy_picked` gene FDR is no longer anti-conservative when decoys pair with genes only through votes of accepted peptides (`--search-db other`, or non-locus-tag protein IDs without protein hits). Every q-passing decoy with protein IDs now competes: in its gene when all its IDs map to one gene, otherwise in its own unit, where it counts as a decoy win. The 1/f rescaling is retired, and the `decoy_win_weight` row is 1.0 (ADR-0078). Vote-route runs lose calls they could not support; locus-tag runs keep theirs, and their q may rise slightly.
+- `gippa run` no longer crashes in Promotech on genomes with assembly gaps. Promoter windows containing `N` or another non-ACGT base are not sent to Promotech; they get a NaN score, are never called promoters, and the run logs one warning with their count. Gene promoter scores use the maximum over the scored windows. Gap-free genomes give identical outputs.
+- `gippa run` no longer crashes in Promoter Calculator on genomes with assembly gaps. TU upstream regions containing `N` or another non-ACGT base are not sent to Promoter Calculator; the genes of those TUs get NA transcription-rate and TSS-distance layers (a scored TU without a hit keeps 0), and the run logs one warning with their count. Gap-free genomes give identical outputs.
+- TerminatorNet terminator calls on genomes with assembly gaps (`N` runs or IUPAC codes) are now in original genome coordinates; before, every call after the first non-ACGT base was shifted by the number of such bases. Hairpins that would span a removed base are dropped, and the run logs one warning with the counts. Gap-free genomes give identical outputs. The opt-in unsharded scan (`--terminatornet_sharded false`) still shifts coordinates on gapped genomes.
+
+
+### Known limitations
+
+- The 1.1.0 limitations still apply. In particular, the pilot's mapping FDR on arm A2 is not measured, the pilot fails true example TE4 for the RplL/RplJ pair, and the standard K-12 runtime (about 3-4 h on 16 threads) is above the §13.2 range; these release criteria are waived for 1.1.1 ([ADR-0080](https://github.com/khoa-yelo/gippa/blob/main/docs/adr/ADR-0080-waivers-1-1-1.md)).
+
 ## GIPPA 1.1.0 (2026-11-11)
 
 ### Features

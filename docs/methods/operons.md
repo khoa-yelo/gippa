@@ -550,6 +550,26 @@ Until that is decided, two things hold:
 - **M-3.** The M6-01 attacks: AR(1) abundance (attack A), and detection confounded with distance
   (attack B).
 
+### Promoter windows over assembly gaps (#611, 1.1.1)
+
+Promotech's encoder drops non-ACGT bases, so a 40-nt window with an `N` or any IUPAC code is not
+sent to it: `dedupe_and_chunk` keeps the window's map row with a null header, `promoter_layer`
+gives that position a NaN score (never a promoter) and the run logs one WARNING with the number of
+skipped positions. Gene and between-gene promoter scores are the maximum over scored windows only
+(NaN, or no `promoter_between` value, when every window was skipped). Genomes with only ACGT give
+byte-identical outputs.
+
+### TU upstream regions over assembly gaps (#614, 1.1.1)
+
+Promoter Calculator's reverse complement knows only A, C, G, T and U, so a TU whose strand-aware
+upstream region (`tu_upstream_bp`, origin wrap included) holds any base other than A, C, G or T is
+not sent to it: `region_is_acgt` is the one skip rule, `write_tu_regions` writes no
+`tu_upstream/<tu_id>.fa` for such a TU and `operon_pairs` logs one WARNING with the number of
+skipped TUs (only when Promoter Calculator runs: enabled and no precomputed `tx_rates`). In
+`layers.parquet` the genes of a skipped TU get `tx_rate_max_tu`, `tx_rate_sum_tu` and
+`tss_distance_bp` NA (unscored), while a scored TU without a hit keeps 0. A precomputed `tx_rates`
+layer is used as given. Genomes with only ACGT give byte-identical outputs.
+
 ## Simulations (M6-03)
 
 The operon generators live in `tests/sim/gippasim/scenarios.py` (configs) and
@@ -934,6 +954,16 @@ alone.
 recording is `terms.tsv.gz`, so the driver must decompress it first, or the parser must learn
 gzip in a separate change. As the spec section 4 call is written, it fails with
 `UnicodeDecodeError`.
+
+**Assembly gaps (1.1.1).** Upstream TerminatorNet deletes every non-ACGT base (N runs, IUPAC
+codes) before it scans, so its own coordinates shift after the first such base. The default sharded
+path (`gippa_terminatornet_shard merge`) maps every call back to original genome coordinates, drops
+the hairpins whose span crosses a removed base, and logs one WARNING with both counts; gap-free
+genomes give byte-identical output. Only the hairpin span is tested: a kept hairpin next to a gap
+can still carry an A- or U-tract read across the removed bases.
+- **Known limitation:** the opt-in unsharded path (`--terminatornet_sharded false`), which calls
+  upstream `TerminatorNet.py` directly, is not corrected: on a genome with non-ACGT bases its calls
+  after the first removed base are shifted by the number of bases removed before them.
 
 ### Bootstrap streams and reproducibility
 
