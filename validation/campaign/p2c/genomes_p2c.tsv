@@ -1,0 +1,2 @@
+dataset	label	assembly	assembly_name	assembly_level	strain	ftp_path	replicons	circular	topology_source
+PXD057335	mtb_h37rv_circ	GCF_000195955.2	ASM19595v2	Complete Genome	H37Rv	https://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/000/195/955/GCF_000195955.2_ASM19595v2	NC_000962.3:4411532:linear	NC_000962.3	lead decision 2026-11-21: biologically circular (NCBI says linear)
