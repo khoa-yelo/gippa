@@ -1,8 +1,9 @@
 """Detection tiers and gene-level FDR (docs/specs/M4-12-detection-tiers.md).
 
 Spec §2.1 decision 4, §7.3 (eligible = non-partial genes), §7.3.2 (tier table, picked steps 1-4,
-MAYU), §9.3 (``detection_status``; ``detection_summary.tsv`` section ``tier``). ADR-0009: picked
-FDR(t) = (D(t)/f + 1) / T(t) with f the paired share of the decoys passing q <= ``q_value_max``.
+MAYU), §9.3 (``detection_status``; ``detection_summary.tsv`` section ``tier``). ADR-0078 (retires
+ADR-0009's 1/f): picked FDR(t) = (D(t) + 1) / T(t) over eligible genes and the decoys' own units;
+f, the gene-paired share of the decoys passing q <= ``q_value_max``, drives the tier guard only.
 Lead decisions: the pairing cut-off is max(``mapping.proteins.min_identity``, ``min_coverage``);
 contaminant evidence counts toward detection in every tier; in the ``mayu`` tier a warning
 ``unspecific_search`` fires when more than half of the accepted non-C-terminal peptides do not end
@@ -164,13 +165,15 @@ def pair_decoys(
     contaminant_prefixes: Sequence[str] | None = None,
 ) -> pd.DataFrame:
     """One row per decoy peptide with ``protein_ids`` (and q <= ``q_value_max`` when both exist):
-    ``peptide, q_value, pep, score, gene``; ``gene`` NA when the stripped IDs do not all map to
-    one and the same gene (unpaired). Contaminant decoys (every stripped ID starts with a
-    contaminant prefix, default ``input.contaminant_prefixes``) get no row: neither paired nor
-    unpaired; a mixed decoy pairs on its non-contaminant IDs only (decision 12). Decoys of makedb
+    ``peptide, q_value, pep, score, gene, unit``; ``gene`` NA when the stripped IDs do not all map
+    to one and the same gene (unpaired). ``unit`` (ADR-0078 rule 1) is the gene when paired, else
+    the decoy's own unit: its sorted, de-duplicated counted stripped IDs joined by ``;``.
+    Contaminant decoys (every stripped ID starts with a contaminant prefix, default
+    ``input.contaminant_prefixes``) get no row: neither paired nor unpaired; a mixed decoy pairs
+    (and is unitised) on its non-contaminant IDs only (decision 12). Decoys of makedb
     six-frame entries (``GIPPAORF_…``) that map to no gene in ``pmap`` are left out the same way;
     an entry voted to a gene (e.g. ``nterm_extension``) pairs there (M7-12 decisions 23, 28)."""
-    cols = ["peptide", "q_value", "pep", "score", "gene"]
+    cols = ["peptide", "q_value", "pep", "score", "gene", "unit"]
     if peptides is None or not len(peptides):
         return pd.DataFrame({c: pd.Series([], dtype=object) for c in cols})
     d = peptides[peptides["is_decoy"].astype(bool)]
@@ -195,15 +198,18 @@ def pair_decoys(
     keep = np.array([len(ms) > 0 for ms in stripped], dtype=bool)
     d = d[keep]
     genes: list[Any] = []
+    units: list[str] = []
     for ms in (s for s, k in zip(stripped, keep, strict=True) if k):
         hit = [lookup.get(m) for m in ms]
         found = {str(g) for g in hit if not _is_na(g)}
         ok = len(found) == 1 and all(not _is_na(g) for g in hit)
         genes.append(found.pop() if ok else None)
+        units.append(str(genes[-1]) if ok else ";".join(sorted(set(ms))))
     out = pd.DataFrame({"peptide": np.asarray(d["peptide"].astype(str).tolist(), dtype=object)})
     for c in ("q_value", "pep", "score"):
         out[c] = d[c].astype("float64").to_numpy()
     out["gene"] = pd.Series(genes, dtype=object)
+    out["unit"] = pd.Series(units, dtype=object)
     return out
 
 
@@ -231,9 +237,10 @@ def choose_tier(
 
     q / PEP presence is read from ``accepted`` when given, else from C9 targets (or C11 without C9).
     M4-24 rule 4: (a) share < ``min_pairing`` -> ``mayu``; (b) no target row -> ``decoy_picked``;
-    (c) S = ``shared_key_columns(target side, paired decoys)``: S = C_T -> ``decoy_picked``,
-    S a non-empty proper subset -> ``decoy_picked`` + ``decoy_unscored``, S empty ->
-    ``decoy_unscored`` and the no-decoy chain below; (d) no pairing rows -> the no-decoy chain.
+    (c) S = ``shared_key_columns(target side, all pairing rows)`` (ADR-0078 rule 6): S = C_T ->
+    ``decoy_picked``, S a non-empty proper subset -> ``decoy_picked`` + ``decoy_unscored``, S
+    empty -> ``decoy_unscored`` and the no-decoy chain below; (d) no pairing rows -> the no-decoy
+    chain.
     """
     warns: list[str] = []
     if len(pairing):
@@ -249,7 +256,7 @@ def choose_tier(
         if not len(side):
             return "decoy_picked", warns
         carried = shared_key_columns(side, side.iloc[:0])
-        shared = shared_key_columns(side, pairing[pairing["gene"].notna()])
+        shared = shared_key_columns(side, pairing)
         if shared != carried or not shared:
             warns.append("decoy_unscored")
         if shared:
@@ -288,20 +295,26 @@ def _picked_q(
     tags: Sequence[str],
     accepted: pd.DataFrame,
     pairing: pd.DataFrame,
-    f: float,
     key: Sequence[KeyColumn] = KEY_COLUMNS,
 ) -> npt.NDArray[np.float64]:
-    """Picked gene q (ADR-0009: each decoy win counts 1/f); NaN for decoy wins / no target.
-    Targets and paired decoys are ranked on ``key`` only (M4-24 rule 1)."""
-    paired = pairing[pairing["gene"].notna()]
+    """Picked gene q over ``tags`` and the decoys' own units (ADR-0078 rules 1-2, no 1/f); NaN
+    for decoy wins / no target. Own units never take a target, so each one is a decoy win.
+    Targets and decoys are ranked on ``key`` only (M4-24 rule 1)."""
+    paired = pairing["gene"].notna().to_numpy(dtype=bool)
     n_t = len(accepted)
-    cols = {c: np.r_[accepted[c].astype(float), paired[c].astype(float)] for c in key}
-    rank = _key_rank(cols, n_t + len(paired))
-    best = np.full((2, len(tags)), np.nan)
-    for k, (g, r) in enumerate(((accepted["gene"], rank[:n_t]), (paired["gene"], rank[n_t:]))):
-        s = pd.Series(r).groupby(np.asarray(g.astype(str).tolist(), dtype=object)).max()
-        best[k] = s.reindex(list(tags)).to_numpy(dtype=np.float64)
-    return picked_fdr_rescaled(best[0], best[1], f).q
+    cols = {c: np.r_[accepted[c].astype(float), pairing[c].astype(float)] for c in key}
+    rank = _key_rank(cols, n_t + len(pairing))
+    d_rank = pd.Series(rank[n_t:])
+
+    def best_by(r: pd.Series, groups: pd.Series) -> pd.Series:
+        return r.groupby(np.asarray(groups.astype(str).tolist(), dtype=object)).max()
+
+    t_best = best_by(pd.Series(rank[:n_t]), accepted["gene"]).reindex(list(tags))
+    g_best = best_by(d_rank[paired], pairing["gene"][paired]).reindex(list(tags))
+    own = best_by(d_rank[~paired], pairing["unit"][~paired]).to_numpy(dtype=np.float64)
+    t = np.r_[t_best.to_numpy(dtype=np.float64), np.full(own.size, np.nan)]
+    d = np.r_[g_best.to_numpy(dtype=np.float64), own]
+    return picked_fdr_rescaled(t, d, 1.0).q[: len(tags)]
 
 
 def _pep_q(pep: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
@@ -386,8 +399,8 @@ def detect(
     elig_tags = [t for t, e in zip(tags, eligible, strict=True) if e]
     q_floor = np.nan
     if tier == "decoy_picked" and elig_tags:
-        key = shared_key_columns(accepted, pairing[pairing["gene"].notna()])
-        q[eligible] = _picked_q(elig_tags, accepted, pairing, f, key)
+        key = shared_key_columns(accepted, pairing)
+        q[eligible] = _picked_q(elig_tags, accepted, pairing, key)
         n_win = int(np.isfinite(q).sum())
         q_floor = 1.0 / n_win if n_win else np.nan  # smallest picked q: no decoy win, all T wins
         if q_floor > alpha:  # Khoa 2026-10-22: flag a too-small genome; q is reported unchanged
@@ -449,7 +462,8 @@ def detect(
         _row("tier", tier, "n_decoys_paired", n_paired),
         _row("tier", tier, "n_decoys_unpaired", n_unpaired),
         _row("tier", tier, "decoy_paired_share", f),
-        _row("tier", tier, "decoy_win_weight", 1.0 / f if f and f > 0 else np.nan),
+        # ADR-0078 rule 5: 1/f retired; the row stays for schema stability
+        _row("tier", tier, "decoy_win_weight", 1.0 if len(pairing) else np.nan),
         _row("tier", tier, "q_floor", q_floor),
     ]
     summary = pd.DataFrame([*tier_rows, *curve], columns=list(SUMMARY_COLUMNS))

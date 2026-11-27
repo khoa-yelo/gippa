@@ -210,6 +210,9 @@ def novel_promoter_layer(ctx: StepContext) -> None:
     for path in _prediction_files(ctx.inputs["promotech_novel"]):
         scores.update(parse_promotech(path))
     layer = promoter_layer(wmap, scores)
+    if skipped := int(layer["score"].isna().sum()):
+        ctx.log.warning("novel_promoter_layer: %d window position(s) with non-ACGT bases, "
+                        "score NaN", skipped)  # fmt: skip
     write_parquet_deterministic(ctx.outputs["novel_promoter_windows"], _LAYER_COLS, _rows(layer))
 
 
