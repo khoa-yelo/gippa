@@ -54,7 +54,7 @@ def refseq_cds(path: str) -> list[tuple[str, str, int]]:
 
 
 def bakta_cds(path: str) -> list[tuple[str, str, int]]:
-    d = json.load(open(path))
+    d = json.load(open(path))  # noqa: SIM115
     out = []
     for x in d["features"]:
         if x["type"] not in ("cds", "sorf"):
