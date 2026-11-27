@@ -1,0 +1,211 @@
+{
+  "version": "1.1.1",
+  "commit": "3f8793e0a7b14ece7708baff25b0808a2a34770f",
+  "computed": "2026-11-27T01:33:41+00:00",
+  "overall": "pass",
+  "rows": [
+    {
+      "id": "R1",
+      "criterion": "≥ 99.5 % of A2 peptides map exactly",
+      "status": "pass",
+      "value": "100.00 %",
+      "threshold": "≥ 99.5 % and te1.passed",
+      "evidence": [
+        "validation/pilot/metrics/metrics.json"
+      ],
+      "waiver": null,
+      "source": "repo"
+    },
+    {
+      "id": "R2",
+      "criterion": "the decoy-estimated mapping FDR is ≤ 1 % at defaults",
+      "status": "waived",
+      "value": "no mapping_fdr in validation/pilot/metrics/metrics.json and no --freeze-run",
+      "threshold": "≤ 1 %",
+      "evidence": [
+        "docs/adr/ADR-0071-r2-mapping-fdr-waiver-1-0-0.md (accepted-by-khoa; waived from pending)"
+      ],
+      "waiver": "ADR-0071",
+      "source": "farmshare"
+    },
+    {
+      "id": "R3",
+      "criterion": "Every statistical method passes its calibration suite (§8.4)",
+      "status": "pass",
+      "value": "calibration_full: 15 suites, 0 failed suites; 558 tests: 0 failed, 0 errors, 462 passed, 90 skipped, 6 xfailed, 0 xpassed; array 2022338; calibration_nightly: 29049 passed, 149 skipped, 17 xfailed, 3 xpassed, 19 warnings in 16719.21s (4:38:39, longest of 4 shards); coverage 97% (min 90%); reused from d2bd17e (reusable: diff ⊆ NON_STATS_PATHS)",
+      "threshold": "exit 0 and 0 failed for R or an ancestor C with reusable(C, R)",
+      "evidence": [
+        "nightly.tsv 2026-11-25 2022338_calibration d2bd17e42dcfb0b7176ab82ff985e4d3e3d61542 exit 0",
+        "nightly.tsv 2026-11-26 2027044_2 3f8793e0 exit 0"
+      ],
+      "waiver": null,
+      "source": "farmshare"
+    },
+    {
+      "id": "R4",
+      "criterion": "every attack null (§8.5) stays at level",
+      "status": "pass",
+      "value": "calibration_attacks: 14 suites, 0 failed suites; 284 attack tests: 0 failed, 0 errors, 276 passed, 3 skipped, 5 xfailed, 0 xpassed; array 2022338; reused from d2bd17e (reusable: diff ⊆ NON_STATS_PATHS)",
+      "threshold": "exit 0 and 0 failed for R or an ancestor C with reusable(C, R)",
+      "evidence": [
+        "nightly.tsv 2026-11-25 2022338_calibration d2bd17e42dcfb0b7176ab82ff985e4d3e3d61542 exit 0"
+      ],
+      "waiver": null,
+      "source": "farmshare"
+    },
+    {
+      "id": "R5",
+      "criterion": "Every true-example assertion that the available data allow (§11.6) passes",
+      "status": "waived",
+      "value": "TE1 pass; TE2 pass; TE3 pass; TE4 fail (fail); TE5 pass; TE7 pass; TE8 pass",
+      "threshold": "each TE pass; no data → deferred; reported → fail (Q-K5)",
+      "evidence": [
+        "validation/pilot/metrics/metrics.json",
+        "weekly.tsv 2026-11-25 2020593_0 d2bd17e4 exit 0",
+        "docs/adr/ADR-0070-te4-rplL-rplJ-waiver-1-0-0.md (accepted-by-khoa; waived from fail)"
+      ],
+      "waiver": "ADR-0070",
+      "source": "both"
+    },
+    {
+      "id": "R6",
+      "criterion": "The same seed gives byte-identical tables",
+      "status": "pass",
+      "value": "TE7 pass; integration: integration: 967 passed, 84 skipped, 1 xfailed, 1 xpassed in 2562.91s (0:42:42); nf-test test,stub: SUCCESS: Executed 144 tests in 1383.302s",
+      "threshold": "te7.gippa.status pass and the integration run",
+      "evidence": [
+        "validation/pilot/metrics/metrics.json",
+        "nightly.tsv 2026-11-26 2025930_0 d2bd17e4 exit 0"
+      ],
+      "waiver": null,
+      "source": "both"
+    },
+    {
+      "id": "R7",
+      "criterion": "A standard run on 16 threads and 64 GB takes about 35 min (range 16-55 …)",
+      "status": "waived",
+      "value": "3:41 > 0:55 (13232 s); node class wheat (16 threads)",
+      "threshold": "0:16-0:55 (inclusive)",
+      "evidence": [
+        "benchmarks/baseline.json > standard_run.wheat.k12_standard",
+        "docs/adr/ADR-0072-benchmark-baseline-1-0-0.md (accepted-by-khoa; waived from fail)"
+      ],
+      "waiver": "ADR-0072",
+      "source": "repo"
+    },
+    {
+      "id": "R8",
+      "criterion": "Core modules alone take about 25 min",
+      "status": "pass",
+      "value": "3:01 (10874 s); node class wheat",
+      "threshold": "reported only",
+      "evidence": [
+        "benchmarks/baseline.json > standard_run.wheat.k12_core"
+      ],
+      "waiver": null,
+      "source": "repo"
+    },
+    {
+      "id": "R9",
+      "criterion": "The pilot passes (§15.6)",
+      "status": "pass",
+      "value": "5 bullets; not passed: 0",
+      "threshold": "Gate M10 with a Khoa review line; no fail/pending in REPORT.md",
+      "evidence": [
+        "PROGRESS.md",
+        "validation/pilot/REPORT.md"
+      ],
+      "waiver": null,
+      "source": "repo"
+    },
+    {
+      "id": "R10",
+      "criterion": "co-abundance … moves to the full validation",
+      "status": "deferred",
+      "value": "spec: co-abundance moves to the full validation",
+      "threshold": "none",
+      "evidence": [],
+      "waiver": null,
+      "source": "repo"
+    },
+    {
+      "id": "H1",
+      "criterion": "milestone gates M1-M10 recorded in PROGRESS.md",
+      "status": "pass",
+      "value": "10 gate blocks",
+      "threshold": "### Gate M1 … M10",
+      "evidence": [
+        "PROGRESS.md"
+      ],
+      "waiver": null,
+      "source": "repo"
+    },
+    {
+      "id": "H2",
+      "criterion": "version agreement; release tag not yet created",
+      "status": "pass",
+      "value": "1.1.1 everywhere; no tag v1.1.1",
+      "threshold": "= 1.1.1",
+      "evidence": [
+        "src/gippa/__init__.py",
+        "CITATION.cff",
+        "git tag -l"
+      ],
+      "waiver": null,
+      "source": "repo"
+    },
+    {
+      "id": "H3",
+      "criterion": "changelog built for the version",
+      "status": "pass",
+      "value": "built",
+      "threshold": "section present, no fragments",
+      "evidence": [
+        "CHANGELOG.md",
+        "changelog.d/"
+      ],
+      "waiver": null,
+      "source": "repo"
+    },
+    {
+      "id": "H4",
+      "criterion": "containers pinned by digest",
+      "status": "pass",
+      "value": "17 digests; 3 conda-only/in-process",
+      "threshold": "<image>@sha256:<64 hex>, no docker:// prefix",
+      "evidence": [
+        "workflow/conf/containers.config",
+        "src/gippa/annotate/tools.py",
+        "workflow/conf/images.json"
+      ],
+      "waiver": null,
+      "source": "repo"
+    },
+    {
+      "id": "H5",
+      "criterion": "licences listed; GIPPA is MIT",
+      "status": "pass",
+      "value": "all tools listed; MIT",
+      "threshold": "registry ⊆ NOTICE.md table; MIT",
+      "evidence": [
+        "NOTICE.md",
+        "LICENSE"
+      ],
+      "waiver": null,
+      "source": "repo"
+    },
+    {
+      "id": "H6",
+      "criterion": "CI check runs on the commit",
+      "status": "pass",
+      "value": "11 check runs success; skipped: summary, deploy, guards",
+      "threshold": "every check run success or skipped",
+      "evidence": [
+        "gh api …/commits/3f8793e0a7b14ece7708baff25b0808a2a34770f/check-runs"
+      ],
+      "waiver": null,
+      "source": "farmshare"
+    }
+  ],
+  "notes": []
+}

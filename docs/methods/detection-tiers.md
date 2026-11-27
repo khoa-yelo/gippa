@@ -1,6 +1,6 @@
 # Detection tiers and gene-level FDR (M4-12)
 
-Status: ADR-0078 (1.1.1, unpaired decoys compete in own units; 1/f retired) specified by the statistician 2026-11-20, code pending. M4-24 shared ranking key approved by the statistician 2026-10-23 (PR #238). Earlier: statistician re-review 2026-10-15 (PR #92, after f297600): PEP-only path approved;
+Status: ADR-0078 (1.1.1, unpaired decoys compete in own units; 1/f retired) specified by the statistician 2026-11-20, implemented 2026-11-21 (PR #607). M4-24 shared ranking key approved by the statistician 2026-10-23 (PR #238). Earlier: statistician re-review 2026-10-15 (PR #92, after f297600): PEP-only path approved;
 **changes requested** on the contaminant-decoy rule (lead decision 11), see Sign-off. Code: `src/gippa/genetable/detection.py`.
 Spec: GIPPA_SPEC.md §2.1 decision 4, §7.3, §7.3.2, §9.3; ADR-0009 (1/f retired by ADR-0078); ADR-0078; docs/specs/M4-12-detection-tiers.md.
 
@@ -12,12 +12,12 @@ One block per detection tier; the report shows the run's.
 
 <!-- report:begin decoy_picked -->
 The input carries decoy peptides, and enough of them (80 % by default) pair with a
-gene. For each gene, the best accepted target peptide competes with the best paired decoy: the
-better one wins, and a tie goes to the decoy. The gene q-value is the picked FDR: decoy wins
-divided by the share of decoys that paired, plus one, over target wins. A gene is detected when
-its q-value is at most the identification level (0.01 by default). The plus one sets a floor: no
-q-value is below 1 over the number of genes won by a target, so a run with few such genes may
-detect none.
+gene. For each gene, the best accepted target peptide competes with the best decoy paired to it:
+the better one wins, and a tie goes to the decoy. A decoy not mapped to one gene competes alone,
+as a decoy win. The gene q-value is the picked FDR: decoy wins plus one, divided by target wins.
+A gene is detected when its q-value is at most the identification level (0.01 by default). The
+plus one sets a floor: no q-value is below 1 over the number of genes won by a target, so a run
+with few such genes may detect none.
 <!-- report:end -->
 
 <!-- report:begin mayu -->

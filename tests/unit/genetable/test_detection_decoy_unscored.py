@@ -571,18 +571,21 @@ def test_decoy_on_a_partial_gene_counts_for_completeness() -> None:
     assert r.detected(t[0]), "ranked on score: the target (99) beats its decoy (10)"
 
 
-def test_unpaired_decoys_never_enter_s() -> None:
+def test_own_unit_decoys_enter_s() -> None:
+    """ADR-0078 rule 6: S is read over every pairing row, own units included. The unpaired decoy
+    has no q, so q leaves S; S is empty -> ``decoy_unscored`` and the no-decoy chain (targets
+    carry q -> ``mayu``). 1.1.0 read paired rows only and stayed ``decoy_picked``."""
     b = Builder(10)
     t = b.tags or []
     for i, g in enumerate(t, start=1):
         b.target(g, 1e-4 * i, None, None)
     for g in t[:9]:
         b.decoy([f"rev_{g}"], 0.002, None, None)
-    b.decoy(["rev_UNKNOWN"], None, None, None)  # unpaired and unscored
+    b.decoy(["rev_UNKNOWN"], None, None, None)  # own unit, unscored
     r = b.run()
     assert fx.tier_metric(r.det, "n_decoys_unpaired") == 1
-    assert r.det.tier == "decoy_picked"
-    assert UNSCORED not in r.det.warnings
+    assert UNSCORED in r.det.warnings
+    assert r.det.tier == "mayu"
 
 
 def test_ties_on_integer_scores_go_to_the_decoy() -> None:
@@ -598,7 +601,8 @@ def test_ties_on_integer_scores_go_to_the_decoy() -> None:
 
 
 def test_fallback_tier_rows_report_partial_pairing() -> None:
-    """Rule 3 with f < 1: the ``mayu`` tier rows still carry the decoy counts, f and 1/f."""
+    """Rule 3 with f < 1: the ``mayu`` tier rows still carry the decoy counts and f; the
+    ``decoy_win_weight`` row is 1.0 (ADR-0078 rule 5: 1/f retired)."""
     b = Builder(12)
     t = b.tags or []
     for i, g in enumerate(t, start=1):
@@ -611,7 +615,7 @@ def test_fallback_tier_rows_report_partial_pairing() -> None:
     vals = {m: fx.tier_metric(r.det, m) for m in TIER_ROWS}
     assert vals["n_decoys_paired"] == 9 and vals["n_decoys_unpaired"] == 1
     assert vals["decoy_paired_share"] == pytest.approx(0.9, rel=1e-12)
-    assert vals["decoy_win_weight"] == pytest.approx(1 / 0.9, rel=1e-12)
+    assert vals["decoy_win_weight"] == 1.0
     assert math.isnan(fx.tier_metric(r.det, "q_floor"))
 
 

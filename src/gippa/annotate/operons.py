@@ -196,11 +196,25 @@ def region_sequence(iv: Interval, seq: str) -> str:
     return nt.translate(_COMP)[::-1] if iv.strand == "-" else nt
 
 
+_ACGT = frozenset("ACGTacgt")
+
+
+def region_is_acgt(tu: Tu, genome: Mapping[str, str]) -> bool:
+    """Whether ``tu``'s strand-aware upstream region holds only A, C, G, T (any case).
+
+    The single skip rule for Promoter Calculator (#614): its reverse complement raises on ``N``
+    and IUPAC codes, so a region with any other base is not sent to it."""
+    return set(region_sequence(tu.upstream, genome[tu.contig])) <= _ACGT
+
+
 def write_tu_regions(outdir: Path, tus: Sequence[Tu], genome: Mapping[str, str]) -> list[Path]:
-    """One ``<tu_id>.fa`` per TU, its upstream region on one line; returns the paths in TU order."""
+    """One ``<tu_id>.fa`` per TU whose region passes :func:`region_is_acgt`, its upstream region
+    on one line; returns the written paths in TU order (gapped TUs get no file)."""
     outdir.mkdir(parents=True, exist_ok=True)
     paths = []
     for t in tus:
+        if not region_is_acgt(t, genome):
+            continue
         path = outdir / f"{t.tu_id}.fa"
         seq = region_sequence(t.upstream, genome[t.contig])
         # one sequence line (= promoter_calculator.region_fasta_text; §7.1.1 gotcha, M2-14)
