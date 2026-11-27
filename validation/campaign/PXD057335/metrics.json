@@ -1,0 +1,2009 @@
+{
+ "schema": "gippa-campaign-p2c/1",
+ "dataset": "mtb",
+ "A": {
+  "commit": "bfc74ff6c20acc2cfcf298cdf23cbb30d8fae0dc",
+  "git_dirty": false,
+  "exit_code": 0,
+  "status": "completed",
+  "detection_tier": "decoy_picked",
+  "started_at": "2026-11-22T07:11:57+00:00",
+  "finished_at": "2026-11-22T12:29:05+00:00",
+  "warnings": [
+   "novel_orfs:novel_orfs.decoys_not_makedb",
+   "novel_orfs:novel_orfs.layer_missing"
+  ],
+  "layers_missing": [
+   "rbs_novel"
+  ],
+  "modules_off": [],
+  "seeds": {
+   "codon_usage": 3129038944,
+   "context_layers": 1365550599,
+   "context_stats": 105909204,
+   "detectability": 3987542110,
+   "determinants": 3593833509,
+   "function": 3400406589,
+   "gene_table": 393846822,
+   "loci": 1770125858,
+   "map_exact": 3911246953,
+   "map_tolerant": 1491420984,
+   "master": 20261014,
+   "novel_candidates": 2908536744,
+   "novel_orfs": 388090210,
+   "operon_pairs": 4034643963,
+   "operons": 179147819,
+   "ostir_input": 1327200810,
+   "parse_bakta": 642799015,
+   "placement": 1222341902,
+   "plots": 2413055744,
+   "promoter_layer": 2441405911,
+   "promoter_windows": 28991342,
+   "rbs_layer": 2821979816,
+   "region_layer": 1556029954,
+   "report": 3291445124,
+   "sensitivity": 4237340471,
+   "sixframe_index": 3300501706,
+   "terminator_layer": 1571130219,
+   "transterm_input": 732194518,
+   "tx_layer": 1302245994,
+   "uniop_input": 3714929077,
+   "variants": 3013104609
+  },
+  "inputs": {
+   "genome": "03b3edadc33561efcb071f0b69d3836c0665509912138e6ffea7d14aef35ae04",
+   "peptides": "443d101b502eb0c70c907671ce8cf6d554d4f5a86bbd64bad3a96d9ca432e21a",
+   "annotation": "a17257269010230bf5f42e1ed1e2c26c1bac1067f24bed90ed7f9a1b4020b76c",
+   "precomputed:bakta_json": "a17257269010230bf5f42e1ed1e2c26c1bac1067f24bed90ed7f9a1b4020b76c"
+  },
+  "n_coding_genes": 4075,
+  "detection_status": {
+   "detected": 2942,
+   "not_detected": 1133
+  },
+  "detected_by_tier": {
+   "decoy_picked": 2942
+  },
+  "n_detected": 2942,
+  "n_gene_q_le_0.01": 2942,
+  "mapping_fdr_all": [
+   {
+    "section": "placement",
+    "n_diff": 0,
+    "targets": 0,
+    "decoys": 0,
+    "n_accepted": 0,
+    "precision": null,
+    "ci_low": null,
+    "ci_high": null,
+    "flags": null
+   },
+   {
+    "section": "placement",
+    "n_diff": 1,
+    "targets": 1,
+    "decoys": 15,
+    "n_accepted": 0,
+    "precision": null,
+    "ci_low": null,
+    "ci_high": null,
+    "flags": null
+   },
+   {
+    "section": "placement",
+    "n_diff": 2,
+    "targets": 0,
+    "decoys": 17,
+    "n_accepted": 0,
+    "precision": null,
+    "ci_low": null,
+    "ci_high": null,
+    "flags": null
+   },
+   {
+    "section": "placement",
+    "n_diff": 0,
+    "targets": 0,
+    "decoys": 0,
+    "n_accepted": 0,
+    "precision": null,
+    "ci_low": null,
+    "ci_high": null,
+    "flags": null
+   },
+   {
+    "section": "placement",
+    "n_diff": 1,
+    "targets": 0,
+    "decoys": 0,
+    "n_accepted": 0,
+    "precision": null,
+    "ci_low": null,
+    "ci_high": null,
+    "flags": null
+   },
+   {
+    "section": "placement",
+    "n_diff": 2,
+    "targets": 0,
+    "decoys": 0,
+    "n_accepted": 0,
+    "precision": null,
+    "ci_low": null,
+    "ci_high": null,
+    "flags": null
+   }
+  ],
+  "gene_fdr": {
+   "fdr_at_q0.01": 0.00985724,
+   "n_detected_at_q0.01": 2942.0,
+   "tier": {
+    "decoy_picked:decoy_paired_share": 0.98995,
+    "decoy_picked:decoy_win_weight": 1.0,
+    "decoy_picked:n_decoys_paired": 394.0,
+    "decoy_picked:n_decoys_unpaired": 4.0,
+    "decoy_picked:n_detected": 2942.0,
+    "decoy_picked:n_detected_2pep": 2738.0,
+    "decoy_picked:q_floor": 0.000335909
+   },
+   "verdict": "pass"
+  },
+  "n_variant_rows": 0,
+  "variant_confidence": {}
+ },
+ "row_te1": {
+  "n_peptides": 32851,
+  "exact_inframe": 32851,
+  "exact_inframe_masked": 14,
+  "share_exact_inframe": 1.0,
+  "ci_low": 0.9998830778463653,
+  "ci_high": 1.0,
+  "threshold": 0.995,
+  "passed": true,
+  "ci_low_below_threshold": false,
+  "target_q_na": 0,
+  "unknown_source": 0,
+  "non_atg_nterm": {
+   "peptides": 111,
+   "misses": 0
+  },
+  "misses": {
+   "non_atg_nterm": 0,
+   "exact_other_gene": 0,
+   "exact_other_class": {},
+   "tolerant_only": 0,
+   "unplaced": {}
+  },
+  "n_misses": 0,
+  "share_excluding_non_atg": {
+   "value": 1.0,
+   "ci_low": 0.9998826814860583,
+   "ci_high": 1.0,
+   "k": 32740,
+   "n": 32740
+  },
+  "share_without_q_at_cutoff": {
+   "value": null,
+   "ci_low": null,
+   "ci_high": null,
+   "k": 0,
+   "n": 0,
+   "reason": "no_crossings",
+   "removed": null,
+   "q_crossings": 0,
+   "pass_becomes_fail": false
+  },
+  "n_exceptions": 0
+ },
+ "row_te3_gippa_set": {
+  "n_ribosomal": 56,
+  "abundance": {
+   "m": 28.10055,
+   "q3": 23.757125,
+   "percentile_rank": 0.9807562457798784,
+   "holds": true,
+   "n_r_measured": 54,
+   "n_measured": 2962,
+   "abundance_type": "ibaq"
+  },
+  "detection": {
+   "share": {
+    "value": 0.9642857142857143,
+    "ci_low": 0.8788121981950989,
+    "ci_high": 0.9901505748517636,
+    "k": 54,
+    "n": 56
+   },
+   "holds": true
+  },
+  "secondary": {
+   "without_type_b": {
+    "n_ribosomal": 56,
+    "abundance": {
+     "m": 28.10055,
+     "q3": 23.757125,
+     "percentile_rank": 0.9807562457798784,
+     "holds": true,
+     "n_r_measured": 54,
+     "n_measured": 2962,
+     "abundance_type": "ibaq"
+    },
+    "detection": {
+     "share": {
+      "value": 0.9642857142857143,
+      "ci_low": 0.8788121981950989,
+      "ci_high": 0.9901505748517636,
+      "k": 54,
+      "n": 56
+     },
+     "holds": true
+    }
+   },
+   "section_7_1_2": {
+    "n_ribosomal": 58,
+    "abundance": {
+     "m": 28.10055,
+     "q3": 23.757125,
+     "percentile_rank": 0.9807562457798784,
+     "holds": true,
+     "n_r_measured": 54,
+     "n_measured": 2962,
+     "abundance_type": "ibaq"
+    },
+    "detection": {
+     "share": {
+      "value": 0.9310344827586207,
+      "ci_low": 0.8356633368561964,
+      "ci_high": 0.9728557529824217,
+      "k": 54,
+      "n": 58
+     },
+     "holds": true
+    }
+   }
+  },
+  "status": "pass"
+ },
+ "row_te3_refseq_set_pilot_rule": {
+  "n_ribosomal": 56,
+  "abundance": {
+   "m": 28.10055,
+   "q3": 23.757125,
+   "percentile_rank": 0.9807562457798784,
+   "holds": true,
+   "n_r_measured": 54,
+   "n_measured": 2962,
+   "abundance_type": "ibaq"
+  },
+  "detection": {
+   "share": {
+    "value": 0.9642857142857143,
+    "ci_low": 0.8788121981950989,
+    "ci_high": 0.9901505748517636,
+    "k": 54,
+    "n": 56
+   },
+   "holds": true
+  },
+  "secondary": {
+   "without_type_b": {
+    "n_ribosomal": 56,
+    "abundance": {
+     "m": 28.10055,
+     "q3": 23.757125,
+     "percentile_rank": 0.9807562457798784,
+     "holds": true,
+     "n_r_measured": 54,
+     "n_measured": 2962,
+     "abundance_type": "ibaq"
+    },
+    "detection": {
+     "share": {
+      "value": 0.9642857142857143,
+      "ci_low": 0.8788121981950989,
+      "ci_high": 0.9901505748517636,
+      "k": 54,
+      "n": 56
+     },
+     "holds": true
+    }
+   },
+   "section_7_1_2": {
+    "n_ribosomal": 56,
+    "abundance": {
+     "m": 28.10055,
+     "q3": 23.757125,
+     "percentile_rank": 0.9807562457798784,
+     "holds": true,
+     "n_r_measured": 54,
+     "n_measured": 2962,
+     "abundance_type": "ibaq"
+    },
+    "detection": {
+     "share": {
+      "value": 0.9642857142857143,
+      "ci_low": 0.8788121981950989,
+      "ci_high": 0.9901505748517636,
+      "k": 54,
+      "n": 56
+     },
+     "holds": true
+    }
+   }
+  },
+  "status": "pass"
+ },
+ "row_te3_refseq_set": {
+  "n_ribosomal": 56,
+  "abundance": {
+   "m": 28.10055,
+   "q3": 23.757125,
+   "percentile_rank": 0.9807562457798784,
+   "holds": true,
+   "n_r_measured": 54,
+   "n_measured": 2962,
+   "abundance_type": "ibaq"
+  },
+  "detection": {
+   "share": {
+    "value": 0.9642857142857143,
+    "ci_low": 0.8788121981950989,
+    "ci_high": 0.9901505748517636,
+    "k": 54,
+    "n": 56
+   },
+   "holds": true
+  },
+  "status": "pass",
+  "not_detected": [
+   {
+    "locus_tag": "LNBHIF_00117",
+    "refseq_locus": "Rv0105c",
+    "product": "50S ribosomal protein L28"
+   },
+   {
+    "locus_tag": "LNBHIF_02185",
+    "refseq_locus": "Rv2056c",
+    "product": "30S ribosomal protein S14"
+   }
+  ]
+ },
+ "row_te4": {
+  "status": "fail",
+  "pairs": {
+   "rplL/rplJ": {
+    "status": "fail",
+    "reason": [],
+    "low": 1,
+    "high": 3,
+    "log2_ratio": 0.6106000000000016,
+    "top3_log2_ratio": 0.5789000000000009
+   },
+   "atpA/atpD": {
+    "status": "pass",
+    "reason": [],
+    "low": -1,
+    "high": 1,
+    "log2_ratio": -0.01740000000000208,
+    "top3_log2_ratio": -0.032900000000001484
+   }
+  },
+  "secondary": {
+   "genes": {
+    "rplL": {
+     "n_peptides_unique": 12,
+     "n_observable_peptides": 6
+    },
+    "rplJ": {
+     "n_peptides_unique": 18,
+     "n_observable_peptides": 9
+    },
+    "atpA": {
+     "n_peptides_unique": 39,
+     "n_observable_peptides": 27
+    },
+    "atpD": {
+     "n_peptides_unique": 35,
+     "n_observable_peptides": 29
+    }
+   }
+  },
+  "abundance_type": "ibaq",
+  "reason": [
+   "rplL/rplJ:fail"
+  ]
+ },
+ "row_te5": {
+  "n_s": 168,
+  "families": {
+   "trypsin": 3,
+   "keratin": 165
+  },
+  "counts": {
+   "genome_exact": 0,
+   "bucket": 168,
+   "placed_tolerant": 0,
+   "labelled_unmapped": 0,
+   "absent": 0,
+   "match_other_entry": 168
+  },
+  "share_bucket": {
+   "value": 1.0,
+   "ci_low": 0.9776453316501321,
+   "ci_high": 1.0,
+   "k": 168,
+   "n": 168
+  },
+  "secondary": {
+   "keratin_associated": {
+    "n_s": 2,
+    "families": {
+     "keratin_associated": 2
+    },
+    "counts": {
+     "genome_exact": 0,
+     "bucket": 2,
+     "placed_tolerant": 0,
+     "labelled_unmapped": 0,
+     "absent": 0,
+     "match_other_entry": 2
+    }
+   }
+  },
+  "status": "pass"
+ },
+ "row_gene_fdr": {
+  "fdr_at_q0.01": 0.00985724,
+  "n_detected_at_q0.01": 2942.0,
+  "tier": {
+   "decoy_picked:decoy_paired_share": 0.98995,
+   "decoy_picked:decoy_win_weight": 1.0,
+   "decoy_picked:n_decoys_paired": 394.0,
+   "decoy_picked:n_decoys_unpaired": 4.0,
+   "decoy_picked:n_detected": 2942.0,
+   "decoy_picked:n_detected_2pep": 2738.0,
+   "decoy_picked:q_floor": 0.000335909
+  },
+  "verdict": "pass"
+ },
+ "row_operons": {
+  "n_set_genes": 66,
+  "n_pairs": 38,
+  "pair_class": {
+   "NO": 10,
+   "OP": 28
+  },
+  "n_pairs_q_le_0.05": 0,
+  "min_q": 0.812544,
+  "median_abs_delta_log2": 0.920484,
+  "operon_flags": [],
+  "discordant": [],
+  "verdict": "pass"
+ },
+ "row_regions_A": {
+  "region_types": {
+   "bgc": 34,
+   "crispr": 4,
+   "amr": 2
+  },
+  "prophage_regions": [],
+  "n_lower": 0,
+  "n_lower_q05": 0,
+  "verdict": "not testable",
+  "islands": [],
+  "significant_rows_q05": [
+   {
+    "region_type": "crispr",
+    "region_id": "crispr_2",
+    "method": "circular_shift_o_minus_e",
+    "effect": -1.59403,
+    "q_value": 0.0220859
+   }
+  ]
+ },
+ "by_replicon_A": {
+  "NC_000962.3": {
+   "k": 2942,
+   "n": 4075,
+   "value": 0.7219631901840491,
+   "ci_low": 0.7080030099981561,
+   "ci_high": 0.7355052798589917
+  }
+ },
+ "refseq_mapped_by_stop": 3789,
+ "row_esx": {
+  "esxA": {
+   "locus_tag": "LNBHIF_04101",
+   "gene": "esxA",
+   "start": 4352609,
+   "end": 4352896,
+   "strand": "+",
+   "detection_status": "detected",
+   "detection_tier": "decoy_picked",
+   "gene_q_value": 0.000367107,
+   "n_peptides_unique": 2,
+   "n_peptides_shared": 0,
+   "coverage_frac": 0.375,
+   "abundance_log2": 18.6203,
+   "flags": "top3_lt3"
+  },
+  "esxB": {
+   "locus_tag": "LNBHIF_04100",
+   "gene": "esxB",
+   "start": 4352274,
+   "end": 4352576,
+   "strand": "+",
+   "detection_status": "detected",
+   "detection_tier": "decoy_picked",
+   "gene_q_value": 0.000367107,
+   "n_peptides_unique": 5,
+   "n_peptides_shared": 0,
+   "coverage_frac": 0.663366,
+   "abundance_log2": 21.5907,
+   "flags": null
+  },
+  "dnaA": {
+   "locus_tag": "LNBHIF_00001",
+   "gene": "dnaA",
+   "start": 1,
+   "end": 1524,
+   "strand": "+",
+   "detection_status": "detected",
+   "detection_tier": "decoy_picked",
+   "gene_q_value": 0.000367107,
+   "n_peptides_unique": 34,
+   "n_peptides_shared": 0,
+   "coverage_frac": 0.557087,
+   "abundance_log2": 23.8274,
+   "flags": null
+  },
+  "verdict": "pass"
+ },
+ "row_peppe": {
+  "pe_ppe": {
+   "k": 19,
+   "n": 150,
+   "value": 0.12666666666666668,
+   "ci_low": 0.08261129487936036,
+   "ci_high": 0.18936648758213687
+  },
+  "other": {
+   "k": 2923,
+   "n": 3925,
+   "value": 0.7447133757961784,
+   "ci_low": 0.7308379694774292,
+   "ci_high": 0.7581102408625777
+  },
+  "fisher_p": 1.0925774273101573e-54,
+  "odds_ratio": 0.04971886564310953,
+  "verdict": "pass"
+ },
+ "row_topology": {
+  "replicons_parquet": [
+   {
+    "contig": "NC_000962.3",
+    "length": 4411532,
+    "topology": "circular",
+    "kind": "chromosome"
+   }
+  ],
+  "genes_crosses_origin": 0
+ },
+ "B": {
+  "commit": "bfc74ff6c20acc2cfcf298cdf23cbb30d8fae0dc",
+  "git_dirty": false,
+  "exit_code": 0,
+  "status": "completed",
+  "detection_tier": "decoy_picked",
+  "started_at": "2026-11-22T11:07:55+00:00",
+  "finished_at": "2026-11-22T14:19:37+00:00",
+  "warnings": [
+   "novel_orfs:novel_orfs.class_q_floor_above_alpha"
+  ],
+  "layers_missing": [],
+  "modules_off": [],
+  "seeds": {
+   "codon_usage": 3129038944,
+   "context_layers": 1365550599,
+   "context_stats": 105909204,
+   "detectability": 3987542110,
+   "determinants": 3593833509,
+   "function": 3400406589,
+   "gene_table": 393846822,
+   "loci": 1770125858,
+   "map_exact": 3911246953,
+   "map_tolerant": 1491420984,
+   "master": 20261014,
+   "novel_candidates": 2908536744,
+   "novel_orfs": 388090210,
+   "novel_promoter_layer": 1428708026,
+   "novel_rbs_layer": 1423765203,
+   "operon_pairs": 4034643963,
+   "operons": 179147819,
+   "ostir_input": 1327200810,
+   "parse_bakta": 642799015,
+   "placement": 1222341902,
+   "plots": 2413055744,
+   "promoter_layer": 2441405911,
+   "promoter_windows": 28991342,
+   "rbs_layer": 2821979816,
+   "region_layer": 1556029954,
+   "report": 3291445124,
+   "sensitivity": 4237340471,
+   "sixframe_index": 3300501706,
+   "terminator_layer": 1571130219,
+   "transterm_input": 732194518,
+   "tx_layer": 1302245994,
+   "uniop_input": 3714929077,
+   "variants": 3013104609
+  },
+  "inputs": {
+   "genome": "03b3edadc33561efcb071f0b69d3836c0665509912138e6ffea7d14aef35ae04",
+   "peptides": "6eff66c6578233064481d303bf772925bfc15dec9fefab04bb98789eaf7628bc",
+   "annotation": "a17257269010230bf5f42e1ed1e2c26c1bac1067f24bed90ed7f9a1b4020b76c",
+   "precomputed:bakta_json": "a17257269010230bf5f42e1ed1e2c26c1bac1067f24bed90ed7f9a1b4020b76c"
+  },
+  "n_coding_genes": 4075,
+  "detection_status": {
+   "detected": 2889,
+   "not_detected": 1186
+  },
+  "detected_by_tier": {
+   "decoy_picked": 2889
+  },
+  "n_detected": 2889,
+  "n_gene_q_le_0.01": 2889,
+  "mapping_fdr_all": [
+   {
+    "section": "placement",
+    "n_diff": 0,
+    "targets": 0,
+    "decoys": 0,
+    "n_accepted": 0,
+    "precision": null,
+    "ci_low": null,
+    "ci_high": null,
+    "flags": null
+   },
+   {
+    "section": "placement",
+    "n_diff": 1,
+    "targets": 1,
+    "decoys": 14,
+    "n_accepted": 0,
+    "precision": null,
+    "ci_low": null,
+    "ci_high": null,
+    "flags": null
+   },
+   {
+    "section": "placement",
+    "n_diff": 2,
+    "targets": 0,
+    "decoys": 17,
+    "n_accepted": 0,
+    "precision": null,
+    "ci_low": null,
+    "ci_high": null,
+    "flags": null
+   },
+   {
+    "section": "placement",
+    "n_diff": 0,
+    "targets": 0,
+    "decoys": 0,
+    "n_accepted": 0,
+    "precision": null,
+    "ci_low": null,
+    "ci_high": null,
+    "flags": null
+   },
+   {
+    "section": "placement",
+    "n_diff": 1,
+    "targets": 0,
+    "decoys": 0,
+    "n_accepted": 0,
+    "precision": null,
+    "ci_low": null,
+    "ci_high": null,
+    "flags": null
+   },
+   {
+    "section": "placement",
+    "n_diff": 2,
+    "targets": 0,
+    "decoys": 0,
+    "n_accepted": 0,
+    "precision": null,
+    "ci_low": null,
+    "ci_high": null,
+    "flags": null
+   }
+  ],
+  "gene_fdr": {
+   "fdr_at_q0.01": 0.00657667,
+   "n_detected_at_q0.01": 2889.0,
+   "tier": {
+    "decoy_picked:decoy_paired_share": 0.988506,
+    "decoy_picked:decoy_win_weight": 1.0,
+    "decoy_picked:n_decoys_paired": 258.0,
+    "decoy_picked:n_decoys_unpaired": 3.0,
+    "decoy_picked:n_detected": 2889.0,
+    "decoy_picked:n_detected_2pep": 2677.0,
+    "decoy_picked:q_floor": 0.000346141
+   },
+   "verdict": "pass"
+  },
+  "n_variant_rows": 0,
+  "variant_confidence": {}
+ },
+ "row_novel": {
+  "n_candidates": 247,
+  "candidates_by_class": {
+   "cds_outframe": 36,
+   "antisense": 76,
+   "nterm_extension": 109,
+   "intergenic": 26
+  },
+  "n_called": 0,
+  "called_by_class": {},
+  "min_class_fdr_by_class": {
+   "cds_outframe": 0.0909091,
+   "antisense": 0.0909091,
+   "nterm_extension": 0.0117647,
+   "intergenic": 0.0909091
+  },
+  "share_matching_refseq": {
+   "k": 0,
+   "n": 0,
+   "value": null,
+   "ci_low": null,
+   "ci_high": null
+  },
+  "called": [],
+  "exploratory_all_candidates": {
+   "all": {
+    "k": 127,
+    "n": 247,
+    "value": 0.5141700404858299,
+    "ci_low": 0.4521020492381375,
+    "ci_high": 0.5758040235175774
+   },
+   "all_by_class": {
+    "antisense": {
+     "k": 2,
+     "n": 76,
+     "value": 0.02631578947368421,
+     "ci_low": 0.00724665907512833,
+     "ci_high": 0.09096621098658073
+    },
+    "cds_outframe": {
+     "k": 20,
+     "n": 36,
+     "value": 0.5555555555555556,
+     "ci_low": 0.395810617556973,
+     "ci_high": 0.7045873125991978
+    },
+    "intergenic": {
+     "k": 12,
+     "n": 26,
+     "value": 0.46153846153846156,
+     "ci_low": 0.2875585353039122,
+     "ci_high": 0.6454206125314121
+    },
+    "nterm_extension": {
+     "k": 93,
+     "n": 109,
+     "value": 0.8532110091743119,
+     "ci_low": 0.7747924198076281,
+     "ci_high": 0.9075808923129953
+    }
+   },
+   "all_pseudogene_matches": 0,
+   "n_peptides_ge_2": {
+    "k": 39,
+    "n": 47,
+    "value": 0.8297872340425532,
+    "ci_low": 0.6986022402737561,
+    "ci_high": 0.9111363612350974
+   },
+   "n_peptides_ge_2_by_class": {
+    "antisense": {
+     "k": 2,
+     "n": 2,
+     "value": 1.0,
+     "ci_low": 0.34238022750665303,
+     "ci_high": 1.0
+    },
+    "cds_outframe": {
+     "k": 2,
+     "n": 4,
+     "value": 0.5,
+     "ci_low": 0.15003898915214947,
+     "ci_high": 0.8499610108478506
+    },
+    "intergenic": {
+     "k": 7,
+     "n": 10,
+     "value": 0.7,
+     "ci_low": 0.39677814746114537,
+     "ci_high": 0.8922087325936989
+    },
+    "nterm_extension": {
+     "k": 28,
+     "n": 31,
+     "value": 0.9032258064516129,
+     "ci_low": 0.7510006155660716,
+     "ci_high": 0.9665353558368026
+    }
+   },
+   "n_peptides_ge_2_pseudogene_matches": 0
+  }
+ },
+ "q_floor_warnings": [
+  "novel_orfs:novel_orfs.class_q_floor_above_alpha"
+ ],
+ "row_route_b": {
+  "A_detected": 2942,
+  "B_detected": 2889,
+  "A_kept_by_B": {
+   "k": 2875,
+   "n": 2942,
+   "value": 0.9772263766145479,
+   "ci_low": 0.9711811094506548,
+   "ci_high": 0.9820270109633078
+  },
+  "B_only": 14
+ },
+ "by_replicon_B": {
+  "NC_000962.3": {
+   "k": 2889,
+   "n": 4075,
+   "value": 0.708957055214724,
+   "ci_low": 0.6948186965624649,
+   "ci_high": 0.7227018217497091
+  }
+ },
+ "row_regions_B": {
+  "region_types": {
+   "bgc": 34,
+   "crispr": 4,
+   "amr": 2
+  },
+  "prophage_regions": [],
+  "n_lower": 0,
+  "n_lower_q05": 0,
+  "verdict": "not testable",
+  "islands": [],
+  "significant_rows_q05": [
+   {
+    "region_type": "crispr",
+    "region_id": "crispr_2",
+    "method": "circular_shift_o_minus_e",
+    "effect": -1.55918,
+    "q_value": 0.0265031
+   }
+  ]
+ },
+ "refseq_cds_missed_by_bakta": {
+  "n": 117,
+  "n_le_70aa": 17,
+  "with_route_b_peptides": 22,
+  "le_70aa_with_route_b_peptides": 4,
+  "with_candidate": 21,
+  "rows_with_evidence": [
+   {
+    "refseq_locus": "Rv0397A",
+    "contig": "NC_000962.3",
+    "start": 476394,
+    "end": 476642,
+    "strand": "+",
+    "length_aa": 82,
+    "product": "hypothetical protein",
+    "route_b_candidates": [
+     "NOVEL_NC_000962.3_476394_p"
+    ],
+    "route_b_exact_peptides": 1
+   },
+   {
+    "refseq_locus": "Rv0456A",
+    "contig": "NC_000962.3",
+    "start": 547076,
+    "end": 547357,
+    "strand": "-",
+    "length_aa": 93,
+    "product": "toxin MazF1",
+    "route_b_candidates": [],
+    "route_b_exact_peptides": 1
+   },
+   {
+    "refseq_locus": "Rv0609A",
+    "contig": "NC_000962.3",
+    "start": 703830,
+    "end": 704057,
+    "strand": "+",
+    "length_aa": 75,
+    "product": "hypothetical protein",
+    "route_b_candidates": [],
+    "route_b_exact_peptides": 1
+   },
+   {
+    "refseq_locus": "Rv0891c",
+    "contig": "NC_000962.3",
+    "start": 992598,
+    "end": 993455,
+    "strand": "-",
+    "length_aa": 285,
+    "product": "hypothetical protein",
+    "route_b_candidates": [
+     "NOVEL_NC_000962.3_992598_m"
+    ],
+    "route_b_exact_peptides": 2
+   },
+   {
+    "refseq_locus": "Rv1322",
+    "contig": "NC_000962.3",
+    "start": 1484982,
+    "end": 1485278,
+    "strand": "+",
+    "length_aa": 98,
+    "product": "hypothetical protein",
+    "route_b_candidates": [
+     "NOVEL_NC_000962.3_1484982_p"
+    ],
+    "route_b_exact_peptides": 3
+   },
+   {
+    "refseq_locus": "Rv1587c",
+    "contig": "NC_000962.3",
+    "start": 1788162,
+    "end": 1789163,
+    "strand": "-",
+    "length_aa": 333,
+    "product": "hypothetical protein",
+    "route_b_candidates": [],
+    "route_b_exact_peptides": 3
+   },
+   {
+    "refseq_locus": "Rv1913",
+    "contig": "NC_000962.3",
+    "start": 2159191,
+    "end": 2159943,
+    "strand": "+",
+    "length_aa": 250,
+    "product": "hypothetical protein",
+    "route_b_candidates": [
+     "NOVEL_NC_000962.3_2158585_p"
+    ],
+    "route_b_exact_peptides": 2
+   },
+   {
+    "refseq_locus": "Rv1929c",
+    "contig": "NC_000962.3",
+    "start": 2181262,
+    "end": 2181906,
+    "strand": "-",
+    "length_aa": 214,
+    "product": "hypothetical protein",
+    "route_b_candidates": [
+     "NOVEL_NC_000962.3_2181262_m"
+    ],
+    "route_b_exact_peptides": 5
+   },
+   {
+    "refseq_locus": "Rv1987",
+    "contig": "NC_000962.3",
+    "start": 2231026,
+    "end": 2231454,
+    "strand": "+",
+    "length_aa": 142,
+    "product": "chitinase",
+    "route_b_candidates": [
+     "NOVEL_NC_000962.3_2231005_p"
+    ],
+    "route_b_exact_peptides": 3
+   },
+   {
+    "refseq_locus": "Rv2063A",
+    "contig": "NC_000962.3",
+    "start": 2321057,
+    "end": 2321467,
+    "strand": "+",
+    "length_aa": 136,
+    "product": "mRNA interferase MazF7",
+    "route_b_candidates": [
+     "NOVEL_NC_000962.3_2320831_p",
+     "NOVEL_NC_000962.3_2321057_p"
+    ],
+    "route_b_exact_peptides": 7
+   },
+   {
+    "refseq_locus": "Rv2231B",
+    "contig": "NC_000962.3",
+    "start": 2506207,
+    "end": 2506383,
+    "strand": "-",
+    "length_aa": 58,
+    "product": "antitoxin VapB16",
+    "route_b_candidates": [],
+    "route_b_exact_peptides": 1
+   },
+   {
+    "refseq_locus": "Rv2256a",
+    "contig": "NC_000962.3",
+    "start": 2528980,
+    "end": 2529174,
+    "strand": "-",
+    "length_aa": 64,
+    "product": "hypothetical protein",
+    "route_b_candidates": [
+     "NOVEL_NC_000962.3_2528980_m"
+    ],
+    "route_b_exact_peptides": 1
+   },
+   {
+    "refseq_locus": "Rv2269c",
+    "contig": "NC_000962.3",
+    "start": 2544289,
+    "end": 2544621,
+    "strand": "-",
+    "length_aa": 110,
+    "product": "hypothetical protein",
+    "route_b_candidates": [
+     "NOVEL_NC_000962.3_2544500_m"
+    ],
+    "route_b_exact_peptides": 0
+   },
+   {
+    "refseq_locus": "Rv2493",
+    "contig": "NC_000962.3",
+    "start": 2808083,
+    "end": 2808304,
+    "strand": "+",
+    "length_aa": 73,
+    "product": "antitoxin VapB38",
+    "route_b_candidates": [
+     "NOVEL_NC_000962.3_2808083_p"
+    ],
+    "route_b_exact_peptides": 2
+   },
+   {
+    "refseq_locus": "Rv2774c",
+    "contig": "NC_000962.3",
+    "start": 3082352,
+    "end": 3082756,
+    "strand": "-",
+    "length_aa": 134,
+    "product": "hypothetical protein",
+    "route_b_candidates": [
+     "NOVEL_NC_000962.3_3081604_m"
+    ],
+    "route_b_exact_peptides": 0
+   },
+   {
+    "refseq_locus": "Rv2840c",
+    "contig": "NC_000962.3",
+    "start": 3147959,
+    "end": 3148258,
+    "strand": "-",
+    "length_aa": 99,
+    "product": "hypothetical protein",
+    "route_b_candidates": [
+     "NOVEL_NC_000962.3_3147959_m"
+    ],
+    "route_b_exact_peptides": 2
+   },
+   {
+    "refseq_locus": "Rv2871",
+    "contig": "NC_000962.3",
+    "start": 3183138,
+    "end": 3183395,
+    "strand": "+",
+    "length_aa": 85,
+    "product": "antitoxin VapB43",
+    "route_b_candidates": [
+     "NOVEL_NC_000962.3_3182268_p"
+    ],
+    "route_b_exact_peptides": 9
+   },
+   {
+    "refseq_locus": "Rv3461c",
+    "contig": "NC_000962.3",
+    "start": 3880286,
+    "end": 3880399,
+    "strand": "-",
+    "length_aa": 37,
+    "product": "50S ribosomal protein L36",
+    "route_b_candidates": [
+     "NOVEL_NC_000962.3_3880286_m"
+    ],
+    "route_b_exact_peptides": 2
+   },
+   {
+    "refseq_locus": "Rv3513c",
+    "contig": "NC_000962.3",
+    "start": 3945092,
+    "end": 3945748,
+    "strand": "-",
+    "length_aa": 218,
+    "product": "fatty-acid--CoA ligase FadD18",
+    "route_b_candidates": [],
+    "route_b_exact_peptides": 8
+   },
+   {
+    "refseq_locus": "Rv3566A",
+    "contig": "NC_000962.3",
+    "start": 4008167,
+    "end": 4008433,
+    "strand": "-",
+    "length_aa": 88,
+    "product": "hypothetical protein",
+    "route_b_candidates": [
+     "NOVEL_NC_000962.3_4007331_m"
+    ],
+    "route_b_exact_peptides": 0
+   },
+   {
+    "refseq_locus": "Rv3675",
+    "contig": "NC_000962.3",
+    "start": 4116002,
+    "end": 4116379,
+    "strand": "+",
+    "length_aa": 125,
+    "product": "membrane protein",
+    "route_b_candidates": [
+     "NOVEL_NC_000962.3_4116002_p"
+    ],
+    "route_b_exact_peptides": 4
+   },
+   {
+    "refseq_locus": "Rv3705A",
+    "contig": "NC_000962.3",
+    "start": 4149091,
+    "end": 4149480,
+    "strand": "-",
+    "length_aa": 129,
+    "product": "hypothetical protein",
+    "route_b_candidates": [
+     "NOVEL_NC_000962.3_4149091_m"
+    ],
+    "route_b_exact_peptides": 1
+   },
+   {
+    "refseq_locus": "Rv3861",
+    "contig": "NC_000962.3",
+    "start": 4337946,
+    "end": 4338272,
+    "strand": "+",
+    "length_aa": 108,
+    "product": "hypothetical protein",
+    "route_b_candidates": [
+     "NOVEL_NC_000962.3_4336777_p"
+    ],
+    "route_b_exact_peptides": 0
+   },
+   {
+    "refseq_locus": "Rv3922c",
+    "contig": "NC_000962.3",
+    "start": 4410053,
+    "end": 4410415,
+    "strand": "-",
+    "length_aa": 120,
+    "product": "membrane protein insertion efficiency factor",
+    "route_b_candidates": [
+     "NOVEL_NC_000962.3_4410053_m",
+     "NOVEL_NC_000962.3_4410412_m"
+    ],
+    "route_b_exact_peptides": 2
+   },
+   {
+    "refseq_locus": "Rv3923c",
+    "contig": "NC_000962.3",
+    "start": 4410412,
+    "end": 4410789,
+    "strand": "-",
+    "length_aa": 125,
+    "product": "ribonuclease P protein component",
+    "route_b_candidates": [
+     "NOVEL_NC_000962.3_4410053_m",
+     "NOVEL_NC_000962.3_4410412_m",
+     "NOVEL_NC_000962.3_4410786_m"
+    ],
+    "route_b_exact_peptides": 4
+   },
+   {
+    "refseq_locus": "Rv3924c",
+    "contig": "NC_000962.3",
+    "start": 4410786,
+    "end": 4410929,
+    "strand": "-",
+    "length_aa": 47,
+    "product": "50S ribosomal protein L34",
+    "route_b_candidates": [
+     "NOVEL_NC_000962.3_4410412_m",
+     "NOVEL_NC_000962.3_4410786_m"
+    ],
+    "route_b_exact_peptides": 1
+   }
+  ]
+ },
+ "candidates_ge2_peptides": [
+  {
+   "orf_id": "NOVEL_NC_000962.3_9899_p",
+   "class": "nterm_extension",
+   "contig": "NC_000962.3",
+   "strand": "+",
+   "start_longest": 9899,
+   "end": 10828,
+   "length_aa_longest": 309,
+   "n_peptides": 11,
+   "best_peptide_q": 4.7821e-07,
+   "class_fdr": 0.0117647,
+   "called": false,
+   "overlapping_gene": "LNBHIF_00008",
+   "flags": "rbs_supported;promoter_supported"
+  },
+  {
+   "orf_id": "NOVEL_NC_000962.3_248115_m",
+   "class": "nterm_extension",
+   "contig": "NC_000962.3",
+   "strand": "-",
+   "start_longest": 249248,
+   "end": 248115,
+   "length_aa_longest": 377,
+   "n_peptides": 2,
+   "best_peptide_q": 5.33198e-07,
+   "class_fdr": 0.0117647,
+   "called": false,
+   "overlapping_gene": "LNBHIF_00226",
+   "flags": "rbs_supported;promoter_supported"
+  },
+  {
+   "orf_id": "NOVEL_NC_000962.3_418949_p",
+   "class": "nterm_extension",
+   "contig": "NC_000962.3",
+   "strand": "+",
+   "start_longest": 418949,
+   "end": 419608,
+   "length_aa_longest": 219,
+   "n_peptides": 3,
+   "best_peptide_q": 5.33198e-07,
+   "class_fdr": 0.0117647,
+   "called": false,
+   "overlapping_gene": "LNBHIF_00372",
+   "flags": "rbs_supported;promoter_supported"
+  },
+  {
+   "orf_id": "NOVEL_NC_000962.3_475158_p",
+   "class": "cds_outframe",
+   "contig": "NC_000962.3",
+   "strand": "+",
+   "start_longest": null,
+   "end": 475229,
+   "length_aa_longest": 23,
+   "n_peptides": 2,
+   "best_peptide_q": 0.00391869,
+   "class_fdr": 0.285714,
+   "called": false,
+   "overlapping_gene": "LNBHIF_00419",
+   "flags": "no_start_codon"
+  },
+  {
+   "orf_id": "NOVEL_NC_000962.3_483977_p",
+   "class": "nterm_extension",
+   "contig": "NC_000962.3",
+   "strand": "+",
+   "start_longest": 483977,
+   "end": 485734,
+   "length_aa_longest": 585,
+   "n_peptides": 4,
+   "best_peptide_q": 0.00019383,
+   "class_fdr": 0.0117647,
+   "called": false,
+   "overlapping_gene": "LNBHIF_00428",
+   "flags": "rbs_supported"
+  },
+  {
+   "orf_id": "NOVEL_NC_000962.3_567921_m",
+   "class": "nterm_extension",
+   "contig": "NC_000962.3",
+   "strand": "-",
+   "start_longest": 568967,
+   "end": 567921,
+   "length_aa_longest": 348,
+   "n_peptides": 2,
+   "best_peptide_q": 4.7821e-07,
+   "class_fdr": 0.0117647,
+   "called": false,
+   "overlapping_gene": "LNBHIF_00505",
+   "flags": "rbs_supported;promoter_supported"
+  },
+  {
+   "orf_id": "NOVEL_NC_000962.3_851608_p",
+   "class": "nterm_extension",
+   "contig": "NC_000962.3",
+   "strand": "+",
+   "start_longest": 851608,
+   "end": 852351,
+   "length_aa_longest": 247,
+   "n_peptides": 2,
+   "best_peptide_q": 5.33198e-07,
+   "class_fdr": 0.0117647,
+   "called": false,
+   "overlapping_gene": "LNBHIF_00804",
+   "flags": "rbs_supported;promoter_supported"
+  },
+  {
+   "orf_id": "NOVEL_NC_000962.3_992598_m",
+   "class": "intergenic",
+   "contig": "NC_000962.3",
+   "strand": "-",
+   "start_longest": 993455,
+   "end": 992598,
+   "length_aa_longest": 285,
+   "n_peptides": 2,
+   "best_peptide_q": 0.000161844,
+   "class_fdr": 0.5,
+   "called": false,
+   "overlapping_gene": null,
+   "flags": "rbs_supported;promoter_supported"
+  },
+  {
+   "orf_id": "NOVEL_NC_000962.3_1220451_p",
+   "class": "nterm_extension",
+   "contig": "NC_000962.3",
+   "strand": "+",
+   "start_longest": 1220451,
+   "end": 1221854,
+   "length_aa_longest": 467,
+   "n_peptides": 2,
+   "best_peptide_q": 4.7821e-07,
+   "class_fdr": 0.0117647,
+   "called": false,
+   "overlapping_gene": "LNBHIF_01160",
+   "flags": "rbs_supported"
+  },
+  {
+   "orf_id": "NOVEL_NC_000962.3_1235457_m",
+   "class": "nterm_extension",
+   "contig": "NC_000962.3",
+   "strand": "-",
+   "start_longest": 1236095,
+   "end": 1235457,
+   "length_aa_longest": 212,
+   "n_peptides": 2,
+   "best_peptide_q": 4.7821e-07,
+   "class_fdr": 0.0117647,
+   "called": false,
+   "overlapping_gene": "LNBHIF_01177",
+   "flags": "rbs_supported;promoter_supported"
+  },
+  {
+   "orf_id": "NOVEL_NC_000962.3_1482514_m",
+   "class": "nterm_extension",
+   "contig": "NC_000962.3",
+   "strand": "-",
+   "start_longest": 1484217,
+   "end": 1482514,
+   "length_aa_longest": 567,
+   "n_peptides": 2,
+   "best_peptide_q": 9.81077e-06,
+   "class_fdr": 0.0117647,
+   "called": false,
+   "overlapping_gene": "LNBHIF_01404",
+   "flags": "rbs_supported;promoter_supported"
+  },
+  {
+   "orf_id": "NOVEL_NC_000962.3_1484982_p",
+   "class": "intergenic",
+   "contig": "NC_000962.3",
+   "strand": "+",
+   "start_longest": 1484982,
+   "end": 1485278,
+   "length_aa_longest": 98,
+   "n_peptides": 3,
+   "best_peptide_q": 0.00019383,
+   "class_fdr": 0.1,
+   "called": false,
+   "overlapping_gene": null,
+   "flags": "rbs_supported;promoter_supported"
+  },
+  {
+   "orf_id": "NOVEL_NC_000962.3_1689303_m",
+   "class": "nterm_extension",
+   "contig": "NC_000962.3",
+   "strand": "-",
+   "start_longest": null,
+   "end": 1689303,
+   "length_aa_longest": 262,
+   "n_peptides": 2,
+   "best_peptide_q": 5.88607e-07,
+   "class_fdr": 0.0117647,
+   "called": false,
+   "overlapping_gene": "LNBHIF_01590",
+   "flags": "no_start_codon"
+  },
+  {
+   "orf_id": "NOVEL_NC_000962.3_1852303_p",
+   "class": "nterm_extension",
+   "contig": "NC_000962.3",
+   "strand": "+",
+   "start_longest": null,
+   "end": 1852878,
+   "length_aa_longest": 191,
+   "n_peptides": 2,
+   "best_peptide_q": 0.000102053,
+   "class_fdr": 0.0117647,
+   "called": false,
+   "overlapping_gene": "LNBHIF_01738",
+   "flags": "no_start_codon"
+  },
+  {
+   "orf_id": "NOVEL_NC_000962.3_2124830_m",
+   "class": "intergenic",
+   "contig": "NC_000962.3",
+   "strand": "-",
+   "start_longest": 2125048,
+   "end": 2124830,
+   "length_aa_longest": 72,
+   "n_peptides": 2,
+   "best_peptide_q": 2.51883e-05,
+   "class_fdr": 0.1,
+   "called": false,
+   "overlapping_gene": null,
+   "flags": "rbs_supported;promoter_supported"
+  },
+  {
+   "orf_id": "NOVEL_NC_000962.3_2158585_p",
+   "class": "antisense",
+   "contig": "NC_000962.3",
+   "strand": "+",
+   "start_longest": 2158585,
+   "end": 2159943,
+   "length_aa_longest": 452,
+   "n_peptides": 2,
+   "best_peptide_q": 4.7821e-07,
+   "class_fdr": 0.333333,
+   "called": false,
+   "overlapping_gene": "LNBHIF_02029",
+   "flags": "rbs_supported"
+  },
+  {
+   "orf_id": "NOVEL_NC_000962.3_2181262_m",
+   "class": "intergenic",
+   "contig": "NC_000962.3",
+   "strand": "-",
+   "start_longest": 2182560,
+   "end": 2181262,
+   "length_aa_longest": 432,
+   "n_peptides": 5,
+   "best_peptide_q": 5.33198e-07,
+   "class_fdr": 0.0909091,
+   "called": false,
+   "overlapping_gene": null,
+   "flags": "rbs_supported;promoter_supported"
+  },
+  {
+   "orf_id": "NOVEL_NC_000962.3_2218844_m",
+   "class": "nterm_extension",
+   "contig": "NC_000962.3",
+   "strand": "-",
+   "start_longest": 2219251,
+   "end": 2218844,
+   "length_aa_longest": 135,
+   "n_peptides": 2,
+   "best_peptide_q": 0.000248068,
+   "class_fdr": 0.0117647,
+   "called": false,
+   "overlapping_gene": "LNBHIF_02096",
+   "flags": "rbs_supported"
+  },
+  {
+   "orf_id": "NOVEL_NC_000962.3_2231005_p",
+   "class": "antisense",
+   "contig": "NC_000962.3",
+   "strand": "+",
+   "start_longest": 2231005,
+   "end": 2231454,
+   "length_aa_longest": 149,
+   "n_peptides": 3,
+   "best_peptide_q": 4.7821e-07,
+   "class_fdr": 0.333333,
+   "called": false,
+   "overlapping_gene": "LNBHIF_02110",
+   "flags": "rbs_supported;promoter_supported"
+  },
+  {
+   "orf_id": "NOVEL_NC_000962.3_2265989_p",
+   "class": "nterm_extension",
+   "contig": "NC_000962.3",
+   "strand": "+",
+   "start_longest": 2265989,
+   "end": 2266405,
+   "length_aa_longest": 138,
+   "n_peptides": 2,
+   "best_peptide_q": 4.7821e-07,
+   "class_fdr": 0.0117647,
+   "called": false,
+   "overlapping_gene": "LNBHIF_02146",
+   "flags": null
+  },
+  {
+   "orf_id": "NOVEL_NC_000962.3_2320831_p",
+   "class": "nterm_extension",
+   "contig": "NC_000962.3",
+   "strand": "+",
+   "start_longest": 2320831,
+   "end": 2321064,
+   "length_aa_longest": 77,
+   "n_peptides": 2,
+   "best_peptide_q": 4.7821e-07,
+   "class_fdr": 0.0117647,
+   "called": false,
+   "overlapping_gene": "LNBHIF_02192",
+   "flags": "rbs_supported;promoter_supported"
+  },
+  {
+   "orf_id": "NOVEL_NC_000962.3_2321057_p",
+   "class": "cds_outframe",
+   "contig": "NC_000962.3",
+   "strand": "+",
+   "start_longest": 2321057,
+   "end": 2321467,
+   "length_aa_longest": 136,
+   "n_peptides": 7,
+   "best_peptide_q": 4.7821e-07,
+   "class_fdr": 0.0909091,
+   "called": false,
+   "overlapping_gene": "LNBHIF_02193",
+   "flags": "rbs_supported"
+  },
+  {
+   "orf_id": "NOVEL_NC_000962.3_2338709_p",
+   "class": "nterm_extension",
+   "contig": "NC_000962.3",
+   "strand": "+",
+   "start_longest": 2338709,
+   "end": 2340874,
+   "length_aa_longest": 721,
+   "n_peptides": 5,
+   "best_peptide_q": 0.000161844,
+   "class_fdr": 0.0117647,
+   "called": false,
+   "overlapping_gene": "LNBHIF_02213",
+   "flags": "rbs_supported"
+  },
+  {
+   "orf_id": "NOVEL_NC_000962.3_2355319_m",
+   "class": "nterm_extension",
+   "contig": "NC_000962.3",
+   "strand": "-",
+   "start_longest": 2356677,
+   "end": 2355319,
+   "length_aa_longest": 452,
+   "n_peptides": 3,
+   "best_peptide_q": 4.7821e-07,
+   "class_fdr": 0.0117647,
+   "called": false,
+   "overlapping_gene": "LNBHIF_02226",
+   "flags": "rbs_supported"
+  },
+  {
+   "orf_id": "NOVEL_NC_000962.3_2445807_m",
+   "class": "nterm_extension",
+   "contig": "NC_000962.3",
+   "strand": "-",
+   "start_longest": null,
+   "end": 2445807,
+   "length_aa_longest": 409,
+   "n_peptides": 2,
+   "best_peptide_q": 3.22548e-05,
+   "class_fdr": 0.0117647,
+   "called": false,
+   "overlapping_gene": "LNBHIF_02319",
+   "flags": "no_start_codon"
+  },
+  {
+   "orf_id": "NOVEL_NC_000962.3_2470622_p",
+   "class": "nterm_extension",
+   "contig": "NC_000962.3",
+   "strand": "+",
+   "start_longest": 2470622,
+   "end": 2471332,
+   "length_aa_longest": 236,
+   "n_peptides": 3,
+   "best_peptide_q": 2.47245e-06,
+   "class_fdr": 0.0117647,
+   "called": false,
+   "overlapping_gene": "LNBHIF_02342",
+   "flags": "rbs_supported"
+  },
+  {
+   "orf_id": "NOVEL_NC_000962.3_2554938_m",
+   "class": "nterm_extension",
+   "contig": "NC_000962.3",
+   "strand": "-",
+   "start_longest": 2555876,
+   "end": 2554938,
+   "length_aa_longest": 312,
+   "n_peptides": 2,
+   "best_peptide_q": 0.00019383,
+   "class_fdr": 0.0117647,
+   "called": false,
+   "overlapping_gene": "LNBHIF_02422",
+   "flags": "rbs_supported;terminator_supported"
+  },
+  {
+   "orf_id": "NOVEL_NC_000962.3_2808083_p",
+   "class": "intergenic",
+   "contig": "NC_000962.3",
+   "strand": "+",
+   "start_longest": 2808083,
+   "end": 2808304,
+   "length_aa_longest": 73,
+   "n_peptides": 2,
+   "best_peptide_q": 5.88607e-07,
+   "class_fdr": 0.1,
+   "called": false,
+   "overlapping_gene": null,
+   "flags": "promoter_supported"
+  },
+  {
+   "orf_id": "NOVEL_NC_000962.3_3015203_p",
+   "class": "nterm_extension",
+   "contig": "NC_000962.3",
+   "strand": "+",
+   "start_longest": 3015203,
+   "end": 3015853,
+   "length_aa_longest": 216,
+   "n_peptides": 3,
+   "best_peptide_q": 5.33198e-07,
+   "class_fdr": 0.0117647,
+   "called": false,
+   "overlapping_gene": "LNBHIF_02861",
+   "flags": "rbs_supported;promoter_supported"
+  },
+  {
+   "orf_id": "NOVEL_NC_000962.3_3082813_p",
+   "class": "nterm_extension",
+   "contig": "NC_000962.3",
+   "strand": "+",
+   "start_longest": 3082813,
+   "end": 3083370,
+   "length_aa_longest": 185,
+   "n_peptides": 2,
+   "best_peptide_q": 4.7821e-07,
+   "class_fdr": 0.0117647,
+   "called": false,
+   "overlapping_gene": "LNBHIF_02933",
+   "flags": "rbs_supported"
+  },
+  {
+   "orf_id": "NOVEL_NC_000962.3_3147959_m",
+   "class": "intergenic",
+   "contig": "NC_000962.3",
+   "strand": "-",
+   "start_longest": 3148336,
+   "end": 3147959,
+   "length_aa_longest": 125,
+   "n_peptides": 2,
+   "best_peptide_q": 4.7821e-07,
+   "class_fdr": 0.1,
+   "called": false,
+   "overlapping_gene": null,
+   "flags": "rbs_supported;promoter_supported"
+  },
+  {
+   "orf_id": "NOVEL_NC_000962.3_3182268_p",
+   "class": "cds_outframe",
+   "contig": "NC_000962.3",
+   "strand": "+",
+   "start_longest": 3182268,
+   "end": 3183395,
+   "length_aa_longest": 375,
+   "n_peptides": 9,
+   "best_peptide_q": 4.7821e-07,
+   "class_fdr": 0.0909091,
+   "called": false,
+   "overlapping_gene": "LNBHIF_03032",
+   "flags": "rbs_supported"
+  },
+  {
+   "orf_id": "NOVEL_NC_000962.3_3190701_m",
+   "class": "nterm_extension",
+   "contig": "NC_000962.3",
+   "strand": "-",
+   "start_longest": 3191750,
+   "end": 3190701,
+   "length_aa_longest": 349,
+   "n_peptides": 3,
+   "best_peptide_q": 5.33198e-07,
+   "class_fdr": 0.0117647,
+   "called": false,
+   "overlapping_gene": "LNBHIF_03041",
+   "flags": "rbs_supported;promoter_supported"
+  },
+  {
+   "orf_id": "NOVEL_NC_000962.3_3580526_p",
+   "class": "intergenic",
+   "contig": "NC_000962.3",
+   "strand": "+",
+   "start_longest": 3580526,
+   "end": 3580684,
+   "length_aa_longest": 52,
+   "n_peptides": 3,
+   "best_peptide_q": 1.16495e-06,
+   "class_fdr": 0.0909091,
+   "called": false,
+   "overlapping_gene": null,
+   "flags": "rbs_supported;promoter_supported"
+  },
+  {
+   "orf_id": "NOVEL_NC_000962.3_3668169_m",
+   "class": "nterm_extension",
+   "contig": "NC_000962.3",
+   "strand": "-",
+   "start_longest": 3668954,
+   "end": 3668169,
+   "length_aa_longest": 261,
+   "n_peptides": 2,
+   "best_peptide_q": 2.20613e-05,
+   "class_fdr": 0.0117647,
+   "called": false,
+   "overlapping_gene": "LNBHIF_03480",
+   "flags": "rbs_supported"
+  },
+  {
+   "orf_id": "NOVEL_NC_000962.3_3714308_p",
+   "class": "nterm_extension",
+   "contig": "NC_000962.3",
+   "strand": "+",
+   "start_longest": 3714308,
+   "end": 3715708,
+   "length_aa_longest": 466,
+   "n_peptides": 2,
+   "best_peptide_q": 2.64104e-05,
+   "class_fdr": 0.0117647,
+   "called": false,
+   "overlapping_gene": "LNBHIF_03526",
+   "flags": "rbs_supported"
+  },
+  {
+   "orf_id": "NOVEL_NC_000962.3_3728615_p",
+   "class": "nterm_extension",
+   "contig": "NC_000962.3",
+   "strand": "+",
+   "start_longest": 3728615,
+   "end": 3729355,
+   "length_aa_longest": 246,
+   "n_peptides": 2,
+   "best_peptide_q": 5.88607e-07,
+   "class_fdr": 0.0117647,
+   "called": false,
+   "overlapping_gene": "LNBHIF_03539",
+   "flags": "rbs_supported"
+  },
+  {
+   "orf_id": "NOVEL_NC_000962.3_3772651_p",
+   "class": "nterm_extension",
+   "contig": "NC_000962.3",
+   "strand": "+",
+   "start_longest": 3772651,
+   "end": 3773019,
+   "length_aa_longest": 122,
+   "n_peptides": 2,
+   "best_peptide_q": 0.00046313,
+   "class_fdr": 0.0117647,
+   "called": false,
+   "overlapping_gene": "LNBHIF_03558",
+   "flags": "rbs_supported"
+  },
+  {
+   "orf_id": "NOVEL_NC_000962.3_3826252_p",
+   "class": "nterm_extension",
+   "contig": "NC_000962.3",
+   "strand": "+",
+   "start_longest": 3826252,
+   "end": 3826551,
+   "length_aa_longest": 99,
+   "n_peptides": 2,
+   "best_peptide_q": 4.7821e-07,
+   "class_fdr": 0.0117647,
+   "called": false,
+   "overlapping_gene": "LNBHIF_03611",
+   "flags": "rbs_supported"
+  },
+  {
+   "orf_id": "NOVEL_NC_000962.3_3880286_m",
+   "class": "intergenic",
+   "contig": "NC_000962.3",
+   "strand": "-",
+   "start_longest": 3880399,
+   "end": 3880286,
+   "length_aa_longest": 37,
+   "n_peptides": 2,
+   "best_peptide_q": 5.33198e-07,
+   "class_fdr": 0.1,
+   "called": false,
+   "overlapping_gene": null,
+   "flags": "rbs_supported"
+  },
+  {
+   "orf_id": "NOVEL_NC_000962.3_3901324_m",
+   "class": "nterm_extension",
+   "contig": "NC_000962.3",
+   "strand": "-",
+   "start_longest": 3902106,
+   "end": 3901324,
+   "length_aa_longest": 260,
+   "n_peptides": 2,
+   "best_peptide_q": 0.000161844,
+   "class_fdr": 0.0117647,
+   "called": false,
+   "overlapping_gene": "LNBHIF_03688",
+   "flags": "rbs_supported"
+  },
+  {
+   "orf_id": "NOVEL_NC_000962.3_4116002_p",
+   "class": "cds_outframe",
+   "contig": "NC_000962.3",
+   "strand": "+",
+   "start_longest": 4116002,
+   "end": 4116379,
+   "length_aa_longest": 125,
+   "n_peptides": 4,
+   "best_peptide_q": 0.000413029,
+   "class_fdr": 0.0909091,
+   "called": false,
+   "overlapping_gene": "LNBHIF_03881",
+   "flags": "rbs_supported;promoter_supported"
+  },
+  {
+   "orf_id": "NOVEL_NC_000962.3_4315568_m",
+   "class": "nterm_extension",
+   "contig": "NC_000962.3",
+   "strand": "-",
+   "start_longest": 4316596,
+   "end": 4315568,
+   "length_aa_longest": 342,
+   "n_peptides": 3,
+   "best_peptide_q": 5.33198e-07,
+   "class_fdr": 0.0117647,
+   "called": false,
+   "overlapping_gene": "LNBHIF_04065",
+   "flags": "rbs_supported;promoter_supported"
+  },
+  {
+   "orf_id": "NOVEL_NC_000962.3_4353010_p",
+   "class": "nterm_extension",
+   "contig": "NC_000962.3",
+   "strand": "+",
+   "start_longest": 4353010,
+   "end": 4355010,
+   "length_aa_longest": 666,
+   "n_peptides": 9,
+   "best_peptide_q": 5.33198e-07,
+   "class_fdr": 0.0117647,
+   "called": false,
+   "overlapping_gene": "LNBHIF_04103",
+   "flags": "rbs_supported;promoter_supported"
+  },
+  {
+   "orf_id": "NOVEL_NC_000962.3_4393248_p",
+   "class": "nterm_extension",
+   "contig": "NC_000962.3",
+   "strand": "+",
+   "start_longest": 4393248,
+   "end": 4394195,
+   "length_aa_longest": 315,
+   "n_peptides": 3,
+   "best_peptide_q": 5.33198e-07,
+   "class_fdr": 0.0117647,
+   "called": false,
+   "overlapping_gene": "LNBHIF_04137",
+   "flags": "rbs_supported;promoter_supported"
+  },
+  {
+   "orf_id": "NOVEL_NC_000962.3_4410053_m",
+   "class": "intergenic",
+   "contig": "NC_000962.3",
+   "strand": "-",
+   "start_longest": 4410415,
+   "end": 4410053,
+   "length_aa_longest": 120,
+   "n_peptides": 2,
+   "best_peptide_q": 5.99395e-06,
+   "class_fdr": 0.0909091,
+   "called": false,
+   "overlapping_gene": null,
+   "flags": "rbs_supported"
+  },
+  {
+   "orf_id": "NOVEL_NC_000962.3_4410412_m",
+   "class": "intergenic",
+   "contig": "NC_000962.3",
+   "strand": "-",
+   "start_longest": 4410789,
+   "end": 4410412,
+   "length_aa_longest": 125,
+   "n_peptides": 4,
+   "best_peptide_q": 4.7821e-07,
+   "class_fdr": 0.1,
+   "called": false,
+   "overlapping_gene": null,
+   "flags": "rbs_supported"
+  }
+ ],
+ "compare": {
+  "abundance": [
+   {
+    "run_a": "genes",
+    "run_b": "sixframe",
+    "n_shared": 2852,
+    "n_units": 1954,
+    "spearman_rho": 0.989492,
+    "ci_low": 0.986352,
+    "ci_high": 0.992205,
+    "ba_bias_log2": 0.0761234,
+    "ba_loa_low": -1.12093,
+    "ba_loa_high": 1.27318,
+    "method": "spearman_tu_bootstrap",
+    "n_boot": 1000,
+    "flags": NaN
+   }
+  ],
+  "stability": [
+   {
+    "family": "islands",
+    "run_a": "genes",
+    "run_b": "sixframe",
+    "n_a": 0,
+    "n_b": 0,
+    "n_shared": 0,
+    "jaccard": NaN,
+    "flags": "both_empty"
+   },
+   {
+    "family": "operon_flags",
+    "run_a": "genes",
+    "run_b": "sixframe",
+    "n_a": 0,
+    "n_b": 0,
+    "n_shared": 0,
+    "jaccard": NaN,
+    "flags": "both_empty"
+   },
+   {
+    "family": "enriched_categories",
+    "run_a": "genes",
+    "run_b": "sixframe",
+    "n_a": 141,
+    "n_b": 116,
+    "n_shared": 107,
+    "jaccard": 0.713333,
+    "flags": NaN
+   },
+   {
+    "family": "novel_orfs",
+    "run_a": "genes",
+    "run_b": "sixframe",
+    "n_a": 0,
+    "n_b": 0,
+    "n_shared": 0,
+    "jaccard": NaN,
+    "flags": "both_empty"
+   },
+   {
+    "family": "alt_sites",
+    "run_a": "genes",
+    "run_b": "sixframe",
+    "n_a": 0,
+    "n_b": 0,
+    "n_shared": 0,
+    "jaccard": NaN,
+    "flags": "both_empty"
+   }
+  ]
+ }
+}
