@@ -1,4 +1,3 @@
-# ruff: noqa: E501  (report-line f-strings; a validation script, not package code)
 """Campaign Phase 2 prep record: aggregates only (no peptide data).
 
 For each dataset in genomes.tsv, read the fetch outputs ($GIPPA_ROOT/campaign/<acc>/raw/SHA256SUMS),
